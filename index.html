@@ -1,0 +1,11 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Mi Gente Express Portal</title><link rel="stylesheet" href="/assets/styles.css"></head>
+<body><div class="auth-shell"><section class="panel auth-card"><div class="brand">MI GENTE <span>EXPRESS</span></div><p class="muted">Secure customer, driver, and staff portal</p><h1>Sign in</h1>
+<form id="login"><label>Email<input id="email" type="email" required autocomplete="email"></label><label>Password<input id="password" type="password" required autocomplete="current-password"></label><button>Sign In</button></form><div id="msg"></div>
+<p class="small">Need an account? Contact info@migenteexpress.com.</p></section></div>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="/config.js"></script><script type="module">
+import {db,routeByRole} from "/assets/js/core.js";
+const msg=document.querySelector("#msg");
+async function route(){const {data:{session}}=await db.auth.getSession();if(!session)return;const {data:p}=await db.from("profiles").select("role").eq("id",session.user.id).single();if(p)routeByRole(p.role)}
+route();
+login.addEventListener("submit",async e=>{e.preventDefault();msg.className="notice info";msg.textContent="Signing in…";const {error}=await db.auth.signInWithPassword({email:email.value,password:password.value});if(error){msg.className="notice error";msg.textContent=error.message}else route()});
+</script></body></html>

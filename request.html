@@ -1,0 +1,14 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Request a Delivery | Mi Gente Express</title><link rel="stylesheet" href="/assets/styles.css"></head>
+<body><header class="topbar"><div class="container topbar-inner"><div class="brand">MI GENTE <span>EXPRESS</span></div><a class="btn secondary" href="https://migenteexpress.com">Main Website</a></div></header>
+<main><div class="container"><section class="hero"><h1>Request a delivery quote</h1><p>Serving Denver, Fort Collins, Colorado Springs, Sterling, and surrounding Colorado communities.</p></section>
+<section class="panel"><form id="requestForm" class="grid">
+<label>Full Name<input name="customer_name" required></label><label>Email<input name="customer_email" type="email" required></label><label>Phone<input name="customer_phone" required></label><label>Company<input name="company"></label>
+<label>Pickup Address<textarea name="pickup_address" required></textarea></label><label>Delivery Address<textarea name="delivery_address" required></textarea></label>
+<label>Vehicle Needed<select name="vehicle_type"><option>Sedan / Small Car</option><option>Small Cargo Van</option><option>Sprinter Van</option><option>Not Sure</option></select></label>
+<label>How Quickly?<select name="delivery_speed"><option>2-Hour Delivery</option><option>3-Hour Delivery</option><option>4-Hour Delivery</option><option>5-Hour Delivery</option><option>6-Hour Delivery</option><option>Next-Day Delivery</option></select></label>
+<label>Package Type<select name="package_type"><option>Documents</option><option>Medical Supplies</option><option>Auto Parts</option><option>Small Package</option><option>Medium Package</option><option>Large Package</option><option>Other</option></select></label>
+<label>Approximate Weight<select name="weight"><option>Under 10 lbs</option><option>10–25 lbs</option><option>25–50 lbs</option><option>50–100 lbs</option><option>Over 100 lbs</option></select></label>
+<label class="full">Special Instructions<textarea name="special_instructions" rows="4"></textarea></label><div class="full"><button>Submit Request</button></div></form><div id="msg"></div></section></div></main>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="/config.js"></script><script type="module">
+import {db} from "/assets/js/core.js";requestForm.onsubmit=async e=>{e.preventDefault();const body=Object.fromEntries(new FormData(requestForm).entries());body.status="new";const {error}=await db.from("quotes").insert(body);msg.className="notice "+(error?"error":"success");msg.textContent=error?error.message:"Your request was received. Mi Gente Express will contact you with pricing.";if(!error)requestForm.reset()};
+</script></body></html>
