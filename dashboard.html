@@ -2,7 +2,12 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1">
+
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1"
+  >
+
   <title>MG Express Dispatch</title>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -13,16 +18,16 @@
     }
 
     :root {
-      --green-dark: #064f3b;
+      --dark-green: #064f3b;
       --green: #087455;
-      --green-light: #e7f5ef;
+      --light-green: #e7f5ef;
       --coral: #ff665c;
+      --background: #f3f8f6;
+      --white: #ffffff;
       --ink: #17221e;
       --muted: #68756f;
       --line: #dfe8e4;
-      --background: #f3f8f6;
-      --white: #ffffff;
-      --danger: #9b2929;
+      --danger: #a32d2d;
     }
 
     body {
@@ -39,26 +44,33 @@
       font: inherit;
     }
 
-    button {
-      cursor: pointer;
+    button,
+    a {
+      -webkit-tap-highlight-color: transparent;
     }
 
     .topbar {
-      background: var(--green-dark);
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      background: var(--dark-green);
       color: white;
-      padding: 18px 22px;
+      padding: 18px 20px;
+    }
+
+    .topbar-inner {
+      width: min(1050px, 100%);
+      margin: auto;
       display: flex;
       align-items: center;
       justify-content: space-between;
-      gap: 16px;
-      position: sticky;
-      top: 0;
-      z-index: 20;
+      gap: 15px;
     }
 
     .brand {
       font-size: 24px;
       font-weight: 900;
+      line-height: 1.08;
     }
 
     .brand span {
@@ -66,32 +78,33 @@
     }
 
     .staff-email {
-      font-size: 12px;
-      margin-top: 6px;
-      opacity: 0.82;
+      margin-top: 7px;
+      font-size: 13px;
+      opacity: .82;
       overflow-wrap: anywhere;
     }
 
     .signout {
       border: 0;
-      border-radius: 14px;
+      border-radius: 16px;
+      padding: 15px 18px;
       background: white;
-      color: var(--green-dark);
-      padding: 14px 18px;
-      font-weight: 800;
+      color: var(--dark-green);
+      font-weight: 900;
+      cursor: pointer;
       min-width: 112px;
     }
 
     .container {
-      width: min(1100px, 100%);
-      margin: 0 auto;
-      padding: 30px 20px 60px;
+      width: min(1050px, 100%);
+      margin: auto;
+      padding: 30px 18px 60px;
     }
 
-    .toolbar {
+    .page-heading {
       display: flex;
-      align-items: end;
       justify-content: space-between;
+      align-items: flex-end;
       gap: 18px;
       margin-bottom: 24px;
     }
@@ -99,52 +112,66 @@
     .eyebrow {
       color: var(--muted);
       font-size: 18px;
-      margin-bottom: 4px;
+      margin-bottom: 5px;
     }
 
     h1 {
       margin: 0;
       font-size: 44px;
+      line-height: 1.05;
     }
 
     h2 {
       margin: 0;
-      font-size: 30px;
-    }
-
-    .primary-button,
-    .secondary-button {
-      border: 0;
-      border-radius: 14px;
-      padding: 14px 18px;
-      font-weight: 800;
+      font-size: 29px;
     }
 
     .primary-button {
+      border: 0;
+      border-radius: 14px;
+      padding: 15px 20px;
       background: var(--green);
       color: white;
+      font-weight: 900;
+      cursor: pointer;
     }
 
     .secondary-button {
-      background: white;
-      color: var(--green-dark);
       border: 1px solid var(--line);
+      border-radius: 13px;
+      padding: 13px 16px;
+      background: white;
+      color: var(--dark-green);
+      font-weight: 900;
+      cursor: pointer;
+    }
+
+    .navigation {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-bottom: 24px;
+    }
+
+    .navigation a {
+      text-decoration: none;
+      display: inline-block;
     }
 
     .stats {
       display: grid;
       grid-template-columns: repeat(5, minmax(0, 1fr));
-      gap: 16px;
-      margin-bottom: 24px;
+      gap: 13px;
+      margin-bottom: 30px;
     }
 
-    .stat,
-    .panel {
+    .stat-card {
       background: white;
       border: 1px solid var(--line);
       border-radius: 20px;
-      padding: 22px;
-      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.04);
+      padding: 20px;
+      min-height: 145px;
+      box-shadow: 0 8px 25px rgba(0, 0, 0, .04);
     }
 
     .stat-number {
@@ -155,41 +182,48 @@
 
     .stat-label {
       color: var(--muted);
-      margin-top: 5px;
+      margin-top: 9px;
+      line-height: 1.3;
     }
 
     .panel {
-      margin-bottom: 24px;
-    }
-
-    .panel-header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 14px;
-      margin-bottom: 18px;
+      background: white;
+      border: 1px solid var(--line);
+      border-radius: 22px;
+      padding: 23px;
+      margin-bottom: 26px;
+      box-shadow: 0 9px 28px rgba(0, 0, 0, .05);
     }
 
     .hidden {
-      display: none !important;
+      display: none;
     }
 
-    .form-grid {
+    .panel-heading,
+    .jobs-heading {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 14px;
+      margin-bottom: 20px;
+    }
+
+    .quote-form {
       display: grid;
       grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: 16px;
-    }
-
-    .full {
-      grid-column: 1 / -1;
+      gap: 15px;
     }
 
     label {
       display: block;
-      font-size: 13px;
-      font-weight: 800;
       color: var(--muted);
+      font-size: 12px;
+      font-weight: 900;
       text-transform: uppercase;
+    }
+
+    label.full {
+      grid-column: 1 / -1;
     }
 
     input,
@@ -197,83 +231,94 @@
     textarea {
       width: 100%;
       margin-top: 7px;
+      padding: 14px;
       border: 1px solid #ccd8d3;
       border-radius: 12px;
-      padding: 13px 14px;
       background: white;
       color: var(--ink);
+      outline: none;
+    }
+
+    input:focus,
+    select:focus,
+    textarea:focus {
+      border-color: var(--green);
+      box-shadow: 0 0 0 3px rgba(8, 116, 85, .12);
     }
 
     textarea {
-      min-height: 92px;
+      min-height: 90px;
       resize: vertical;
     }
 
     .form-actions {
+      grid-column: 1 / -1;
       display: flex;
       gap: 10px;
-      justify-content: flex-end;
-      margin-top: 18px;
+      flex-wrap: wrap;
     }
 
     .message {
-      padding: 14px;
-      border-radius: 12px;
       margin-top: 15px;
+      padding: 13px;
+      border-radius: 11px;
+      line-height: 1.4;
     }
 
-    .info {
+    .message.info {
       background: #edf7f3;
       color: #06543e;
     }
 
-    .error {
+    .message.error {
       background: #fff0f0;
       color: var(--danger);
     }
 
-    .jobs {
+    .jobs-list {
       display: grid;
-      gap: 15px;
+      gap: 18px;
     }
 
     .job-card {
-      border: 1px solid var(--line);
-      border-radius: 18px;
-      padding: 18px;
       background: white;
+      border: 1px solid var(--line);
+      border-radius: 20px;
+      padding: 20px;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, .04);
     }
 
     .job-top {
       display: flex;
       justify-content: space-between;
+      align-items: flex-start;
       gap: 12px;
-      margin-bottom: 14px;
+      margin-bottom: 17px;
     }
 
     .job-number {
-      color: var(--green-dark);
-      font-size: 21px;
+      color: var(--dark-green);
+      font-size: 24px;
       font-weight: 900;
     }
 
     .customer {
+      margin-top: 5px;
+      font-size: 18px;
       font-weight: 800;
-      margin-top: 4px;
     }
 
     .customer-email {
+      margin-top: 4px;
       color: var(--muted);
-      font-size: 14px;
-      margin-top: 3px;
       overflow-wrap: anywhere;
     }
 
     .status-pill {
-      background: var(--green-light);
-      color: var(--green);
-      padding: 8px 11px;
       border-radius: 999px;
+      padding: 8px 11px;
+      background: var(--light-green);
+      color: var(--green);
       font-size: 12px;
       font-weight: 900;
       text-transform: capitalize;
@@ -281,95 +326,133 @@
     }
 
     .route {
-      background: var(--background);
-      border-radius: 14px;
-      padding: 14px;
+      border-radius: 15px;
+      padding: 16px;
+      background: #f7faf9;
       line-height: 1.45;
-      margin-bottom: 14px;
+      margin-bottom: 17px;
     }
 
     .route-arrow {
+      margin: 8px 0;
       color: var(--green);
+      font-size: 23px;
       font-weight: 900;
-      padding: 4px 0;
+    }
+
+    .job-details {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 12px;
+      margin-bottom: 17px;
+    }
+
+    .detail-box {
+      background: #f7faf9;
+      border-radius: 13px;
+      padding: 13px;
+    }
+
+    .detail-label {
+      color: var(--muted);
+      font-size: 11px;
+      font-weight: 900;
+      text-transform: uppercase;
+    }
+
+    .detail-value {
+      margin-top: 5px;
+      line-height: 1.35;
+      overflow-wrap: anywhere;
+    }
+
+    .instructions {
+      margin-bottom: 17px;
+      padding: 15px;
+      border-radius: 14px;
+      background: #fff8ed;
+      line-height: 1.45;
+      white-space: pre-wrap;
     }
 
     .job-controls {
       display: grid;
-      grid-template-columns: 1fr 1fr auto;
-      gap: 10px;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 12px;
       align-items: end;
     }
 
-    .job-controls label {
-      text-transform: none;
-    }
-
-    .save-job {
+    .save-job,
+    .photo-link {
+      min-height: 49px;
       border: 0;
       border-radius: 12px;
-      padding: 13px 16px;
+      padding: 13px;
       background: var(--green);
       color: white;
-      font-weight: 800;
-      min-height: 46px;
+      text-align: center;
+      text-decoration: none;
+      font-weight: 900;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .photo-link {
+      background: #eaf3ef;
+      color: var(--dark-green);
+    }
+
+    .photo-link.disabled {
+      opacity: .5;
+      pointer-events: none;
     }
 
     .empty {
+      padding: 28px;
       text-align: center;
       color: var(--muted);
-      padding: 30px 10px;
+      background: #fafdfb;
+      border-radius: 17px;
     }
 
-    @media (max-width: 850px) {
+    @media (max-width: 900px) {
       .stats {
         grid-template-columns: repeat(2, minmax(0, 1fr));
       }
 
       .job-controls {
-        grid-template-columns: 1fr;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
       }
     }
 
-    @media (max-width: 600px) {
-      .topbar {
-        padding: 16px;
-      }
-
-      .brand {
-        font-size: 21px;
-      }
-
-      .container {
-        padding: 26px 16px 50px;
-      }
-
-      .toolbar,
-      .panel-header {
+    @media (max-width: 650px) {
+      .page-heading {
         align-items: stretch;
         flex-direction: column;
       }
 
-      h1 {
-        font-size: 38px;
+      .page-heading .primary-button {
+        width: 100%;
       }
 
-      .form-grid {
+      .quote-form,
+      .job-controls,
+      .job-details {
         grid-template-columns: 1fr;
       }
 
-      .full {
-        grid-column: auto;
+      .stats {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
       }
 
-      .form-actions {
-        flex-direction: column-reverse;
+      h1 {
+        font-size: 40px;
       }
 
-      .form-actions button,
-      .panel-header button,
-      .toolbar button {
-        width: 100%;
+      .panel {
+        padding: 18px;
       }
     }
   </style>
@@ -377,58 +460,99 @@
 
 <body>
   <header class="topbar">
-    <div>
-      <div class="brand">MG <span>EXPRESS</span> DISPATCH</div>
-      <div class="staff-email" id="staffEmail"></div>
-    </div>
+    <div class="topbar-inner">
+      <div>
+        <div class="brand">
+          MG <span>EXPRESS</span> DISPATCH
+        </div>
 
-    <button class="signout" id="signOutButton" type="button">
-      Sign Out
-    </button>
+        <div class="staff-email" id="staffEmail"></div>
+      </div>
+
+      <button
+        class="signout"
+        id="signOutButton"
+        type="button"
+      >
+        Sign Out
+      </button>
+    </div>
   </header>
 
   <main class="container">
-    <section class="toolbar">
+    <div class="page-heading">
       <div>
         <div class="eyebrow">Dispatch control center</div>
         <h1>Dashboard</h1>
       </div>
 
-      <button class="primary-button" id="newQuoteButton" type="button">
-        + New Quote
+      <button
+        class="primary-button"
+        id="newQuoteButton"
+        type="button"
+      >
+        + New Job
       </button>
-    </section>
+    </div>
+
+    <nav class="navigation">
+      <a
+        class="secondary-button"
+        href="/history.html"
+      >
+        Job History
+      </a>
+
+      <a
+        class="secondary-button"
+        href="/customer.html"
+      >
+        Customers
+      </a>
+
+      <a
+        class="secondary-button"
+        href="https://drivers.migenteexpress.com"
+        target="_blank"
+        rel="noopener"
+      >
+        Driver Portal
+      </a>
+    </nav>
 
     <section class="stats">
-      <div class="stat">
+      <div class="stat-card">
         <div class="stat-number" id="countNew">0</div>
         <div class="stat-label">New</div>
       </div>
 
-      <div class="stat">
+      <div class="stat-card">
         <div class="stat-number" id="countWaiting">0</div>
         <div class="stat-label">Waiting Payment</div>
       </div>
 
-      <div class="stat">
+      <div class="stat-card">
         <div class="stat-number" id="countReady">0</div>
         <div class="stat-label">Paid / Ready</div>
       </div>
 
-      <div class="stat">
+      <div class="stat-card">
         <div class="stat-number" id="countTransit">0</div>
         <div class="stat-label">In Transit</div>
       </div>
 
-      <div class="stat">
+      <div class="stat-card">
         <div class="stat-number" id="countDelivered">0</div>
         <div class="stat-label">Delivered</div>
       </div>
     </section>
 
-    <section class="panel hidden" id="quotePanel">
-      <div class="panel-header">
-        <h2>Create Quote</h2>
+    <section
+      id="quotePanel"
+      class="panel hidden"
+    >
+      <div class="panel-heading">
+        <h2>Create New Job</h2>
 
         <button
           class="secondary-button"
@@ -439,84 +563,141 @@
         </button>
       </div>
 
-      <form id="quoteForm">
-        <div class="form-grid">
-          <label>
-            Job Number
-            <input name="job_number" id="jobNumber" required>
-          </label>
+      <form id="quoteForm" class="quote-form">
+        <label>
+          Job Number
 
-          <label>
-            Customer Name
-            <input name="customer_name" required>
-          </label>
+          <input
+            name="job_number"
+            type="text"
+            placeholder="MGE-00002"
+            required
+          >
+        </label>
 
-          <label>
-            Customer Email
-            <input name="customer_email" type="email" required>
-          </label>
+        <label>
+          Customer Name
 
-          <label>
-            Vehicle
-            <select name="vehicle_type">
-              <option value="Car">Car</option>
-              <option value="SUV">SUV</option>
-              <option value="Cargo Van">Cargo Van</option>
-              <option value="Sprinter Van">Sprinter Van</option>
-              <option value="Box Truck">Box Truck</option>
-            </select>
-          </label>
+          <input
+            name="customer_name"
+            type="text"
+            required
+          >
+        </label>
 
-          <label class="full">
-            Pickup Address
-            <textarea name="pickup_address" required></textarea>
-          </label>
+        <label>
+          Customer Email
 
-          <label class="full">
-            Delivery Address
-            <textarea name="delivery_address" required></textarea>
-          </label>
+          <input
+            name="customer_email"
+            type="email"
+          >
+        </label>
 
-          <label>
-            Delivery Speed
-            <select name="delivery_speed">
-              <option value="Standard">Standard</option>
-              <option value="Same Day">Same Day</option>
-              <option value="Rush">Rush</option>
-              <option value="Scheduled">Scheduled</option>
-            </select>
-          </label>
+        <label>
+          Assigned Driver
 
-          <label>
-            Package Type
-            <input name="package_type">
-          </label>
+          <select name="assigned_driver_id" id="newJobDriver">
+            <option value="">Unassigned</option>
+          </select>
+        </label>
 
-          <label>
-            Status
-            <select name="status">
-              <option value="new">New</option>
-              <option value="waiting_payment">Waiting Payment</option>
-              <option value="paid">Paid / Ready</option>
-            </select>
-          </label>
+        <label class="full">
+          Pickup Address
 
-          <label>
-            Assign Driver
-            <select name="assigned_driver_id" id="newQuoteDriver">
-              <option value="">Unassigned</option>
-            </select>
-          </label>
+          <textarea
+            name="pickup_address"
+            required
+          ></textarea>
+        </label>
 
-          <label class="full">
-            Special Instructions
-            <textarea name="special_instructions"></textarea>
-          </label>
-        </div>
+        <label class="full">
+          Delivery Address
 
-        <div id="quoteMessage"></div>
+          <textarea
+            name="delivery_address"
+            required
+          ></textarea>
+        </label>
+
+        <label>
+          Vehicle Type
+
+          <select name="vehicle_type">
+            <option value="">Choose vehicle</option>
+            <option value="Car">Car</option>
+            <option value="SUV">SUV</option>
+            <option value="Cargo Van">Cargo Van</option>
+            <option value="Sprinter Van">Sprinter Van</option>
+            <option value="Box Truck">Box Truck</option>
+          </select>
+        </label>
+
+        <label>
+          Delivery Speed
+
+          <select name="delivery_speed">
+            <option value="">Choose speed</option>
+            <option value="Standard">Standard</option>
+            <option value="Same Day">Same Day</option>
+            <option value="Rush">Rush</option>
+            <option value="Scheduled Route">Scheduled Route</option>
+          </select>
+        </label>
+
+        <label>
+          Package Type
+
+          <input
+            name="package_type"
+            type="text"
+            placeholder="Documents, medical supplies, box..."
+          >
+        </label>
+
+        <label>
+          Driver Pay
+
+          <input
+            name="driver_pay"
+            type="number"
+            min="0"
+            step="0.01"
+            value="0.00"
+          >
+        </label>
+
+        <label>
+          Status
+
+          <select name="status">
+            <option value="new">New</option>
+            <option value="waiting_payment">Waiting Payment</option>
+            <option value="paid">Paid / Ready</option>
+            <option value="in_transit">In Transit</option>
+            <option value="delivered">Delivered</option>
+            <option value="cancelled">Cancelled</option>
+          </select>
+        </label>
+
+        <label class="full">
+          Special Instructions
+
+          <textarea
+            name="special_instructions"
+            placeholder="Pickup details, gate code, contact information..."
+          ></textarea>
+        </label>
 
         <div class="form-actions">
+          <button
+            class="primary-button"
+            id="saveQuoteButton"
+            type="submit"
+          >
+            Save Job
+          </button>
+
           <button
             class="secondary-button"
             id="cancelQuoteButton"
@@ -524,21 +705,15 @@
           >
             Cancel
           </button>
-
-          <button
-            class="primary-button"
-            id="saveQuoteButton"
-            type="submit"
-          >
-            Save Quote
-          </button>
         </div>
       </form>
+
+      <div id="quoteMessage"></div>
     </section>
 
     <section class="panel">
-      <div class="panel-header">
-        <h2>Quotes & Jobs</h2>
+      <div class="jobs-heading">
+        <h2>Quotes &amp; Jobs</h2>
 
         <button
           class="secondary-button"
@@ -549,7 +724,7 @@
         </button>
       </div>
 
-      <div id="jobs" class="jobs">
+      <div id="jobsBox" class="jobs-list">
         <div class="empty">Loading quotes and jobs…</div>
       </div>
     </section>
@@ -561,19 +736,38 @@
       "sb_publishable_kcv_a78ZyUxMo2neKUANdw_XN7eAMpI"
     );
 
-    const jobsBox = document.getElementById("jobs");
-    const quotePanel = document.getElementById("quotePanel");
-    const quoteForm = document.getElementById("quoteForm");
-    const quoteMessage = document.getElementById("quoteMessage");
-    const saveQuoteButton = document.getElementById("saveQuoteButton");
+    const jobsBox =
+      document.getElementById("jobsBox");
 
-    let quotes = [];
+    const quotePanel =
+      document.getElementById("quotePanel");
+
+    const quoteForm =
+      document.getElementById("quoteForm");
+
+    const quoteMessage =
+      document.getElementById("quoteMessage");
+
+    const saveQuoteButton =
+      document.getElementById("saveQuoteButton");
+
     let drivers = [];
+    let quotes = [];
 
     function escapeHtml(value) {
-      const div = document.createElement("div");
-      div.textContent = value ?? "";
-      return div.innerHTML;
+      const element = document.createElement("div");
+      element.textContent = value ?? "";
+      return element.innerHTML;
+    }
+
+    function money(value) {
+      return Number(value || 0).toLocaleString(
+        "en-US",
+        {
+          style: "currency",
+          currency: "USD"
+        }
+      );
     }
 
     function statusLabel(status) {
@@ -588,34 +782,11 @@
       };
 
       return labels[status] ||
-        String(status || "New").replaceAll("_", " ");
-    }
-
-    function nextJobNumber() {
-      let highest = 0;
-
-      for (const quote of quotes) {
-        const match = String(quote.job_number || "").match(/(\d+)$/);
-
-        if (match) {
-          highest = Math.max(highest, Number(match[1]));
-        }
-      }
-
-      return "MGE-" + String(highest + 1).padStart(5, "0");
-    }
-
-    function setQuoteMessage(text, type) {
-      quoteMessage.className = text ? "message " + type : "";
-      quoteMessage.textContent = text || "";
+        String(status || "").replaceAll("_", " ");
     }
 
     function openQuotePanel() {
-      quoteForm.reset();
-      document.getElementById("jobNumber").value = nextJobNumber();
-      setQuoteMessage("", "");
       quotePanel.classList.remove("hidden");
-
       quotePanel.scrollIntoView({
         behavior: "smooth",
         block: "start"
@@ -624,11 +795,21 @@
 
     function closeQuotePanel() {
       quotePanel.classList.add("hidden");
-      setQuoteMessage("", "");
+      quoteForm.reset();
+      quoteMessage.className = "";
+      quoteMessage.textContent = "";
     }
 
-    function populateDriverOptions() {
-      document.getElementById("newQuoteDriver").innerHTML =
+    function setQuoteMessage(text, type) {
+      quoteMessage.className = "message " + type;
+      quoteMessage.textContent = text;
+    }
+
+    function populateNewJobDrivers() {
+      const select =
+        document.getElementById("newJobDriver");
+
+      select.innerHTML =
         '<option value="">Unassigned</option>' +
         drivers.map(driver => `
           <option value="${escapeHtml(driver.id)}">
@@ -643,7 +824,9 @@
 
     function updateCounts() {
       const count = status =>
-        quotes.filter(quote => quote.status === status).length;
+        quotes.filter(
+          quote => quote.status === status
+        ).length;
 
       document.getElementById("countNew").textContent =
         count("new");
@@ -661,23 +844,25 @@
         count("delivered");
     }
 
-    function renderJobs() {
-      updateCounts();
+    function driverOptions(quote) {
+      const unassignedSelected =
+        quote.assigned_driver_id ? "" : "selected";
 
-      if (!quotes.length) {
-        jobsBox.innerHTML =
-          '<div class="empty">No quotes or jobs yet.</div>';
+      return `
+        <option value="" ${unassignedSelected}>
+          Unassigned
+        </option>
 
-        return;
-      }
+        ${drivers.map(driver => {
+          const selected =
+            driver.id === quote.assigned_driver_id
+              ? "selected"
+              : "";
 
-      jobsBox.innerHTML = quotes.map(quote => {
-        const driverOptions =
-          '<option value="">Unassigned</option>' +
-          drivers.map(driver => `
+          return `
             <option
               value="${escapeHtml(driver.id)}"
-              ${driver.id === quote.assigned_driver_id ? "selected" : ""}
+              ${selected}
             >
               ${escapeHtml(
                 driver.full_name ||
@@ -685,132 +870,203 @@
                 "Driver"
               )}
             </option>
-          `).join("");
+          `;
+        }).join("")}
+      `;
+    }
 
-        const statuses = [
-          "new",
-          "waiting_payment",
-          "paid",
-          "in_transit",
-          "delivered",
-          "cancelled"
-        ];
+    function statusOptions(quote) {
+      const statuses = [
+        "new",
+        "waiting_payment",
+        "paid",
+        "in_transit",
+        "delivered",
+        "cancelled"
+      ];
 
-        const statusOptions = statuses.map(status => `
-          <option
-            value="${status}"
-            ${status === quote.status ? "selected" : ""}
-          >
-            ${statusLabel(status)}
-          </option>
-        `).join("");
+      return statuses.map(status => `
+        <option
+          value="${status}"
+          ${status === quote.status ? "selected" : ""}
+        >
+          ${escapeHtml(statusLabel(status))}
+        </option>
+      `).join("");
+    }
 
+    function photoLink(url, label) {
+      if (!url) {
         return `
-          <article class="job-card">
-            <div class="job-top">
-              <div>
-                <div class="job-number">
-                  ${escapeHtml(quote.job_number)}
-                </div>
-
-                <div class="customer">
-                  ${escapeHtml(quote.customer_name)}
-                </div>
-
-                <div class="customer-email">
-                  ${escapeHtml(quote.customer_email)}
-                </div>
-              </div>
-
-              <div class="status-pill">
-                ${escapeHtml(statusLabel(quote.status))}
-              </div>
-            </div>
-
-            <div class="route">
-              <strong>Pickup:</strong><br>
-              ${escapeHtml(quote.pickup_address)}
-
-              <div class="route-arrow">↓</div>
-
-              <strong>Delivery:</strong><br>
-              ${escapeHtml(quote.delivery_address)}
-            </div>
-
-            <div class="job-controls">
-              <label>
-                Assigned Driver
-
-                <select id="driver-${quote.id}">
-                  ${driverOptions}
-                </select>
-              </label>
-
-<label>
-  Driver Pay
-
-  <input
-    id="driverPay-${quote.id}"
-    type="number"
-    min="0"
-    step="0.01"
-    value="${Number(quote.driver_pay || 0).toFixed(2)}"
-    placeholder="0.00"
-  >
-</label>
-              <label>
-                Status
-
-                <select id="status-${quote.id}">
-                  ${statusOptions}
-                </select>
-              </label>
-
-              <button
-                class="save-job"
-                type="button"
-                onclick="saveJob('${quote.id}')"
-              >
-                Save
-              </button>
-              ${
-  quote.pickup_photo_url
-    ? `
-      <a
-        class="save-job"
-        href="${escapeHtml(quote.pickup_photo_url)}"
-        target="_blank"
-        rel="noopener"
-      >
-        View Pickup Photo
-      </a>
-    `
-    : ""
-}
-
-${
-  quote.delivery_photo_url
-    ? `
-      <a
-        class="save-job"
-        href="${escapeHtml(quote.delivery_photo_url)}"
-        target="_blank"
-        rel="noopener"
-      >
-        View Delivery Photo
-      </a>
-    `
-    : ""
-}
-            </div>
-          </article>
+          <div class="photo-link disabled">
+            ${escapeHtml(label)} Not Available
+          </div>
         `;
-      }).join("");
+      }
+
+      return `
+        <a
+          class="photo-link"
+          href="${escapeHtml(url)}"
+          target="_blank"
+          rel="noopener"
+        >
+          ${escapeHtml(label)}
+        </a>
+      `;
+    }
+
+    function renderJobs() {
+      updateCounts();
+
+      if (!quotes.length) {
+        jobsBox.innerHTML =
+          '<div class="empty">No quotes or jobs found.</div>';
+
+        return;
+      }
+
+      jobsBox.innerHTML = quotes.map(quote => `
+        <article class="job-card">
+          <div class="job-top">
+            <div>
+              <div class="job-number">
+                ${escapeHtml(quote.job_number)}
+              </div>
+
+              <div class="customer">
+                ${escapeHtml(
+                  quote.customer_name || "Customer"
+                )}
+              </div>
+
+              <div class="customer-email">
+                ${escapeHtml(quote.customer_email || "")}
+              </div>
+            </div>
+
+            <div class="status-pill">
+              ${escapeHtml(statusLabel(quote.status))}
+            </div>
+          </div>
+
+          <div class="route">
+            <strong>Pickup:</strong><br>
+            ${escapeHtml(quote.pickup_address || "")}
+
+            <div class="route-arrow">↓</div>
+
+            <strong>Delivery:</strong><br>
+            ${escapeHtml(quote.delivery_address || "")}
+          </div>
+
+          <div class="job-details">
+            <div class="detail-box">
+              <div class="detail-label">Vehicle</div>
+              <div class="detail-value">
+                ${escapeHtml(quote.vehicle_type || "Not set")}
+              </div>
+            </div>
+
+            <div class="detail-box">
+              <div class="detail-label">Delivery Speed</div>
+              <div class="detail-value">
+                ${escapeHtml(quote.delivery_speed || "Not set")}
+              </div>
+            </div>
+
+            <div class="detail-box">
+              <div class="detail-label">Package</div>
+              <div class="detail-value">
+                ${escapeHtml(quote.package_type || "Not set")}
+              </div>
+            </div>
+          </div>
+
+          ${
+            quote.special_instructions
+              ? `
+                <div class="instructions">
+                  <strong>Instructions:</strong><br>
+                  ${escapeHtml(quote.special_instructions)}
+                </div>
+              `
+              : ""
+          }
+
+          <div class="job-controls">
+            <label>
+              Assigned Driver
+
+              <select id="driver-${quote.id}">
+                ${driverOptions(quote)}
+              </select>
+            </label>
+
+            <label>
+              Driver Pay
+
+              <input
+                id="driverPay-${quote.id}"
+                type="number"
+                min="0"
+                step="0.01"
+                value="${Number(
+                  quote.driver_pay || 0
+                ).toFixed(2)}"
+              >
+            </label>
+
+            <label>
+              Status
+
+              <select id="status-${quote.id}">
+                ${statusOptions(quote)}
+              </select>
+            </label>
+
+            <button
+              class="save-job"
+              type="button"
+              onclick="saveJob('${quote.id}')"
+            >
+              Save Changes
+            </button>
+
+            ${photoLink(
+              quote.pickup_photo_url,
+              "View Pickup Photo"
+            )}
+
+            ${photoLink(
+              quote.delivery_photo_url,
+              "View Delivery Photo"
+            )}
+          </div>
+
+          <div id="jobMessage-${quote.id}"></div>
+        </article>
+      `).join("");
+    }
+
+    function showJobMessage(quoteId, text, type) {
+      const box =
+        document.getElementById(
+          "jobMessage-" + quoteId
+        );
+
+      if (!box) return;
+
+      box.className = "message " + type;
+      box.textContent = text;
     }
 
     async function requireDispatchAccess() {
-      const sessionResult = await client.auth.getSession();
-      const session = sessionResult.data.session;
+      const sessionResult =
+        await client.auth.getSession();
+
+      const session =
+        sessionResult.data.session;
 
       if (!session) {
         location.replace("/index.html");
@@ -826,7 +1082,10 @@ ${
         .eq("id", session.user.id)
         .maybeSingle();
 
-      if (profileResult.error || !profileResult.data) {
+      if (
+        profileResult.error ||
+        !profileResult.data
+      ) {
         alert(
           profileResult.error?.message ||
           "No MG Express profile was found."
@@ -834,7 +1093,6 @@ ${
 
         await client.auth.signOut();
         location.replace("/index.html");
-
         return null;
       }
 
@@ -842,9 +1100,14 @@ ${
         profileResult.data.role || ""
       ).toLowerCase();
 
-      if (!["admin", "staff", "dispatcher"].includes(role)) {
+      if (
+        !["admin", "staff", "dispatcher"].includes(role)
+      ) {
         if (role === "driver") {
-          location.replace("/driver.html");
+          location.replace(
+            "https://drivers.migenteexpress.com"
+          );
+
           return null;
         }
 
@@ -855,7 +1118,6 @@ ${
 
         await client.auth.signOut();
         location.replace("/index.html");
-
         return null;
       }
 
@@ -867,14 +1129,16 @@ ${
         .from("drivers")
         .select("id,full_name,email,active")
         .eq("active", true)
-        .order("full_name", { ascending: true });
+        .order("full_name", {
+          ascending: true
+        });
 
       if (result.error) {
         throw result.error;
       }
 
       drivers = result.data || [];
-      populateDriverOptions();
+      populateNewJobDrivers();
     }
 
     async function loadQuotes() {
@@ -890,18 +1154,17 @@ ${
           vehicle_type,
           delivery_speed,
           package_type,
+          status,
           special_instructions,
-assigned_driver_id,
-driver_pay,
-pickup_photo_url,
-delivery_photo_url,
-pickup_photo_uploaded_at,
-delivery_photo_uploaded_at,
-delivery_method,
-completed_at,
-created_at
+          assigned_driver_id,
+          driver_pay,
+          pickup_photo_url,
+          delivery_photo_url,
+          created_at
         `)
-        .order("created_at", { ascending: false });
+        .order("created_at", {
+          ascending: false
+        });
 
       if (result.error) {
         throw result.error;
@@ -916,10 +1179,8 @@ created_at
         '<div class="empty">Loading quotes and jobs…</div>';
 
       try {
-        await Promise.all([
-          loadDrivers(),
-          loadQuotes()
-        ]);
+        await loadDrivers();
+        await loadQuotes();
       } catch (error) {
         jobsBox.innerHTML = `
           <div class="message error">
@@ -940,16 +1201,51 @@ created_at
           "status-" + quoteId
         ).value;
 
+      const driverPayValue =
+        document.getElementById(
+          "driverPay-" + quoteId
+        ).value;
+
+      const driverPay =
+        driverPayValue === ""
+          ? 0
+          : Number(driverPayValue);
+
+      if (
+        !Number.isFinite(driverPay) ||
+        driverPay < 0
+      ) {
+        showJobMessage(
+          quoteId,
+          "Enter a valid driver pay amount.",
+          "error"
+        );
+
+        return;
+      }
+
+      showJobMessage(
+        quoteId,
+        "Saving changes…",
+        "info"
+      );
+
       const result = await client
         .from("quotes")
         .update({
           assigned_driver_id: driverId,
+          driver_pay: driverPay,
           status: status
         })
         .eq("id", quoteId);
 
       if (result.error) {
-        alert(result.error.message);
+        showJobMessage(
+          quoteId,
+          result.error.message,
+          "error"
+        );
+
         return;
       }
 
@@ -958,141 +1254,192 @@ created_at
 
     window.saveJob = saveJob;
 
-    quoteForm.addEventListener("submit", async event => {
-      event.preventDefault();
+    quoteForm.addEventListener(
+      "submit",
+      async function (event) {
+        event.preventDefault();
 
-      saveQuoteButton.disabled = true;
-      saveQuoteButton.textContent = "Saving…";
+        saveQuoteButton.disabled = true;
+        saveQuoteButton.textContent = "Saving…";
 
-      setQuoteMessage(
-        "Saving quote…",
-        "info"
-      );
-
-      const formData = new FormData(quoteForm);
-
-      const payload = {
-        job_number:
-          String(formData.get("job_number") || "").trim(),
-
-        customer_name:
-          String(formData.get("customer_name") || "").trim(),
-
-        customer_email:
-          String(formData.get("customer_email") || "").trim(),
-
-        pickup_address:
-          String(formData.get("pickup_address") || "").trim(),
-
-        delivery_address:
-          String(formData.get("delivery_address") || "").trim(),
-
-        vehicle_type:
-          String(formData.get("vehicle_type") || ""),
-
-        delivery_speed:
-          String(formData.get("delivery_speed") || ""),
-
-        package_type:
-          String(formData.get("package_type") || ""),
-
-        status:
-          String(formData.get("status") || "new"),
-const driverPayValue =
-  document.getElementById(
-    "driverPay-" + quoteId
-  ).value;
-
-const driverPay =
-  driverPayValue === ""
-    ? 0
-    : Number(driverPayValue);
-
-if (
-  !Number.isFinite(driverPay) ||
-  driverPay < 0
-) {
-  alert("Enter a valid driver pay amount.");
-  return;
-}
-
-      .update({
-  assigned_driver_id: driverId,
-  driver_pay: driverPay,
-  status: status
-})
-
-        special_instructions:
-          String(
-            formData.get("special_instructions") || ""
-          )
-      };
-
-      const result = await client
-        .from("quotes")
-        .insert(payload);
-
-      if (result.error) {
         setQuoteMessage(
-          result.error.message,
-          "error"
+          "Saving new job…",
+          "info"
+        );
+
+        const formData =
+          new FormData(quoteForm);
+
+        const driverPayValue =
+          String(
+            formData.get("driver_pay") || "0"
+          );
+
+        const driverPay =
+          Number(driverPayValue);
+
+        if (
+          !Number.isFinite(driverPay) ||
+          driverPay < 0
+        ) {
+          setQuoteMessage(
+            "Enter a valid driver pay amount.",
+            "error"
+          );
+
+          saveQuoteButton.disabled = false;
+          saveQuoteButton.textContent = "Save Job";
+          return;
+        }
+
+        const assignedDriver =
+          String(
+            formData.get("assigned_driver_id") || ""
+          );
+
+        const payload = {
+          job_number:
+            String(
+              formData.get("job_number") || ""
+            ).trim(),
+
+          customer_name:
+            String(
+              formData.get("customer_name") || ""
+            ).trim(),
+
+          customer_email:
+            String(
+              formData.get("customer_email") || ""
+            ).trim(),
+
+          pickup_address:
+            String(
+              formData.get("pickup_address") || ""
+            ).trim(),
+
+          delivery_address:
+            String(
+              formData.get("delivery_address") || ""
+            ).trim(),
+
+          vehicle_type:
+            String(
+              formData.get("vehicle_type") || ""
+            ),
+
+          delivery_speed:
+            String(
+              formData.get("delivery_speed") || ""
+            ),
+
+          package_type:
+            String(
+              formData.get("package_type") || ""
+            ).trim(),
+
+          driver_pay: driverPay,
+
+          status:
+            String(
+              formData.get("status") || "new"
+            ),
+
+          special_instructions:
+            String(
+              formData.get(
+                "special_instructions"
+              ) || ""
+            ).trim(),
+
+          assigned_driver_id:
+            assignedDriver || null
+        };
+
+        const result = await client
+          .from("quotes")
+          .insert(payload);
+
+        if (result.error) {
+          setQuoteMessage(
+            result.error.message,
+            "error"
+          );
+
+          saveQuoteButton.disabled = false;
+          saveQuoteButton.textContent = "Save Job";
+          return;
+        }
+
+        setQuoteMessage(
+          "Job saved successfully.",
+          "info"
+        );
+
+        await loadQuotes();
+
+        setTimeout(
+          closeQuotePanel,
+          700
         );
 
         saveQuoteButton.disabled = false;
-        saveQuoteButton.textContent = "Save Quote";
-
-        return;
+        saveQuoteButton.textContent = "Save Job";
       }
-
-      setQuoteMessage(
-        "Quote saved successfully.",
-        "info"
-      );
-
-      await loadQuotes();
-
-      setTimeout(closeQuotePanel, 700);
-
-      saveQuoteButton.disabled = false;
-      saveQuoteButton.textContent = "Save Quote";
-    });
+    );
 
     document
       .getElementById("newQuoteButton")
-      .addEventListener("click", openQuotePanel);
+      .addEventListener(
+        "click",
+        openQuotePanel
+      );
 
     document
       .getElementById("closeQuoteButton")
-      .addEventListener("click", closeQuotePanel);
+      .addEventListener(
+        "click",
+        closeQuotePanel
+      );
 
     document
       .getElementById("cancelQuoteButton")
-      .addEventListener("click", closeQuotePanel);
+      .addEventListener(
+        "click",
+        closeQuotePanel
+      );
 
     document
       .getElementById("refreshButton")
-      .addEventListener("click", loadDashboard);
+      .addEventListener(
+        "click",
+        loadDashboard
+      );
 
     document
       .getElementById("signOutButton")
-      .addEventListener("click", async function () {
-        this.disabled = true;
-        this.textContent = "Signing Out…";
+      .addEventListener(
+        "click",
+        async function () {
+          this.disabled = true;
+          this.textContent = "Signing Out…";
 
-        try {
-          await client.auth.signOut();
-        } finally {
-          localStorage.clear();
-          sessionStorage.clear();
+          try {
+            await client.auth.signOut();
+          } finally {
+            localStorage.clear();
+            sessionStorage.clear();
 
-          location.replace(
-            "/index.html?loggedout=1"
-          );
+            location.replace(
+              "/index.html?loggedout=1"
+            );
+          }
         }
-      });
+      );
 
     (async function start() {
-      const session = await requireDispatchAccess();
+      const session =
+        await requireDispatchAccess();
 
       if (session) {
         await loadDashboard();
