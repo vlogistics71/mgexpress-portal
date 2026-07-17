@@ -1,0 +1,729 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>MG Express Job History</title>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    :root {
+      --green-dark: #064f3b;
+      --green: #087455;
+      --green-light: #e7f5ef;
+      --coral: #ff665c;
+      --ink: #17221e;
+      --muted: #68756f;
+      --line: #dfe8e4;
+      --background: #f3f8f6;
+      --white: #ffffff;
+      --danger: #9b2929;
+    }
+
+    body {
+      margin: 0;
+      font-family: Arial, Helvetica, sans-serif;
+      background: var(--background);
+      color: var(--ink);
+    }
+
+    button,
+    input,
+    select {
+      font: inherit;
+    }
+
+    button {
+      cursor: pointer;
+    }
+
+    .topbar {
+      background: var(--green-dark);
+      color: white;
+      padding: 18px 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 15px;
+    }
+
+    .brand {
+      font-size: 23px;
+      font-weight: 900;
+      line-height: 1.1;
+    }
+
+    .brand span {
+      color: var(--coral);
+    }
+
+    .email {
+      margin-top: 5px;
+      font-size: 12px;
+      opacity: .82;
+      overflow-wrap: anywhere;
+    }
+
+    .header-buttons {
+      display: flex;
+      gap: 8px;
+    }
+
+    .header-button {
+      border: 0;
+      border-radius: 12px;
+      background: white;
+      color: var(--green-dark);
+      padding: 12px 14px;
+      font-weight: 800;
+    }
+
+    .container {
+      width: min(1100px, 100%);
+      margin: auto;
+      padding: 28px 18px 55px;
+    }
+
+    .eyebrow {
+      color: var(--muted);
+      font-size: 18px;
+      margin-bottom: 5px;
+    }
+
+    h1 {
+      margin: 0 0 24px;
+      font-size: 42px;
+    }
+
+    .filters {
+      background: white;
+      border: 1px solid var(--line);
+      border-radius: 20px;
+      padding: 18px;
+      margin-bottom: 22px;
+      box-shadow: 0 8px 25px rgba(0,0,0,.04);
+      display: grid;
+      grid-template-columns: 2fr 1fr 1fr auto;
+      gap: 12px;
+      align-items: end;
+    }
+
+    label {
+      display: block;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 800;
+      text-transform: uppercase;
+    }
+
+    input,
+    select {
+      width: 100%;
+      margin-top: 6px;
+      border: 1px solid #ccd8d3;
+      border-radius: 12px;
+      padding: 13px;
+      background: white;
+    }
+
+    .refresh {
+      border: 0;
+      border-radius: 12px;
+      padding: 13px 17px;
+      background: var(--green);
+      color: white;
+      font-weight: 800;
+      min-height: 46px;
+    }
+
+    .summary {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0,1fr));
+      gap: 14px;
+      margin-bottom: 22px;
+    }
+
+    .summary-card {
+      background: white;
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      padding: 20px;
+    }
+
+    .summary-number {
+      color: var(--green);
+      font-size: 34px;
+      font-weight: 900;
+    }
+
+    .summary-label {
+      color: var(--muted);
+      margin-top: 4px;
+    }
+
+    .history-list {
+      display: grid;
+      gap: 16px;
+    }
+
+    .job-card {
+      background: white;
+      border: 1px solid var(--line);
+      border-radius: 20px;
+      padding: 20px;
+      box-shadow: 0 8px 25px rgba(0,0,0,.04);
+    }
+
+    .job-top {
+      display: flex;
+      justify-content: space-between;
+      gap: 14px;
+      align-items: start;
+      margin-bottom: 14px;
+    }
+
+    .job-number {
+      color: var(--green-dark);
+      font-size: 22px;
+      font-weight: 900;
+    }
+
+    .customer {
+      font-size: 18px;
+      font-weight: 800;
+      margin-top: 5px;
+    }
+
+    .customer-email {
+      color: var(--muted);
+      font-size: 14px;
+      margin-top: 3px;
+      overflow-wrap: anywhere;
+    }
+
+    .status {
+      border-radius: 999px;
+      padding: 8px 12px;
+      font-size: 12px;
+      font-weight: 900;
+      text-transform: capitalize;
+      background: var(--green-light);
+      color: var(--green);
+      white-space: nowrap;
+    }
+
+    .cancelled {
+      background: #fff0f0;
+      color: var(--danger);
+    }
+
+    .details {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0,1fr));
+      gap: 14px;
+      margin-top: 15px;
+    }
+
+    .detail {
+      background: var(--background);
+      border-radius: 14px;
+      padding: 14px;
+    }
+
+    .detail-title {
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 800;
+      text-transform: uppercase;
+      margin-bottom: 5px;
+    }
+
+    .route {
+      grid-column: 1 / -1;
+    }
+
+    .arrow {
+      color: var(--green);
+      font-size: 20px;
+      font-weight: 900;
+      margin: 7px 0;
+    }
+
+    .photos {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0,1fr));
+      gap: 12px;
+      margin-top: 15px;
+    }
+
+    .photo-box {
+      background: var(--background);
+      border-radius: 14px;
+      padding: 14px;
+    }
+
+    .photo-box img {
+      width: 100%;
+      max-height: 240px;
+      object-fit: cover;
+      border-radius: 11px;
+      margin-top: 8px;
+    }
+
+    .no-photo {
+      color: var(--muted);
+      margin-top: 8px;
+      font-size: 14px;
+    }
+
+    .empty,
+    .error {
+      background: white;
+      border: 1px solid var(--line);
+      border-radius: 20px;
+      padding: 30px;
+      text-align: center;
+    }
+
+    .error {
+      color: var(--danger);
+    }
+
+    @media (max-width: 750px) {
+      .filters {
+        grid-template-columns: 1fr;
+      }
+
+      .summary {
+        grid-template-columns: 1fr 1fr;
+      }
+
+      .details,
+      .photos {
+        grid-template-columns: 1fr;
+      }
+
+      .route {
+        grid-column: auto;
+      }
+    }
+
+    @media (max-width: 500px) {
+      .topbar {
+        align-items: flex-start;
+      }
+
+      .brand {
+        font-size: 20px;
+      }
+
+      .header-buttons {
+        flex-direction: column;
+      }
+
+      .header-button {
+        padding: 10px 12px;
+      }
+
+      h1 {
+        font-size: 36px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <header class="topbar">
+    <div>
+      <div class="brand">MG <span>EXPRESS</span> JOB HISTORY</div>
+      <div class="email" id="staffEmail"></div>
+    </div>
+
+    <div class="header-buttons">
+      <button class="header-button" id="dashboardButton" type="button">
+        Dashboard
+      </button>
+
+      <button class="header-button" id="signOutButton" type="button">
+        Sign Out
+      </button>
+    </div>
+  </header>
+
+  <main class="container">
+    <div class="eyebrow">Completed and cancelled deliveries</div>
+    <h1>Job History</h1>
+
+    <section class="filters">
+      <label>
+        Search
+        <input
+          id="searchInput"
+          placeholder="Job number, customer, email or address"
+        >
+      </label>
+
+      <label>
+        Status
+        <select id="statusFilter">
+          <option value="all">All History</option>
+          <option value="delivered">Delivered</option>
+          <option value="cancelled">Cancelled</option>
+        </select>
+      </label>
+
+      <label>
+        Date
+        <input id="dateFilter" type="date">
+      </label>
+
+      <button class="refresh" id="refreshButton" type="button">
+        Refresh
+      </button>
+    </section>
+
+    <section class="summary">
+      <div class="summary-card">
+        <div class="summary-number" id="totalJobs">0</div>
+        <div class="summary-label">History Jobs</div>
+      </div>
+
+      <div class="summary-card">
+        <div class="summary-number" id="deliveredJobs">0</div>
+        <div class="summary-label">Delivered</div>
+      </div>
+
+      <div class="summary-card">
+        <div class="summary-number" id="totalDriverPay">$0.00</div>
+        <div class="summary-label">Driver Pay</div>
+      </div>
+    </section>
+
+    <section id="historyList" class="history-list">
+      <div class="empty">Loading completed jobs…</div>
+    </section>
+  </main>
+
+  <script>
+    const client = supabase.createClient(
+      "https://dczlucwfjayymlwbzzdi.supabase.co",
+      "sb_publishable_kcv_a78ZyUxMo2neKUANdw_XN7eAMpI"
+    );
+
+    const historyList = document.getElementById("historyList");
+    const searchInput = document.getElementById("searchInput");
+    const statusFilter = document.getElementById("statusFilter");
+    const dateFilter = document.getElementById("dateFilter");
+
+    let jobs = [];
+
+    function escapeHtml(value) {
+      const div = document.createElement("div");
+      div.textContent = value ?? "";
+      return div.innerHTML;
+    }
+
+    function money(value) {
+      const number = Number(value || 0);
+
+      return number.toLocaleString("en-US", {
+        style: "currency",
+        currency: "USD"
+      });
+    }
+
+    function formatDate(value) {
+      if (!value) {
+        return "Not recorded";
+      }
+
+      return new Date(value).toLocaleString();
+    }
+
+    async function requireStaff() {
+      const sessionResult = await client.auth.getSession();
+      const session = sessionResult.data.session;
+
+      if (!session) {
+        location.replace("/index.html");
+        return null;
+      }
+
+      document.getElementById("staffEmail").textContent =
+        session.user.email || "";
+
+      const profileResult = await client
+        .from("profiles")
+        .select("role")
+        .eq("id", session.user.id)
+        .maybeSingle();
+
+      const role = String(
+        profileResult.data?.role || ""
+      ).toLowerCase();
+
+      if (!["admin", "staff", "dispatcher"].includes(role)) {
+        location.replace("/index.html");
+        return null;
+      }
+
+      return session;
+    }
+
+    async function loadHistory() {
+      historyList.innerHTML =
+        '<div class="empty">Loading completed jobs…</div>';
+
+      const result = await client
+        .from("quotes")
+        .select(`
+          id,
+          job_number,
+          customer_name,
+          customer_email,
+          pickup_address,
+          delivery_address,
+          status,
+          driver_pay,
+          internal_notes,
+          customer_notes,
+          delivery_method,
+          pickup_photo_url,
+          delivery_photo_url,
+          pickup_photo_uploaded_at,
+          delivery_photo_uploaded_at,
+          completed_at,
+          created_at
+        `)
+        .in("status", ["delivered", "cancelled"])
+        .order("completed_at", {
+          ascending: false,
+          nullsFirst: false
+        });
+
+      if (result.error) {
+        historyList.innerHTML =
+          `<div class="error">${escapeHtml(result.error.message)}</div>`;
+
+        return;
+      }
+
+      jobs = result.data || [];
+      renderHistory();
+    }
+
+    function filteredJobs() {
+      const search = searchInput.value
+        .trim()
+        .toLowerCase();
+
+      const status = statusFilter.value;
+      const selectedDate = dateFilter.value;
+
+      return jobs.filter(job => {
+        const text = [
+          job.job_number,
+          job.customer_name,
+          job.customer_email,
+          job.pickup_address,
+          job.delivery_address
+        ]
+          .join(" ")
+          .toLowerCase();
+
+        const matchesSearch =
+          !search || text.includes(search);
+
+        const matchesStatus =
+          status === "all" || job.status === status;
+
+        let matchesDate = true;
+
+        if (selectedDate) {
+          const jobDate =
+            job.completed_at || job.created_at;
+
+          matchesDate =
+            jobDate &&
+            new Date(jobDate)
+              .toISOString()
+              .slice(0, 10) === selectedDate;
+        }
+
+        return (
+          matchesSearch &&
+          matchesStatus &&
+          matchesDate
+        );
+      });
+    }
+
+    function updateSummary(list) {
+      document.getElementById("totalJobs").textContent =
+        list.length;
+
+      document.getElementById("deliveredJobs").textContent =
+        list.filter(job => job.status === "delivered").length;
+
+      const totalPay = list.reduce(
+        (sum, job) => sum + Number(job.driver_pay || 0),
+        0
+      );
+
+      document.getElementById("totalDriverPay").textContent =
+        money(totalPay);
+    }
+
+    function renderPhoto(title, url, uploadedAt) {
+      if (!url) {
+        return `
+          <div class="photo-box">
+            <div class="detail-title">${title}</div>
+            <div class="no-photo">No photo uploaded</div>
+          </div>
+        `;
+      }
+
+      return `
+        <div class="photo-box">
+          <div class="detail-title">${title}</div>
+          <div>${escapeHtml(formatDate(uploadedAt))}</div>
+          <a href="${escapeHtml(url)}" target="_blank">
+            <img src="${escapeHtml(url)}" alt="${title}">
+          </a>
+        </div>
+      `;
+    }
+
+    function renderHistory() {
+      const list = filteredJobs();
+
+      updateSummary(list);
+
+      if (!list.length) {
+        historyList.innerHTML =
+          '<div class="empty">No matching completed jobs were found.</div>';
+
+        return;
+      }
+
+      historyList.innerHTML = list.map(job => `
+        <article class="job-card">
+          <div class="job-top">
+            <div>
+              <div class="job-number">
+                ${escapeHtml(job.job_number)}
+              </div>
+
+              <div class="customer">
+                ${escapeHtml(job.customer_name)}
+              </div>
+
+              <div class="customer-email">
+                ${escapeHtml(job.customer_email)}
+              </div>
+            </div>
+
+            <div class="status ${job.status === "cancelled" ? "cancelled" : ""}">
+              ${escapeHtml(job.status)}
+            </div>
+          </div>
+
+          <div class="details">
+            <div class="detail route">
+              <div class="detail-title">Route</div>
+
+              ${escapeHtml(job.pickup_address)}
+
+              <div class="arrow">↓</div>
+
+              ${escapeHtml(job.delivery_address)}
+            </div>
+
+            <div class="detail">
+              <div class="detail-title">Completed</div>
+              ${escapeHtml(formatDate(job.completed_at))}
+            </div>
+
+            <div class="detail">
+              <div class="detail-title">Driver Pay</div>
+              ${escapeHtml(money(job.driver_pay))}
+            </div>
+
+            <div class="detail">
+              <div class="detail-title">Delivery Method</div>
+              ${escapeHtml(job.delivery_method || "Not recorded")}
+            </div>
+
+            <div class="detail">
+              <div class="detail-title">Customer Notes</div>
+              ${escapeHtml(job.customer_notes || "No customer notes")}
+            </div>
+
+            <div class="detail">
+              <div class="detail-title">Internal Notes</div>
+              ${escapeHtml(job.internal_notes || "No internal notes")}
+            </div>
+          </div>
+
+          <div class="photos">
+            ${renderPhoto(
+              "Pickup Photo",
+              job.pickup_photo_url,
+              job.pickup_photo_uploaded_at
+            )}
+
+            ${renderPhoto(
+              "Delivery Photo",
+              job.delivery_photo_url,
+              job.delivery_photo_uploaded_at
+            )}
+          </div>
+        </article>
+      `).join("");
+    }
+
+    searchInput.addEventListener("input", renderHistory);
+    statusFilter.addEventListener("change", renderHistory);
+    dateFilter.addEventListener("change", renderHistory);
+
+    document
+      .getElementById("refreshButton")
+      .addEventListener("click", loadHistory);
+
+    document
+      .getElementById("dashboardButton")
+      .addEventListener("click", () => {
+        location.href = "/dashboard.html";
+      });
+
+    document
+      .getElementById("signOutButton")
+      .addEventListener("click", async function () {
+        this.disabled = true;
+        this.textContent = "Signing Out…";
+
+        try {
+          await client.auth.signOut();
+        } finally {
+          localStorage.clear();
+          sessionStorage.clear();
+          location.replace("/index.html");
+        }
+      });
+
+    (async function start() {
+      const session = await requireStaff();
+
+      if (session) {
+        await loadHistory();
+      }
+    })();
+  </script>
+</body>
+</html>
