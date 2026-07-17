@@ -746,6 +746,18 @@
                 </select>
               </label>
 
+<label>
+  Driver Pay
+
+  <input
+    id="driverPay-${quote.id}"
+    type="number"
+    min="0"
+    step="0.01"
+    value="${Number(quote.driver_pay || 0).toFixed(2)}"
+    placeholder="0.00"
+  >
+</label>
               <label>
                 Status
 
@@ -761,6 +773,35 @@
               >
                 Save
               </button>
+              ${
+  quote.pickup_photo_url
+    ? `
+      <a
+        class="save-job"
+        href="${escapeHtml(quote.pickup_photo_url)}"
+        target="_blank"
+        rel="noopener"
+      >
+        View Pickup Photo
+      </a>
+    `
+    : ""
+}
+
+${
+  quote.delivery_photo_url
+    ? `
+      <a
+        class="save-job"
+        href="${escapeHtml(quote.delivery_photo_url)}"
+        target="_blank"
+        rel="noopener"
+      >
+        View Delivery Photo
+      </a>
+    `
+    : ""
+}
             </div>
           </article>
         `;
@@ -849,10 +890,16 @@
           vehicle_type,
           delivery_speed,
           package_type,
-          status,
           special_instructions,
-          assigned_driver_id,
-          created_at
+assigned_driver_id,
+driver_pay,
+pickup_photo_url,
+delivery_photo_url,
+pickup_photo_uploaded_at,
+delivery_photo_uploaded_at,
+delivery_method,
+completed_at,
+created_at
         `)
         .order("created_at", { ascending: false });
 
@@ -951,9 +998,29 @@
 
         status:
           String(formData.get("status") || "new"),
+const driverPayValue =
+  document.getElementById(
+    "driverPay-" + quoteId
+  ).value;
 
-        assigned_driver_id:
-          formData.get("assigned_driver_id") || null,
+const driverPay =
+  driverPayValue === ""
+    ? 0
+    : Number(driverPayValue);
+
+if (
+  !Number.isFinite(driverPay) ||
+  driverPay < 0
+) {
+  alert("Enter a valid driver pay amount.");
+  return;
+}
+
+      .update({
+  assigned_driver_id: driverId,
+  driver_pay: driverPay,
+  status: status
+})
 
         special_instructions:
           String(
