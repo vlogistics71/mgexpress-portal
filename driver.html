@@ -2,103 +2,197 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>MG Express Driver</title>
 
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
   <style>
-    * {
-      box-sizing: border-box;
+    *{box-sizing:border-box}
+    body{margin:0;font-family:Arial,sans-serif;background:#f3f8f6;color:#17221e}
+    header{background:#064f3b;color:#fff;padding:18px;display:flex;justify-content:space-between;align-items:center;gap:12px}
+    .brand{font-size:22px;font-weight:800}
+    .brand span{color:#ff665c}
+    #email{font-size:12px;margin-top:5px;opacity:.85;overflow-wrap:anywhere}
+    button{border:0;border-radius:12px;padding:13px 16px;font-size:15px;font-weight:700}
+    .logout{background:#fff;color:#064f3b}
+    main{max-width:800px;margin:auto;padding:26px 18px}
+    h1{font-size:38px;margin:5px 0 22px}
+    .small{color:#68756f;font-size:18px}
+    .summary,.card,.message{background:#fff;border:1px solid #dfe8e4;border-radius:20px;padding:20px;margin-bottom:18px;box-shadow:0 8px 24px rgba(0,0,0,.05)}
+    .count{font-size:38px;font-weight:800;color:#087455}
+    .top{display:flex;justify-content:space-between;gap:12px;align-items:start}
+    .job{font-size:22px;font-weight:800;color:#064f3b}
+    .status{background:#e7f5ef;color:#087455;border-radius:20px;padding:8px 11px;font-size:12px;font-weight:800}
+    .label{font-size:12px;font-weight:800;color:#728079;text-transform:uppercase;margin-top:16px}
+    .value{font-size:17px;line-height:1.4;overflow-wrap:anywhere}
+    .arrow{font-size:22px;color:#087455;margin:8px 0}
+    .actions{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:18px}
+    .primary{background:#087455;color:#fff}
+    .secondary{background:#e8efec;color:#064f3b}
+    .error{color:#9b2929}
+    @media(max-width:520px){.actions{grid-template-columns:1fr}h1{font-size:34px}}
+  </style>
+</head>
+
+<body>
+  <header>
+    <div>
+      <div class="brand">MG EXPRESS <span>DRIVER</span></div>
+      <div id="email"></div>
+    </div>
+    <button class="logout" id="logout">Sign Out</button>
+  </header>
+
+  <main>
+    <div class="small">Driver mobile portal</div>
+    <h1>Assigned Jobs</h1>
+
+    <div class="summary">
+      <div class="count" id="count">0</div>
+      <div class="small">Active assigned jobs</div>
+    </div>
+
+    <div id="jobs" class="message">Loading assigned jobs...</div>
+  </main>
+
+  <script>
+    const client = supabase.createClient(
+      "https://dczlucwfjayymlwbzzdi.supabase.co",
+      "sb_publishable_kcv_a78ZyUxMo2neKUANdw_XN7eAMpI"
+    );
+
+    const jobsBox = document.getElementById("jobs");
+    const countBox = document.getElementById("count");
+    const emailBox = document.getElementById("email");
+
+    function safe(value) {
+      const div = document.createElement("div");
+      div.textContent = value || "";
+      return div.innerHTML;
     }
 
-    body {
-      margin: 0;
-      font-family: Arial, Helvetica, sans-serif;
-      background: #f3f8f6;
-      color: #17221e;
+    function mapUrl(address) {
+      return "https://www.google.com/maps/search/?api=1&query=" +
+        encodeURIComponent(address || "");
     }
 
-    .topbar {
-      background: #064f3b;
-      color: white;
-      padding: 18px 20px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 15px;
+    document.getElementById("logout").onclick = async function () {
+      await client.auth.signOut();
+      location.href = "/index.html";
+    };
+
+    async function changeStatus(id, status) {
+      const result = await client
+        .from("quotes")
+        .update({ status: status })
+        .eq("id", id);
+
+      if (result.error) {
+        alert(result.error.message);
+        return;
+      }
+
+      load();
     }
 
-    .brand {
-      font-size: 23px;
-      font-weight: 800;
-      line-height: 1.05;
+    async function load() {
+      const sessionResult = await client.auth.getSession();
+      const session = sessionResult.data.session;
+
+      if (!session) {
+        location.href = "/index.html";
+        return;
+      }
+
+      emailBox.textContent = session.user.email || "";
+
+      const driverResult = await client
+        .from("drivers")
+        .select("id,full_name")
+        .eq("auth_user_id", session.user.id)
+        .maybeSingle();
+
+      if (driverResult.error) {
+        jobsBox.className = "message error";
+        jobsBox.textContent = driverResult.error.message;
+        return;
+      }
+
+      if (!driverResult.data) {
+        jobsBox.className = "message error";
+        jobsBox.textContent = "This login is not connected to a driver profile.";
+        return;
+      }
+
+      const jobsResult = await client
+        .from("quotes")
+        .select("id,job_number,customer_name,pickup_address,delivery_address,special_instructions,status,created_at")
+        .eq("assigned_driver_id", driverResult.data.id)
+        .neq("status", "cancelled")
+        .order("created_at", { ascending: false });
+
+      if (jobsResult.error) {
+        jobsBox.className = "message error";
+        jobsBox.textContent = jobsResult.error.message;
+        return;
+      }
+
+      const jobs = jobsResult.data || [];
+      countBox.textContent = jobs.length;
+
+      if (!jobs.length) {
+        jobsBox.className = "message";
+        jobsBox.innerHTML = "<strong>No jobs assigned yet.</strong><p>Contact MG Express Dispatch.</p>";
+        return;
+      }
+
+      jobsBox.className = "";
+      jobsBox.innerHTML = jobs.map(function (job) {
+        return `
+          <div class="card">
+            <div class="top">
+              <div class="job">${safe(job.job_number)}</div>
+              <div class="status">${safe((job.status || "assigned").replaceAll("_"," "))}</div>
+            </div>
+
+            <div class="label">Customer</div>
+            <div class="value">${safe(job.customer_name)}</div>
+
+            <div class="label">Pickup</div>
+            <div class="value">${safe(job.pickup_address)}</div>
+
+            <div class="arrow">↓</div>
+
+            <div class="label">Delivery</div>
+            <div class="value">${safe(job.delivery_address)}</div>
+
+            <div class="label">Instructions</div>
+            <div class="value">${safe(job.special_instructions || "No special instructions")}</div>
+
+            <div class="actions">
+              <button class="secondary" onclick="window.open('${mapUrl(job.pickup_address)}','_blank')">
+                Pickup Directions
+              </button>
+
+              <button class="secondary" onclick="window.open('${mapUrl(job.delivery_address)}','_blank')">
+                Delivery Directions
+              </button>
+
+              <button class="primary" onclick="changeStatus('${job.id}','in_transit')">
+                Start Delivery
+              </button>
+
+              <button class="primary" onclick="changeStatus('${job.id}','delivered')">
+                Mark Delivered
+              </button>
+            </div>
+          </div>
+        `;
+      }).join("");
     }
 
-    .brand span {
-      color: #ff665c;
-    }
-
-    .driver-email {
-      margin-top: 5px;
-      font-size: 13px;
-      opacity: 0.85;
-      overflow-wrap: anywhere;
-    }
-
-    button {
-      border: 0;
-      border-radius: 12px;
-      padding: 13px 17px;
-      font-size: 16px;
-      font-weight: 700;
-      cursor: pointer;
-    }
-
-    .signout {
-      background: white;
-      color: #064f3b;
-      white-space: nowrap;
-    }
-
-    .container {
-      max-width: 850px;
-      margin: auto;
-      padding: 26px 18px 50px;
-    }
-
-    .eyebrow {
-      color: #66736e;
-      font-size: 18px;
-      margin-bottom: 4px;
-    }
-
-    h1 {
-      font-size: 40px;
-      margin: 0 0 20px;
-    }
-
-    .summary {
-      background: white;
-      border: 1px solid #dfe8e4;
-      border-radius: 20px;
-      padding: 22px;
-      margin-bottom: 24px;
-      box-shadow: 0 8px 25px rgba(0,0,0,.05);
-    }
-
-    .summary-number {
-      color: #087455;
-      font-size: 39px;
-      font-weight: 800;
-    }
-
-    .summary-label {
-      color: #68756f;
-      margin-top: 4px;
-    }
-
-    .job-card {
-      background: white;
-      border: 1px solid #dfe8e4;
-      border-radius: 20px;
-      padding: 20px;
-      margin-bottom: 18px
+    load();
+  </script>
+</body>
+</html>
