@@ -1,6 +1,104 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Driver Portal | Mi Gente Express</title><link rel="stylesheet" href="/assets/styles.css"></head>
-<body><header class="topbar"><div class="container topbar-inner"><div class="brand">MI GENTE <span>EXPRESS</span> DRIVER</div><button id="signout" class="secondary">Sign Out</button></div></header><main><div class="container"><h1>Assigned jobs</h1><section class="panel"><div id="cards" class="cards"></div></section></div></main>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="/config.js"></script><script type="module">
-import {db,sessionAndProfile,logout,escapeHtml,statusLabel} from "/assets/js/core.js";const u=await sessionAndProfile(["driver"]);signout.onclick=logout;
-const {data:driver}=await db.from("drivers").select("id").eq("auth_user_id",u.session.user.id).single();if(!driver){cards.innerHTML='<div class="notice info">Your driver account has not been linked by dispatch.</div>'}else{const {data,error}=await db.from("quotes").select("*").eq("assigned_driver_id",driver.id).order("created_at",{ascending:false});cards.innerHTML=error?`<div class="notice error">${escapeHtml(error.message)}</div>`:(data||[]).map(q=>`<article class="card"><h3>${escapeHtml(q.job_number)}</h3><p><span class="status ${q.status}">${statusLabel(q.status)}</span></p><p><b>Pickup:</b> ${escapeHtml(q.pickup_address)}</p><p><b>Delivery:</b> ${escapeHtml(q.delivery_address)}</p><div class="actions"><a class="btn" target="_blank" href="https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(q.pickup_address)}">Navigate</a><a class="btn secondary" href="/job.html?id=${q.id}">Open Job</a></div></article>`).join("")||"<p>No assigned jobs.</p>"}
-</script></body></html>
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>MG Express Driver</title>
+
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: Arial, Helvetica, sans-serif;
+      background: #f3f8f6;
+      color: #17221e;
+    }
+
+    .topbar {
+      background: #064f3b;
+      color: white;
+      padding: 18px 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 15px;
+    }
+
+    .brand {
+      font-size: 23px;
+      font-weight: 800;
+      line-height: 1.05;
+    }
+
+    .brand span {
+      color: #ff665c;
+    }
+
+    .driver-email {
+      margin-top: 5px;
+      font-size: 13px;
+      opacity: 0.85;
+      overflow-wrap: anywhere;
+    }
+
+    button {
+      border: 0;
+      border-radius: 12px;
+      padding: 13px 17px;
+      font-size: 16px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    .signout {
+      background: white;
+      color: #064f3b;
+      white-space: nowrap;
+    }
+
+    .container {
+      max-width: 850px;
+      margin: auto;
+      padding: 26px 18px 50px;
+    }
+
+    .eyebrow {
+      color: #66736e;
+      font-size: 18px;
+      margin-bottom: 4px;
+    }
+
+    h1 {
+      font-size: 40px;
+      margin: 0 0 20px;
+    }
+
+    .summary {
+      background: white;
+      border: 1px solid #dfe8e4;
+      border-radius: 20px;
+      padding: 22px;
+      margin-bottom: 24px;
+      box-shadow: 0 8px 25px rgba(0,0,0,.05);
+    }
+
+    .summary-number {
+      color: #087455;
+      font-size: 39px;
+      font-weight: 800;
+    }
+
+    .summary-label {
+      color: #68756f;
+      margin-top: 4px;
+    }
+
+    .job-card {
+      background: white;
+      border: 1px solid #dfe8e4;
+      border-radius: 20px;
+      padding: 20px;
+      margin-bottom: 18px
