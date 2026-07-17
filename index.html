@@ -1,11 +1,262 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Mi Gente Express Portal</title><link rel="stylesheet" href="/assets/styles.css"></head>
-<body><div class="auth-shell"><section class="panel auth-card"><div class="brand">MI GENTE <span>EXPRESS</span></div><p class="muted">Secure customer, driver, and staff portal</p><h1>Sign in</h1>
-<form id="login"><label>Email<input id="email" type="email" required autocomplete="email"></label><label>Password<input id="password" type="password" required autocomplete="current-password"></label><button>Sign In</button></form><div id="msg"></div>
-<p class="small">Need an account? Contact info@migenteexpress.com.</p></section></div>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="/config.js"></script><script type="module">
-import {db,routeByRole} from "/assets/js/core.js";
-const msg=document.querySelector("#msg");
-async function route(){const {data:{session}}=await db.auth.getSession();if(!session)return;const {data:p}=await db.from("profiles").select("role").eq("id",session.user.id).single();if(p)routeByRole(p.role)}
-route();
-login.addEventListener("submit",async e=>{e.preventDefault();msg.className="notice info";msg.textContent="Signing in…";const {error}=await db.auth.signInWithPassword({email:email.value,password:password.value});if(error){msg.className="notice error";msg.textContent=error.message}else route()});
-</script></body></html>
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>MG Express Portal</title>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: Arial, Helvetica, sans-serif;
+      background: #f3f8f6;
+      color: #17221e;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+    }
+
+    .login-card {
+      width: 100%;
+      max-width: 520px;
+      background: white;
+      border: 1px solid #dfe8e4;
+      border-radius: 24px;
+      padding: 34px 28px;
+      box-shadow: 0 12px 35px rgba(0,0,0,.08);
+    }
+
+    .brand {
+      color: #064f3b;
+      font-size: 28px;
+      font-weight: 900;
+      line-height: 1.05;
+      margin-bottom: 16px;
+    }
+
+    .brand span {
+      color: #ff665c;
+    }
+
+    .subtitle {
+      color: #66736e;
+      font-size: 18px;
+      margin-bottom: 25px;
+    }
+
+    h1 {
+      font-size: 42px;
+      margin: 0 0 25px;
+    }
+
+    label {
+      display: block;
+      font-weight: 800;
+      margin: 17px 0 7px;
+    }
+
+    input {
+      width: 100%;
+      min-height: 56px;
+      border: 1px solid #ccd8d3;
+      border-radius: 13px;
+      padding: 13px 15px;
+      font-size: 17px;
+      outline: none;
+    }
+
+    input:focus {
+      border-color: #087455;
+      box-shadow: 0 0 0 3px rgba(8,116,85,.12);
+    }
+
+    button {
+      width: 100%;
+      min-height: 56px;
+      margin-top: 24px;
+      border: 0;
+      border-radius: 13px;
+      background: #087455;
+      color: white;
+      font-size: 18px;
+      font-weight: 800;
+      cursor: pointer;
+    }
+
+    button:disabled {
+      opacity: .65;
+    }
+
+    .message {
+      display: none;
+      margin-top: 18px;
+      padding: 13px;
+      border-radius: 12px;
+      font-size: 15px;
+    }
+
+    .error {
+      display: block;
+      background: #fff0f0;
+      color: #9b2929;
+    }
+
+    .info {
+      display: block;
+      background: #edf7f3;
+      color: #06543e;
+    }
+
+    .help {
+      color: #68756f;
+      text-align: center;
+      margin-top: 22px;
+      line-height: 1.5;
+    }
+  </style>
+</head>
+
+<body>
+  <main class="login-card">
+    <div class="brand">MG EXPRESS <span>PORTAL</span></div>
+    <div class="subtitle">Secure customer, driver and dispatch access</div>
+
+    <h1>Sign in</h1>
+
+    <form id="loginForm">
+      <label for="email">Email</label>
+      <input
+        id="email"
+        type="email"
+        autocomplete="email"
+        required
+      >
+
+      <label for="password">Password</label>
+      <input
+        id="password"
+        type="password"
+        autocomplete="current-password"
+        required
+      >
+
+      <button id="signInButton" type="submit">Sign In</button>
+    </form>
+
+    <div id="message" class="message"></div>
+
+    <div class="help">
+      Need an account?<br>
+      Contact MG Express Dispatch.
+    </div>
+  </main>
+
+  <script>
+    const client = supabase.createClient(
+      "https://dczlucwfjayymlwbzzdi.supabase.co",
+      "sb_publishable_kcv_a78ZyUxMo2neKUANdw_XN7eAMpI"
+    );
+
+    const form = document.getElementById("loginForm");
+    const button = document.getElementById("signInButton");
+    const message = document.getElementById("message");
+
+    function showMessage(text, type) {
+      message.textContent = text;
+      message.className = "message " + type;
+    }
+
+    async function sendUserToPortal(userId) {
+      const profileResult = await client
+        .from("profiles")
+        .select("role")
+        .eq("id", userId)
+        .maybeSingle();
+
+      if (profileResult.error) {
+        showMessage(profileResult.error.message, "error");
+        return;
+      }
+
+      if (!profileResult.data) {
+        showMessage(
+          "Your login does not have a portal profile. Contact MG Express Dispatch.",
+          "error"
+        );
+        return;
+      }
+
+      const role = String(profileResult.data.role || "").toLowerCase();
+
+      if (role === "driver") {
+        location.replace("/driver.html");
+        return;
+      }
+
+      if (
+        role === "admin" ||
+        role === "staff" ||
+        role === "dispatcher"
+      ) {
+        location.replace("/dashboard.html");
+        return;
+      }
+
+      if (role === "customer") {
+        location.replace("/customer.html");
+        return;
+      }
+
+      showMessage(
+        "Your account role is not recognized: " + role,
+        "error"
+      );
+    }
+
+    async function checkExistingSession() {
+      const sessionResult = await client.auth.getSession();
+      const session = sessionResult.data.session;
+
+      if (session) {
+        showMessage("Opening your MG Express portal…", "info");
+        await sendUserToPortal(session.user.id);
+      }
+    }
+
+    form.addEventListener("submit", async function (event) {
+      event.preventDefault();
+
+      button.disabled = true;
+      button.textContent = "Signing In…";
+      showMessage("Checking your account…", "info");
+
+      const email = document.getElementById("email").value.trim();
+      const password = document.getElementById("password").value;
+
+      const result = await client.auth.signInWithPassword({
+        email: email,
+        password: password
+      });
+
+      if (result.error) {
+        showMessage(result.error.message, "error");
+        button.disabled = false;
+        button.textContent = "Sign In";
+        return;
+      }
+
+      await sendUserToPortal(result.data.user.id);
+    });
+
+    checkExistingSession();
+  </script>
+</body>
+</html>
