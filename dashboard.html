@@ -17,7 +17,16 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="config.js"></script><script>
 const db=supabase.createClient(MG_CONFIG.SUPABASE_URL,MG_CONFIG.SUPABASE_ANON_KEY);let data=[];
 async function auth(){const {data:{session}}=await db.auth.getSession();if(!session){location.href='index.html';return false}who.textContent=session.user.email;const {data:p}=await db.from('profiles').select('role').eq('id',session.user.id).single();if(!p||!['admin','dispatcher'].includes(p.role)){alert('Not authorized');await db.auth.signOut();location.href='index.html';return false}return true}
-out.onclick=async()=>{await db.auth.signOut();location.href='index.html'};show.onclick=()=>formbox.classList.toggle('hidden');reload.onclick=load;
+out.onclick = async () => {
+  const { error } = await db.auth.signOut();
+
+  if (error) {
+    alert(error.message);
+    return;
+  }
+
+  window.location.replace("/index.html");
+};
 qf.onsubmit=async e=>{e.preventDefault();const b=Object.fromEntries(new FormData(qf).entries());b.approved_price=b.approved_price?Number(b.approved_price):null;const {error}=await db.from('quotes').insert(b);if(error){fm.className='notice error';fm.textContent=error.message}else{fm.className='notice success';fm.textContent='Saved';qf.reset();formbox.classList.add('hidden');load()}};
 async function load(){const {data:d,error}=await db.from('quotes').select('*').order('created_at',{ascending:false});if(error){rows.innerHTML='<tr><td colspan=8>'+esc(error.message)+'</td></tr>';return}data=d||[];render()}
 function render(){rows.innerHTML=data.map(q=>`<tr><td><b>${esc(q.job_number||'')}</b></td><td>${esc(q.customer_name||'')}<br><span class=small>${esc(q.customer_email||'')}</span></td><td>${esc(q.pickup_address||'')}<br>→<br>${esc(q.delivery_address||'')}</td><td>${esc(q.vehicle_type||'')}</td><td>${esc(q.delivery_speed||'')}</td><td>${q.approved_price?'$'+Number(q.approved_price).toFixed(2):'—'}</td><td><span class="status ${q.status}">${q.status}</span></td><td><div class=actions><button onclick="next('${q.id}','${q.status}')">Advance</button><button onclick="cancelQ('${q.id}')">Cancel</button></div></td></tr>`).join('');const c=s=>data.filter(x=>x.status===s).length;n1.textContent=c('new');n2.textContent=c('waiting_payment');n3.textContent=c('paid');n4.textContent=c('in_transit');n5.textContent=c('delivered')}
