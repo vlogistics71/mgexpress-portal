@@ -1442,9 +1442,19 @@
         await requireDispatchAccess();
 
       if (session) {
-        await loadDashboard();
+
+    window.dispatchEvent(
+        new CustomEvent("mg-dispatch-ready", {
+            detail: {
+                email: session.user.email
+            }
+        })
+    );
+
+    await loadDashboard();
       }
     })();
   </script>
+  <script src="/dispatch-menu.js"></script>
 </body>
 </html>
