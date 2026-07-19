@@ -8,7 +8,7 @@
     content="width=device-width, initial-scale=1"
   >
 
-  <title>MG Express Active Jobs</title>
+  <title>MG Express Job Details</title>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
@@ -27,12 +27,12 @@
       --ink: #17221e;
       --muted: #68756f;
       --line: #dfe8e4;
-      --warning: #9a6400;
+      --danger: #9b2929;
+      --danger-bg: #fff0f0;
+      --warning: #986200;
       --warning-bg: #fff5d8;
       --blue: #245d9c;
       --blue-bg: #eaf3ff;
-      --danger: #9b2929;
-      --danger-bg: #fff0f0;
     }
 
     body {
@@ -44,7 +44,8 @@
 
     button,
     input,
-    select {
+    select,
+    textarea {
       font: inherit;
     }
 
@@ -52,9 +53,9 @@
       position: sticky;
       top: 0;
       z-index: 50;
+      padding: 18px 20px;
       background: var(--dark-green);
       color: white;
-      padding: 18px 20px;
     }
 
     .topbar-inner {
@@ -86,203 +87,60 @@
     .container {
       width: min(950px, 100%);
       margin: auto;
-      padding: 28px 18px 70px;
+      padding: 25px 18px 70px;
+    }
+
+    .back-button {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      min-height: 46px;
+      margin-bottom: 20px;
+      padding: 10px 15px;
+      border: 1px solid var(--line);
+      border-radius: 13px;
+      background: white;
+      color: var(--dark-green);
+      text-decoration: none;
+      font-weight: 900;
+    }
+
+    .job-heading {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 18px;
+      margin-bottom: 23px;
     }
 
     .eyebrow {
+      margin-bottom: 5px;
       color: var(--muted);
-      font-size: 17px;
-      margin-bottom: 6px;
+      font-size: 16px;
     }
 
     h1 {
       margin: 0;
-      font-size: clamp(38px, 8vw, 54px);
-      line-height: 1.03;
-    }
-
-    .heading-row {
-      display: flex;
-      align-items: flex-end;
-      justify-content: space-between;
-      gap: 16px;
-      margin-bottom: 24px;
-    }
-
-    .new-job-button {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      min-height: 52px;
-      padding: 13px 18px;
-      border: 0;
-      border-radius: 14px;
-      background: var(--green);
-      color: white;
-      text-decoration: none;
-      font-weight: 900;
-      white-space: nowrap;
-    }
-
-    .count-grid {
-      display: grid;
-      grid-template-columns: repeat(4, minmax(0, 1fr));
-      gap: 12px;
-      margin-bottom: 22px;
-    }
-
-    .count-card {
-      border: 1px solid var(--line);
-      border-radius: 18px;
-      padding: 17px;
-      background: white;
-      box-shadow: 0 7px 22px rgba(0, 0, 0, .04);
-    }
-
-    .count-number {
-      color: var(--green);
-      font-size: 29px;
-      font-weight: 900;
-    }
-
-    .count-label {
-      margin-top: 6px;
-      color: var(--muted);
-      font-size: 13px;
-      line-height: 1.3;
-    }
-
-    .filters {
-      background: white;
-      border: 1px solid var(--line);
-      border-radius: 21px;
-      padding: 18px;
-      margin-bottom: 20px;
-      box-shadow: 0 8px 26px rgba(0, 0, 0, .04);
-    }
-
-    .filter-grid {
-      display: grid;
-      grid-template-columns: minmax(0, 2fr) minmax(180px, 1fr) auto;
-      gap: 12px;
-    }
-
-    .field label {
-      display: block;
-      margin-bottom: 7px;
-      color: var(--muted);
-      font-size: 12px;
-      font-weight: 900;
-      text-transform: uppercase;
-      letter-spacing: .04em;
-    }
-
-    .field input,
-    .field select {
-      width: 100%;
-      min-height: 50px;
-      border: 1px solid var(--line);
-      border-radius: 13px;
-      padding: 12px 14px;
-      background: white;
-      color: var(--ink);
-    }
-
-    .refresh-button {
-      align-self: end;
-      min-height: 50px;
-      border: 1px solid var(--line);
-      border-radius: 13px;
-      padding: 12px 18px;
-      background: white;
       color: var(--dark-green);
-      font-weight: 900;
-      cursor: pointer;
-    }
-
-    .list-heading {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 14px;
-      margin: 25px 2px 14px;
-    }
-
-    .list-heading h2 {
-      margin: 0;
-      font-size: 28px;
-    }
-
-    .visible-count {
-      color: var(--muted);
-      font-size: 14px;
-      font-weight: 700;
-    }
-
-    .jobs-list {
-      display: grid;
-      gap: 12px;
-    }
-
-    .job-row {
-      display: block;
-      border: 1px solid var(--line);
-      border-radius: 19px;
-      padding: 18px;
-      background: white;
-      color: inherit;
-      text-decoration: none;
-      box-shadow: 0 7px 23px rgba(0, 0, 0, .045);
-      transition:
-        transform .15s ease,
-        box-shadow .15s ease,
-        border-color .15s ease;
-    }
-
-    .job-row:active {
-      transform: scale(.992);
-    }
-
-    .job-row:hover {
-      border-color: #b8d2c8;
-      box-shadow: 0 10px 28px rgba(0, 0, 0, .07);
-    }
-
-    .job-top {
-      display: flex;
-      align-items: flex-start;
-      justify-content: space-between;
-      gap: 14px;
-    }
-
-    .job-number {
-      color: var(--dark-green);
-      font-size: 21px;
-      font-weight: 900;
+      font-size: clamp(38px, 8vw, 55px);
+      line-height: 1.02;
       overflow-wrap: anywhere;
     }
 
-    .customer {
-      margin-top: 5px;
-      font-size: 17px;
+    .customer-heading {
+      margin-top: 8px;
+      font-size: 20px;
       font-weight: 800;
-      overflow-wrap: anywhere;
-    }
-
-    .customer-email {
-      margin-top: 4px;
-      color: var(--muted);
-      font-size: 13px;
       overflow-wrap: anywhere;
     }
 
     .status-pill {
       flex-shrink: 0;
-      padding: 8px 11px;
+      padding: 10px 14px;
       border-radius: 999px;
       background: var(--light-green);
       color: var(--green);
-      font-size: 12px;
+      font-size: 13px;
       font-weight: 900;
       text-transform: capitalize;
       white-space: nowrap;
@@ -298,136 +156,363 @@
       color: var(--warning);
     }
 
-    .status-in_transit {
+    .status-delivered {
       background: var(--light-green);
       color: var(--green);
     }
 
-    .status-paid,
-    .status-ready {
-      background: #eaf8e8;
-      color: #287226;
-    }
-
-    .job-route {
-      display: grid;
-      grid-template-columns: 1fr auto 1fr;
-      align-items: center;
-      gap: 12px;
-      margin-top: 16px;
-      padding: 14px;
-      border-radius: 14px;
-      background: #f6faf8;
-    }
-
-    .route-label {
-      display: block;
-      margin-bottom: 4px;
-      color: var(--muted);
-      font-size: 11px;
-      font-weight: 900;
-      text-transform: uppercase;
-    }
-
-    .route-address {
-      font-size: 14px;
-      font-weight: 700;
-      line-height: 1.4;
-      overflow-wrap: anywhere;
-    }
-
-    .route-arrow {
-      color: var(--green);
-      font-size: 23px;
-      font-weight: 900;
-    }
-
-    .job-bottom {
-      display: grid;
-      grid-template-columns: repeat(3, minmax(0, 1fr)) auto;
-      gap: 12px;
-      align-items: end;
-      margin-top: 15px;
-    }
-
-    .meta-label {
-      display: block;
-      margin-bottom: 4px;
-      color: var(--muted);
-      font-size: 11px;
-      font-weight: 900;
-      text-transform: uppercase;
-    }
-
-    .meta-value {
-      font-size: 14px;
-      font-weight: 800;
-      overflow-wrap: anywhere;
-    }
-
-    .open-label {
-      color: var(--green);
-      font-size: 14px;
-      font-weight: 900;
-      white-space: nowrap;
-    }
-
-    .empty,
-    .error-message {
-      padding: 30px 22px;
-      border-radius: 18px;
-      text-align: center;
-      line-height: 1.55;
-    }
-
-    .empty {
-      background: white;
-      border: 1px solid var(--line);
-      color: var(--muted);
-    }
-
-    .error-message {
+    .status-cancelled,
+    .status-canceled {
       background: var(--danger-bg);
       color: var(--danger);
     }
 
-    @media (max-width: 720px) {
-      .count-grid {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-      }
+    .page-grid {
+      display: grid;
+      grid-template-columns: minmax(0, 1.55fr) minmax(270px, .75fr);
+      gap: 18px;
+      align-items: start;
+    }
 
-      .filter-grid {
+    .stack {
+      display: grid;
+      gap: 18px;
+    }
+
+    .panel {
+      padding: 21px;
+      border: 1px solid var(--line);
+      border-radius: 22px;
+      background: white;
+      box-shadow: 0 8px 27px rgba(0, 0, 0, .045);
+    }
+
+    .panel h2 {
+      margin: 0 0 18px;
+      font-size: 25px;
+    }
+
+    .detail-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 15px;
+    }
+
+    .detail {
+      min-width: 0;
+      padding: 15px;
+      border-radius: 15px;
+      background: #f7faf9;
+    }
+
+    .detail.full {
+      grid-column: 1 / -1;
+    }
+
+    .detail-label {
+      display: block;
+      margin-bottom: 6px;
+      color: var(--muted);
+      font-size: 11px;
+      font-weight: 900;
+      letter-spacing: .04em;
+      text-transform: uppercase;
+    }
+
+    .detail-value {
+      font-size: 16px;
+      font-weight: 750;
+      line-height: 1.45;
+      overflow-wrap: anywhere;
+      white-space: pre-wrap;
+    }
+
+    .route-card {
+      display: grid;
+      gap: 14px;
+    }
+
+    .route-stop {
+      padding: 17px;
+      border-radius: 16px;
+      background: #f7faf9;
+    }
+
+    .route-stop-title {
+      margin-bottom: 7px;
+      color: var(--dark-green);
+      font-size: 14px;
+      font-weight: 900;
+      text-transform: uppercase;
+    }
+
+    .address {
+      font-size: 17px;
+      font-weight: 750;
+      line-height: 1.45;
+      overflow-wrap: anywhere;
+    }
+
+    .route-arrow {
+      margin-left: 18px;
+      color: var(--green);
+      font-size: 28px;
+      font-weight: 900;
+    }
+
+    .map-button {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 44px;
+      margin-top: 12px;
+      padding: 10px 14px;
+      border-radius: 12px;
+      background: var(--light-green);
+      color: var(--dark-green);
+      text-decoration: none;
+      font-size: 14px;
+      font-weight: 900;
+    }
+
+    .field {
+      margin-bottom: 16px;
+    }
+
+    .field:last-child {
+      margin-bottom: 0;
+    }
+
+    .field label {
+      display: block;
+      margin-bottom: 7px;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 900;
+      letter-spacing: .04em;
+      text-transform: uppercase;
+    }
+
+    .field input,
+    .field select,
+    .field textarea {
+      width: 100%;
+      min-height: 50px;
+      padding: 12px 14px;
+      border: 1px solid var(--line);
+      border-radius: 13px;
+      background: white;
+      color: var(--ink);
+    }
+
+    .field textarea {
+      min-height: 110px;
+      resize: vertical;
+    }
+
+    .save-button,
+    .print-button {
+      width: 100%;
+      min-height: 55px;
+      border: 0;
+      border-radius: 14px;
+      font-weight: 900;
+      cursor: pointer;
+    }
+
+    .save-button {
+      background: var(--green);
+      color: white;
+    }
+
+    .print-button {
+      margin-top: 11px;
+      border: 1px solid var(--line);
+      background: white;
+      color: var(--dark-green);
+    }
+
+    .save-message {
+      display: none;
+      margin-top: 13px;
+      padding: 13px;
+      border-radius: 12px;
+      line-height: 1.45;
+    }
+
+    .save-message.success {
+      display: block;
+      background: var(--light-green);
+      color: var(--dark-green);
+    }
+
+    .save-message.error {
+      display: block;
+      background: var(--danger-bg);
+      color: var(--danger);
+    }
+
+    .photo-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 14px;
+    }
+
+    .photo-card {
+      overflow: hidden;
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      background: #f7faf9;
+    }
+
+    .photo-card img {
+      display: block;
+      width: 100%;
+      height: 190px;
+      object-fit: cover;
+      background: #edf2f0;
+    }
+
+    .photo-content {
+      padding: 14px;
+    }
+
+    .photo-title {
+      color: var(--dark-green);
+      font-weight: 900;
+    }
+
+    .photo-date {
+      margin-top: 6px;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.4;
+    }
+
+    .photo-link {
+      display: inline-block;
+      margin-top: 10px;
+      color: var(--green);
+      font-weight: 900;
+    }
+
+    .photo-missing {
+      display: grid;
+      min-height: 190px;
+      place-items: center;
+      padding: 20px;
+      color: var(--muted);
+      text-align: center;
+    }
+
+    .timeline {
+      position: relative;
+      display: grid;
+      gap: 17px;
+      padding-left: 8px;
+    }
+
+    .timeline-item {
+      position: relative;
+      display: grid;
+      grid-template-columns: 19px minmax(0, 1fr);
+      gap: 12px;
+    }
+
+    .timeline-dot {
+      width: 16px;
+      height: 16px;
+      margin-top: 2px;
+      border: 4px solid #b8d8cb;
+      border-radius: 50%;
+      background: white;
+    }
+
+    .timeline-dot.complete {
+      border-color: var(--green);
+      background: var(--green);
+    }
+
+    .timeline-title {
+      font-weight: 900;
+    }
+
+    .timeline-date {
+      margin-top: 4px;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.4;
+    }
+
+    .loading,
+    .error-box {
+      padding: 32px 22px;
+      border-radius: 19px;
+      text-align: center;
+      line-height: 1.55;
+    }
+
+    .loading {
+      border: 1px solid var(--line);
+      background: white;
+      color: var(--muted);
+    }
+
+    .error-box {
+      background: var(--danger-bg);
+      color: var(--danger);
+    }
+
+    .hidden {
+      display: none !important;
+    }
+
+    @media (max-width: 780px) {
+      .page-grid {
         grid-template-columns: 1fr;
       }
 
-      .refresh-button {
-        width: 100%;
-      }
-
-      .heading-row {
-        align-items: flex-start;
+      .job-heading {
         flex-direction: column;
       }
 
-      .new-job-button {
-        width: 100%;
-      }
-
-      .job-route {
+      .detail-grid,
+      .photo-grid {
         grid-template-columns: 1fr;
       }
 
-      .route-arrow {
-        transform: rotate(90deg);
-        justify-self: start;
+      .detail.full {
+        grid-column: auto;
+      }
+    }
+
+    @media print {
+      .topbar,
+      .back-button,
+      .controls-panel,
+      .dispatch-menu-button,
+      .dispatch-menu-overlay,
+      .dispatch-side-menu {
+        display: none !important;
       }
 
-      .job-bottom {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
+      body {
+        background: white;
       }
 
-      .open-label {
-        grid-column: 1 / -1;
+      .container {
+        width: 100%;
+        padding: 0;
+      }
+
+      .page-grid {
+        display: block;
+      }
+
+      .panel {
+        margin-bottom: 15px;
+        box-shadow: none;
+        break-inside: avoid;
       }
     }
   </style>
@@ -450,137 +535,316 @@
   </header>
 
   <main class="container">
-    <div class="heading-row">
-      <div>
-        <div class="eyebrow">
-          Dispatch work queue
-        </div>
+    <a class="back-button" href="/jobs.html">
+      ← Active Jobs
+    </a>
 
-        <h1>Active Jobs</h1>
-      </div>
-
-      <a
-        class="new-job-button"
-        href="/create-job.html"
-      >
-        + Create New Job
-      </a>
+    <div id="loadingBox" class="loading">
+      Loading work order...
     </div>
 
-    <section class="count-grid">
-      <div class="count-card">
-        <div class="count-number" id="countOpen">
-          0
+    <div id="errorBox" class="error-box hidden"></div>
+
+    <div id="jobPage" class="hidden">
+      <div class="job-heading">
+        <div>
+          <div class="eyebrow">MG Express Work Order</div>
+
+          <h1 id="jobNumber">Job</h1>
+
+          <div
+            class="customer-heading"
+            id="customerHeading"
+          ></div>
         </div>
 
-        <div class="count-label">
-          Total Open
-        </div>
-      </div>
-
-      <div class="count-card">
-        <div class="count-number" id="countUnassigned">
-          0
-        </div>
-
-        <div class="count-label">
-          Unassigned
-        </div>
-      </div>
-
-      <div class="count-card">
-        <div class="count-number" id="countTransit">
-          0
-        </div>
-
-        <div class="count-label">
-          In Transit
-        </div>
-      </div>
-
-      <div class="count-card">
-        <div class="count-number" id="countWaiting">
-          0
-        </div>
-
-        <div class="count-label">
-          Waiting Payment
-        </div>
-      </div>
-    </section>
-
-    <section class="filters">
-      <div class="filter-grid">
-        <div class="field">
-          <label for="searchInput">
-            Search
-          </label>
-
-          <input
-            id="searchInput"
-            type="search"
-            placeholder="Job number, customer, driver or address"
-          >
-        </div>
-
-        <div class="field">
-          <label for="statusFilter">
-            Status
-          </label>
-
-          <select id="statusFilter">
-            <option value="">
-              All Open Jobs
-            </option>
-
-            <option value="new">
-              New
-            </option>
-
-            <option value="waiting_payment">
-              Waiting Payment
-            </option>
-
-            <option value="paid">
-              Paid
-            </option>
-
-            <option value="ready">
-              Ready
-            </option>
-
-            <option value="in_transit">
-              In Transit
-            </option>
-          </select>
-        </div>
-
-        <button
-          class="refresh-button"
-          id="refreshButton"
-          type="button"
+        <div
+          class="status-pill"
+          id="statusPill"
         >
-          Refresh
-        </button>
+          Open
+        </div>
       </div>
-    </section>
 
-    <div class="list-heading">
-      <h2>Open Work Orders</h2>
+      <div class="page-grid">
+        <div class="stack">
+          <section class="panel">
+            <h2>Route</h2>
 
-      <div
-        class="visible-count"
-        id="visibleCount"
-      >
-        0 jobs
+            <div class="route-card">
+              <div class="route-stop">
+                <div class="route-stop-title">
+                  Pickup Address
+                </div>
+
+                <div
+                  class="address"
+                  id="pickupAddress"
+                ></div>
+
+                <a
+                  class="map-button"
+                  id="pickupMap"
+                  target="_blank"
+                  rel="noopener"
+                >
+                  Open Pickup in Maps
+                </a>
+              </div>
+
+              <div class="route-arrow">↓</div>
+
+              <div class="route-stop">
+                <div class="route-stop-title">
+                  Delivery Address
+                </div>
+
+                <div
+                  class="address"
+                  id="deliveryAddress"
+                ></div>
+
+                <a
+                  class="map-button"
+                  id="deliveryMap"
+                  target="_blank"
+                  rel="noopener"
+                >
+                  Open Delivery in Maps
+                </a>
+              </div>
+            </div>
+          </section>
+
+          <section class="panel">
+            <h2>Customer & Package</h2>
+
+            <div class="detail-grid">
+              <div class="detail">
+                <span class="detail-label">
+                  Customer
+                </span>
+
+                <div
+                  class="detail-value"
+                  id="customerName"
+                ></div>
+              </div>
+
+              <div class="detail">
+                <span class="detail-label">
+                  Customer Email
+                </span>
+
+                <div
+                  class="detail-value"
+                  id="customerEmail"
+                ></div>
+              </div>
+
+              <div class="detail">
+                <span class="detail-label">
+                  Vehicle
+                </span>
+
+                <div
+                  class="detail-value"
+                  id="vehicleType"
+                ></div>
+              </div>
+
+              <div class="detail">
+                <span class="detail-label">
+                  Delivery Speed
+                </span>
+
+                <div
+                  class="detail-value"
+                  id="deliverySpeed"
+                ></div>
+              </div>
+
+              <div class="detail">
+                <span class="detail-label">
+                  Package
+                </span>
+
+                <div
+                  class="detail-value"
+                  id="packageType"
+                ></div>
+              </div>
+
+              <div class="detail">
+                <span class="detail-label">
+                  Delivery Method
+                </span>
+
+                <div
+                  class="detail-value"
+                  id="deliveryMethod"
+                ></div>
+              </div>
+
+              <div class="detail full">
+                <span class="detail-label">
+                  Special Instructions
+                </span>
+
+                <div
+                  class="detail-value"
+                  id="specialInstructions"
+                ></div>
+              </div>
+            </div>
+          </section>
+
+          <section class="panel">
+            <h2>Proof Photos</h2>
+
+            <div class="photo-grid">
+              <div
+                class="photo-card"
+                id="pickupPhotoCard"
+              ></div>
+
+              <div
+                class="photo-card"
+                id="deliveryPhotoCard"
+              ></div>
+            </div>
+          </section>
+
+          <section class="panel">
+            <h2>Job Timeline</h2>
+
+            <div class="timeline" id="timeline"></div>
+          </section>
+        </div>
+
+        <div class="stack">
+          <section class="panel controls-panel">
+            <h2>Dispatch Controls</h2>
+
+            <div class="field">
+              <label for="driverSelect">
+                Assigned Driver
+              </label>
+
+              <select id="driverSelect">
+                <option value="">
+                  Unassigned
+                </option>
+              </select>
+            </div>
+
+            <div class="field">
+              <label for="driverPay">
+                Driver Pay
+              </label>
+
+              <input
+                id="driverPay"
+                type="number"
+                min="0"
+                step="0.01"
+                placeholder="0.00"
+              >
+            </div>
+
+            <div class="field">
+              <label for="statusSelect">
+                Job Status
+              </label>
+
+              <select id="statusSelect">
+                <option value="new">New</option>
+
+                <option value="waiting_payment">
+                  Waiting Payment
+                </option>
+
+                <option value="paid">Paid</option>
+
+                <option value="ready">Ready</option>
+
+                <option value="in_transit">
+                  In Transit
+                </option>
+
+                <option value="delivered">
+                  Delivered
+                </option>
+
+                <option value="cancelled">
+                  Cancelled
+                </option>
+              </select>
+            </div>
+
+            <button
+              class="save-button"
+              id="saveButton"
+              type="button"
+            >
+              Save Changes
+            </button>
+
+            <button
+              class="print-button"
+              id="printButton"
+              type="button"
+            >
+              Print Work Order
+            </button>
+
+            <div
+              class="save-message"
+              id="saveMessage"
+            ></div>
+          </section>
+
+          <section class="panel">
+            <h2>Job Information</h2>
+
+            <div class="detail-grid">
+              <div class="detail full">
+                <span class="detail-label">
+                  Created
+                </span>
+
+                <div
+                  class="detail-value"
+                  id="createdAt"
+                ></div>
+              </div>
+
+              <div class="detail full">
+                <span class="detail-label">
+                  Completed
+                </span>
+
+                <div
+                  class="detail-value"
+                  id="completedAt"
+                ></div>
+              </div>
+
+              <div class="detail full">
+                <span class="detail-label">
+                  Database ID
+                </span>
+
+                <div
+                  class="detail-value"
+                  id="databaseId"
+                ></div>
+              </div>
+            </div>
+          </section>
+        </div>
       </div>
     </div>
-
-    <section id="jobsList" class="jobs-list">
-      <div class="empty">
-        Loading active jobs...
-      </div>
-    </section>
   </main>
 
   <script>
@@ -591,32 +855,18 @@
 
     window.mgDispatchClient = client;
 
-    const jobsList =
-      document.getElementById("jobsList");
+    const params =
+      new URLSearchParams(window.location.search);
 
-    const searchInput =
-      document.getElementById("searchInput");
+    const jobId = params.get("id");
 
-    const statusFilter =
-      document.getElementById("statusFilter");
-
-    let jobs = [];
-    let driversById = {};
+    let currentJob = null;
+    let drivers = [];
 
     function escapeHtml(value) {
       const div = document.createElement("div");
       div.textContent = value ?? "";
       return div.innerHTML;
-    }
-
-    function money(value) {
-      return Number(value || 0).toLocaleString(
-        "en-US",
-        {
-          style: "currency",
-          currency: "USD"
-        }
-      );
     }
 
     function cleanStatus(value) {
@@ -631,7 +881,10 @@
         waiting_payment: "Waiting Payment",
         paid: "Paid",
         ready: "Ready",
-        in_transit: "In Transit"
+        in_transit: "In Transit",
+        delivered: "Delivered",
+        cancelled: "Cancelled",
+        canceled: "Cancelled"
       };
 
       return labels[cleanStatus(value)] ||
@@ -641,7 +894,7 @@
 
     function formatDate(value) {
       if (!value) {
-        return "Not set";
+        return "Not recorded";
       }
 
       const date = new Date(value);
@@ -653,23 +906,62 @@
       return new Intl.DateTimeFormat(
         "en-US",
         {
+          weekday: "short",
           month: "short",
           day: "numeric",
+          year: "numeric",
           hour: "numeric",
           minute: "2-digit"
         }
       ).format(date);
     }
 
-    function shortAddress(value) {
-      const address =
-        String(value || "Not provided");
-
-      if (address.length <= 65) {
-        return address;
+    function displayValue(value) {
+      if (
+        value === null ||
+        value === undefined ||
+        value === ""
+      ) {
+        return "Not provided";
       }
 
-      return `${address.slice(0, 62)}...`;
+      return String(value);
+    }
+
+    function mapUrl(address) {
+      return (
+        "https://www.google.com/maps/search/?api=1&query=" +
+        encodeURIComponent(address || "")
+      );
+    }
+
+    function setText(id, value) {
+      document
+        .getElementById(id)
+        .textContent = displayValue(value);
+    }
+
+    function showError(message) {
+      document
+        .getElementById("loadingBox")
+        .classList.add("hidden");
+
+      const errorBox =
+        document.getElementById("errorBox");
+
+      errorBox.textContent =
+        message || "Unable to load this job.";
+
+      errorBox.classList.remove("hidden");
+    }
+
+    function setSaveMessage(message, type) {
+      const box =
+        document.getElementById("saveMessage");
+
+      box.textContent = message;
+      box.className =
+        `save-message ${type || ""}`;
     }
 
     async function requireDispatchAccess() {
@@ -709,13 +1001,13 @@
         profileResult.data.role || ""
       ).toLowerCase();
 
-      const allowedRoles = [
-        "admin",
-        "staff",
-        "dispatcher"
-      ];
-
-      if (!allowedRoles.includes(role)) {
+      if (
+        ![
+          "admin",
+          "staff",
+          "dispatcher"
+        ].includes(role)
+      ) {
         if (role === "driver") {
           location.replace("/driver.html");
           return null;
@@ -745,349 +1037,491 @@
     async function loadDrivers() {
       const result = await client
         .from("drivers")
-        .select("id,full_name,email");
-
-      if (result.error) {
-        console.warn(
-          "Driver names could not be loaded:",
-          result.error.message
-        );
-
-        driversById = {};
-        return;
-      }
-
-      driversById = {};
-
-      (result.data || []).forEach(driver => {
-        driversById[driver.id] =
-          driver.full_name ||
-          driver.email ||
-          "Driver";
-      });
-    }
-
-    async function loadJobs() {
-      jobsList.innerHTML = `
-        <div class="empty">
-          Loading active jobs...
-        </div>
-      `;
-
-      const result = await client
-        .from("quotes")
-        .select("*")
-        .order(
-          "created_at",
-          {
-            ascending: false
-          }
-        );
+        .select("id,full_name,email,active")
+        .order("full_name", {
+          ascending: true
+        });
 
       if (result.error) {
         throw result.error;
       }
 
-      jobs = (result.data || []).filter(job => {
-        const status =
-          cleanStatus(job.status);
+      drivers = result.data || [];
 
-        return ![
-          "delivered",
-          "cancelled",
-          "canceled"
-        ].includes(status);
-      });
+      const driverSelect =
+        document.getElementById("driverSelect");
 
-      updateCounts();
-      renderJobs();
+      driverSelect.innerHTML = `
+        <option value="">Unassigned</option>
+        ${drivers.map(driver => `
+          <option value="${escapeHtml(driver.id)}">
+            ${escapeHtml(
+              driver.full_name ||
+              driver.email ||
+              "Driver"
+            )}
+            ${driver.active === false ? " — Inactive" : ""}
+          </option>
+        `).join("")}
+      `;
     }
 
-    function updateCounts() {
-      const unassigned =
-        jobs.filter(job =>
-          !job.assigned_driver_id
-        ).length;
-
-      const inTransit =
-        jobs.filter(job =>
-          cleanStatus(job.status) ===
-          "in_transit"
-        ).length;
-
-      const waiting =
-        jobs.filter(job =>
-          cleanStatus(job.status) ===
-          "waiting_payment"
-        ).length;
-
-      document
-        .getElementById("countOpen")
-        .textContent = jobs.length;
-
-      document
-        .getElementById("countUnassigned")
-        .textContent = unassigned;
-
-      document
-        .getElementById("countTransit")
-        .textContent = inTransit;
-
-      document
-        .getElementById("countWaiting")
-        .textContent = waiting;
-    }
-
-    function filteredJobs() {
-      const query =
-        searchInput.value
-          .trim()
-          .toLowerCase();
-
-      const selectedStatus =
-        statusFilter.value;
-
-      return jobs.filter(job => {
-        const status =
-          cleanStatus(job.status);
-
-        if (
-          selectedStatus &&
-          status !== selectedStatus
-        ) {
-          return false;
-        }
-
-        if (!query) {
-          return true;
-        }
-
-        const driverName =
-          driversById[job.assigned_driver_id] ||
-          "";
-
-        const searchable = [
-          job.job_number,
-          job.customer_name,
-          job.customer_email,
-          job.pickup_address,
-          job.delivery_address,
-          driverName,
-          job.special_instructions
-        ]
-          .filter(Boolean)
-          .join(" ")
-          .toLowerCase();
-
-        return searchable.includes(query);
-      });
-    }
-
-    function renderJobs() {
-      const visibleJobs =
-        filteredJobs();
-
-      document
-        .getElementById("visibleCount")
-        .textContent =
-          `${visibleJobs.length} ${
-            visibleJobs.length === 1
-              ? "job"
-              : "jobs"
-          }`;
-
-      if (!visibleJobs.length) {
-        jobsList.innerHTML = `
-          <div class="empty">
-            No open jobs match your search or filter.
-          </div>
-        `;
-
-        return;
+    async function loadJob() {
+      if (!jobId) {
+        throw new Error(
+          "No job ID was included in this link."
+        );
       }
 
-      jobsList.innerHTML =
-        visibleJobs.map(job => {
-          const status =
-            cleanStatus(job.status);
+      const result = await client
+        .from("quotes")
+        .select("*")
+        .eq("id", jobId)
+        .maybeSingle();
 
-          const driverName =
-            job.assigned_driver_id
-              ? (
-                  driversById[
-                    job.assigned_driver_id
-                  ] || "Assigned Driver"
-                )
-              : "Unassigned";
+      if (result.error) {
+        throw result.error;
+      }
 
-          const eta =
-            job.estimated_delivery ||
-            job.estimated_delivery_at ||
-            job.delivery_eta ||
-            job.estimated_delivery_time ||
-            null;
+      if (!result.data) {
+        throw new Error(
+          "This work order could not be found."
+        );
+      }
 
-          return `
-            <a
-              class="job-row"
-              href="/job.html?id=${encodeURIComponent(
-                job.id
-              )}"
-            >
-              <div class="job-top">
-                <div>
-                  <div class="job-number">
-                    ${escapeHtml(
-                      job.job_number ||
-                      "Job"
-                    )}
-                  </div>
-
-                  <div class="customer">
-                    ${escapeHtml(
-                      job.customer_name ||
-                      "Customer"
-                    )}
-                  </div>
-
-                  ${
-                    job.customer_email
-                      ? `
-                        <div class="customer-email">
-                          ${escapeHtml(
-                            job.customer_email
-                          )}
-                        </div>
-                      `
-                      : ""
-                  }
-                </div>
-
-                <div
-                  class="status-pill status-${escapeHtml(
-                    status
-                  )}"
-                >
-                  ${escapeHtml(
-                    statusLabel(status)
-                  )}
-                </div>
-              </div>
-
-              <div class="job-route">
-                <div>
-                  <span class="route-label">
-                    Pickup
-                  </span>
-
-                  <div class="route-address">
-                    ${escapeHtml(
-                      shortAddress(
-                        job.pickup_address
-                      )
-                    )}
-                  </div>
-                </div>
-
-                <div class="route-arrow">
-                  →
-                </div>
-
-                <div>
-                  <span class="route-label">
-                    Delivery
-                  </span>
-
-                  <div class="route-address">
-                    ${escapeHtml(
-                      shortAddress(
-                        job.delivery_address
-                      )
-                    )}
-                  </div>
-                </div>
-              </div>
-
-              <div class="job-bottom">
-                <div>
-                  <span class="meta-label">
-                    Driver
-                  </span>
-
-                  <div class="meta-value">
-                    ${escapeHtml(driverName)}
-                  </div>
-                </div>
-
-                <div>
-                  <span class="meta-label">
-                    Driver Pay
-                  </span>
-
-                  <div class="meta-value">
-                    ${escapeHtml(
-                      money(job.driver_pay)
-                    )}
-                  </div>
-                </div>
-
-                <div>
-                  <span class="meta-label">
-                    Estimated Delivery
-                  </span>
-
-                  <div class="meta-value">
-                    ${escapeHtml(
-                      formatDate(eta)
-                    )}
-                  </div>
-                </div>
-
-                <div class="open-label">
-                  Open Job →
-                </div>
-              </div>
-            </a>
-          `;
-        }).join("");
+      currentJob = result.data;
+      renderJob();
     }
 
-    searchInput.addEventListener(
-      "input",
-      renderJobs
-    );
+    function photoCard(
+      title,
+      url,
+      uploadedAt
+    ) {
+      if (!url) {
+        return `
+          <div class="photo-missing">
+            No ${escapeHtml(
+              title.toLowerCase()
+            )} has been uploaded.
+          </div>
 
-    statusFilter.addEventListener(
-      "change",
-      renderJobs
-    );
+          <div class="photo-content">
+            <div class="photo-title">
+              ${escapeHtml(title)}
+            </div>
+
+            <div class="photo-date">
+              Not uploaded
+            </div>
+          </div>
+        `;
+      }
+
+      return `
+        <a
+          href="${escapeHtml(url)}"
+          target="_blank"
+          rel="noopener"
+        >
+          <img
+            src="${escapeHtml(url)}"
+            alt="${escapeHtml(title)}"
+          >
+        </a>
+
+        <div class="photo-content">
+          <div class="photo-title">
+            ${escapeHtml(title)}
+          </div>
+
+          <div class="photo-date">
+            ${escapeHtml(formatDate(uploadedAt))}
+          </div>
+
+          <a
+            class="photo-link"
+            href="${escapeHtml(url)}"
+            target="_blank"
+            rel="noopener"
+          >
+            View Full Photo
+          </a>
+        </div>
+      `;
+    }
+
+    function renderTimeline() {
+      const status =
+        cleanStatus(currentJob.status);
+
+      const stages = [
+        {
+          title: "Job Created",
+          date: currentJob.created_at,
+          complete: Boolean(
+            currentJob.created_at
+          )
+        },
+        {
+          title: "Driver Assigned",
+          date: null,
+          complete: Boolean(
+            currentJob.assigned_driver_id
+          )
+        },
+        {
+          title: "Pickup Photo Uploaded",
+          date:
+            currentJob.pickup_photo_uploaded_at,
+          complete: Boolean(
+            currentJob.pickup_photo_url
+          )
+        },
+        {
+          title: "In Transit",
+          date: null,
+          complete: [
+            "in_transit",
+            "delivered"
+          ].includes(status)
+        },
+        {
+          title: "Delivery Photo Uploaded",
+          date:
+            currentJob.delivery_photo_uploaded_at,
+          complete: Boolean(
+            currentJob.delivery_photo_url
+          )
+        },
+        {
+          title: "Job Delivered",
+          date: currentJob.completed_at,
+          complete:
+            status === "delivered"
+        }
+      ];
+
+      document
+        .getElementById("timeline")
+        .innerHTML =
+          stages.map(stage => `
+            <div class="timeline-item">
+              <div
+                class="timeline-dot ${
+                  stage.complete
+                    ? "complete"
+                    : ""
+                }"
+              ></div>
+
+              <div>
+                <div class="timeline-title">
+                  ${escapeHtml(stage.title)}
+                </div>
+
+                <div class="timeline-date">
+                  ${
+                    stage.date
+                      ? escapeHtml(
+                          formatDate(stage.date)
+                        )
+                      : (
+                          stage.complete
+                            ? "Completed"
+                            : "Pending"
+                        )
+                  }
+                </div>
+              </div>
+            </div>
+          `).join("");
+    }
+
+    function renderJob() {
+      document
+        .getElementById("loadingBox")
+        .classList.add("hidden");
+
+      document
+        .getElementById("errorBox")
+        .classList.add("hidden");
+
+      document
+        .getElementById("jobPage")
+        .classList.remove("hidden");
+
+      const status =
+        cleanStatus(currentJob.status);
+
+      setText(
+        "jobNumber",
+        currentJob.job_number || "Job"
+      );
+
+      setText(
+        "customerHeading",
+        currentJob.customer_name || "Customer"
+      );
+
+      setText(
+        "customerName",
+        currentJob.customer_name
+      );
+
+      setText(
+        "customerEmail",
+        currentJob.customer_email
+      );
+
+      setText(
+        "pickupAddress",
+        currentJob.pickup_address
+      );
+
+      setText(
+        "deliveryAddress",
+        currentJob.delivery_address
+      );
+
+      setText(
+        "vehicleType",
+        currentJob.vehicle_type
+      );
+
+      setText(
+        "deliverySpeed",
+        currentJob.delivery_speed
+      );
+
+      setText(
+        "packageType",
+        currentJob.package_type
+      );
+
+      setText(
+        "deliveryMethod",
+        currentJob.delivery_method
+      );
+
+      setText(
+        "specialInstructions",
+        currentJob.special_instructions
+      );
+
+      setText(
+        "createdAt",
+        formatDate(currentJob.created_at)
+      );
+
+      setText(
+        "completedAt",
+        formatDate(currentJob.completed_at)
+      );
+
+      setText(
+        "databaseId",
+        currentJob.id
+      );
+
+      const statusPill =
+        document.getElementById("statusPill");
+
+      statusPill.textContent =
+        statusLabel(status);
+
+      statusPill.className =
+        `status-pill status-${status}`;
+
+      document
+        .getElementById("pickupMap")
+        .href =
+          mapUrl(currentJob.pickup_address);
+
+      document
+        .getElementById("deliveryMap")
+        .href =
+          mapUrl(currentJob.delivery_address);
+
+      document
+        .getElementById("driverSelect")
+        .value =
+          currentJob.assigned_driver_id || "";
+
+      document
+        .getElementById("driverPay")
+        .value =
+          Number(currentJob.driver_pay || 0)
+            .toFixed(2);
+
+      document
+        .getElementById("statusSelect")
+        .value = status;
+
+      document
+        .getElementById("pickupPhotoCard")
+        .innerHTML =
+          photoCard(
+            "Pickup Photo",
+            currentJob.pickup_photo_url,
+            currentJob.pickup_photo_uploaded_at
+          );
+
+      document
+        .getElementById("deliveryPhotoCard")
+        .innerHTML =
+          photoCard(
+            "Delivery Photo",
+            currentJob.delivery_photo_url,
+            currentJob.delivery_photo_uploaded_at
+          );
+
+      renderTimeline();
+
+      document.title =
+        `${currentJob.job_number || "Job"} | MG Express`;
+    }
+
+    async function saveJob() {
+      const saveButton =
+        document.getElementById("saveButton");
+
+      saveButton.disabled = true;
+      saveButton.textContent =
+        "Saving Changes...";
+
+      setSaveMessage("", "");
+
+      try {
+        const newStatus =
+          cleanStatus(
+            document
+              .getElementById("statusSelect")
+              .value
+          );
+
+        const driverId =
+          document
+            .getElementById("driverSelect")
+            .value || null;
+
+        const driverPay =
+          Number(
+            document
+              .getElementById("driverPay")
+              .value || 0
+          );
+
+        const payload = {
+          assigned_driver_id: driverId,
+          driver_pay: driverPay,
+          status: newStatus
+        };
+
+        if (
+          newStatus === "delivered" &&
+          !currentJob.completed_at
+        ) {
+          payload.completed_at =
+            new Date().toISOString();
+        }
+
+        const result = await client
+          .from("quotes")
+          .update(payload)
+          .eq("id", currentJob.id)
+          .select("*")
+          .maybeSingle();
+
+        if (result.error) {
+          /*
+            Some older databases may not have
+            completed_at. Retry without it.
+          */
+          if (
+            payload.completed_at &&
+            result.error.message
+              .toLowerCase()
+              .includes("completed_at")
+          ) {
+            delete payload.completed_at;
+
+            const retryResult = await client
+              .from("quotes")
+              .update(payload)
+              .eq("id", currentJob.id)
+              .select("*")
+              .maybeSingle();
+
+            if (retryResult.error) {
+              throw retryResult.error;
+            }
+
+            currentJob =
+              retryResult.data || {
+                ...currentJob,
+                ...payload
+              };
+          } else {
+            throw result.error;
+          }
+        } else {
+          currentJob =
+            result.data || {
+              ...currentJob,
+              ...payload
+            };
+        }
+
+        renderJob();
+
+        setSaveMessage(
+          "Job changes saved successfully.",
+          "success"
+        );
+
+        if (
+          [
+            "delivered",
+            "cancelled",
+            "canceled"
+          ].includes(newStatus)
+        ) {
+          setSaveMessage(
+            "Job closed successfully. Returning to Job History...",
+            "success"
+          );
+
+          setTimeout(() => {
+            location.href = "/history.html";
+          }, 1200);
+        }
+      } catch (error) {
+        setSaveMessage(
+          error.message ||
+          "Unable to save this job.",
+          "error"
+        );
+      } finally {
+        saveButton.disabled = false;
+        saveButton.textContent =
+          "Save Changes";
+      }
+    }
 
     document
-      .getElementById("refreshButton")
+      .getElementById("saveButton")
       .addEventListener(
         "click",
-        async function () {
-          this.disabled = true;
-          this.textContent = "Refreshing...";
+        saveJob
+      );
 
-          try {
-            await Promise.all([
-              loadDrivers(),
-              loadJobs()
-            ]);
-          } catch (error) {
-            jobsList.innerHTML = `
-              <div class="error-message">
-                ${escapeHtml(
-                  error.message ||
-                  "Unable to refresh active jobs."
-                )}
-              </div>
-            `;
-          } finally {
-            this.disabled = false;
-            this.textContent = "Refresh";
-          }
+    document
+      .getElementById("printButton")
+      .addEventListener(
+        "click",
+        function () {
+          window.print();
         }
       );
 
@@ -1101,16 +1535,12 @@
         }
 
         await loadDrivers();
-        await loadJobs();
+        await loadJob();
       } catch (error) {
-        jobsList.innerHTML = `
-          <div class="error-message">
-            ${escapeHtml(
-              error.message ||
-              "Unable to load active jobs."
-            )}
-          </div>
-        `;
+        showError(
+          error.message ||
+          "Unable to load this work order."
+        );
       }
     })();
   </script>
