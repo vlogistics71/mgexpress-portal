@@ -27,12 +27,12 @@
       --ink: #17221e;
       --muted: #68756f;
       --line: #dfe8e4;
-      --warning: #9a6400;
+      --danger: #9b2929;
+      --danger-bg: #fff0f0;
+      --warning: #946000;
       --warning-bg: #fff5d8;
       --blue: #245d9c;
       --blue-bg: #eaf3ff;
-      --danger: #9b2929;
-      --danger-bg: #fff0f0;
     }
 
     body {
@@ -52,9 +52,9 @@
       position: sticky;
       top: 0;
       z-index: 50;
+      padding: 18px 20px;
       background: var(--dark-green);
       color: white;
-      padding: 18px 20px;
     }
 
     .topbar-inner {
@@ -63,7 +63,7 @@
       display: flex;
       align-items: center;
       justify-content: space-between;
-      gap: 14px;
+      gap: 15px;
     }
 
     .brand {
@@ -77,7 +77,7 @@
     }
 
     .staff-email {
-      margin-top: 6px;
+      margin-top: 7px;
       font-size: 13px;
       opacity: .82;
       overflow-wrap: anywhere;
@@ -90,14 +90,14 @@
     }
 
     .eyebrow {
+      margin-bottom: 6px;
       color: var(--muted);
       font-size: 17px;
-      margin-bottom: 6px;
     }
 
     h1 {
       margin: 0;
-      font-size: clamp(38px, 8vw, 54px);
+      font-size: clamp(39px, 8vw, 55px);
       line-height: 1.03;
     }
 
@@ -106,17 +106,16 @@
       align-items: flex-end;
       justify-content: space-between;
       gap: 16px;
-      margin-bottom: 24px;
+      margin-bottom: 25px;
     }
 
-    .new-job-button {
+    .create-button {
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      min-height: 52px;
-      padding: 13px 18px;
-      border: 0;
-      border-radius: 14px;
+      min-height: 54px;
+      padding: 14px 19px;
+      border-radius: 15px;
       background: var(--green);
       color: white;
       text-decoration: none;
@@ -124,41 +123,41 @@
       white-space: nowrap;
     }
 
-    .count-grid {
+    .stats {
       display: grid;
       grid-template-columns: repeat(4, minmax(0, 1fr));
       gap: 12px;
       margin-bottom: 22px;
     }
 
-    .count-card {
+    .stat-card {
+      min-width: 0;
+      padding: 18px;
       border: 1px solid var(--line);
-      border-radius: 18px;
-      padding: 17px;
+      border-radius: 19px;
       background: white;
       box-shadow: 0 7px 22px rgba(0, 0, 0, .04);
     }
 
-    .count-number {
+    .stat-number {
       color: var(--green);
-      font-size: 29px;
+      font-size: 31px;
       font-weight: 900;
     }
 
-    .count-label {
-      margin-top: 6px;
+    .stat-label {
+      margin-top: 7px;
       color: var(--muted);
-      font-size: 13px;
+      font-size: 14px;
       line-height: 1.3;
     }
 
     .filters {
-      background: white;
+      padding: 18px;
       border: 1px solid var(--line);
       border-radius: 21px;
-      padding: 18px;
-      margin-bottom: 20px;
-      box-shadow: 0 8px 26px rgba(0, 0, 0, .04);
+      background: white;
+      box-shadow: 0 8px 25px rgba(0, 0, 0, .04);
     }
 
     .filter-grid {
@@ -173,27 +172,27 @@
       color: var(--muted);
       font-size: 12px;
       font-weight: 900;
-      text-transform: uppercase;
       letter-spacing: .04em;
+      text-transform: uppercase;
     }
 
     .field input,
     .field select {
       width: 100%;
-      min-height: 50px;
+      min-height: 51px;
+      padding: 12px 14px;
       border: 1px solid var(--line);
       border-radius: 13px;
-      padding: 12px 14px;
       background: white;
       color: var(--ink);
     }
 
     .refresh-button {
       align-self: end;
-      min-height: 50px;
+      min-height: 51px;
+      padding: 12px 19px;
       border: 1px solid var(--line);
       border-radius: 13px;
-      padding: 12px 18px;
       background: white;
       color: var(--dark-green);
       font-weight: 900;
@@ -205,47 +204,38 @@
       align-items: center;
       justify-content: space-between;
       gap: 14px;
-      margin: 25px 2px 14px;
+      margin: 27px 2px 14px;
     }
 
     .list-heading h2 {
       margin: 0;
-      font-size: 28px;
+      font-size: 29px;
     }
 
     .visible-count {
       color: var(--muted);
       font-size: 14px;
-      font-weight: 700;
+      font-weight: 800;
     }
 
     .jobs-list {
       display: grid;
-      gap: 12px;
+      gap: 13px;
     }
 
-    .job-row {
+    .job-card {
       display: block;
-      border: 1px solid var(--line);
-      border-radius: 19px;
       padding: 18px;
+      border: 1px solid var(--line);
+      border-radius: 20px;
       background: white;
       color: inherit;
       text-decoration: none;
       box-shadow: 0 7px 23px rgba(0, 0, 0, .045);
-      transition:
-        transform .15s ease,
-        box-shadow .15s ease,
-        border-color .15s ease;
     }
 
-    .job-row:active {
+    .job-card:active {
       transform: scale(.992);
-    }
-
-    .job-row:hover {
-      border-color: #b8d2c8;
-      box-shadow: 0 10px 28px rgba(0, 0, 0, .07);
     }
 
     .job-top {
@@ -257,7 +247,7 @@
 
     .job-number {
       color: var(--dark-green);
-      font-size: 21px;
+      font-size: 22px;
       font-weight: 900;
       overflow-wrap: anywhere;
     }
@@ -284,7 +274,6 @@
       color: var(--green);
       font-size: 12px;
       font-weight: 900;
-      text-transform: capitalize;
       white-space: nowrap;
     }
 
@@ -298,31 +287,20 @@
       color: var(--warning);
     }
 
-    .status-in_transit {
-      background: var(--light-green);
-      color: var(--green);
-    }
-
-    .status-paid,
-    .status-ready {
-      background: #eaf8e8;
-      color: #287226;
-    }
-
-    .job-route {
+    .route {
       display: grid;
       grid-template-columns: 1fr auto 1fr;
       align-items: center;
       gap: 12px;
       margin-top: 16px;
-      padding: 14px;
-      border-radius: 14px;
+      padding: 15px;
+      border-radius: 15px;
       background: #f6faf8;
     }
 
     .route-label {
       display: block;
-      margin-bottom: 4px;
+      margin-bottom: 5px;
       color: var(--muted);
       font-size: 11px;
       font-weight: 900;
@@ -331,7 +309,7 @@
 
     .route-address {
       font-size: 14px;
-      font-weight: 700;
+      font-weight: 750;
       line-height: 1.4;
       overflow-wrap: anywhere;
     }
@@ -352,7 +330,7 @@
 
     .meta-label {
       display: block;
-      margin-bottom: 4px;
+      margin-bottom: 5px;
       color: var(--muted);
       font-size: 11px;
       font-weight: 900;
@@ -365,7 +343,7 @@
       overflow-wrap: anywhere;
     }
 
-    .open-label {
+    .open-job {
       color: var(--green);
       font-size: 14px;
       font-weight: 900;
@@ -373,26 +351,35 @@
     }
 
     .empty,
-    .error-message {
-      padding: 30px 22px;
-      border-radius: 18px;
+    .error {
+      padding: 31px 22px;
+      border-radius: 19px;
       text-align: center;
       line-height: 1.55;
     }
 
     .empty {
-      background: white;
       border: 1px solid var(--line);
+      background: white;
       color: var(--muted);
     }
 
-    .error-message {
+    .error {
       background: var(--danger-bg);
       color: var(--danger);
     }
 
     @media (max-width: 720px) {
-      .count-grid {
+      .heading-row {
+        align-items: flex-start;
+        flex-direction: column;
+      }
+
+      .create-button {
+        width: 100%;
+      }
+
+      .stats {
         grid-template-columns: repeat(2, minmax(0, 1fr));
       }
 
@@ -404,16 +391,7 @@
         width: 100%;
       }
 
-      .heading-row {
-        align-items: flex-start;
-        flex-direction: column;
-      }
-
-      .new-job-button {
-        width: 100%;
-      }
-
-      .job-route {
+      .route {
         grid-template-columns: 1fr;
       }
 
@@ -426,7 +404,7 @@
         grid-template-columns: repeat(2, minmax(0, 1fr));
       }
 
-      .open-label {
+      .open-job {
         grid-column: 1 / -1;
       }
     }
@@ -460,50 +438,50 @@
       </div>
 
       <a
-        class="new-job-button"
-        href="/create-job.html"
+        class="create-button"
+        href="/dashboard.html"
       >
         + Create New Job
       </a>
     </div>
 
-    <section class="count-grid">
-      <div class="count-card">
-        <div class="count-number" id="countOpen">
+    <section class="stats">
+      <div class="stat-card">
+        <div class="stat-number" id="totalOpen">
           0
         </div>
 
-        <div class="count-label">
+        <div class="stat-label">
           Total Open
         </div>
       </div>
 
-      <div class="count-card">
-        <div class="count-number" id="countUnassigned">
+      <div class="stat-card">
+        <div class="stat-number" id="totalUnassigned">
           0
         </div>
 
-        <div class="count-label">
+        <div class="stat-label">
           Unassigned
         </div>
       </div>
 
-      <div class="count-card">
-        <div class="count-number" id="countTransit">
+      <div class="stat-card">
+        <div class="stat-number" id="totalTransit">
           0
         </div>
 
-        <div class="count-label">
+        <div class="stat-label">
           In Transit
         </div>
       </div>
 
-      <div class="count-card">
-        <div class="count-number" id="countWaiting">
+      <div class="stat-card">
+        <div class="stat-number" id="totalWaiting">
           0
         </div>
 
-        <div class="count-label">
+        <div class="stat-label">
           Waiting Payment
         </div>
       </div>
@@ -533,21 +511,15 @@
               All Open Jobs
             </option>
 
-            <option value="new">
-              New
-            </option>
+            <option value="new">New</option>
 
             <option value="waiting_payment">
               Waiting Payment
             </option>
 
-            <option value="paid">
-              Paid
-            </option>
+            <option value="paid">Paid</option>
 
-            <option value="ready">
-              Ready
-            </option>
+            <option value="ready">Ready</option>
 
             <option value="in_transit">
               In Transit
@@ -568,15 +540,12 @@
     <div class="list-heading">
       <h2>Open Work Orders</h2>
 
-      <div
-        class="visible-count"
-        id="visibleCount"
-      >
+      <div class="visible-count" id="visibleCount">
         0 jobs
       </div>
     </div>
 
-    <section id="jobsList" class="jobs-list">
+    <section class="jobs-list" id="jobsList">
       <div class="empty">
         Loading active jobs...
       </div>
@@ -609,16 +578,6 @@
       return div.innerHTML;
     }
 
-    function money(value) {
-      return Number(value || 0).toLocaleString(
-        "en-US",
-        {
-          style: "currency",
-          currency: "USD"
-        }
-      );
-    }
-
     function cleanStatus(value) {
       return String(value || "new")
         .trim()
@@ -637,6 +596,16 @@
       return labels[cleanStatus(value)] ||
         String(value || "Open")
           .replaceAll("_", " ");
+    }
+
+    function money(value) {
+      return Number(value || 0).toLocaleString(
+        "en-US",
+        {
+          style: "currency",
+          currency: "USD"
+        }
+      );
     }
 
     function formatDate(value) {
@@ -665,14 +634,14 @@
       const address =
         String(value || "Not provided");
 
-      if (address.length <= 65) {
+      if (address.length <= 60) {
         return address;
       }
 
-      return `${address.slice(0, 62)}...`;
+      return address.slice(0, 57) + "...";
     }
 
-    async function requireDispatchAccess() {
+    async function verifyDispatchUser() {
       const sessionResult =
         await client.auth.getSession();
 
@@ -709,13 +678,13 @@
         profileResult.data.role || ""
       ).toLowerCase();
 
-      const allowedRoles = [
-        "admin",
-        "staff",
-        "dispatcher"
-      ];
-
-      if (!allowedRoles.includes(role)) {
+      if (
+        ![
+          "admin",
+          "staff",
+          "dispatcher"
+        ].includes(role)
+      ) {
         if (role === "driver") {
           location.replace("/driver.html");
           return null;
@@ -748,11 +717,6 @@
         .select("id,full_name,email");
 
       if (result.error) {
-        console.warn(
-          "Driver names could not be loaded:",
-          result.error.message
-        );
-
         driversById = {};
         return;
       }
@@ -760,7 +724,7 @@
       driversById = {};
 
       (result.data || []).forEach(driver => {
-        driversById[driver.id] =
+        driversById[String(driver.id)] =
           driver.full_name ||
           driver.email ||
           "Driver";
@@ -777,12 +741,9 @@
       const result = await client
         .from("quotes")
         .select("*")
-        .order(
-          "created_at",
-          {
-            ascending: false
-          }
-        );
+        .order("created_at", {
+          ascending: false
+        });
 
       if (result.error) {
         throw result.error;
@@ -799,47 +760,41 @@
         ].includes(status);
       });
 
-      updateCounts();
+      updateStatistics();
       renderJobs();
     }
 
-    function updateCounts() {
-      const unassigned =
-        jobs.filter(job =>
-          !job.assigned_driver_id
-        ).length;
-
-      const inTransit =
-        jobs.filter(job =>
-          cleanStatus(job.status) ===
-          "in_transit"
-        ).length;
-
-      const waiting =
-        jobs.filter(job =>
-          cleanStatus(job.status) ===
-          "waiting_payment"
-        ).length;
-
+    function updateStatistics() {
       document
-        .getElementById("countOpen")
+        .getElementById("totalOpen")
         .textContent = jobs.length;
 
       document
-        .getElementById("countUnassigned")
-        .textContent = unassigned;
+        .getElementById("totalUnassigned")
+        .textContent =
+          jobs.filter(job =>
+            !job.assigned_driver_id
+          ).length;
 
       document
-        .getElementById("countTransit")
-        .textContent = inTransit;
+        .getElementById("totalTransit")
+        .textContent =
+          jobs.filter(job =>
+            cleanStatus(job.status) ===
+            "in_transit"
+          ).length;
 
       document
-        .getElementById("countWaiting")
-        .textContent = waiting;
+        .getElementById("totalWaiting")
+        .textContent =
+          jobs.filter(job =>
+            cleanStatus(job.status) ===
+            "waiting_payment"
+          ).length;
     }
 
-    function filteredJobs() {
-      const query =
+    function getVisibleJobs() {
+      const search =
         searchInput.value
           .trim()
           .toLowerCase();
@@ -858,13 +813,14 @@
           return false;
         }
 
-        if (!query) {
+        if (!search) {
           return true;
         }
 
         const driverName =
-          driversById[job.assigned_driver_id] ||
-          "";
+          driversById[
+            String(job.assigned_driver_id || "")
+          ] || "";
 
         const searchable = [
           job.job_number,
@@ -879,27 +835,26 @@
           .join(" ")
           .toLowerCase();
 
-        return searchable.includes(query);
+        return searchable.includes(search);
       });
     }
 
     function renderJobs() {
       const visibleJobs =
-        filteredJobs();
+        getVisibleJobs();
 
       document
         .getElementById("visibleCount")
         .textContent =
-          `${visibleJobs.length} ${
-            visibleJobs.length === 1
-              ? "job"
-              : "jobs"
-          }`;
+          visibleJobs.length +
+          (visibleJobs.length === 1
+            ? " job"
+            : " jobs");
 
       if (!visibleJobs.length) {
         jobsList.innerHTML = `
           <div class="empty">
-            No open jobs match your search or filter.
+            No active jobs match your search or filter.
           </div>
         `;
 
@@ -911,35 +866,43 @@
           const status =
             cleanStatus(job.status);
 
+          const realJobId =
+            String(job.id || "").trim();
+
           const driverName =
             job.assigned_driver_id
               ? (
                   driversById[
-                    job.assigned_driver_id
+                    String(job.assigned_driver_id)
                   ] || "Assigned Driver"
                 )
               : "Unassigned";
 
-          const eta =
+          const estimatedDelivery =
             job.estimated_delivery ||
             job.estimated_delivery_at ||
             job.delivery_eta ||
             job.estimated_delivery_time ||
             null;
 
+          /*
+            This creates the correct link using
+            the actual Supabase UUID.
+          */
+          const jobUrl =
+            "/job.html?id=" +
+            encodeURIComponent(realJobId);
+
           return `
             <a
-              class="job-row"
-              href="/job.html?id=${encodeURIComponent(
-                job.id
-              )}"
+              class="job-card"
+              href="${escapeHtml(jobUrl)}"
             >
               <div class="job-top">
                 <div>
                   <div class="job-number">
                     ${escapeHtml(
-                      job.job_number ||
-                      "Job"
+                      job.job_number || "Job"
                     )}
                   </div>
 
@@ -974,7 +937,7 @@
                 </div>
               </div>
 
-              <div class="job-route">
+              <div class="route">
                 <div>
                   <span class="route-label">
                     Pickup
@@ -1038,12 +1001,14 @@
 
                   <div class="meta-value">
                     ${escapeHtml(
-                      formatDate(eta)
+                      formatDate(
+                        estimatedDelivery
+                      )
                     )}
                   </div>
                 </div>
 
-                <div class="open-label">
+                <div class="open-job">
                   Open Job →
                 </div>
               </div>
@@ -1068,16 +1033,15 @@
         "click",
         async function () {
           this.disabled = true;
-          this.textContent = "Refreshing...";
+          this.textContent =
+            "Refreshing...";
 
           try {
-            await Promise.all([
-              loadDrivers(),
-              loadJobs()
-            ]);
+            await loadDrivers();
+            await loadJobs();
           } catch (error) {
             jobsList.innerHTML = `
-              <div class="error-message">
+              <div class="error">
                 ${escapeHtml(
                   error.message ||
                   "Unable to refresh active jobs."
@@ -1094,7 +1058,7 @@
     (async function startPage() {
       try {
         const session =
-          await requireDispatchAccess();
+          await verifyDispatchUser();
 
         if (!session) {
           return;
@@ -1104,7 +1068,7 @@
         await loadJobs();
       } catch (error) {
         jobsList.innerHTML = `
-          <div class="error-message">
+          <div class="error">
             ${escapeHtml(
               error.message ||
               "Unable to load active jobs."
