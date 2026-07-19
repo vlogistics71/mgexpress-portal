@@ -833,25 +833,24 @@
           ).length;
     }
 
-    function createCustomerUrl(
-      customer
-    ) {
-      if (customer.email) {
-        return (
-          "/customer-details.html?email=" +
-          encodeURIComponent(
-            customer.email
-          )
-        );
-      }
+    function createCustomerUrl(customer) {
+  const portalBase =
+    "https://portal.migenteexpress.com";
 
-      return (
-        "/customer-details.html?name=" +
-        encodeURIComponent(
-          customer.name
-        )
-      );
-    }
+  if (customer.email) {
+    return (
+      portalBase +
+      "/customer-details.html?email=" +
+      encodeURIComponent(customer.email)
+    );
+  }
+
+  return (
+    portalBase +
+    "/customer-details.html?name=" +
+    encodeURIComponent(customer.name)
+  );
+}
 
     function renderCustomers() {
       const shownCustomers =
