@@ -8,7 +8,7 @@
     content="width=device-width, initial-scale=1"
   >
 
-  <title>MG Express Dispatch</title>
+  <title>MG Express Dispatch Dashboard</title>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
@@ -27,7 +27,12 @@
       --ink: #17221e;
       --muted: #68756f;
       --line: #dfe8e4;
-      --danger: #a32d2d;
+      --danger: #9b2929;
+      --danger-bg: #fff0f0;
+      --warning: #946000;
+      --warning-bg: #fff5d8;
+      --blue: #245d9c;
+      --blue-bg: #eaf3ff;
     }
 
     body {
@@ -44,31 +49,26 @@
       font: inherit;
     }
 
-    button,
-    a {
-      -webkit-tap-highlight-color: transparent;
+    .hidden {
+      display: none !important;
     }
 
     .topbar {
       position: sticky;
       top: 0;
       z-index: 50;
+      padding: 18px 20px;
       background: var(--dark-green);
       color: white;
-      padding: 18px 20px;
     }
 
     .topbar-inner {
-      width: min(1050px, 100%);
+      width: min(950px, 100%);
       margin: auto;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 15px;
     }
 
     .brand {
-      font-size: 24px;
+      font-size: 23px;
       font-weight: 900;
       line-height: 1.08;
     }
@@ -84,375 +84,362 @@
       overflow-wrap: anywhere;
     }
 
-    .signout {
-      border: 0;
-      border-radius: 16px;
-      padding: 15px 18px;
-      background: white;
-      color: var(--dark-green);
-      font-weight: 900;
-      cursor: pointer;
-      min-width: 112px;
-    }
-
     .container {
-      width: min(1050px, 100%);
+      width: min(950px, 100%);
       margin: auto;
-      padding: 30px 18px 60px;
-    }
-
-    .page-heading {
-      display: flex;
-      justify-content: space-between;
-      align-items: flex-end;
-      gap: 18px;
-      margin-bottom: 24px;
+      padding: 28px 18px 75px;
     }
 
     .eyebrow {
+      margin-bottom: 6px;
       color: var(--muted);
-      font-size: 18px;
-      margin-bottom: 5px;
+      font-size: 17px;
     }
 
     h1 {
       margin: 0;
-      font-size: 44px;
-      line-height: 1.05;
+      font-size: clamp(40px, 8vw, 56px);
+      line-height: 1.03;
     }
 
-    h2 {
-      margin: 0;
-      font-size: 29px;
-    }
-
-    .primary-button {
+    .new-job-button {
+      width: 100%;
+      min-height: 57px;
+      margin-top: 25px;
       border: 0;
-      border-radius: 14px;
-      padding: 15px 20px;
+      border-radius: 16px;
       background: var(--green);
       color: white;
       font-weight: 900;
       cursor: pointer;
     }
 
-    .secondary-button {
+    .quick-links {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 12px;
+      margin-top: 18px;
+    }
+
+    .quick-link {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 70px;
+      padding: 14px;
+      border: 1px solid var(--line);
+      border-radius: 17px;
+      background: white;
+      color: var(--dark-green);
+      text-align: center;
+      text-decoration: none;
+      font-weight: 900;
+      box-shadow: 0 6px 20px rgba(0, 0, 0, .035);
+    }
+
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 12px;
+      margin-top: 27px;
+    }
+
+    .stat-card {
+      min-width: 0;
+      padding: 19px;
+      border: 1px solid var(--line);
+      border-radius: 20px;
+      background: white;
+      box-shadow: 0 7px 22px rgba(0, 0, 0, .04);
+    }
+
+    .stat-number {
+      color: var(--green);
+      font-size: 34px;
+      font-weight: 900;
+    }
+
+    .stat-label {
+      margin-top: 8px;
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.35;
+    }
+
+    .panel {
+      margin-top: 25px;
+      padding: 20px;
+      border: 1px solid var(--line);
+      border-radius: 22px;
+      background: white;
+      box-shadow: 0 8px 27px rgba(0, 0, 0, .04);
+    }
+
+    .panel-heading {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 15px;
+      margin-bottom: 17px;
+    }
+
+    .panel-heading h2 {
+      margin: 0;
+      font-size: 29px;
+    }
+
+    .refresh-button,
+    .close-button {
+      min-height: 48px;
+      padding: 11px 17px;
       border: 1px solid var(--line);
       border-radius: 13px;
-      padding: 13px 16px;
       background: white;
       color: var(--dark-green);
       font-weight: 900;
       cursor: pointer;
     }
 
-    .navigation {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 10px;
-      margin-bottom: 24px;
-    }
-
-    .navigation a {
-      text-decoration: none;
-      display: inline-block;
-    }
-
-    .stats {
-      display: grid;
-      grid-template-columns: repeat(5, minmax(0, 1fr));
-      gap: 13px;
-      margin-bottom: 30px;
-    }
-
-    .stat-card {
-      background: white;
-      border: 1px solid var(--line);
-      border-radius: 20px;
-      padding: 20px;
-      min-height: 145px;
-      box-shadow: 0 8px 25px rgba(0, 0, 0, .04);
-    }
-
-    .stat-number {
-      color: var(--green);
-      font-size: 38px;
-      font-weight: 900;
-    }
-
-    .stat-label {
-      color: var(--muted);
-      margin-top: 9px;
-      line-height: 1.3;
-    }
-
-    .panel {
-      background: white;
-      border: 1px solid var(--line);
-      border-radius: 22px;
-      padding: 23px;
-      margin-bottom: 26px;
-      box-shadow: 0 9px 28px rgba(0, 0, 0, .05);
-    }
-
-    .hidden {
-      display: none;
-    }
-
-    .panel-heading,
-    .jobs-heading {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: 14px;
-      margin-bottom: 20px;
-    }
-
-    .quote-form {
-      display: grid;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: 15px;
-    }
-
-    label {
-      display: block;
-      color: var(--muted);
-      font-size: 12px;
-      font-weight: 900;
-      text-transform: uppercase;
-    }
-
-    label.full {
-      grid-column: 1 / -1;
-    }
-
-    input,
-    select,
-    textarea {
+    .search-box {
       width: 100%;
-      margin-top: 7px;
-      padding: 14px;
-      border: 1px solid #ccd8d3;
-      border-radius: 12px;
+      min-height: 50px;
+      margin-bottom: 15px;
+      padding: 12px 14px;
+      border: 1px solid var(--line);
+      border-radius: 13px;
       background: white;
       color: var(--ink);
-      outline: none;
-    }
-
-    input:focus,
-    select:focus,
-    textarea:focus {
-      border-color: var(--green);
-      box-shadow: 0 0 0 3px rgba(8, 116, 85, .12);
-    }
-
-    textarea {
-      min-height: 90px;
-      resize: vertical;
-    }
-
-    .form-actions {
-      grid-column: 1 / -1;
-      display: flex;
-      gap: 10px;
-      flex-wrap: wrap;
-    }
-
-    .message {
-      margin-top: 15px;
-      padding: 13px;
-      border-radius: 11px;
-      line-height: 1.4;
-    }
-
-    .message.info {
-      background: #edf7f3;
-      color: #06543e;
-    }
-
-    .message.error {
-      background: #fff0f0;
-      color: var(--danger);
     }
 
     .jobs-list {
-      display: grid;
-      gap: 18px;
-    }
-
-    .job-card {
-      background: white;
+      overflow: hidden;
       border: 1px solid var(--line);
-      border-radius: 20px;
-      padding: 20px;
-      box-shadow: 0 8px 24px rgba(0, 0, 0, .04);
+      border-radius: 18px;
     }
 
-    .job-top {
-      display: flex;
-      justify-content: space-between;
-      align-items: flex-start;
-      gap: 12px;
-      margin-bottom: 17px;
+    .job-row {
+      display: grid;
+      grid-template-columns:
+        minmax(120px, .8fr)
+        minmax(0, 1.3fr)
+        minmax(130px, .8fr)
+        minmax(120px, .8fr)
+        auto;
+      gap: 14px;
+      align-items: center;
+      min-height: 85px;
+      padding: 15px 17px;
+      border-bottom: 1px solid var(--line);
+      background: white;
+      color: inherit;
+      text-decoration: none;
+    }
+
+    .job-row:last-child {
+      border-bottom: 0;
+    }
+
+    .job-row:active {
+      background: #f7faf9;
     }
 
     .job-number {
       color: var(--dark-green);
-      font-size: 24px;
+      font-size: 18px;
       font-weight: 900;
+      overflow-wrap: anywhere;
     }
 
-    .customer {
-      margin-top: 5px;
-      font-size: 18px;
+    .customer-name {
+      font-size: 16px;
       font-weight: 800;
+      overflow-wrap: anywhere;
     }
 
     .customer-email {
       margin-top: 4px;
       color: var(--muted);
+      font-size: 12px;
       overflow-wrap: anywhere;
     }
 
     .status-pill {
-      border-radius: 999px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: fit-content;
       padding: 8px 11px;
-      background: var(--light-green);
-      color: var(--green);
+      border-radius: 999px;
       font-size: 12px;
       font-weight: 900;
-      text-transform: capitalize;
       white-space: nowrap;
     }
 
-    .route {
-      border-radius: 15px;
-      padding: 16px;
-      background: #f7faf9;
-      line-height: 1.45;
-      margin-bottom: 17px;
+    .status-new {
+      background: var(--blue-bg);
+      color: var(--blue);
     }
 
-    .route-arrow {
-      margin: 8px 0;
+    .status-waiting_payment {
+      background: var(--warning-bg);
+      color: var(--warning);
+    }
+
+    .status-paid,
+    .status-ready,
+    .status-in_transit {
+      background: var(--light-green);
       color: var(--green);
-      font-size: 23px;
-      font-weight: 900;
     }
 
-    .job-details {
-      display: grid;
-      grid-template-columns: repeat(3, minmax(0, 1fr));
-      gap: 12px;
-      margin-bottom: 17px;
-    }
-
-    .detail-box {
-      background: #f7faf9;
-      border-radius: 13px;
-      padding: 13px;
-    }
-
-    .detail-label {
+    .driver-label {
+      display: block;
+      margin-bottom: 4px;
       color: var(--muted);
-      font-size: 11px;
+      font-size: 10px;
       font-weight: 900;
       text-transform: uppercase;
     }
 
-    .detail-value {
-      margin-top: 5px;
-      line-height: 1.35;
+    .driver-name {
+      font-size: 13px;
+      font-weight: 800;
       overflow-wrap: anywhere;
     }
 
-    .instructions {
-      margin-bottom: 17px;
-      padding: 15px;
-      border-radius: 14px;
-      background: #fff8ed;
-      line-height: 1.45;
-      white-space: pre-wrap;
-    }
-
-    .job-controls {
-      display: grid;
-      grid-template-columns: repeat(3, minmax(0, 1fr));
-      gap: 12px;
-      align-items: end;
-    }
-
-    .save-job,
-    .photo-link {
-      min-height: 49px;
-      border: 0;
-      border-radius: 12px;
-      padding: 13px;
-      background: var(--green);
-      color: white;
-      text-align: center;
-      text-decoration: none;
+    .arrow {
+      color: var(--green);
+      font-size: 26px;
       font-weight: 900;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
     }
 
-    .photo-link {
-      background: #eaf3ef;
-      color: var(--dark-green);
-    }
-
-    .photo-link.disabled {
-      opacity: .5;
-      pointer-events: none;
+    .empty,
+    .message {
+      padding: 28px 20px;
+      border-radius: 17px;
+      text-align: center;
+      line-height: 1.55;
     }
 
     .empty {
-      padding: 28px;
-      text-align: center;
+      background: #f7faf9;
       color: var(--muted);
-      background: #fafdfb;
-      border-radius: 17px;
     }
 
-    @media (max-width: 900px) {
+    .message.success {
+      background: var(--light-green);
+      color: var(--dark-green);
+    }
+
+    .message.error {
+      background: var(--danger-bg);
+      color: var(--danger);
+    }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 15px;
+    }
+
+    .field {
+      min-width: 0;
+    }
+
+    .field.full {
+      grid-column: 1 / -1;
+    }
+
+    .field label {
+      display: block;
+      margin-bottom: 7px;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 900;
+      letter-spacing: .04em;
+      text-transform: uppercase;
+    }
+
+    .field input,
+    .field select,
+    .field textarea {
+      width: 100%;
+      min-height: 50px;
+      padding: 12px 14px;
+      border: 1px solid var(--line);
+      border-radius: 13px;
+      background: white;
+      color: var(--ink);
+    }
+
+    .field textarea {
+      min-height: 110px;
+      resize: vertical;
+    }
+
+    .form-actions {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 12px;
+      margin-top: 18px;
+    }
+
+    .save-button {
+      min-height: 54px;
+      border: 0;
+      border-radius: 14px;
+      background: var(--green);
+      color: white;
+      font-weight: 900;
+      cursor: pointer;
+    }
+
+    @media (max-width: 760px) {
+      .quick-links {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
       .stats {
         grid-template-columns: repeat(2, minmax(0, 1fr));
       }
 
-      .job-controls {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-      }
-    }
-
-    @media (max-width: 650px) {
-      .page-heading {
-        align-items: stretch;
-        flex-direction: column;
+      .job-row {
+        grid-template-columns: minmax(0, 1fr) auto;
+        gap: 7px 12px;
+        min-height: 105px;
       }
 
-      .page-heading .primary-button {
-        width: 100%;
+      .customer-block {
+        grid-column: 1 / 2;
       }
 
-      .quote-form,
-      .job-controls,
-      .job-details {
+      .status-pill {
+        grid-column: 2 / 3;
+        grid-row: 1 / 2;
+      }
+
+      .driver-block {
+        grid-column: 1 / 2;
+      }
+
+      .arrow {
+        grid-column: 2 / 3;
+        grid-row: 2 / 4;
+        align-self: center;
+      }
+
+      .form-grid {
         grid-template-columns: 1fr;
       }
 
-      .stats {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
+      .field.full {
+        grid-column: auto;
       }
+    }
 
-      h1 {
-        font-size: 40px;
-      }
-
-      .panel {
-        padding: 18px;
+    @media (max-width: 430px) {
+      .quick-links {
+        grid-template-columns: 1fr;
       }
     }
   </style>
@@ -461,262 +448,332 @@
 <body>
   <header class="topbar">
     <div class="topbar-inner">
-      <div>
-        <div class="brand">
-          MG <span>EXPRESS</span> DISPATCH
-        </div>
-
-        <div class="staff-email" id="staffEmail"></div>
+      <div class="brand">
+        MG <span>EXPRESS</span> DISPATCH
       </div>
 
-      <button
-        class="signout"
-        id="signOutButton"
-        type="button"
-      >
-        Sign Out
-      </button>
+      <div
+        class="staff-email"
+        id="staffEmail"
+      ></div>
     </div>
   </header>
 
   <main class="container">
-    <div class="page-heading">
-      <div>
-        <div class="eyebrow">Dispatch control center</div>
-        <h1>Dashboard</h1>
-      </div>
-
-      <button
-        class="primary-button"
-        id="newQuoteButton"
-        type="button"
-      >
-        + New Job
-      </button>
+    <div class="eyebrow">
+      Dispatch control center
     </div>
 
-    <nav class="navigation">
-      <a
-        class="secondary-button"
-        href="/history.html"
-      >
+    <h1>Dashboard</h1>
+
+    <button
+      class="new-job-button"
+      id="openJobFormButton"
+      type="button"
+    >
+      + New Job
+    </button>
+
+    <section class="quick-links">
+      <a class="quick-link" href="/jobs.html">
+        Active Jobs
+      </a>
+
+      <a class="quick-link" href="/history.html">
         Job History
       </a>
 
-      <a
-        class="secondary-button"
-        href="/customer.html"
-      >
+      <a class="quick-link" href="/customers.html">
         Customers
       </a>
 
-      <a
-        class="secondary-button"
-        href="https://drivers.migenteexpress.com"
-        target="_blank"
-        rel="noopener"
-      >
-        Driver Portal
+      <a class="quick-link" href="/drivers.html">
+        Drivers
       </a>
-    </nav>
+
+      <a class="quick-link" href="/payroll.html">
+        Payroll
+      </a>
+
+      <a class="quick-link" href="/invoices.html">
+        Invoices
+      </a>
+    </section>
 
     <section class="stats">
       <div class="stat-card">
-        <div class="stat-number" id="countNew">0</div>
-        <div class="stat-label">New</div>
+        <div class="stat-number" id="countNew">
+          0
+        </div>
+
+        <div class="stat-label">
+          New
+        </div>
       </div>
 
       <div class="stat-card">
-        <div class="stat-number" id="countWaiting">0</div>
-        <div class="stat-label">Waiting Payment</div>
+        <div class="stat-number" id="countWaiting">
+          0
+        </div>
+
+        <div class="stat-label">
+          Waiting Payment
+        </div>
       </div>
 
       <div class="stat-card">
-        <div class="stat-number" id="countReady">0</div>
-        <div class="stat-label">Paid / Ready</div>
+        <div class="stat-number" id="countReady">
+          0
+        </div>
+
+        <div class="stat-label">
+          Paid / Ready
+        </div>
       </div>
 
       <div class="stat-card">
-        <div class="stat-number" id="countTransit">0</div>
-        <div class="stat-label">In Transit</div>
-      </div>
+        <div class="stat-number" id="countTransit">
+          0
+        </div>
 
-      <div class="stat-card">
-        <div class="stat-number" id="countDelivered">0</div>
-        <div class="stat-label">Delivered</div>
+        <div class="stat-label">
+          In Transit
+        </div>
       </div>
     </section>
 
     <section
-      id="quotePanel"
       class="panel hidden"
+      id="jobFormPanel"
     >
       <div class="panel-heading">
         <h2>Create New Job</h2>
 
         <button
-          class="secondary-button"
-          id="closeQuoteButton"
+          class="close-button"
+          id="closeJobFormButton"
           type="button"
         >
           Close
         </button>
       </div>
 
-      <form id="quoteForm" class="quote-form">
-        <label>
-          Job Number
+      <form id="jobForm">
+        <div class="form-grid">
+          <div class="field">
+            <label for="customerName">
+              Customer Name
+            </label>
 
-          <input
-            name="job_number"
-            type="text"
-            placeholder="MGE-00002"
-            required
-          >
-        </label>
+            <input
+              id="customerName"
+              name="customer_name"
+              type="text"
+              required
+            >
+          </div>
 
-        <label>
-          Customer Name
+          <div class="field">
+            <label for="customerEmail">
+              Customer Email
+            </label>
 
-          <input
-            name="customer_name"
-            type="text"
-            required
-          >
-        </label>
+            <input
+              id="customerEmail"
+              name="customer_email"
+              type="email"
+            >
+          </div>
 
-        <label>
-          Customer Email
+          <div class="field full">
+            <label for="pickupAddress">
+              Pickup Address
+            </label>
 
-          <input
-            name="customer_email"
-            type="email"
-          >
-        </label>
+            <input
+              id="pickupAddress"
+              name="pickup_address"
+              type="text"
+              required
+            >
+          </div>
 
-        <label>
-          Assigned Driver
+          <div class="field full">
+            <label for="deliveryAddress">
+              Delivery Address
+            </label>
 
-          <select name="assigned_driver_id" id="newJobDriver">
-            <option value="">Unassigned</option>
-          </select>
-        </label>
+            <input
+              id="deliveryAddress"
+              name="delivery_address"
+              type="text"
+              required
+            >
+          </div>
 
-        <label class="full">
-          Pickup Address
+          <div class="field">
+            <label for="vehicleType">
+              Vehicle Type
+            </label>
 
-          <textarea
-            name="pickup_address"
-            required
-          ></textarea>
-        </label>
+            <select
+              id="vehicleType"
+              name="vehicle_type"
+            >
+              <option value="Car">
+                Car
+              </option>
 
-        <label class="full">
-          Delivery Address
+              <option value="Small Cargo Van">
+                Small Cargo Van
+              </option>
 
-          <textarea
-            name="delivery_address"
-            required
-          ></textarea>
-        </label>
+              <option value="Sprinter Van">
+                Sprinter Van
+              </option>
 
-        <label>
-          Vehicle Type
+              <option value="Box Truck">
+                Box Truck
+              </option>
+            </select>
+          </div>
 
-          <select name="vehicle_type">
-            <option value="">Choose vehicle</option>
-            <option value="Car">Car</option>
-            <option value="SUV">SUV</option>
-            <option value="Cargo Van">Cargo Van</option>
-            <option value="Sprinter Van">Sprinter Van</option>
-            <option value="Box Truck">Box Truck</option>
-          </select>
-        </label>
+          <div class="field">
+            <label for="deliverySpeed">
+              Delivery Speed
+            </label>
 
-        <label>
-          Delivery Speed
+            <select
+              id="deliverySpeed"
+              name="delivery_speed"
+            >
+              <option value="Standard Delivery">
+                Standard Delivery
+              </option>
 
-          <select name="delivery_speed">
-            <option value="">Choose speed</option>
-            <option value="Standard">Standard</option>
-            <option value="Same Day">Same Day</option>
-            <option value="Rush">Rush</option>
-            <option value="Scheduled Route">Scheduled Route</option>
-          </select>
-        </label>
+              <option value="Same-Day Delivery">
+                Same-Day Delivery
+              </option>
 
-        <label>
-          Package Type
+              <option value="3-Hour Delivery">
+                3-Hour Delivery
+              </option>
 
-          <input
-            name="package_type"
-            type="text"
-            placeholder="Documents, medical supplies, box..."
-          >
-        </label>
+              <option value="Rush Delivery">
+                Rush Delivery
+              </option>
+            </select>
+          </div>
 
-        <label>
-          Driver Pay
+          <div class="field">
+            <label for="packageType">
+              Package
+            </label>
 
-          <input
-            name="driver_pay"
-            type="number"
-            min="0"
-            step="0.01"
-            value="0.00"
-          >
-        </label>
+            <input
+              id="packageType"
+              name="package_type"
+              type="text"
+              placeholder="Example: 3 boxes"
+            >
+          </div>
 
-        <label>
-          Status
+          <div class="field">
+            <label for="deliveryMethod">
+              Delivery Method
+            </label>
 
-          <select name="status">
-            <option value="new">New</option>
-            <option value="waiting_payment">Waiting Payment</option>
-            <option value="paid">Paid / Ready</option>
-            <option value="in_transit">In Transit</option>
-            <option value="delivered">Delivered</option>
-            <option value="cancelled">Cancelled</option>
-          </select>
-        </label>
+            <select
+              id="deliveryMethod"
+              name="delivery_method"
+            >
+              <option value="Hand Delivery">
+                Hand Delivery
+              </option>
 
-        <label class="full">
-          Special Instructions
+              <option value="Leave at Door">
+                Leave at Door
+              </option>
 
-          <textarea
-            name="special_instructions"
-            placeholder="Pickup details, gate code, contact information..."
-          ></textarea>
-        </label>
+              <option value="Signature Required">
+                Signature Required
+              </option>
+            </select>
+          </div>
+
+          <div class="field">
+            <label for="driverSelect">
+              Assigned Driver
+            </label>
+
+            <select
+              id="driverSelect"
+              name="assigned_driver_id"
+            >
+              <option value="">
+                Unassigned
+              </option>
+            </select>
+          </div>
+
+          <div class="field">
+            <label for="driverPay">
+              Driver Pay
+            </label>
+
+            <input
+              id="driverPay"
+              name="driver_pay"
+              type="number"
+              min="0"
+              step="0.01"
+              placeholder="0.00"
+            >
+          </div>
+
+          <div class="field full">
+            <label for="specialInstructions">
+              Special Instructions
+            </label>
+
+            <textarea
+              id="specialInstructions"
+              name="special_instructions"
+            ></textarea>
+          </div>
+        </div>
 
         <div class="form-actions">
           <button
-            class="primary-button"
-            id="saveQuoteButton"
+            class="save-button"
+            id="saveJobButton"
             type="submit"
           >
-            Save Job
+            Create Job
           </button>
 
           <button
-            class="secondary-button"
-            id="cancelQuoteButton"
+            class="close-button"
+            id="cancelJobButton"
             type="button"
           >
             Cancel
           </button>
         </div>
-      </form>
 
-      <div id="quoteMessage"></div>
+        <div
+          class="message hidden"
+          id="formMessage"
+        ></div>
+      </form>
     </section>
 
     <section class="panel">
-      <div class="jobs-heading">
-        <h2>Quotes &amp; Jobs</h2>
+      <div class="panel-heading">
+        <h2>Quotes & Jobs</h2>
 
         <button
-          class="secondary-button"
+          class="refresh-button"
           id="refreshButton"
           type="button"
         >
@@ -724,8 +781,17 @@
         </button>
       </div>
 
-      <div id="jobsBox" class="jobs-list">
-        <div class="empty">Loading quotes and jobs…</div>
+      <input
+        class="search-box"
+        id="searchInput"
+        type="search"
+        placeholder="Search job number, customer or driver"
+      >
+
+      <div id="jobsBox">
+        <div class="empty">
+          Loading active jobs...
+        </div>
       </div>
     </section>
   </main>
@@ -735,335 +801,83 @@
       "https://dczlucwfjayymlwbzzdi.supabase.co",
       "sb_publishable_kcv_a78ZyUxMo2neKUANdw_XN7eAMpI"
     );
-    
+
     window.mgDispatchClient = client;
 
     const jobsBox =
       document.getElementById("jobsBox");
 
-    const quotePanel =
-      document.getElementById("quotePanel");
+    const searchInput =
+      document.getElementById("searchInput");
 
-    const quoteForm =
-      document.getElementById("quoteForm");
+    const jobFormPanel =
+      document.getElementById("jobFormPanel");
 
-    const quoteMessage =
-      document.getElementById("quoteMessage");
+    const jobForm =
+      document.getElementById("jobForm");
 
-    const saveQuoteButton =
-      document.getElementById("saveQuoteButton");
+    const formMessage =
+      document.getElementById("formMessage");
 
+    const saveJobButton =
+      document.getElementById("saveJobButton");
+
+    let jobs = [];
     let drivers = [];
-    let quotes = [];
+    let driversById = {};
 
     function escapeHtml(value) {
-      const element = document.createElement("div");
-      element.textContent = value ?? "";
-      return element.innerHTML;
+      const div = document.createElement("div");
+      div.textContent = value ?? "";
+      return div.innerHTML;
     }
 
-    function money(value) {
-      return Number(value || 0).toLocaleString(
-        "en-US",
-        {
-          style: "currency",
-          currency: "USD"
-        }
-      );
+    function cleanStatus(value) {
+      return String(value || "new")
+        .trim()
+        .toLowerCase();
     }
 
-    function statusLabel(status) {
+    function statusLabel(value) {
       const labels = {
         new: "New",
         waiting_payment: "Waiting Payment",
-        paid: "Paid / Ready",
-        ready: "Paid / Ready",
-        in_transit: "In Transit",
-        delivered: "Delivered",
-        cancelled: "Cancelled"
+        paid: "Paid",
+        ready: "Ready",
+        in_transit: "In Transit"
       };
 
-      return labels[status] ||
-        String(status || "").replaceAll("_", " ");
+      return labels[cleanStatus(value)] ||
+        String(value || "Open")
+          .replaceAll("_", " ");
     }
 
-    function openQuotePanel() {
-      quotePanel.classList.remove("hidden");
-      quotePanel.scrollIntoView({
+    function setFormMessage(message, type) {
+      formMessage.textContent = message || "";
+
+      formMessage.className =
+        message
+          ? `message ${type || ""}`
+          : "message hidden";
+    }
+
+    function openJobForm() {
+      jobFormPanel.classList.remove("hidden");
+
+      setFormMessage("", "");
+
+      jobFormPanel.scrollIntoView({
         behavior: "smooth",
         block: "start"
       });
     }
 
-    function closeQuotePanel() {
-      quotePanel.classList.add("hidden");
-      quoteForm.reset();
-      quoteMessage.className = "";
-      quoteMessage.textContent = "";
+    function closeJobForm() {
+      jobFormPanel.classList.add("hidden");
+      setFormMessage("", "");
     }
 
-    function setQuoteMessage(text, type) {
-      quoteMessage.className = "message " + type;
-      quoteMessage.textContent = text;
-    }
-
-    function populateNewJobDrivers() {
-      const select =
-        document.getElementById("newJobDriver");
-
-      select.innerHTML =
-        '<option value="">Unassigned</option>' +
-        drivers.map(driver => `
-          <option value="${escapeHtml(driver.id)}">
-            ${escapeHtml(
-              driver.full_name ||
-              driver.email ||
-              "Driver"
-            )}
-          </option>
-        `).join("");
-    }
-
-    function updateCounts() {
-      const count = status =>
-        quotes.filter(
-          quote => quote.status === status
-        ).length;
-
-      document.getElementById("countNew").textContent =
-        count("new");
-
-      document.getElementById("countWaiting").textContent =
-        count("waiting_payment");
-
-      document.getElementById("countReady").textContent =
-        count("paid") + count("ready");
-
-      document.getElementById("countTransit").textContent =
-        count("in_transit");
-
-      document.getElementById("countDelivered").textContent =
-        count("delivered");
-    }
-
-    function driverOptions(quote) {
-      const unassignedSelected =
-        quote.assigned_driver_id ? "" : "selected";
-
-      return `
-        <option value="" ${unassignedSelected}>
-          Unassigned
-        </option>
-
-        ${drivers.map(driver => {
-          const selected =
-            driver.id === quote.assigned_driver_id
-              ? "selected"
-              : "";
-
-          return `
-            <option
-              value="${escapeHtml(driver.id)}"
-              ${selected}
-            >
-              ${escapeHtml(
-                driver.full_name ||
-                driver.email ||
-                "Driver"
-              )}
-            </option>
-          `;
-        }).join("")}
-      `;
-    }
-
-    function statusOptions(quote) {
-      const statuses = [
-        "new",
-        "waiting_payment",
-        "paid",
-        "in_transit",
-        "delivered",
-        "cancelled"
-      ];
-
-      return statuses.map(status => `
-        <option
-          value="${status}"
-          ${status === quote.status ? "selected" : ""}
-        >
-          ${escapeHtml(statusLabel(status))}
-        </option>
-      `).join("");
-    }
-
-    function photoLink(url, label) {
-      if (!url) {
-        return `
-          <div class="photo-link disabled">
-            ${escapeHtml(label)} Not Available
-          </div>
-        `;
-      }
-
-      return `
-        <a
-          class="photo-link"
-          href="${escapeHtml(url)}"
-          target="_blank"
-          rel="noopener"
-        >
-          ${escapeHtml(label)}
-        </a>
-      `;
-    }
-
-    function renderJobs() {
-      updateCounts();
-
-      if (!quotes.length) {
-        jobsBox.innerHTML =
-          '<div class="empty">No quotes or jobs found.</div>';
-
-        return;
-      }
-
-      jobsBox.innerHTML = quotes.map(quote => `
-        <article class="job-card">
-          <div class="job-top">
-            <div>
-              <div class="job-number">
-                ${escapeHtml(quote.job_number)}
-              </div>
-
-              <div class="customer">
-                ${escapeHtml(
-                  quote.customer_name || "Customer"
-                )}
-              </div>
-
-              <div class="customer-email">
-                ${escapeHtml(quote.customer_email || "")}
-              </div>
-            </div>
-
-            <div class="status-pill">
-              ${escapeHtml(statusLabel(quote.status))}
-            </div>
-          </div>
-
-          <div class="route">
-            <strong>Pickup:</strong><br>
-            ${escapeHtml(quote.pickup_address || "")}
-
-            <div class="route-arrow">↓</div>
-
-            <strong>Delivery:</strong><br>
-            ${escapeHtml(quote.delivery_address || "")}
-          </div>
-
-          <div class="job-details">
-            <div class="detail-box">
-              <div class="detail-label">Vehicle</div>
-              <div class="detail-value">
-                ${escapeHtml(quote.vehicle_type || "Not set")}
-              </div>
-            </div>
-
-            <div class="detail-box">
-              <div class="detail-label">Delivery Speed</div>
-              <div class="detail-value">
-                ${escapeHtml(quote.delivery_speed || "Not set")}
-              </div>
-            </div>
-
-            <div class="detail-box">
-              <div class="detail-label">Package</div>
-              <div class="detail-value">
-                ${escapeHtml(quote.package_type || "Not set")}
-              </div>
-            </div>
-          </div>
-
-          ${
-            quote.special_instructions
-              ? `
-                <div class="instructions">
-                  <strong>Instructions:</strong><br>
-                  ${escapeHtml(quote.special_instructions)}
-                </div>
-              `
-              : ""
-          }
-
-          <div class="job-controls">
-            <label>
-              Assigned Driver
-
-              <select id="driver-${quote.id}">
-                ${driverOptions(quote)}
-              </select>
-            </label>
-
-            <label>
-              Driver Pay
-
-              <input
-                id="driverPay-${quote.id}"
-                type="number"
-                min="0"
-                step="0.01"
-                value="${Number(
-                  quote.driver_pay || 0
-                ).toFixed(2)}"
-              >
-            </label>
-
-            <label>
-              Status
-
-              <select id="status-${quote.id}">
-                ${statusOptions(quote)}
-              </select>
-            </label>
-
-            <button
-              class="save-job"
-              type="button"
-              onclick="saveJob('${quote.id}')"
-            >
-              Save Changes
-            </button>
-
-            ${photoLink(
-              quote.pickup_photo_url,
-              "View Pickup Photo"
-            )}
-
-            ${photoLink(
-              quote.delivery_photo_url,
-              "View Delivery Photo"
-            )}
-          </div>
-
-          <div id="jobMessage-${quote.id}"></div>
-        </article>
-      `).join("");
-    }
-
-    function showJobMessage(quoteId, text, type) {
-      const box =
-        document.getElementById(
-          "jobMessage-" + quoteId
-        );
-
-      if (!box) return;
-
-      box.className = "message " + type;
-      box.textContent = text;
-    }
-
-    async function requireDispatchAccess() {
+    async function verifyDispatchUser() {
       const sessionResult =
         await client.auth.getSession();
 
@@ -1075,8 +889,10 @@
         return null;
       }
 
-      document.getElementById("staffEmail").textContent =
-        session.user.email || "";
+      document
+        .getElementById("staffEmail")
+        .textContent =
+          session.user.email || "";
 
       const profileResult = await client
         .from("profiles")
@@ -1088,14 +904,10 @@
         profileResult.error ||
         !profileResult.data
       ) {
-        alert(
+        throw new Error(
           profileResult.error?.message ||
           "No MG Express profile was found."
         );
-
-        await client.auth.signOut();
-        location.replace("/index.html");
-        return null;
       }
 
       const role = String(
@@ -1103,13 +915,14 @@
       ).toLowerCase();
 
       if (
-        !["admin", "staff", "dispatcher"].includes(role)
+        ![
+          "admin",
+          "staff",
+          "dispatcher"
+        ].includes(role)
       ) {
         if (role === "driver") {
-          location.replace(
-            "https://drivers.migenteexpress.com"
-          );
-
+          location.replace("/driver.html");
           return null;
         }
 
@@ -1118,10 +931,18 @@
           return null;
         }
 
-        await client.auth.signOut();
-        location.replace("/index.html");
-        return null;
+        throw new Error(
+          "This account does not have dispatch access."
+        );
       }
+
+      window.dispatchEvent(
+        new CustomEvent("mg-dispatch-ready", {
+          detail: {
+            email: session.user.email
+          }
+        })
+      );
 
       return session;
     }
@@ -1130,40 +951,58 @@
       const result = await client
         .from("drivers")
         .select("id,full_name,email,active")
-        .eq("active", true)
         .order("full_name", {
           ascending: true
         });
 
       if (result.error) {
-        throw result.error;
+        drivers = [];
+        driversById = {};
+        return;
       }
 
       drivers = result.data || [];
-      populateNewJobDrivers();
+      driversById = {};
+
+      drivers.forEach(driver => {
+        driversById[String(driver.id)] =
+          driver.full_name ||
+          driver.email ||
+          "Driver";
+      });
+
+      document
+        .getElementById("driverSelect")
+        .innerHTML = `
+          <option value="">Unassigned</option>
+
+          ${drivers
+            .filter(driver =>
+              driver.active !== false
+            )
+            .map(driver => `
+              <option value="${escapeHtml(driver.id)}">
+                ${escapeHtml(
+                  driver.full_name ||
+                  driver.email ||
+                  "Driver"
+                )}
+              </option>
+            `)
+            .join("")}
+        `;
     }
 
-    async function loadQuotes() {
+    async function loadJobs() {
+      jobsBox.innerHTML = `
+        <div class="empty">
+          Loading active jobs...
+        </div>
+      `;
+
       const result = await client
         .from("quotes")
-        .select(`
-          id,
-          job_number,
-          customer_name,
-          customer_email,
-          pickup_address,
-          delivery_address,
-          vehicle_type,
-          delivery_speed,
-          package_type,
-          status,
-          special_instructions,
-          assigned_driver_id,
-          driver_pay,
-          pickup_photo_url,
-          delivery_photo_url,
-          created_at
-        `)
+        .select("*")
         .order("created_at", {
           ascending: false
         });
@@ -1172,180 +1011,309 @@
         throw result.error;
       }
 
-      quotes = result.data || [];
+      jobs = (result.data || []).filter(job => {
+        return ![
+          "delivered",
+          "cancelled",
+          "canceled"
+        ].includes(cleanStatus(job.status));
+      });
+
+      updateCounts();
       renderJobs();
     }
 
-    async function loadDashboard() {
-      jobsBox.innerHTML =
-        '<div class="empty">Loading quotes and jobs…</div>';
+    function updateCounts() {
+      const count = status =>
+        jobs.filter(job =>
+          cleanStatus(job.status) === status
+        ).length;
 
-      try {
-        await loadDrivers();
-        await loadQuotes();
-      } catch (error) {
-        jobsBox.innerHTML = `
-          <div class="message error">
-            ${escapeHtml(error.message)}
-          </div>
-        `;
-      }
+      document
+        .getElementById("countNew")
+        .textContent = count("new");
+
+      document
+        .getElementById("countWaiting")
+        .textContent =
+          count("waiting_payment");
+
+      document
+        .getElementById("countReady")
+        .textContent =
+          count("paid") + count("ready");
+
+      document
+        .getElementById("countTransit")
+        .textContent =
+          count("in_transit");
     }
 
-    async function saveJob(quoteId) {
-      const driverId =
-        document.getElementById(
-          "driver-" + quoteId
-        ).value || null;
+    function visibleJobs() {
+      const search =
+        searchInput.value
+          .trim()
+          .toLowerCase();
 
-      const status =
-        document.getElementById(
-          "status-" + quoteId
-        ).value;
+      if (!search) {
+        return jobs;
+      }
 
-      const driverPayValue =
-        document.getElementById(
-          "driverPay-" + quoteId
-        ).value;
+      return jobs.filter(job => {
+        const driverName =
+          driversById[
+            String(job.assigned_driver_id || "")
+          ] || "";
 
-      const driverPay =
-        driverPayValue === ""
-          ? 0
-          : Number(driverPayValue);
+        const searchable = [
+          job.job_number,
+          job.customer_name,
+          job.customer_email,
+          driverName,
+          job.pickup_address,
+          job.delivery_address
+        ]
+          .filter(Boolean)
+          .join(" ")
+          .toLowerCase();
 
-      if (
-        !Number.isFinite(driverPay) ||
-        driverPay < 0
-      ) {
-        showJobMessage(
-          quoteId,
-          "Enter a valid driver pay amount.",
-          "error"
-        );
+        return searchable.includes(search);
+      });
+    }
+
+    function renderJobs() {
+      const shownJobs =
+        visibleJobs();
+
+      if (!shownJobs.length) {
+        jobsBox.className = "";
+
+        jobsBox.innerHTML = `
+          <div class="empty">
+            No active jobs match your search.
+          </div>
+        `;
 
         return;
       }
 
-      showJobMessage(
-        quoteId,
-        "Saving changes…",
-        "info"
-      );
+      jobsBox.className = "jobs-list";
+
+      jobsBox.innerHTML =
+        shownJobs.map(job => {
+          const status =
+            cleanStatus(job.status);
+
+          const jobId =
+            String(job.id || "").trim();
+
+          const jobUrl =
+            "/job.html?id=" +
+            encodeURIComponent(jobId);
+
+          const driverName =
+            job.assigned_driver_id
+              ? (
+                  driversById[
+                    String(job.assigned_driver_id)
+                  ] || "Assigned Driver"
+                )
+              : "Unassigned";
+
+          return `
+            <a
+              class="job-row"
+              href="${escapeHtml(jobUrl)}"
+            >
+              <div class="job-number">
+                ${escapeHtml(
+                  job.job_number || "Job"
+                )}
+              </div>
+
+              <div class="customer-block">
+                <div class="customer-name">
+                  ${escapeHtml(
+                    job.customer_name ||
+                    "Customer"
+                  )}
+                </div>
+
+                ${
+                  job.customer_email
+                    ? `
+                      <div class="customer-email">
+                        ${escapeHtml(
+                          job.customer_email
+                        )}
+                      </div>
+                    `
+                    : ""
+                }
+              </div>
+
+              <div
+                class="status-pill status-${escapeHtml(
+                  status
+                )}"
+              >
+                ${escapeHtml(
+                  statusLabel(status)
+                )}
+              </div>
+
+              <div class="driver-block">
+                <span class="driver-label">
+                  Driver
+                </span>
+
+                <div class="driver-name">
+                  ${escapeHtml(driverName)}
+                </div>
+              </div>
+
+              <div class="arrow">›</div>
+            </a>
+          `;
+        }).join("");
+    }
+
+    function datePrefix() {
+      const now = new Date();
+
+      const year =
+        String(now.getFullYear()).slice(-2);
+
+      const month =
+        String(now.getMonth() + 1)
+          .padStart(2, "0");
+
+      const day =
+        String(now.getDate())
+          .padStart(2, "0");
+
+      return `MG-${year}${month}${day}-`;
+    }
+
+    async function createJobNumber() {
+      const prefix = datePrefix();
 
       const result = await client
         .from("quotes")
-        .update({
-          assigned_driver_id: driverId,
-          driver_pay: driverPay,
-          status: status
-        })
-        .eq("id", quoteId);
+        .select("job_number")
+        .like("job_number", `${prefix}%`);
 
       if (result.error) {
-        showJobMessage(
-          quoteId,
-          result.error.message,
-          "error"
-        );
-
-        return;
+        throw result.error;
       }
 
-      await loadQuotes();
-    }
+      let highest = 0;
 
-    window.saveJob = saveJob;
+      (result.data || []).forEach(job => {
+        const ending = String(
+          job.job_number || ""
+        ).slice(prefix.length);
 
-    quoteForm.addEventListener(
-      "submit",
-      async function (event) {
-        event.preventDefault();
-
-        saveQuoteButton.disabled = true;
-        saveQuoteButton.textContent = "Saving…";
-
-        setQuoteMessage(
-          "Saving new job…",
-          "info"
-        );
-
-        const formData =
-          new FormData(quoteForm);
-
-        const driverPayValue =
-          String(
-            formData.get("driver_pay") || "0"
-          );
-
-        const driverPay =
-          Number(driverPayValue);
+        const number = Number(ending);
 
         if (
-          !Number.isFinite(driverPay) ||
-          driverPay < 0
+          Number.isInteger(number) &&
+          number > highest
         ) {
-          setQuoteMessage(
-            "Enter a valid driver pay amount.",
-            "error"
-          );
-
-          saveQuoteButton.disabled = false;
-          saveQuoteButton.textContent = "Save Job";
-          return;
+          highest = number;
         }
+      });
+
+      return (
+        prefix +
+        String(highest + 1).padStart(3, "0")
+      );
+    }
+
+    async function createJob(event) {
+      event.preventDefault();
+
+      saveJobButton.disabled = true;
+      saveJobButton.textContent =
+        "Creating Job...";
+
+      setFormMessage(
+        "Creating job...",
+        "success"
+      );
+
+      try {
+        const formData =
+          new FormData(jobForm);
+
+        const jobNumber =
+          await createJobNumber();
 
         const assignedDriver =
           String(
-            formData.get("assigned_driver_id") || ""
-          );
+            formData.get(
+              "assigned_driver_id"
+            ) || ""
+          ).trim();
 
         const payload = {
-          job_number:
-            String(
-              formData.get("job_number") || ""
-            ).trim(),
+          job_number: jobNumber,
 
           customer_name:
             String(
-              formData.get("customer_name") || ""
+              formData.get(
+                "customer_name"
+              ) || ""
             ).trim(),
 
           customer_email:
             String(
-              formData.get("customer_email") || ""
+              formData.get(
+                "customer_email"
+              ) || ""
             ).trim(),
 
           pickup_address:
             String(
-              formData.get("pickup_address") || ""
+              formData.get(
+                "pickup_address"
+              ) || ""
             ).trim(),
 
           delivery_address:
             String(
-              formData.get("delivery_address") || ""
+              formData.get(
+                "delivery_address"
+              ) || ""
             ).trim(),
 
           vehicle_type:
             String(
-              formData.get("vehicle_type") || ""
-            ),
+              formData.get(
+                "vehicle_type"
+              ) || ""
+            ).trim(),
 
           delivery_speed:
             String(
-              formData.get("delivery_speed") || ""
-            ),
+              formData.get(
+                "delivery_speed"
+              ) || ""
+            ).trim(),
 
           package_type:
             String(
-              formData.get("package_type") || ""
+              formData.get(
+                "package_type"
+              ) || ""
             ).trim(),
 
-          driver_pay: driverPay,
-
-          status:
+          delivery_method:
             String(
-              formData.get("status") || "new"
-            ),
+              formData.get(
+                "delivery_method"
+              ) || ""
+            ).trim(),
 
           special_instructions:
             String(
@@ -1355,108 +1323,147 @@
             ).trim(),
 
           assigned_driver_id:
-            assignedDriver || null
+            assignedDriver || null,
+
+          driver_pay:
+            Number(
+              formData.get(
+                "driver_pay"
+              ) || 0
+            ),
+
+          status:
+            assignedDriver
+              ? "ready"
+              : "new"
         };
 
         const result = await client
           .from("quotes")
-          .insert(payload);
+          .insert(payload)
+          .select("*")
+          .maybeSingle();
 
         if (result.error) {
-          setQuoteMessage(
-            result.error.message,
-            "error"
-          );
-
-          saveQuoteButton.disabled = false;
-          saveQuoteButton.textContent = "Save Job";
-          return;
+          throw result.error;
         }
 
-        setQuoteMessage(
-          "Job saved successfully.",
-          "info"
+        jobForm.reset();
+
+        document
+          .getElementById("driverSelect")
+          .value = "";
+
+        setFormMessage(
+          `${jobNumber} was created successfully.`,
+          "success"
         );
 
-        await loadQuotes();
+        await loadJobs();
 
-        setTimeout(
-          closeQuotePanel,
-          700
+        setTimeout(() => {
+          closeJobForm();
+        }, 1200);
+      } catch (error) {
+        setFormMessage(
+          error.message ||
+          "Unable to create this job.",
+          "error"
         );
-
-        saveQuoteButton.disabled = false;
-        saveQuoteButton.textContent = "Save Job";
+      } finally {
+        saveJobButton.disabled = false;
+        saveJobButton.textContent =
+          "Create Job";
       }
+    }
+
+    document
+      .getElementById("openJobFormButton")
+      .addEventListener(
+        "click",
+        openJobForm
+      );
+
+    document
+      .getElementById("closeJobFormButton")
+      .addEventListener(
+        "click",
+        closeJobForm
+      );
+
+    document
+      .getElementById("cancelJobButton")
+      .addEventListener(
+        "click",
+        closeJobForm
+      );
+
+    jobForm.addEventListener(
+      "submit",
+      createJob
     );
 
-    document
-      .getElementById("newQuoteButton")
-      .addEventListener(
-        "click",
-        openQuotePanel
-      );
-
-    document
-      .getElementById("closeQuoteButton")
-      .addEventListener(
-        "click",
-        closeQuotePanel
-      );
-
-    document
-      .getElementById("cancelQuoteButton")
-      .addEventListener(
-        "click",
-        closeQuotePanel
-      );
+    searchInput.addEventListener(
+      "input",
+      renderJobs
+    );
 
     document
       .getElementById("refreshButton")
       .addEventListener(
         "click",
-        loadDashboard
-      );
-
-    document
-      .getElementById("signOutButton")
-      .addEventListener(
-        "click",
         async function () {
           this.disabled = true;
-          this.textContent = "Signing Out…";
+          this.textContent =
+            "Refreshing...";
 
           try {
-            await client.auth.signOut();
-          } finally {
-            localStorage.clear();
-            sessionStorage.clear();
+            await loadDrivers();
+            await loadJobs();
+          } catch (error) {
+            jobsBox.className = "";
 
-            location.replace(
-              "/index.html?loggedout=1"
-            );
+            jobsBox.innerHTML = `
+              <div class="message error">
+                ${escapeHtml(
+                  error.message ||
+                  "Unable to refresh dashboard."
+                )}
+              </div>
+            `;
+          } finally {
+            this.disabled = false;
+            this.textContent = "Refresh";
           }
         }
       );
 
-    (async function start() {
-      const session =
-        await requireDispatchAccess();
+    (async function startPage() {
+      try {
+        const session =
+          await verifyDispatchUser();
 
-      if (session) {
+        if (!session) {
+          return;
+        }
 
-    window.dispatchEvent(
-        new CustomEvent("mg-dispatch-ready", {
-            detail: {
-                email: session.user.email
-            }
-        })
-    );
+        await loadDrivers();
+        await loadJobs();
+      } catch (error) {
+        jobsBox.className = "";
 
-    await loadDashboard();
+        jobsBox.innerHTML = `
+          <div class="message error">
+            ${escapeHtml(
+              error.message ||
+              "Unable to load dashboard."
+            )}
+          </div>
+        `;
       }
     })();
   </script>
+
   <script src="/dispatch-menu.js"></script>
 </body>
 </html>
