@@ -28,7 +28,7 @@
       --muted: #68756f;
       --line: #dfe8e4;
       --danger: #9b2929;
-      --danger-bg: #fff0f0;
+      --danger-background: #fff0f0;
     }
 
     body {
@@ -100,16 +100,16 @@
       line-height: 1.03;
     }
 
-    .new-job-button {
+    .dashboard-button {
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      min-height: 53px;
+      min-height: 52px;
       padding: 13px 18px;
-      border: 0;
+      border: 1px solid var(--line);
       border-radius: 14px;
-      background: var(--green);
-      color: white;
+      background: white;
+      color: var(--dark-green);
       text-decoration: none;
       font-weight: 900;
       white-space: nowrap;
@@ -123,6 +123,7 @@
     }
 
     .stat-card {
+      min-width: 0;
       padding: 18px;
       border: 1px solid var(--line);
       border-radius: 19px;
@@ -134,12 +135,14 @@
       color: var(--green);
       font-size: 31px;
       font-weight: 900;
+      overflow-wrap: anywhere;
     }
 
     .stat-label {
       margin-top: 7px;
       color: var(--muted);
       font-size: 14px;
+      line-height: 1.35;
     }
 
     .filters {
@@ -207,11 +210,12 @@
     .customer-row {
       display: grid;
       grid-template-columns:
-        minmax(0, 1.35fr)
-        minmax(110px, .6fr)
-        minmax(150px, .8fr)
+        minmax(0, 1.4fr)
+        minmax(90px, .5fr)
+        minmax(120px, .65fr)
+        minmax(145px, .75fr)
         auto;
-      gap: 16px;
+      gap: 15px;
       align-items: center;
       min-height: 88px;
       padding: 16px 18px;
@@ -295,22 +299,22 @@
     }
 
     .error {
-      background: var(--danger-bg);
+      background: var(--danger-background);
       color: var(--danger);
     }
 
-    @media (max-width: 720px) {
+    @media (max-width: 760px) {
       .heading-row {
         align-items: flex-start;
         flex-direction: column;
       }
 
-      .new-job-button {
+      .dashboard-button {
         width: 100%;
       }
 
       .stats {
-        grid-template-columns: 1fr;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
       }
 
       .filter-grid {
@@ -324,7 +328,7 @@
       .customer-row {
         grid-template-columns: minmax(0, 1fr) auto;
         gap: 8px 12px;
-        min-height: 112px;
+        min-height: 125px;
       }
 
       .customer-main {
@@ -332,6 +336,10 @@
       }
 
       .jobs-block {
+        grid-column: 1 / 2;
+      }
+
+      .active-block {
         grid-column: 1 / 2;
       }
 
@@ -346,8 +354,14 @@
 
       .arrow {
         grid-column: 2 / 3;
-        grid-row: 2 / 4;
+        grid-row: 2 / 5;
         align-self: center;
+      }
+    }
+
+    @media (max-width: 430px) {
+      .stats {
+        grid-template-columns: 1fr;
       }
     }
   </style>
@@ -371,17 +385,17 @@
     <div class="heading-row">
       <div>
         <div class="eyebrow">
-          Customer accounts and delivery history
+          Customer accounts and delivery records
         </div>
 
         <h1>Customers</h1>
       </div>
 
       <a
-        class="new-job-button"
+        class="dashboard-button"
         href="/dashboard.html"
       >
-        + Create New Job
+        ← Dashboard
       </a>
     </div>
 
@@ -408,20 +422,20 @@
         </div>
 
         <div class="stat-label">
-          Customer Jobs
+          Total Customer Jobs
         </div>
       </div>
 
       <div class="stat-card">
         <div
           class="stat-number"
-          id="activeCustomers"
+          id="customersWithActiveJobs"
         >
           0
         </div>
 
         <div class="stat-label">
-          Active Customers
+          Customers With Active Jobs
         </div>
       </div>
     </section>
@@ -432,7 +446,7 @@
           class="search-input"
           id="searchInput"
           type="search"
-          placeholder="Search customer name or email"
+          placeholder="Search customer name, email or address"
         >
 
         <button
@@ -477,8 +491,8 @@
     const searchInput =
       document.getElementById("searchInput");
 
-    let customers = [];
     let allJobs = [];
+    let customers = [];
 
     function escapeHtml(value) {
       const div = document.createElement("div");
@@ -492,12 +506,35 @@
         .toLowerCase();
     }
 
+    function normalizeName(value) {
+      return String(value || "Customer")
+        .trim()
+        .toLowerCase();
+    }
+
+    function cleanStatus(value) {
+      return String(value || "")
+        .trim()
+        .toLowerCase();
+    }
+
+    function isClosedJob(job) {
+      return [
+        "delivered",
+        "cancelled",
+        "canceled"
+      ].includes(cleanStatus(job.status));
+    }
+
     function formatDate(value) {
       if (!value) {
-        return "No deliveries";
+        return "No jobs";
       }
 
-      const date = new Date(value);
+      const date =
+        value instanceof Date
+          ? value
+          : new Date(value);
 
       if (Number.isNaN(date.getTime())) {
         return "Not recorded";
@@ -513,7 +550,7 @@
       ).format(date);
     }
 
-    function customerKey(job) {
+    function getCustomerKey(job) {
       const email =
         normalizeEmail(job.customer_email);
 
@@ -523,24 +560,24 @@
 
       return (
         "name:" +
-        String(job.customer_name || "Customer")
-          .trim()
-          .toLowerCase()
+        normalizeName(job.customer_name)
       );
     }
 
-    function buildCustomers(jobs) {
-      const grouped = new Map();
+    function buildCustomerList() {
+      const groupedCustomers = new Map();
 
-      jobs.forEach(job => {
-        const key = customerKey(job);
+      allJobs.forEach(job => {
+        const key = getCustomerKey(job);
 
-        if (!grouped.has(key)) {
-          grouped.set(key, {
+        if (!groupedCustomers.has(key)) {
+          groupedCustomers.set(key, {
             key: key,
             name:
-              job.customer_name ||
-              "Customer",
+              String(
+                job.customer_name ||
+                "Customer"
+              ).trim(),
 
             email:
               normalizeEmail(
@@ -548,59 +585,67 @@
               ),
 
             jobs: [],
+            activeJobs: 0,
             lastJobAt: null,
-            activeJobs: 0
+            addresses: new Set()
           });
         }
 
         const customer =
-          grouped.get(key);
+          groupedCustomers.get(key);
 
         customer.jobs.push(job);
 
-        const jobDate =
-          job.created_at
-            ? new Date(job.created_at)
-            : null;
-
-        if (
-          jobDate &&
-          !Number.isNaN(jobDate.getTime()) &&
-          (
-            !customer.lastJobAt ||
-            jobDate > customer.lastJobAt
-          )
-        ) {
-          customer.lastJobAt = jobDate;
+        if (!isClosedJob(job)) {
+          customer.activeJobs += 1;
         }
 
-        const status =
-          String(job.status || "")
-            .trim()
-            .toLowerCase();
+        [
+          job.pickup_address,
+          job.delivery_address
+        ].forEach(address => {
+          const cleanAddress =
+            String(address || "").trim();
 
-        if (
-          ![
-            "delivered",
-            "cancelled",
-            "canceled"
-          ].includes(status)
-        ) {
-          customer.activeJobs += 1;
+          if (cleanAddress) {
+            customer.addresses.add(
+              cleanAddress
+            );
+          }
+        });
+
+        if (job.created_at) {
+          const jobDate =
+            new Date(job.created_at);
+
+          if (
+            !Number.isNaN(
+              jobDate.getTime()
+            ) &&
+            (
+              !customer.lastJobAt ||
+              jobDate >
+                customer.lastJobAt
+            )
+          ) {
+            customer.lastJobAt =
+              jobDate;
+          }
         }
       });
 
       customers =
-        Array.from(grouped.values())
-          .sort((a, b) => {
-            const dateA =
-              a.lastJobAt?.getTime() || 0;
+        Array.from(
+          groupedCustomers.values()
+        ).sort((first, second) => {
+          const firstTime =
+            first.lastJobAt?.getTime() || 0;
 
-            const dateB =
-              b.lastJobAt?.getTime() || 0;
+          const secondTime =
+            second.lastJobAt?.getTime() || 0;
 
-            return dateB - dateA;
-          });
+          return secondTime - firstTime;
+        });
     }
 
     async function verifyDispatchUser() {
@@ -611,7 +656,10 @@
         sessionResult.data.session;
 
       if (!session) {
-        location.replace("/index.html");
+        location.replace(
+          "/index.html"
+        );
+
         return null;
       }
 
@@ -620,11 +668,15 @@
         .textContent =
           session.user.email || "";
 
-      const profileResult = await client
-        .from("profiles")
-        .select("role")
-        .eq("id", session.user.id)
-        .maybeSingle();
+      const profileResult =
+        await client
+          .from("profiles")
+          .select("role")
+          .eq(
+            "id",
+            session.user.id
+          )
+          .maybeSingle();
 
       if (
         profileResult.error ||
@@ -636,9 +688,10 @@
         );
       }
 
-      const role = String(
-        profileResult.data.role || ""
-      ).toLowerCase();
+      const role =
+        String(
+          profileResult.data.role || ""
+        ).toLowerCase();
 
       if (
         ![
@@ -648,12 +701,18 @@
         ].includes(role)
       ) {
         if (role === "driver") {
-          location.replace("/driver.html");
+          location.replace(
+            "/driver.html"
+          );
+
           return null;
         }
 
         if (role === "customer") {
-          location.replace("/customer.html");
+          location.replace(
+            "/customer.html"
+          );
+
           return null;
         }
 
@@ -663,11 +722,15 @@
       }
 
       window.dispatchEvent(
-        new CustomEvent("mg-dispatch-ready", {
-          detail: {
-            email: session.user.email
+        new CustomEvent(
+          "mg-dispatch-ready",
+          {
+            detail: {
+              email:
+                session.user.email
+            }
           }
-        })
+        )
       );
 
       return session;
@@ -682,30 +745,34 @@
         </div>
       `;
 
-      const result = await client
-        .from("quotes")
-        .select(`
-          id,
-          job_number,
-          customer_name,
-          customer_email,
-          pickup_address,
-          delivery_address,
-          status,
-          created_at
-        `)
-        .order("created_at", {
-          ascending: false
-        });
+      const result =
+        await client
+          .from("quotes")
+          .select(`
+            id,
+            job_number,
+            customer_name,
+            customer_email,
+            pickup_address,
+            delivery_address,
+            status,
+            created_at
+          `)
+          .order(
+            "created_at",
+            {
+              ascending: false
+            }
+          );
 
       if (result.error) {
         throw result.error;
       }
 
-      allJobs = result.data || [];
+      allJobs =
+        result.data || [];
 
-      buildCustomers(allJobs);
-
+      buildCustomerList();
       updateStatistics();
       renderCustomers();
     }
@@ -720,36 +787,70 @@
         return customers;
       }
 
-      return customers.filter(customer => {
-        const searchable = [
-          customer.name,
-          customer.email
-        ]
-          .filter(Boolean)
-          .join(" ")
-          .toLowerCase();
+      return customers.filter(
+        customer => {
+          const searchableText = [
+            customer.name,
+            customer.email,
+            ...Array.from(
+              customer.addresses
+            )
+          ]
+            .filter(Boolean)
+            .join(" ")
+            .toLowerCase();
 
-        return searchable.includes(search);
-      });
+          return searchableText.includes(
+            search
+          );
+        }
+      );
     }
 
     function updateStatistics() {
       document
-        .getElementById("totalCustomers")
+        .getElementById(
+          "totalCustomers"
+        )
         .textContent =
           customers.length;
 
       document
-        .getElementById("totalJobs")
+        .getElementById(
+          "totalJobs"
+        )
         .textContent =
           allJobs.length;
 
       document
-        .getElementById("activeCustomers")
+        .getElementById(
+          "customersWithActiveJobs"
+        )
         .textContent =
-          customers.filter(customer =>
-            customer.activeJobs > 0
+          customers.filter(
+            customer =>
+              customer.activeJobs > 0
           ).length;
+    }
+
+    function createCustomerUrl(
+      customer
+    ) {
+      if (customer.email) {
+        return (
+          "/customer-details.html?email=" +
+          encodeURIComponent(
+            customer.email
+          )
+        );
+      }
+
+      return (
+        "/customer-details.html?name=" +
+        encodeURIComponent(
+          customer.name
+        )
+      );
     }
 
     function renderCustomers() {
@@ -757,7 +858,9 @@
         filteredCustomers();
 
       document
-        .getElementById("visibleCount")
+        .getElementById(
+          "visibleCount"
+        )
         .textContent =
           shownCustomers.length +
           (
@@ -782,86 +885,80 @@
         "customer-list";
 
       customersBox.innerHTML =
-        shownCustomers.map(customer => {
-          const profileUrl =
-            "/customer-details.html?" +
-            (
-              customer.email
-                ? (
-                    "email=" +
-                    encodeURIComponent(
-                      customer.email
-                    )
-                  )
-                : (
-                    "name=" +
-                    encodeURIComponent(
-                      customer.name
-                    )
-                  )
-            );
+        shownCustomers
+          .map(customer => {
+            const customerUrl =
+              createCustomerUrl(
+                customer
+              );
 
-          return `
-            <a
-              class="customer-row"
-              href="${escapeHtml(profileUrl)}"
-            >
-              <div class="customer-main">
-                <div class="customer-name">
-                  ${escapeHtml(
-                    customer.name
-                  )}
-                </div>
-
-                <div class="customer-email">
-                  ${escapeHtml(
-                    customer.email ||
-                    "No email recorded"
-                  )}
-                </div>
-              </div>
-
-              <div class="jobs-block">
-                <span class="meta-label">
-                  Deliveries
-                </span>
-
-                <div class="meta-value">
-                  ${customer.jobs.length}
-                </div>
-              </div>
-
-              <div class="last-job-block">
-                <span class="meta-label">
-                  Last Job
-                </span>
-
-                <div class="meta-value">
-                  ${escapeHtml(
-                    formatDate(
-                      customer.lastJobAt
-                    )
-                  )}
-                </div>
-              </div>
-
-              <div
-                class="status-pill"
-                title="${
-                  customer.activeJobs
-                } active jobs"
+            return `
+              <a
+                class="customer-row"
+                href="${escapeHtml(
+                  customerUrl
+                )}"
               >
-                ${
-                  customer.activeJobs > 0
-                    ? "Active"
-                    : "Customer"
-                }
-              </div>
+                <div class="customer-main">
+                  <div class="customer-name">
+                    ${escapeHtml(
+                      customer.name
+                    )}
+                  </div>
 
-              <div class="arrow">›</div>
-            </a>
-          `;
-        }).join("");
+                  <div class="customer-email">
+                    ${escapeHtml(
+                      customer.email ||
+                      "No email recorded"
+                    )}
+                  </div>
+                </div>
+
+                <div class="jobs-block">
+                  <span class="meta-label">
+                    Jobs
+                  </span>
+
+                  <div class="meta-value">
+                    ${customer.jobs.length}
+                  </div>
+                </div>
+
+                <div class="active-block">
+                  <span class="meta-label">
+                    Active
+                  </span>
+
+                  <div class="meta-value">
+                    ${customer.activeJobs}
+                  </div>
+                </div>
+
+                <div class="last-job-block">
+                  <span class="meta-label">
+                    Last Job
+                  </span>
+
+                  <div class="meta-value">
+                    ${escapeHtml(
+                      formatDate(
+                        customer.lastJobAt
+                      )
+                    )}
+                  </div>
+                </div>
+
+                <div class="status-pill">
+                  Customer
+                </div>
+
+                <div class="arrow">
+                  ›
+                </div>
+              </a>
+            `;
+          })
+          .join("");
     }
 
     searchInput.addEventListener(
@@ -870,7 +967,9 @@
     );
 
     document
-      .getElementById("refreshButton")
+      .getElementById(
+        "refreshButton"
+      )
       .addEventListener(
         "click",
         async function () {
