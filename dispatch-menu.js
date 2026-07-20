@@ -1,30 +1,102 @@
-(function () {
-  const styles = document.createElement("style");
+(() => {
+  "use strict";
 
-  styles.textContent = `
-    .dispatch-menu-button {
-      width: 50px;
-      height: 50px;
-      border: 0;
-      border-radius: 14px;
-      background: #ffffff;
-      color: #064f3b;
-      font-size: 28px;
-      font-weight: 900;
-      cursor: pointer;
-      display: grid;
-      place-items: center;
-      flex-shrink: 0;
+  const PORTAL_BASE =
+    "https://portal.migenteexpress.com";
+
+  const pages = [
+    {
+      href:
+        PORTAL_BASE +
+        "/dashboard.html",
+
+      label: "Dashboard",
+      icon: "🏠"
+    },
+    {
+      href:
+        PORTAL_BASE +
+        "/jobs.html",
+
+      label: "Active Jobs",
+      icon: "📦"
+    },
+    {
+      href:
+        PORTAL_BASE +
+        "/dashboard.html",
+
+      label: "Create Job",
+      icon: "➕"
+    },
+    {
+      href:
+        PORTAL_BASE +
+        "/history.html",
+
+      label: "Job History",
+      icon: "📚"
+    },
+    {
+      href:
+        PORTAL_BASE +
+        "/customer.html",
+
+      label: "Customers",
+      icon: "👥"
+    },
+    {
+      href:
+        PORTAL_BASE +
+        "/drivers.html",
+
+      label: "Drivers",
+      icon: "🚚"
+    },
+    {
+      href:
+        PORTAL_BASE +
+        "/payroll.html",
+
+      label: "Payroll",
+      icon: "💵"
+    },
+    {
+      href:
+        PORTAL_BASE +
+        "/invoices.html",
+
+      label: "Invoices",
+      icon: "🧾"
+    },
+    {
+      href:
+        PORTAL_BASE +
+        "/reports.html",
+
+      label: "Reports",
+      icon: "📊"
+    }
+  ];
+
+  const style =
+    document.createElement("style");
+
+  style.textContent = `
+    body.dispatch-menu-open {
+      overflow: hidden !important;
     }
 
     .dispatch-menu-overlay {
       position: fixed;
       inset: 0;
       z-index: 998;
-      background: rgba(0, 0, 0, .46);
+      background: rgba(10, 20, 16, .58);
       opacity: 0;
       visibility: hidden;
-      transition: opacity .2s ease;
+      transition:
+        opacity .22s ease,
+        visibility .22s ease;
     }
 
     .dispatch-menu-overlay.open {
@@ -37,15 +109,19 @@
       top: 0;
       right: 0;
       z-index: 999;
-      width: min(340px, 90vw);
-      height: 100vh;
-      background: #ffffff;
-      color: #17221e;
-      transform: translateX(100%);
-      transition: transform .25s ease;
-      box-shadow: -12px 0 35px rgba(0, 0, 0, .2);
+      width: min(88vw, 440px);
+      height: 100dvh;
       display: flex;
       flex-direction: column;
+      background: #ffffff;
+      color: #17221e;
+      box-shadow:
+        -15px 0 45px
+        rgba(0, 0, 0, .2);
+      transform: translateX(105%);
+      transition:
+        transform .24s ease;
+      overflow: hidden;
     }
 
     .dispatch-side-menu.open {
@@ -54,13 +130,15 @@
 
     .dispatch-menu-header {
       position: relative;
+      padding:
+        28px 82px
+        27px 28px;
       background: #064f3b;
       color: #ffffff;
-      padding: 27px 22px;
     }
 
     .dispatch-menu-brand {
-      font-size: 23px;
+      font-size: 29px;
       font-weight: 900;
       line-height: 1.08;
     }
@@ -69,150 +147,164 @@
       color: #ff665c;
     }
 
-    .dispatch-menu-user {
-      margin-top: 8px;
-      font-size: 13px;
-      opacity: .84;
+    .dispatch-menu-subtitle {
+      margin-top: 7px;
+      font-size: 14px;
+      opacity: .82;
       overflow-wrap: anywhere;
     }
 
     .dispatch-menu-close {
       position: absolute;
-      top: 16px;
-      right: 16px;
-      width: 44px;
-      height: 44px;
+      top: 24px;
+      right: 24px;
+      width: 56px;
+      height: 56px;
       border: 0;
-      border-radius: 12px;
+      border-radius: 16px;
       background: #ffffff;
       color: #064f3b;
-      font-size: 24px;
+      font-size: 30px;
       font-weight: 900;
       cursor: pointer;
     }
 
     .dispatch-menu-links {
-      padding: 18px 14px;
-      display: grid;
-      gap: 7px;
+      flex: 1;
       overflow-y: auto;
+      padding: 18px 18px 25px;
+      background: #ffffff;
     }
-
-    .dispatch-menu-link {
+        .dispatch-menu-link {
       display: flex;
       align-items: center;
-      gap: 13px;
-      min-height: 56px;
-      padding: 13px 15px;
-      border-radius: 13px;
+      gap: 18px;
+      min-height: 70px;
+      margin-bottom: 5px;
+      padding: 14px 18px;
+      border-radius: 17px;
       color: #17221e;
       text-decoration: none;
-      font-size: 16px;
-      font-weight: 800;
+      font-size: 19px;
+      font-weight: 900;
+      transition: background .2s ease;
     }
 
     .dispatch-menu-link:hover,
+    .dispatch-menu-link:active {
+      background: #f2f7f5;
+    }
+
     .dispatch-menu-link.active {
       background: #e7f5ef;
       color: #087455;
     }
 
     .dispatch-menu-icon {
-      width: 30px;
+      width: 34px;
+      flex: 0 0 34px;
       text-align: center;
-      font-size: 21px;
+      font-size: 27px;
     }
 
     .dispatch-menu-footer {
-      margin-top: auto;
-      padding: 15px;
+      padding: 18px;
       border-top: 1px solid #dfe8e4;
+      background: #ffffff;
     }
 
     .dispatch-menu-signout {
       width: 100%;
-      min-height: 54px;
+      min-height: 55px;
       border: 0;
-      border-radius: 13px;
+      border-radius: 15px;
       background: #fff0f0;
       color: #9b2929;
-      font-size: 16px;
+      font-size: 17px;
       font-weight: 900;
       cursor: pointer;
     }
 
-    body.dispatch-menu-open {
-      overflow: hidden;
+    .dispatch-menu-button {
+      width: 62px;
+      height: 62px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border: 0;
+      border-radius: 17px;
+      background: #ffffff;
+      color: #064f3b;
+      font-size: 34px;
+      cursor: pointer;
+      box-shadow: 0 4px 16px rgba(0,0,0,.08);
+    }
+
+    .dispatch-menu-floating {
+      position: fixed !important;
+      top: 15px !important;
+      right: 15px !important;
+      z-index: 997 !important;
     }
   `;
 
-  document.head.appendChild(styles);
+  document.head.appendChild(style);
 
   const currentPage =
-    window.location.pathname.split("/").pop() || "dashboard.html";
+    window.location.pathname
+      .split("/")
+      .pop()
+      .toLowerCase();
 
-  const pages = [
-    {
-      href: "/dashboard.html",
-      label: "Dashboard",
-      icon: "🏠"
-    },
-    {
-      href: "/jobs.html",
-      label: "Active Jobs",
-      icon: "📦"
-    },
-    {
-      href: "/create-job.html",
-      label: "Create Job",
-      icon: "➕"
-    },
-    {
-      href: "/history.html",
-      label: "Job History",
-      icon: "📚"
-    },
-     {
-  href: "https://portal.migenteexpress.com/customer.html",
-  label: "Customers",
-  icon: "👥"
-},
-{
-  href: "/drivers.html",
-  label: "Drivers",
-  icon: "🚚"
-},
-    {
-      href: "/payroll.html",
-      label: "Payroll",
-      icon: "💵"
-    },
-    {
-      href: "/invoices.html",
-      label: "Invoices",
-      icon: "🧾"
-    },
-    {
-      href: "/reports.html",
-      label: "Reports",
-      icon: "📊"
-    }
-  ];
+  function fileName(url) {
+    return new URL(url).pathname
+      .split("/")
+      .pop()
+      .toLowerCase();
+  }
 
-  const overlay = document.createElement("div");
-  overlay.className = "dispatch-menu-overlay";
+  const overlay =
+    document.createElement("div");
 
-  const menu = document.createElement("aside");
-  menu.className = "dispatch-side-menu";
+  overlay.className =
+    "dispatch-menu-overlay";
 
-  menu.innerHTML = `
+  const menu =
+    document.createElement("aside");
+
+  menu.className =
+    "dispatch-side-menu";
+
+  const links =
+    pages.map(page => {
+
+      const active =
+        fileName(page.href) === currentPage
+          ? " active"
+          : "";
+
+      return `
+        <a
+          class="dispatch-menu-link${active}"
+          href="${page.href}"
+        >
+          <span class="dispatch-menu-icon">
+            ${page.icon}
+          </span>
+
+          <span>
+            ${page.label}
+          </span>
+        </a>
+      `;
+    }).join("");
+    menu.innerHTML = `
     <div class="dispatch-menu-header">
+
       <button
         class="dispatch-menu-close"
         id="dispatchMenuClose"
-        type="button"
-        aria-label="Close menu"
-      >
+        type="button">
         ×
       </button>
 
@@ -222,49 +314,33 @@
       </div>
 
       <div
-        class="dispatch-menu-user"
-        id="dispatchMenuUser"
-      ></div>
+        class="dispatch-menu-subtitle"
+        id="dispatchMenuUser">
+
+        MG Express Dispatch
+
+      </div>
+
     </div>
 
     <nav class="dispatch-menu-links">
-      ${pages.map(page => {
-        const pageName =
-          page.href.split("/").pop();
 
-        const active =
-          pageName === currentPage
-            ? "active"
-            : "";
+      ${links}
 
-        return `
-          <a
-            class="dispatch-menu-link ${active}"
-            href="${page.href}"
-          >
-            <span class="dispatch-menu-icon">
-              ${page.icon}
-            </span>
-
-            <span>${page.label}</span>
-          </a>
-        `;
-      }).join("")}
     </nav>
 
     <div class="dispatch-menu-footer">
+
       <button
-        class="dispatch-menu-signout"
         id="dispatchMenuSignOut"
-        type="button"
-      >
+        class="dispatch-menu-signout">
+
         Sign Out
+
       </button>
+
     </div>
   `;
-
-  document.body.appendChild(overlay);
-  document.body.appendChild(menu);
 
   const openButton =
     document.createElement("button");
@@ -272,52 +348,68 @@
   openButton.className =
     "dispatch-menu-button";
 
-  openButton.type = "button";
-  openButton.setAttribute(
-    "aria-label",
-    "Open menu"
-  );
-
-  openButton.textContent = "☰";
-
-  const header =
-    document.querySelector(".topbar-inner") ||
-    document.querySelector(".topbar") ||
-    document.querySelector("header");
-
-  if (header) {
-    const oldSignOut =
-      header.querySelector("#signOutButton") ||
-      header.querySelector(".signout");
-
-    if (oldSignOut) {
-      oldSignOut.style.display = "none";
-    }
-
-    header.appendChild(openButton);
-  } else {
-    openButton.style.position = "fixed";
-    openButton.style.top = "15px";
-    openButton.style.right = "15px";
-    openButton.style.zIndex = "997";
-
-    document.body.appendChild(openButton);
-  }
+  openButton.innerHTML = "☰";
 
   function openMenu() {
-    menu.classList.add("open");
+
     overlay.classList.add("open");
+
+    menu.classList.add("open");
+
     document.body.classList.add(
       "dispatch-menu-open"
     );
+
   }
 
   function closeMenu() {
-    menu.classList.remove("open");
+
     overlay.classList.remove("open");
+
+    menu.classList.remove("open");
+
     document.body.classList.remove(
       "dispatch-menu-open"
     );
+
+  }
+
+  document.body.appendChild(
+    overlay
+  );
+
+  document.body.appendChild(
+    menu
+  );
+
+  const header =
+    document.querySelector(".topbar-inner") ||
+    document.querySelector(".topbar");
+
+  if (header) {
+
+    header.style.display = "flex";
+
+    header.style.justifyContent =
+      "space-between";
+
+    header.style.alignItems =
+      "center";
+
+    header.appendChild(
+      openButton
+    );
+
+  } else {
+
+    openButton.classList.add(
+      "dispatch-menu-floating"
+    );
+
+    document.body.appendChild(
+      openButton
+    );
+
   }
 
   openButton.addEventListener(
@@ -325,41 +417,54 @@
     openMenu
   );
 
-  document
-    .getElementById("dispatchMenuClose")
-    .addEventListener(
-      "click",
-      closeMenu
-    );
-
   overlay.addEventListener(
     "click",
     closeMenu
   );
 
   document
-    .getElementById("dispatchMenuSignOut")
+    .getElementById(
+      "dispatchMenuClose"
+    )
+    .addEventListener(
+      "click",
+      closeMenu
+    );
+    document
+    .getElementById(
+      "dispatchMenuSignOut"
+    )
     .addEventListener(
       "click",
       async function () {
         this.disabled = true;
-        this.textContent = "Signing Out…";
+        this.textContent =
+          "Signing Out...";
 
         try {
-          if (window.mgDispatchClient) {
-            await window.mgDispatchClient
-              .auth
-              .signOut();
-          } else if (window.client) {
-            await window.client
-              .auth
-              .signOut();
+          const client =
+            window.mgDispatchClient ||
+            window.mgSupabaseClient ||
+            window.client;
+
+          if (
+            client &&
+            client.auth &&
+            client.auth.signOut
+          ) {
+            await client.auth.signOut();
           }
+        } catch (error) {
+          console.error(
+            "MG Express sign-out error:",
+            error
+          );
         } finally {
           localStorage.clear();
           sessionStorage.clear();
 
           window.location.replace(
+            PORTAL_BASE +
             "/index.html?loggedout=1"
           );
         }
@@ -372,12 +477,43 @@
       const details =
         event.detail || {};
 
-      document
-        .getElementById("dispatchMenuUser")
-        .textContent =
-          details.name ||
-          details.email ||
-          "MG Express Dispatch";
+      const userBox =
+        document.getElementById(
+          "dispatchMenuUser"
+        );
+
+      if (!userBox) {
+        return;
+      }
+
+      userBox.textContent =
+        details.name ||
+        details.email ||
+        "MG Express Dispatch";
     }
   );
+
+  document.addEventListener(
+    "keydown",
+    function (event) {
+      if (event.key === "Escape") {
+        closeMenu();
+      }
+    }
+  );
+
+  const existingEmail =
+    document
+      .getElementById("staffEmail")
+      ?.textContent
+      ?.trim();
+
+  if (existingEmail) {
+    document
+      .getElementById(
+        "dispatchMenuUser"
+      )
+      .textContent =
+        existingEmail;
+  }
 })();
