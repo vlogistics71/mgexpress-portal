@@ -182,10 +182,6 @@
   label: "Drivers",
   icon: "🚚"
 },
-      href: "/drivers.html",
-      label: "Drivers",
-      icon: "🚚"
-    },
     {
       href: "/payroll.html",
       label: "Payroll",
