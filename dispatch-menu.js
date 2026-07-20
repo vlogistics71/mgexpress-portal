@@ -173,10 +173,11 @@
       icon: "📚"
     },
     {
-      href: "/customers.html",
+    {
       label: "Customers",
-      icon: "👥"
-    },
+      icon: "👥",
+      href: "https://portal.migenteexpress.com/customer.html"
+    }
     {
       href: "/drivers.html",
       label: "Drivers",
