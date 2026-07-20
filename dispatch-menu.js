@@ -172,12 +172,12 @@
       label: "Job History",
       icon: "📚"
     },
-    {
+
     {
       label: "Customers",
       icon: "👥",
       href: "https://portal.migenteexpress.com/customer.html"
-    }
+    },
     {
       href: "/drivers.html",
       label: "Drivers",
