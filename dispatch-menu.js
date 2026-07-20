@@ -48,7 +48,7 @@
     {
       href:
         PORTAL_BASE +
-        "/drivers.html",
+        "/driver.html",
 
       label: "Drivers",
       icon: "🚚"
