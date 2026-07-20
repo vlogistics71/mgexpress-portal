@@ -1,0 +1,1520 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1"
+  >
+
+  <title>MG Express Payroll</title>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    :root {
+      --dark-green: #064f3b;
+      --green: #087455;
+      --light-green: #e7f5ef;
+      --coral: #ff665c;
+      --background: #f3f8f6;
+      --white: #ffffff;
+      --ink: #17221e;
+      --muted: #68756f;
+      --line: #dfe8e4;
+      --danger: #9b2929;
+      --danger-bg: #fff0f0;
+      --warning: #946000;
+      --warning-bg: #fff5d8;
+    }
+
+    body {
+      margin: 0;
+      font-family: Arial, Helvetica, sans-serif;
+      background: var(--background);
+      color: var(--ink);
+    }
+
+    button,
+    input {
+      font: inherit;
+    }
+
+    .hidden {
+      display: none !important;
+    }
+
+    .topbar {
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      padding: 18px 20px;
+      background: var(--dark-green);
+      color: white;
+    }
+
+    .topbar-inner {
+      width: min(1050px, 100%);
+      margin: auto;
+    }
+
+    .brand {
+      font-size: 23px;
+      font-weight: 900;
+      line-height: 1.08;
+    }
+
+    .brand span {
+      color: var(--coral);
+    }
+
+    .staff-email {
+      margin-top: 7px;
+      font-size: 13px;
+      opacity: .82;
+      overflow-wrap: anywhere;
+    }
+
+    .container {
+      width: min(1050px, 100%);
+      margin: auto;
+      padding: 28px 18px 75px;
+    }
+
+    .heading-row {
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      gap: 16px;
+      margin-bottom: 23px;
+    }
+
+    .eyebrow {
+      margin-bottom: 6px;
+      color: var(--muted);
+      font-size: 17px;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(39px, 8vw, 55px);
+      line-height: 1.03;
+    }
+
+    .dashboard-button {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 52px;
+      padding: 13px 18px;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      background: white;
+      color: var(--dark-green);
+      text-decoration: none;
+      font-weight: 900;
+      white-space: nowrap;
+    }
+
+    .week-selector {
+      display: grid;
+      grid-template-columns: auto minmax(0, 1fr) auto;
+      gap: 12px;
+      align-items: center;
+      margin-bottom: 22px;
+      padding: 16px;
+      border: 1px solid var(--line);
+      border-radius: 20px;
+      background: white;
+      box-shadow: 0 7px 22px rgba(0, 0, 0, .04);
+    }
+
+    .week-button {
+      min-height: 49px;
+      padding: 11px 16px;
+      border: 1px solid var(--line);
+      border-radius: 13px;
+      background: white;
+      color: var(--dark-green);
+      font-weight: 900;
+      cursor: pointer;
+    }
+
+    .week-display {
+      text-align: center;
+    }
+
+    .week-title {
+      color: var(--dark-green);
+      font-size: 19px;
+      font-weight: 900;
+    }
+
+    .week-subtitle {
+      margin-top: 4px;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 12px;
+      margin-bottom: 22px;
+    }
+
+    .stat-card {
+      min-width: 0;
+      padding: 18px;
+      border: 1px solid var(--line);
+      border-radius: 19px;
+      background: white;
+      box-shadow: 0 7px 22px rgba(0, 0, 0, .04);
+    }
+
+    .stat-number {
+      color: var(--green);
+      font-size: 31px;
+      font-weight: 900;
+      overflow-wrap: anywhere;
+    }
+
+    .stat-label {
+      margin-top: 7px;
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.35;
+    }
+
+    .filters {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 12px;
+      margin-bottom: 24px;
+      padding: 18px;
+      border: 1px solid var(--line);
+      border-radius: 20px;
+      background: white;
+      box-shadow: 0 7px 22px rgba(0, 0, 0, .04);
+    }
+
+    .search-input {
+      width: 100%;
+      min-height: 51px;
+      padding: 12px 14px;
+      border: 1px solid var(--line);
+      border-radius: 13px;
+      background: white;
+      color: var(--ink);
+    }
+
+    .refresh-button {
+      min-height: 51px;
+      padding: 12px 18px;
+      border: 1px solid var(--line);
+      border-radius: 13px;
+      background: white;
+      color: var(--dark-green);
+      font-weight: 900;
+      cursor: pointer;
+    }
+
+    .list-heading {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 14px;
+      margin: 0 2px 13px;
+    }
+
+    .list-heading h2 {
+      margin: 0;
+      font-size: 28px;
+    }
+
+    .visible-count {
+      color: var(--muted);
+      font-size: 14px;
+      font-weight: 800;
+    }
+
+    .driver-list {
+      display: grid;
+      gap: 14px;
+    }
+
+    .driver-card {
+      overflow: hidden;
+      border: 1px solid var(--line);
+      border-radius: 20px;
+      background: white;
+      box-shadow: 0 8px 25px rgba(0, 0, 0, .04);
+    }
+
+    .driver-summary {
+      display: grid;
+      grid-template-columns:
+        minmax(0, 1.4fr)
+        minmax(105px, .55fr)
+        minmax(125px, .65fr)
+        minmax(125px, .65fr)
+        auto;
+      gap: 15px;
+      align-items: center;
+      width: 100%;
+      min-height: 94px;
+      padding: 17px 18px;
+      border: 0;
+      background: white;
+      color: inherit;
+      text-align: left;
+      cursor: pointer;
+    }
+
+    .driver-summary:active {
+      background: #f7faf9;
+    }
+
+    .driver-name {
+      color: var(--dark-green);
+      font-size: 19px;
+      font-weight: 900;
+      overflow-wrap: anywhere;
+    }
+
+    .driver-email {
+      margin-top: 5px;
+      color: var(--muted);
+      font-size: 13px;
+      overflow-wrap: anywhere;
+    }
+
+    .meta-label {
+      display: block;
+      margin-bottom: 5px;
+      color: var(--muted);
+      font-size: 10px;
+      font-weight: 900;
+      letter-spacing: .04em;
+      text-transform: uppercase;
+    }
+
+    .meta-value {
+      font-size: 14px;
+      font-weight: 800;
+      line-height: 1.35;
+    }
+
+    .pay-value {
+      color: var(--green);
+      font-size: 17px;
+      font-weight: 900;
+    }
+
+    .expand-arrow {
+      color: var(--green);
+      font-size: 25px;
+      font-weight: 900;
+      transition: transform .2s ease;
+    }
+
+    .driver-card.open .expand-arrow {
+      transform: rotate(90deg);
+    }
+
+    .driver-details {
+      display: none;
+      border-top: 1px solid var(--line);
+      background: #fbfdfc;
+    }
+
+    .driver-card.open .driver-details {
+      display: block;
+    }
+
+    .jobs-header {
+      display: grid;
+      grid-template-columns:
+        minmax(115px, .7fr)
+        minmax(0, 1.2fr)
+        minmax(145px, .8fr)
+        minmax(150px, .75fr);
+      gap: 14px;
+      padding: 13px 18px;
+      border-bottom: 1px solid var(--line);
+      color: var(--muted);
+      font-size: 10px;
+      font-weight: 900;
+      letter-spacing: .04em;
+      text-transform: uppercase;
+    }
+
+    .pay-job-row {
+      display: grid;
+      grid-template-columns:
+        minmax(115px, .7fr)
+        minmax(0, 1.2fr)
+        minmax(145px, .8fr)
+        minmax(150px, .75fr);
+      gap: 14px;
+      align-items: center;
+      min-height: 82px;
+      padding: 14px 18px;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .pay-job-row:last-child {
+      border-bottom: 0;
+    }
+
+    .job-number {
+      color: var(--dark-green);
+      font-size: 16px;
+      font-weight: 900;
+      overflow-wrap: anywhere;
+    }
+
+    .customer-name {
+      font-size: 14px;
+      font-weight: 800;
+      overflow-wrap: anywhere;
+    }
+
+    .job-date {
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.4;
+    }
+
+    .pay-editor {
+      display: grid;
+      grid-template-columns: minmax(85px, 1fr) auto;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .pay-input {
+      width: 100%;
+      min-height: 44px;
+      padding: 9px 11px;
+      border: 1px solid var(--line);
+      border-radius: 11px;
+      background: white;
+      color: var(--ink);
+    }
+
+    .save-pay-button {
+      min-height: 44px;
+      padding: 9px 13px;
+      border: 0;
+      border-radius: 11px;
+      background: var(--green);
+      color: white;
+      font-size: 13px;
+      font-weight: 900;
+      cursor: pointer;
+    }
+
+    .save-pay-button:disabled {
+      opacity: .65;
+      cursor: wait;
+    }
+
+    .job-message {
+      grid-column: 1 / -1;
+      display: none;
+      padding: 10px 12px;
+      border-radius: 10px;
+      font-size: 12px;
+      line-height: 1.4;
+    }
+
+    .job-message.success {
+      display: block;
+      background: var(--light-green);
+      color: var(--dark-green);
+    }
+
+    .job-message.error {
+      display: block;
+      background: var(--danger-bg);
+      color: var(--danger);
+    }
+
+    .empty,
+    .error {
+      padding: 31px 22px;
+      border-radius: 19px;
+      text-align: center;
+      line-height: 1.55;
+    }
+
+    .empty {
+      border: 1px solid var(--line);
+      background: white;
+      color: var(--muted);
+    }
+
+    .error {
+      background: var(--danger-bg);
+      color: var(--danger);
+    }
+
+    @media (max-width: 800px) {
+      .stats {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .driver-summary {
+        grid-template-columns:
+          minmax(0, 1fr)
+          auto;
+        gap: 8px 12px;
+        min-height: 140px;
+      }
+
+      .driver-main {
+        grid-column: 1 / 2;
+      }
+
+      .jobs-block,
+      .today-block,
+      .week-block {
+        grid-column: 1 / 2;
+      }
+
+      .expand-arrow {
+        grid-column: 2 / 3;
+        grid-row: 1 / 5;
+        align-self: center;
+      }
+
+      .jobs-header {
+        display: none;
+      }
+
+      .pay-job-row {
+        grid-template-columns: 1fr;
+        gap: 9px;
+      }
+
+      .pay-editor {
+        grid-template-columns: minmax(0, 1fr) auto;
+      }
+    }
+
+    @media (max-width: 600px) {
+      .heading-row {
+        align-items: flex-start;
+        flex-direction: column;
+      }
+
+      .dashboard-button {
+        width: 100%;
+      }
+
+      .week-selector {
+        grid-template-columns: 1fr 1fr;
+      }
+
+      .week-display {
+        grid-column: 1 / -1;
+        grid-row: 1;
+      }
+
+      .filters {
+        grid-template-columns: 1fr;
+      }
+
+      .refresh-button {
+        width: 100%;
+      }
+    }
+
+    @media (max-width: 430px) {
+      .stats {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <header class="topbar">
+    <div class="topbar-inner">
+      <div class="brand">
+        MG <span>EXPRESS</span> DISPATCH
+      </div>
+
+      <div
+        class="staff-email"
+        id="staffEmail"
+      ></div>
+    </div>
+  </header>
+
+  <main class="container">
+    <div class="heading-row">
+      <div>
+        <div class="eyebrow">
+          Driver job pay and weekly totals
+        </div>
+
+        <h1>Payroll</h1>
+      </div>
+
+      <a
+        class="dashboard-button"
+        href="https://portal.migenteexpress.com/dashboard.html"
+      >
+        ← Dashboard
+      </a>
+    </div>
+
+    <section class="week-selector">
+      <button
+        class="week-button"
+        id="previousWeekButton"
+        type="button"
+      >
+        ← Previous
+      </button>
+
+      <div class="week-display">
+        <div
+          class="week-title"
+          id="weekTitle"
+        >
+          Current Week
+        </div>
+
+        <div
+          class="week-subtitle"
+          id="weekDates"
+        ></div>
+      </div>
+
+      <button
+        class="week-button"
+        id="nextWeekButton"
+        type="button"
+      >
+        Next →
+      </button>
+    </section>
+
+    <section class="stats">
+      <div class="stat-card">
+        <div
+          class="stat-number"
+          id="grossPayroll"
+        >
+          $0.00
+        </div>
+
+        <div class="stat-label">
+          Selected Week Payroll
+        </div>
+      </div>
+
+      <div class="stat-card">
+        <div
+          class="stat-number"
+          id="completedJobs"
+        >
+          0
+        </div>
+
+        <div class="stat-label">
+          Completed Jobs
+        </div>
+      </div>
+
+      <div class="stat-card">
+        <div
+          class="stat-number"
+          id="driversWithPay"
+        >
+          0
+        </div>
+
+        <div class="stat-label">
+          Drivers With Pay
+        </div>
+      </div>
+
+      <div class="stat-card">
+        <div
+          class="stat-number"
+          id="todayPayroll"
+        >
+          $0.00
+        </div>
+
+        <div class="stat-label">
+          Completed Today
+        </div>
+      </div>
+    </section>
+
+    <section class="filters">
+      <input
+        class="search-input"
+        id="searchInput"
+        type="search"
+        placeholder="Search driver, customer or job number"
+      >
+
+      <button
+        class="refresh-button"
+        id="refreshButton"
+        type="button"
+      >
+        Refresh
+      </button>
+    </section>
+
+    <div class="list-heading">
+      <h2>Driver Payroll</h2>
+
+      <div
+        class="visible-count"
+        id="visibleCount"
+      >
+        0 drivers
+      </div>
+    </div>
+
+    <section
+      class="driver-list"
+      id="payrollBox"
+    >
+      <div class="empty">
+        Loading payroll...
+      </div>
+    </section>
+  </main>
+
+  <script>
+    const client = supabase.createClient(
+      "https://dczlucwfjayymlwbzzdi.supabase.co",
+      "sb_publishable_kcv_a78ZyUxMo2neKUANdw_XN7eAMpI"
+    );
+
+    window.mgDispatchClient = client;
+
+    const payrollBox =
+      document.getElementById("payrollBox");
+
+    const searchInput =
+      document.getElementById("searchInput");
+
+    let weekOffset = 0;
+    let drivers = [];
+    let allJobs = [];
+    let payrollDrivers = [];
+
+    function escapeHtml(value) {
+      const div = document.createElement("div");
+      div.textContent = value ?? "";
+      return div.innerHTML;
+    }
+
+    function money(value) {
+      return Number(value || 0).toLocaleString(
+        "en-US",
+        {
+          style: "currency",
+          currency: "USD"
+        }
+      );
+    }
+
+    function cleanStatus(value) {
+      return String(value || "")
+        .trim()
+        .toLowerCase();
+    }
+
+    function startOfToday() {
+      const date = new Date();
+      date.setHours(0, 0, 0, 0);
+      return date;
+    }
+
+    function startOfWeek(offset = 0) {
+      const date = startOfToday();
+      const day = date.getDay();
+
+      const daysSinceMonday =
+        day === 0 ? 6 : day - 1;
+
+      date.setDate(
+        date.getDate() -
+        daysSinceMonday +
+        offset * 7
+      );
+
+      return date;
+    }
+
+    function endOfWeek(offset = 0) {
+      const date = startOfWeek(offset);
+      date.setDate(date.getDate() + 7);
+      return date;
+    }
+
+    function completedDate(job) {
+      const value =
+        job.completed_at ||
+        job.delivery_photo_uploaded_at ||
+        job.created_at;
+
+      if (!value) {
+        return null;
+      }
+
+      const date = new Date(value);
+
+      return Number.isNaN(date.getTime())
+        ? null
+        : date;
+    }
+
+    function formatDate(value) {
+      if (!value) {
+        return "Not recorded";
+      }
+
+      return new Intl.DateTimeFormat(
+        "en-US",
+        {
+          weekday: "short",
+          month: "short",
+          day: "numeric",
+          hour: "numeric",
+          minute: "2-digit"
+        }
+      ).format(value);
+    }
+
+    function formatWeekDate(value) {
+      return new Intl.DateTimeFormat(
+        "en-US",
+        {
+          month: "short",
+          day: "numeric",
+          year: "numeric"
+        }
+      ).format(value);
+    }
+
+    function selectedWeekJobs() {
+      const weekStart = startOfWeek(weekOffset);
+      const weekEnd = endOfWeek(weekOffset);
+
+      return allJobs.filter(job => {
+        if (
+          cleanStatus(job.status) !==
+          "delivered"
+        ) {
+          return false;
+        }
+
+        const date = completedDate(job);
+
+        return (
+          date &&
+          date >= weekStart &&
+          date < weekEnd
+        );
+      });
+    }
+
+    function buildPayroll() {
+      const weekJobs = selectedWeekJobs();
+      const driverMap = new Map();
+
+      drivers.forEach(driver => {
+        driverMap.set(
+          String(driver.id),
+          {
+            id: driver.id,
+            name:
+              driver.full_name ||
+              driver.email ||
+              "Driver",
+            email: driver.email || "",
+            jobs: [],
+            total: 0,
+            todayTotal: 0
+          }
+        );
+      });
+
+      const todayStart = startOfToday();
+      const tomorrow = new Date(todayStart);
+      tomorrow.setDate(tomorrow.getDate() + 1);
+
+      weekJobs.forEach(job => {
+        const driverId =
+          String(
+            job.assigned_driver_id || ""
+          );
+
+        if (!driverId) {
+          return;
+        }
+
+        if (!driverMap.has(driverId)) {
+          driverMap.set(driverId, {
+            id: driverId,
+            name: "Assigned Driver",
+            email: "",
+            jobs: [],
+            total: 0,
+            todayTotal: 0
+          });
+        }
+
+        const summary =
+          driverMap.get(driverId);
+
+        summary.jobs.push(job);
+
+        summary.total +=
+          Number(job.driver_pay || 0);
+
+        const date = completedDate(job);
+
+        if (
+          date &&
+          date >= todayStart &&
+          date < tomorrow
+        ) {
+          summary.todayTotal +=
+            Number(job.driver_pay || 0);
+        }
+      });
+
+      payrollDrivers =
+        Array.from(driverMap.values())
+          .filter(driver =>
+            driver.jobs.length > 0
+          )
+          .sort((first, second) =>
+            first.name.localeCompare(
+              second.name
+            )
+          );
+
+      updateSummary(weekJobs);
+      updateWeekDisplay();
+    }
+
+    function updateSummary(weekJobs) {
+      const gross =
+        weekJobs.reduce(
+          (total, job) =>
+            total +
+            Number(job.driver_pay || 0),
+          0
+        );
+
+      const todayStart = startOfToday();
+      const tomorrow = new Date(todayStart);
+      tomorrow.setDate(tomorrow.getDate() + 1);
+
+      const todayTotal =
+        weekJobs.reduce((total, job) => {
+          const date = completedDate(job);
+
+          if (
+            date &&
+            date >= todayStart &&
+            date < tomorrow
+          ) {
+            return (
+              total +
+              Number(job.driver_pay || 0)
+            );
+          }
+
+          return total;
+        }, 0);
+
+      document
+        .getElementById("grossPayroll")
+        .textContent = money(gross);
+
+      document
+        .getElementById("completedJobs")
+        .textContent = weekJobs.length;
+
+      document
+        .getElementById("driversWithPay")
+        .textContent =
+          payrollDrivers.length;
+
+      document
+        .getElementById("todayPayroll")
+        .textContent =
+          money(todayTotal);
+    }
+
+    function updateWeekDisplay() {
+      const start = startOfWeek(weekOffset);
+      const end = endOfWeek(weekOffset);
+
+      end.setDate(end.getDate() - 1);
+
+      document
+        .getElementById("weekTitle")
+        .textContent =
+          weekOffset === 0
+            ? "Current Week"
+            : weekOffset === -1
+              ? "Previous Week"
+              : "Payroll Week";
+
+      document
+        .getElementById("weekDates")
+        .textContent =
+          `${formatWeekDate(start)} – ${formatWeekDate(end)}`;
+
+      document
+        .getElementById("nextWeekButton")
+        .disabled =
+          weekOffset >= 0;
+    }
+
+    function filteredPayroll() {
+      const search =
+        searchInput.value
+          .trim()
+          .toLowerCase();
+
+      if (!search) {
+        return payrollDrivers;
+      }
+
+      return payrollDrivers
+        .map(driver => {
+          const driverMatches =
+            [
+              driver.name,
+              driver.email
+            ]
+              .filter(Boolean)
+              .join(" ")
+              .toLowerCase()
+              .includes(search);
+
+          const matchingJobs =
+            driver.jobs.filter(job =>
+              [
+                job.job_number,
+                job.customer_name,
+                job.customer_email
+              ]
+                .filter(Boolean)
+                .join(" ")
+                .toLowerCase()
+                .includes(search)
+            );
+
+          if (driverMatches) {
+            return driver;
+          }
+
+          if (matchingJobs.length) {
+            return {
+              ...driver,
+              jobs: matchingJobs
+            };
+          }
+
+          return null;
+        })
+        .filter(Boolean);
+    }
+
+    function renderPayroll() {
+      const shownDrivers =
+        filteredPayroll();
+
+      document
+        .getElementById("visibleCount")
+        .textContent =
+          shownDrivers.length +
+          (
+            shownDrivers.length === 1
+              ? " driver"
+              : " drivers"
+          );
+
+      if (!shownDrivers.length) {
+        payrollBox.innerHTML = `
+          <div class="empty">
+            No completed driver jobs were found
+            for this payroll week.
+          </div>
+        `;
+
+        return;
+      }
+
+      payrollBox.innerHTML =
+        shownDrivers.map(driver => `
+          <article
+            class="driver-card"
+            data-driver-id="${escapeHtml(
+              driver.id
+            )}"
+          >
+            <button
+              class="driver-summary"
+              type="button"
+              data-toggle-driver="${escapeHtml(
+                driver.id
+              )}"
+            >
+              <div class="driver-main">
+                <div class="driver-name">
+                  ${escapeHtml(driver.name)}
+                </div>
+
+                <div class="driver-email">
+                  ${escapeHtml(
+                    driver.email ||
+                    "No email recorded"
+                  )}
+                </div>
+              </div>
+
+              <div class="jobs-block">
+                <span class="meta-label">
+                  Completed Jobs
+                </span>
+
+                <div class="meta-value">
+                  ${driver.jobs.length}
+                </div>
+              </div>
+
+              <div class="today-block">
+                <span class="meta-label">
+                  Today’s Pay
+                </span>
+
+                <div class="pay-value">
+                  ${escapeHtml(
+                    money(driver.todayTotal)
+                  )}
+                </div>
+              </div>
+
+              <div class="week-block">
+                <span class="meta-label">
+                  Week Pay
+                </span>
+
+                <div class="pay-value">
+                  ${escapeHtml(
+                    money(driver.total)
+                  )}
+                </div>
+              </div>
+
+              <div class="expand-arrow">›</div>
+            </button>
+
+            <div class="driver-details">
+              <div class="jobs-header">
+                <div>Job Number</div>
+                <div>Customer</div>
+                <div>Completed</div>
+                <div>Driver Pay</div>
+              </div>
+
+              ${driver.jobs.map(job => {
+                const jobId =
+                  String(job.id || "");
+
+                return `
+                  <div class="pay-job-row">
+                    <div class="job-number">
+                      ${escapeHtml(
+                        job.job_number ||
+                        "Job"
+                      )}
+                    </div>
+
+                    <div class="customer-name">
+                      ${escapeHtml(
+                        job.customer_name ||
+                        "Customer"
+                      )}
+                    </div>
+
+                    <div class="job-date">
+                      ${escapeHtml(
+                        formatDate(
+                          completedDate(job)
+                        )
+                      )}
+                    </div>
+
+                    <div class="pay-editor">
+                      <input
+                        class="pay-input"
+                        id="pay-${escapeHtml(jobId)}"
+                        type="number"
+                        min="0"
+                        step="0.01"
+                        value="${escapeHtml(
+                          Number(
+                            job.driver_pay || 0
+                          ).toFixed(2)
+                        )}"
+                      >
+
+                      <button
+                        class="save-pay-button"
+                        type="button"
+                        data-save-pay="${escapeHtml(
+                          jobId
+                        )}"
+                      >
+                        Save
+                      </button>
+
+                      <div
+                        class="job-message"
+                        id="message-${escapeHtml(
+                          jobId
+                        )}"
+                      ></div>
+                    </div>
+                  </div>
+                `;
+              }).join("")}
+            </div>
+          </article>
+        `).join("");
+
+      document
+        .querySelectorAll(
+          "[data-toggle-driver]"
+        )
+        .forEach(button => {
+          button.addEventListener(
+            "click",
+            function () {
+              this
+                .closest(".driver-card")
+                .classList
+                .toggle("open");
+            }
+          );
+        });
+
+      document
+        .querySelectorAll(
+          "[data-save-pay]"
+        )
+        .forEach(button => {
+          button.addEventListener(
+            "click",
+            function () {
+              saveJobPay(
+                this.dataset.savePay,
+                this
+              );
+            }
+          );
+        });
+    }
+
+    async function saveJobPay(
+      jobId,
+      button
+    ) {
+      const input =
+        document.getElementById(
+          `pay-${jobId}`
+        );
+
+      const message =
+        document.getElementById(
+          `message-${jobId}`
+        );
+
+      const newPay =
+        Number(input.value || 0);
+
+      if (
+        Number.isNaN(newPay) ||
+        newPay < 0
+      ) {
+        message.className =
+          "job-message error";
+
+        message.textContent =
+          "Enter a valid pay amount.";
+
+        return;
+      }
+
+      button.disabled = true;
+      button.textContent = "Saving...";
+
+      message.className =
+        "job-message";
+
+      message.textContent = "";
+
+      try {
+        const result = await client
+          .from("quotes")
+          .update({
+            driver_pay: newPay
+          })
+          .eq("id", jobId)
+          .select("*")
+          .maybeSingle();
+
+        if (result.error) {
+          throw result.error;
+        }
+
+        const index =
+          allJobs.findIndex(job =>
+            String(job.id) ===
+            String(jobId)
+          );
+
+        if (index !== -1) {
+          allJobs[index] =
+            result.data || {
+              ...allJobs[index],
+              driver_pay: newPay
+            };
+        }
+
+        message.className =
+          "job-message success";
+
+        message.textContent =
+          "Driver pay updated successfully.";
+
+        buildPayroll();
+        renderPayroll();
+      } catch (error) {
+        message.className =
+          "job-message error";
+
+        message.textContent =
+          error.message ||
+          "Unable to update driver pay.";
+      } finally {
+        button.disabled = false;
+        button.textContent = "Save";
+      }
+    }
+
+    async function verifyDispatchUser() {
+      const sessionResult =
+        await client.auth.getSession();
+
+      const session =
+        sessionResult.data.session;
+
+      if (!session) {
+        location.replace("/index.html");
+        return null;
+      }
+
+      document
+        .getElementById("staffEmail")
+        .textContent =
+          session.user.email || "";
+
+      const profileResult = await client
+        .from("profiles")
+        .select("role")
+        .eq("id", session.user.id)
+        .maybeSingle();
+
+      if (
+        profileResult.error ||
+        !profileResult.data
+      ) {
+        throw new Error(
+          profileResult.error?.message ||
+          "No MG Express profile was found."
+        );
+      }
+
+      const role =
+        String(
+          profileResult.data.role || ""
+        ).toLowerCase();
+
+      if (
+        ![
+          "admin",
+          "staff",
+          "dispatcher"
+        ].includes(role)
+      ) {
+        throw new Error(
+          "This account does not have dispatch access."
+        );
+      }
+
+      window.dispatchEvent(
+        new CustomEvent(
+          "mg-dispatch-ready",
+          {
+            detail: {
+              email:
+                session.user.email
+            }
+          }
+        )
+      );
+
+      return session;
+    }
+
+    async function loadPayroll() {
+      payrollBox.innerHTML = `
+        <div class="empty">
+          Loading payroll...
+        </div>
+      `;
+
+      const driverResult = await client
+        .from("drivers")
+        .select("*")
+        .order("full_name", {
+          ascending: true
+        });
+
+      if (driverResult.error) {
+        throw driverResult.error;
+      }
+
+      const jobsResult = await client
+        .from("quotes")
+        .select("*")
+        .order("created_at", {
+          ascending: false
+        });
+
+      if (jobsResult.error) {
+        throw jobsResult.error;
+      }
+
+      drivers =
+        driverResult.data || [];
+
+      allJobs =
+        jobsResult.data || [];
+
+      buildPayroll();
+      renderPayroll();
+    }
+
+    document
+      .getElementById(
+        "previousWeekButton"
+      )
+      .addEventListener(
+        "click",
+        function () {
+          weekOffset -= 1;
+          buildPayroll();
+          renderPayroll();
+        }
+      );
+
+    document
+      .getElementById(
+        "nextWeekButton"
+      )
+      .addEventListener(
+        "click",
+        function () {
+          if (weekOffset < 0) {
+            weekOffset += 1;
+            buildPayroll();
+            renderPayroll();
+          }
+        }
+      );
+
+    searchInput.addEventListener(
+      "input",
+      renderPayroll
+    );
+
+    document
+      .getElementById("refreshButton")
+      .addEventListener(
+        "click",
+        async function () {
+          this.disabled = true;
+          this.textContent =
+            "Refreshing...";
+
+          try {
+            await loadPayroll();
+          } catch (error) {
+            payrollBox.innerHTML = `
+              <div class="error">
+                ${escapeHtml(
+                  error.message ||
+                  "Unable to refresh payroll."
+                )}
+              </div>
+            `;
+          } finally {
+            this.disabled = false;
+            this.textContent = "Refresh";
+          }
+        }
+      );
+
+    (async function startPage() {
+      try {
+        const session =
+          await verifyDispatchUser();
+
+        if (!session) {
+          return;
+        }
+
+        await loadPayroll();
+      } catch (error) {
+        payrollBox.innerHTML = `
+          <div class="error">
+            ${escapeHtml(
+              error.message ||
+              "Unable to load payroll."
+            )}
+          </div>
+        `;
+      }
+    })();
+  </script>
+
+  <script src="/dispatch-menu-v3.js"></script>
+</body>
+</html>
