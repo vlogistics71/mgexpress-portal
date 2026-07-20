@@ -1,0 +1,2031 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1"
+  >
+
+  <title>MG Express Reports</title>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    :root {
+      --dark-green: #064f3b;
+      --green: #087455;
+      --light-green: #e7f5ef;
+      --coral: #ff665c;
+      --background: #f3f8f6;
+      --white: #ffffff;
+      --ink: #17221e;
+      --muted: #68756f;
+      --line: #dfe8e4;
+      --danger: #9b2929;
+      --danger-bg: #fff0f0;
+      --warning: #946000;
+      --warning-bg: #fff5d8;
+      --blue: #245d9c;
+      --blue-bg: #eaf3ff;
+    }
+
+    body {
+      margin: 0;
+      font-family: Arial, Helvetica, sans-serif;
+      background: var(--background);
+      color: var(--ink);
+    }
+
+    button,
+    input,
+    select {
+      font: inherit;
+    }
+
+    .topbar {
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      padding: 18px 20px;
+      background: var(--dark-green);
+      color: white;
+    }
+
+    .topbar-inner {
+      width: min(1100px, 100%);
+      margin: auto;
+    }
+
+    .brand {
+      font-size: 23px;
+      font-weight: 900;
+      line-height: 1.08;
+    }
+
+    .brand span {
+      color: var(--coral);
+    }
+
+    .staff-email {
+      margin-top: 7px;
+      font-size: 13px;
+      opacity: .82;
+      overflow-wrap: anywhere;
+    }
+
+    .container {
+      width: min(1100px, 100%);
+      margin: auto;
+      padding: 28px 18px 75px;
+    }
+
+    .heading-row {
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+
+    .eyebrow {
+      margin-bottom: 6px;
+      color: var(--muted);
+      font-size: 17px;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(39px, 8vw, 55px);
+      line-height: 1.03;
+    }
+
+    .heading-actions {
+      display: flex;
+      gap: 10px;
+    }
+
+    .dashboard-button,
+    .print-button {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 52px;
+      padding: 13px 18px;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      background: white;
+      color: var(--dark-green);
+      text-decoration: none;
+      font-weight: 900;
+      white-space: nowrap;
+      cursor: pointer;
+    }
+
+    .period-panel {
+      padding: 18px;
+      border: 1px solid var(--line);
+      border-radius: 21px;
+      background: white;
+      box-shadow: 0 8px 25px rgba(0, 0, 0, .04);
+    }
+
+    .period-buttons {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    .period-button {
+      min-height: 50px;
+      padding: 11px 14px;
+      border: 1px solid var(--line);
+      border-radius: 13px;
+      background: white;
+      color: var(--dark-green);
+      font-weight: 900;
+      cursor: pointer;
+    }
+
+    .period-button.active {
+      border-color: var(--green);
+      background: var(--light-green);
+      color: var(--green);
+    }
+
+    .custom-dates {
+      display: grid;
+      grid-template-columns:
+        minmax(150px, 1fr)
+        minmax(150px, 1fr)
+        auto;
+      gap: 12px;
+      align-items: end;
+      margin-top: 14px;
+    }
+
+    .field label {
+      display: block;
+      margin-bottom: 7px;
+      color: var(--muted);
+      font-size: 11px;
+      font-weight: 900;
+      letter-spacing: .04em;
+      text-transform: uppercase;
+    }
+
+    .field input {
+      width: 100%;
+      min-height: 49px;
+      padding: 11px 13px;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      background: white;
+      color: var(--ink);
+    }
+
+    .apply-button {
+      min-height: 49px;
+      padding: 11px 17px;
+      border: 0;
+      border-radius: 12px;
+      background: var(--green);
+      color: white;
+      font-weight: 900;
+      cursor: pointer;
+    }
+
+    .report-period {
+      margin-top: 13px;
+      color: var(--muted);
+      font-size: 14px;
+      font-weight: 800;
+      text-align: center;
+    }
+
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 12px;
+      margin-top: 22px;
+    }
+
+    .stat-card {
+      min-width: 0;
+      padding: 18px;
+      border: 1px solid var(--line);
+      border-radius: 19px;
+      background: white;
+      box-shadow: 0 7px 22px rgba(0, 0, 0, .04);
+    }
+
+    .stat-number {
+      color: var(--green);
+      font-size: 29px;
+      font-weight: 900;
+      overflow-wrap: anywhere;
+    }
+
+    .stat-number.profit {
+      color: var(--dark-green);
+    }
+
+    .stat-number.warning {
+      color: var(--warning);
+    }
+
+    .stat-label {
+      margin-top: 7px;
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.35;
+    }
+
+    .section-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 18px;
+      margin-top: 22px;
+    }
+
+    .panel {
+      min-width: 0;
+      padding: 20px;
+      border: 1px solid var(--line);
+      border-radius: 21px;
+      background: white;
+      box-shadow: 0 8px 25px rgba(0, 0, 0, .04);
+    }
+
+    .panel.full {
+      grid-column: 1 / -1;
+    }
+
+    .panel-heading {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+
+    .panel h2 {
+      margin: 0;
+      font-size: 25px;
+    }
+
+    .panel-count {
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 800;
+    }
+
+    .ranking-list {
+      overflow: hidden;
+      border: 1px solid var(--line);
+      border-radius: 16px;
+    }
+
+    .ranking-row {
+      display: grid;
+      grid-template-columns: auto minmax(0, 1fr) auto;
+      gap: 13px;
+      align-items: center;
+      min-height: 70px;
+      padding: 13px 15px;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .ranking-row:last-child {
+      border-bottom: 0;
+    }
+
+    .rank-number {
+      width: 34px;
+      height: 34px;
+      display: grid;
+      place-items: center;
+      border-radius: 50%;
+      background: var(--light-green);
+      color: var(--green);
+      font-weight: 900;
+    }
+
+    .ranking-name {
+      color: var(--dark-green);
+      font-size: 15px;
+      font-weight: 900;
+      overflow-wrap: anywhere;
+    }
+
+    .ranking-detail {
+      margin-top: 4px;
+      color: var(--muted);
+      font-size: 12px;
+      overflow-wrap: anywhere;
+    }
+
+    .ranking-value {
+      color: var(--green);
+      font-size: 16px;
+      font-weight: 900;
+      text-align: right;
+    }
+
+    .invoice-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .invoice-box {
+      padding: 16px;
+      border-radius: 15px;
+      background: #f7faf9;
+      text-align: center;
+    }
+
+    .invoice-value {
+      color: var(--green);
+      font-size: 24px;
+      font-weight: 900;
+      overflow-wrap: anywhere;
+    }
+
+    .invoice-value.overdue {
+      color: var(--danger);
+    }
+
+    .invoice-label {
+      margin-top: 6px;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .jobs-list {
+      overflow: hidden;
+      border: 1px solid var(--line);
+      border-radius: 17px;
+    }
+
+    .job-row {
+      display: grid;
+      grid-template-columns:
+        minmax(125px, .7fr)
+        minmax(0, 1.1fr)
+        minmax(125px, .7fr)
+        minmax(125px, .7fr)
+        minmax(150px, .85fr)
+        auto;
+      gap: 14px;
+      align-items: center;
+      min-height: 82px;
+      padding: 14px 16px;
+      border-bottom: 1px solid var(--line);
+      color: inherit;
+      text-decoration: none;
+    }
+
+    .job-row:last-child {
+      border-bottom: 0;
+    }
+
+    .job-row:active {
+      background: #f7faf9;
+    }
+
+    .job-number {
+      color: var(--dark-green);
+      font-size: 16px;
+      font-weight: 900;
+      overflow-wrap: anywhere;
+    }
+
+    .customer-name {
+      font-size: 14px;
+      font-weight: 800;
+      overflow-wrap: anywhere;
+    }
+
+    .meta-label {
+      display: block;
+      margin-bottom: 4px;
+      color: var(--muted);
+      font-size: 9px;
+      font-weight: 900;
+      text-transform: uppercase;
+    }
+
+    .meta-value {
+      font-size: 13px;
+      font-weight: 800;
+      line-height: 1.35;
+      overflow-wrap: anywhere;
+    }
+
+    .money-value {
+      color: var(--green);
+    }
+
+    .profit-value {
+      color: var(--dark-green);
+    }
+
+    .arrow {
+      color: var(--green);
+      font-size: 25px;
+      font-weight: 900;
+    }
+
+    .empty,
+    .error {
+      padding: 30px 22px;
+      border-radius: 18px;
+      text-align: center;
+      line-height: 1.55;
+    }
+
+    .empty {
+      border: 1px solid var(--line);
+      background: white;
+      color: var(--muted);
+    }
+
+    .error {
+      background: var(--danger-bg);
+      color: var(--danger);
+    }
+
+    .notice {
+      margin-top: 18px;
+      padding: 14px 16px;
+      border-radius: 14px;
+      background: var(--warning-bg);
+      color: var(--warning);
+      font-size: 13px;
+      line-height: 1.5;
+    }
+
+    @media (max-width: 900px) {
+      .stats {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .job-row {
+        grid-template-columns:
+          minmax(0, 1fr)
+          auto;
+        gap: 7px 12px;
+        min-height: 145px;
+      }
+
+      .job-main,
+      .customer-block,
+      .revenue-block,
+      .payroll-block,
+      .profit-block {
+        grid-column: 1 / 2;
+      }
+
+      .arrow {
+        grid-column: 2 / 3;
+        grid-row: 1 / 6;
+        align-self: center;
+      }
+    }
+
+    @media (max-width: 720px) {
+      .heading-row {
+        align-items: flex-start;
+        flex-direction: column;
+      }
+
+      .heading-actions {
+        width: 100%;
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+      }
+
+      .period-buttons {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .custom-dates {
+        grid-template-columns: 1fr;
+      }
+
+      .apply-button {
+        width: 100%;
+      }
+
+      .section-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .panel.full {
+        grid-column: auto;
+      }
+
+      .invoice-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media (max-width: 430px) {
+      .stats {
+        grid-template-columns: 1fr;
+      }
+
+      .heading-actions {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media print {
+      body {
+        background: white;
+      }
+
+      .topbar,
+      .heading-actions,
+      .period-buttons,
+      .custom-dates,
+      .dispatch-menu-button,
+      .dispatch-side-menu,
+      .dispatch-menu-overlay,
+      .notice {
+        display: none !important;
+      }
+
+      .container {
+        width: 100%;
+        padding: 0;
+      }
+
+      .period-panel,
+      .stat-card,
+      .panel {
+        box-shadow: none;
+      }
+
+      .section-grid {
+        display: block;
+      }
+
+      .panel {
+        margin-top: 15px;
+        break-inside: avoid;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <header class="topbar">
+    <div class="topbar-inner">
+      <div class="brand">
+        MG <span>EXPRESS</span> DISPATCH
+      </div>
+
+      <div
+        class="staff-email"
+        id="staffEmail"
+      ></div>
+    </div>
+  </header>
+
+  <main class="container">
+    <div class="heading-row">
+      <div>
+        <div class="eyebrow">
+          Revenue, payroll and delivery performance
+        </div>
+
+        <h1>Reports</h1>
+      </div>
+
+      <div class="heading-actions">
+        <button
+          class="print-button"
+          id="printButton"
+          type="button"
+        >
+          Print Report
+        </button>
+
+        <a
+          class="dashboard-button"
+          href="https://portal.migenteexpress.com/dashboard.html"
+        >
+          ← Dashboard
+        </a>
+      </div>
+    </div>
+
+    <section class="period-panel">
+      <div class="period-buttons">
+        <button
+          class="period-button"
+          data-period="today"
+          type="button"
+        >
+          Today
+        </button>
+
+        <button
+          class="period-button active"
+          data-period="week"
+          type="button"
+        >
+          This Week
+        </button>
+
+        <button
+          class="period-button"
+          data-period="month"
+          type="button"
+        >
+          This Month
+        </button>
+
+        <button
+          class="period-button"
+          data-period="all"
+          type="button"
+        >
+          All Time
+        </button>
+      </div>
+
+      <div class="custom-dates">
+        <div class="field">
+          <label for="dateFrom">
+            Custom From
+          </label>
+
+          <input
+            id="dateFrom"
+            type="date"
+          >
+        </div>
+
+        <div class="field">
+          <label for="dateTo">
+            Custom To
+          </label>
+
+          <input
+            id="dateTo"
+            type="date"
+          >
+        </div>
+
+        <button
+          class="apply-button"
+          id="applyCustomButton"
+          type="button"
+        >
+          Apply Dates
+        </button>
+      </div>
+
+      <div
+        class="report-period"
+        id="reportPeriod"
+      ></div>
+    </section>
+
+    <section class="stats">
+      <div class="stat-card">
+        <div
+          class="stat-number"
+          id="revenueTotal"
+        >
+          $0.00
+        </div>
+
+        <div class="stat-label">
+          Customer Revenue
+        </div>
+      </div>
+
+      <div class="stat-card">
+        <div
+          class="stat-number warning"
+          id="payrollTotal"
+        >
+          $0.00
+        </div>
+
+        <div class="stat-label">
+          Driver Payroll
+        </div>
+      </div>
+
+      <div class="stat-card">
+        <div
+          class="stat-number profit"
+          id="profitTotal"
+        >
+          $0.00
+        </div>
+
+        <div class="stat-label">
+          Estimated Gross Profit
+        </div>
+      </div>
+
+      <div class="stat-card">
+        <div
+          class="stat-number"
+          id="completedTotal"
+        >
+          0
+        </div>
+
+        <div class="stat-label">
+          Completed Jobs
+        </div>
+      </div>
+
+      <div class="stat-card">
+        <div
+          class="stat-number"
+          id="averageCharge"
+        >
+          $0.00
+        </div>
+
+        <div class="stat-label">
+          Average Customer Charge
+        </div>
+      </div>
+
+      <div class="stat-card">
+        <div
+          class="stat-number warning"
+          id="averageDriverPay"
+        >
+          $0.00
+        </div>
+
+        <div class="stat-label">
+          Average Driver Pay
+        </div>
+      </div>
+
+      <div class="stat-card">
+        <div
+          class="stat-number"
+          id="customerCount"
+        >
+          0
+        </div>
+
+        <div class="stat-label">
+          Customers Served
+        </div>
+      </div>
+
+      <div class="stat-card">
+        <div
+          class="stat-number"
+          id="driverCount"
+        >
+          0
+        </div>
+
+        <div class="stat-label">
+          Drivers With Deliveries
+        </div>
+      </div>
+    </section>
+
+    <div class="section-grid">
+      <section class="panel">
+        <div class="panel-heading">
+          <h2>Top Customers</h2>
+
+          <div
+            class="panel-count"
+            id="topCustomerCount"
+          ></div>
+        </div>
+
+        <div id="topCustomersBox">
+          <div class="empty">
+            Loading customers...
+          </div>
+        </div>
+      </section>
+
+      <section class="panel">
+        <div class="panel-heading">
+          <h2>Top Drivers</h2>
+
+          <div
+            class="panel-count"
+            id="topDriverCount"
+          ></div>
+        </div>
+
+        <div id="topDriversBox">
+          <div class="empty">
+            Loading drivers...
+          </div>
+        </div>
+      </section>
+
+      <section class="panel full">
+        <div class="panel-heading">
+          <h2>Invoice Status</h2>
+
+          <div class="panel-count">
+            Customer billing only
+          </div>
+        </div>
+
+        <div class="invoice-grid">
+          <div class="invoice-box">
+            <div
+              class="invoice-value"
+              id="invoicePaid"
+            >
+              $0.00
+            </div>
+
+            <div class="invoice-label">
+              Paid
+            </div>
+          </div>
+
+          <div class="invoice-box">
+            <div
+              class="invoice-value"
+              id="invoiceOutstanding"
+            >
+              $0.00
+            </div>
+
+            <div class="invoice-label">
+              Outstanding
+            </div>
+          </div>
+
+          <div class="invoice-box">
+            <div
+              class="invoice-value overdue"
+              id="invoiceOverdue"
+            >
+              $0.00
+            </div>
+
+            <div class="invoice-label">
+              Overdue
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="panel full">
+        <div class="panel-heading">
+          <h2>Completed Jobs</h2>
+
+          <div
+            class="panel-count"
+            id="jobCountLabel"
+          >
+            0 jobs
+          </div>
+        </div>
+
+        <div id="jobsBox">
+          <div class="empty">
+            Loading completed jobs...
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <div class="notice">
+      Edited customer charges and invoice payment statuses
+      currently come from this browser’s saved invoice records.
+      Driver payroll amounts come directly from completed jobs
+      in Supabase.
+    </div>
+  </main>
+
+  <script>
+    const client = supabase.createClient(
+      "https://dczlucwfjayymlwbzzdi.supabase.co",
+      "sb_publishable_kcv_a78ZyUxMo2neKUANdw_XN7eAMpI"
+    );
+
+    window.mgDispatchClient = client;
+
+    const INVOICE_STORAGE_KEY =
+      "mg-express-invoice-records-v1";
+
+    let allJobs = [];
+    let drivers = [];
+    let driversById = {};
+    let invoiceRecords = {};
+    let selectedPeriod = "week";
+    let rangeStart = null;
+    let rangeEnd = null;
+
+    function escapeHtml(value) {
+      const div = document.createElement("div");
+      div.textContent = value ?? "";
+      return div.innerHTML;
+    }
+
+    function money(value) {
+      return Number(value || 0).toLocaleString(
+        "en-US",
+        {
+          style: "currency",
+          currency: "USD"
+        }
+      );
+    }
+
+    function cleanStatus(value) {
+      return String(value || "")
+        .trim()
+        .toLowerCase();
+    }
+
+    function startOfToday() {
+      const date = new Date();
+      date.setHours(0, 0, 0, 0);
+      return date;
+    }
+
+    function startOfTomorrow() {
+      const date = startOfToday();
+      date.setDate(date.getDate() + 1);
+      return date;
+    }
+
+    function startOfCurrentWeek() {
+      const date = startOfToday();
+      const day = date.getDay();
+      const daysSinceMonday =
+        day === 0 ? 6 : day - 1;
+
+      date.setDate(
+        date.getDate() -
+        daysSinceMonday
+      );
+
+      return date;
+    }
+
+    function startOfCurrentMonth() {
+      const date = startOfToday();
+      date.setDate(1);
+      return date;
+    }
+
+    function completedDate(job) {
+      const value =
+        job.completed_at ||
+        job.delivery_photo_uploaded_at ||
+        job.created_at;
+
+      if (!value) {
+        return null;
+      }
+
+      const date = new Date(value);
+
+      return Number.isNaN(date.getTime())
+        ? null
+        : date;
+    }
+
+    function formatDate(value) {
+      if (!value) {
+        return "Not recorded";
+      }
+
+      const date =
+        value instanceof Date
+          ? value
+          : new Date(value);
+
+      if (Number.isNaN(date.getTime())) {
+        return "Not recorded";
+      }
+
+      return new Intl.DateTimeFormat(
+        "en-US",
+        {
+          month: "short",
+          day: "numeric",
+          year: "numeric",
+          hour: "numeric",
+          minute: "2-digit"
+        }
+      ).format(date);
+    }
+
+    function formatShortDate(value) {
+      return new Intl.DateTimeFormat(
+        "en-US",
+        {
+          month: "short",
+          day: "numeric",
+          year: "numeric"
+        }
+      ).format(value);
+    }
+
+    function originalCharge(job) {
+      const possibleValues = [
+        job.customer_charge,
+        job.customer_price,
+        job.quoted_price,
+        job.quote_amount,
+        job.price,
+        job.total_price,
+        job.total_amount,
+        job.amount,
+        job.charge
+      ];
+
+      const value =
+        possibleValues.find(item =>
+          item !== null &&
+          item !== undefined &&
+          item !== "" &&
+          !Number.isNaN(Number(item))
+        );
+
+      return Number(value || 0);
+    }
+
+    function customerCharge(job) {
+      const saved =
+        invoiceRecords[
+          String(job.id || "")
+        ];
+
+      if (
+        saved &&
+        saved.amount !== undefined
+      ) {
+        return Number(saved.amount || 0);
+      }
+
+      return originalCharge(job);
+    }
+
+    function invoiceStatus(job) {
+      const id = String(job.id || "");
+      const saved = invoiceRecords[id] || {};
+
+      if (saved.paymentStatus) {
+        return saved.paymentStatus;
+      }
+
+      const date =
+        completedDate(job) ||
+        new Date(job.created_at);
+
+      const due = new Date(date);
+      due.setDate(due.getDate() + 30);
+
+      return due < new Date()
+        ? "overdue"
+        : "unpaid";
+    }
+
+    function loadInvoiceRecords() {
+      try {
+        invoiceRecords =
+          JSON.parse(
+            localStorage.getItem(
+              INVOICE_STORAGE_KEY
+            ) || "{}"
+          );
+      } catch {
+        invoiceRecords = {};
+      }
+    }
+
+    function setPeriod(period) {
+      selectedPeriod = period;
+
+      document
+        .querySelectorAll(
+          "[data-period]"
+        )
+        .forEach(button => {
+          button.classList.toggle(
+            "active",
+            button.dataset.period ===
+              period
+          );
+        });
+
+      const now = new Date();
+
+      if (period === "today") {
+        rangeStart = startOfToday();
+        rangeEnd = startOfTomorrow();
+      }
+
+      if (period === "week") {
+        rangeStart =
+          startOfCurrentWeek();
+
+        rangeEnd =
+          new Date(rangeStart);
+
+        rangeEnd.setDate(
+          rangeEnd.getDate() + 7
+        );
+      }
+
+      if (period === "month") {
+        rangeStart =
+          startOfCurrentMonth();
+
+        rangeEnd =
+          new Date(
+            now.getFullYear(),
+            now.getMonth() + 1,
+            1
+          );
+      }
+
+      if (period === "all") {
+        rangeStart = null;
+        rangeEnd = null;
+      }
+
+      updatePeriodLabel();
+      renderReport();
+    }
+
+    function updatePeriodLabel() {
+      let label = "All completed jobs";
+
+      if (rangeStart && rangeEnd) {
+        const displayEnd =
+          new Date(rangeEnd);
+
+        displayEnd.setMilliseconds(-1);
+
+        label =
+          `${formatShortDate(rangeStart)} – ` +
+          `${formatShortDate(displayEnd)}`;
+      }
+
+      document
+        .getElementById("reportPeriod")
+        .textContent = label;
+    }
+
+    function reportJobs() {
+      return allJobs.filter(job => {
+        if (
+          cleanStatus(job.status) !==
+          "delivered"
+        ) {
+          return false;
+        }
+
+        const date = completedDate(job);
+
+        if (!date) {
+          return false;
+        }
+
+        if (
+          rangeStart &&
+          date < rangeStart
+        ) {
+          return false;
+        }
+
+        if (
+          rangeEnd &&
+          date >= rangeEnd
+        ) {
+          return false;
+        }
+
+        return true;
+      });
+    }
+
+    function customerKey(job) {
+      const email =
+        String(
+          job.customer_email || ""
+        )
+          .trim()
+          .toLowerCase();
+
+      if (email) {
+        return "email:" + email;
+      }
+
+      return (
+        "name:" +
+        String(
+          job.customer_name ||
+          "Customer"
+        )
+          .trim()
+          .toLowerCase()
+      );
+    }
+
+    function calculateReport(jobs) {
+      const revenue =
+        jobs.reduce(
+          (total, job) =>
+            total + customerCharge(job),
+          0
+        );
+
+      const payroll =
+        jobs.reduce(
+          (total, job) =>
+            total +
+            Number(job.driver_pay || 0),
+          0
+        );
+
+      const customerSet =
+        new Set(
+          jobs.map(customerKey)
+        );
+
+      const driverSet =
+        new Set(
+          jobs
+            .map(job =>
+              String(
+                job.assigned_driver_id ||
+                ""
+              )
+            )
+            .filter(Boolean)
+        );
+
+      return {
+        revenue,
+        payroll,
+        profit: revenue - payroll,
+        completed: jobs.length,
+
+        averageCharge:
+          jobs.length
+            ? revenue / jobs.length
+            : 0,
+
+        averageDriverPay:
+          jobs.length
+            ? payroll / jobs.length
+            : 0,
+
+        customerCount:
+          customerSet.size,
+
+        driverCount:
+          driverSet.size
+      };
+    }
+
+    function renderStatistics(report) {
+      document
+        .getElementById(
+          "revenueTotal"
+        )
+        .textContent =
+          money(report.revenue);
+
+      document
+        .getElementById(
+          "payrollTotal"
+        )
+        .textContent =
+          money(report.payroll);
+
+      document
+        .getElementById(
+          "profitTotal"
+        )
+        .textContent =
+          money(report.profit);
+
+      document
+        .getElementById(
+          "completedTotal"
+        )
+        .textContent =
+          report.completed;
+
+      document
+        .getElementById(
+          "averageCharge"
+        )
+        .textContent =
+          money(report.averageCharge);
+
+      document
+        .getElementById(
+          "averageDriverPay"
+        )
+        .textContent =
+          money(report.averageDriverPay);
+
+      document
+        .getElementById(
+          "customerCount"
+        )
+        .textContent =
+          report.customerCount;
+
+      document
+        .getElementById(
+          "driverCount"
+        )
+        .textContent =
+          report.driverCount;
+    }
+
+    function renderTopCustomers(jobs) {
+      const grouped = new Map();
+
+      jobs.forEach(job => {
+        const key = customerKey(job);
+
+        if (!grouped.has(key)) {
+          grouped.set(key, {
+            name:
+              job.customer_name ||
+              "Customer",
+
+            email:
+              job.customer_email || "",
+
+            jobs: 0,
+            revenue: 0
+          });
+        }
+
+        const customer =
+          grouped.get(key);
+
+        customer.jobs += 1;
+        customer.revenue +=
+          customerCharge(job);
+      });
+
+      const customers =
+        Array.from(grouped.values())
+          .sort(
+            (first, second) =>
+              second.revenue -
+              first.revenue
+          )
+          .slice(0, 10);
+
+      document
+        .getElementById(
+          "topCustomerCount"
+        )
+        .textContent =
+          `${customers.length} shown`;
+
+      const box =
+        document.getElementById(
+          "topCustomersBox"
+        );
+
+      if (!customers.length) {
+        box.innerHTML = `
+          <div class="empty">
+            No customer activity was found
+            for this period.
+          </div>
+        `;
+
+        return;
+      }
+
+      box.className = "ranking-list";
+
+      box.innerHTML =
+        customers.map(
+          (customer, index) => `
+            <div class="ranking-row">
+              <div class="rank-number">
+                ${index + 1}
+              </div>
+
+              <div>
+                <div class="ranking-name">
+                  ${escapeHtml(
+                    customer.name
+                  )}
+                </div>
+
+                <div class="ranking-detail">
+                  ${customer.jobs}
+                  ${
+                    customer.jobs === 1
+                      ? "job"
+                      : "jobs"
+                  }
+                  ${
+                    customer.email
+                      ? " • " +
+                        escapeHtml(
+                          customer.email
+                        )
+                      : ""
+                  }
+                </div>
+              </div>
+
+              <div class="ranking-value">
+                ${escapeHtml(
+                  money(customer.revenue)
+                )}
+              </div>
+            </div>
+          `
+        ).join("");
+    }
+
+    function renderTopDrivers(jobs) {
+      const grouped = new Map();
+
+      jobs.forEach(job => {
+        const id =
+          String(
+            job.assigned_driver_id ||
+            ""
+          );
+
+        if (!id) {
+          return;
+        }
+
+        if (!grouped.has(id)) {
+          grouped.set(id, {
+            name:
+              driversById[id] ||
+              "Assigned Driver",
+
+            jobs: 0,
+            pay: 0
+          });
+        }
+
+        const driver =
+          grouped.get(id);
+
+        driver.jobs += 1;
+
+        driver.pay +=
+          Number(job.driver_pay || 0);
+      });
+
+      const topDrivers =
+        Array.from(grouped.values())
+          .sort((first, second) => {
+            if (
+              second.jobs !== first.jobs
+            ) {
+              return (
+                second.jobs -
+                first.jobs
+              );
+            }
+
+            return (
+              second.pay -
+              first.pay
+            );
+          })
+          .slice(0, 10);
+
+      document
+        .getElementById(
+          "topDriverCount"
+        )
+        .textContent =
+          `${topDrivers.length} shown`;
+
+      const box =
+        document.getElementById(
+          "topDriversBox"
+        );
+
+      if (!topDrivers.length) {
+        box.innerHTML = `
+          <div class="empty">
+            No assigned driver deliveries
+            were found for this period.
+          </div>
+        `;
+
+        return;
+      }
+
+      box.className = "ranking-list";
+
+      box.innerHTML =
+        topDrivers.map(
+          (driver, index) => `
+            <div class="ranking-row">
+              <div class="rank-number">
+                ${index + 1}
+              </div>
+
+              <div>
+                <div class="ranking-name">
+                  ${escapeHtml(
+                    driver.name
+                  )}
+                </div>
+
+                <div class="ranking-detail">
+                  ${driver.jobs}
+                  ${
+                    driver.jobs === 1
+                      ? "completed job"
+                      : "completed jobs"
+                  }
+                </div>
+              </div>
+
+              <div class="ranking-value">
+                ${escapeHtml(
+                  money(driver.pay)
+                )}
+              </div>
+            </div>
+          `
+        ).join("");
+    }
+
+    function renderInvoiceSummary(jobs) {
+      let paid = 0;
+      let outstanding = 0;
+      let overdue = 0;
+
+      jobs.forEach(job => {
+        const amount =
+          customerCharge(job);
+
+        const status =
+          invoiceStatus(job);
+
+        if (status === "paid") {
+          paid += amount;
+          return;
+        }
+
+        outstanding += amount;
+
+        if (status === "overdue") {
+          overdue += amount;
+        }
+      });
+
+      document
+        .getElementById("invoicePaid")
+        .textContent = money(paid);
+
+      document
+        .getElementById(
+          "invoiceOutstanding"
+        )
+        .textContent =
+          money(outstanding);
+
+      document
+        .getElementById(
+          "invoiceOverdue"
+        )
+        .textContent =
+          money(overdue);
+    }
+
+    function renderJobs(jobs) {
+      const box =
+        document.getElementById(
+          "jobsBox"
+        );
+
+      document
+        .getElementById(
+          "jobCountLabel"
+        )
+        .textContent =
+          `${jobs.length} ${
+            jobs.length === 1
+              ? "job"
+              : "jobs"
+          }`;
+
+      if (!jobs.length) {
+        box.className = "";
+
+        box.innerHTML = `
+          <div class="empty">
+            No completed jobs were found
+            for this report period.
+          </div>
+        `;
+
+        return;
+      }
+
+      box.className = "jobs-list";
+
+      box.innerHTML =
+        jobs.map(job => {
+          const revenue =
+            customerCharge(job);
+
+          const payroll =
+            Number(
+              job.driver_pay || 0
+            );
+
+          const profit =
+            revenue - payroll;
+
+          const driverName =
+            driversById[
+              String(
+                job.assigned_driver_id ||
+                ""
+              )
+            ] || "Unassigned";
+
+          const url =
+            "https://portal.migenteexpress.com/" +
+            "job.html?id=" +
+            encodeURIComponent(
+              String(job.id || "")
+            );
+
+          return `
+            <a
+              class="job-row"
+              href="${escapeHtml(url)}"
+            >
+              <div class="job-main">
+                <div class="job-number">
+                  ${escapeHtml(
+                    job.job_number ||
+                    "Job"
+                  )}
+                </div>
+              </div>
+
+              <div class="customer-block">
+                <span class="meta-label">
+                  Customer
+                </span>
+
+                <div class="customer-name">
+                  ${escapeHtml(
+                    job.customer_name ||
+                    "Customer"
+                  )}
+                </div>
+              </div>
+
+              <div class="revenue-block">
+                <span class="meta-label">
+                  Revenue
+                </span>
+
+                <div class="meta-value money-value">
+                  ${escapeHtml(
+                    money(revenue)
+                  )}
+                </div>
+              </div>
+
+              <div class="payroll-block">
+                <span class="meta-label">
+                  Driver Pay
+                </span>
+
+                <div class="meta-value">
+                  ${escapeHtml(
+                    money(payroll)
+                  )}
+                </div>
+              </div>
+
+              <div class="profit-block">
+                <span class="meta-label">
+                  Gross Profit
+                </span>
+
+                <div class="meta-value profit-value">
+                  ${escapeHtml(
+                    money(profit)
+                  )}
+                </div>
+
+                <div class="ranking-detail">
+                  ${escapeHtml(driverName)}
+                  •
+                  ${escapeHtml(
+                    formatDate(
+                      completedDate(job)
+                    )
+                  )}
+                </div>
+              </div>
+
+              <div class="arrow">›</div>
+            </a>
+          `;
+        }).join("");
+    }
+
+    function renderReport() {
+      const jobs =
+        reportJobs().sort(
+          (first, second) =>
+            (
+              completedDate(second)
+                ?.getTime() || 0
+            ) -
+            (
+              completedDate(first)
+                ?.getTime() || 0
+            )
+        );
+
+      const report =
+        calculateReport(jobs);
+
+      renderStatistics(report);
+      renderTopCustomers(jobs);
+      renderTopDrivers(jobs);
+      renderInvoiceSummary(jobs);
+      renderJobs(jobs);
+    }
+
+    async function verifyDispatchUser() {
+      const sessionResult =
+        await client.auth.getSession();
+
+      const session =
+        sessionResult.data.session;
+
+      if (!session) {
+        location.replace(
+          "/index.html"
+        );
+
+        return null;
+      }
+
+      document
+        .getElementById(
+          "staffEmail"
+        )
+        .textContent =
+          session.user.email || "";
+
+      const profileResult =
+        await client
+          .from("profiles")
+          .select("role")
+          .eq(
+            "id",
+            session.user.id
+          )
+          .maybeSingle();
+
+      if (
+        profileResult.error ||
+        !profileResult.data
+      ) {
+        throw new Error(
+          profileResult.error?.message ||
+          "No MG Express profile was found."
+        );
+      }
+
+      const role =
+        String(
+          profileResult.data.role || ""
+        ).toLowerCase();
+
+      if (
+        ![
+          "admin",
+          "staff",
+          "dispatcher"
+        ].includes(role)
+      ) {
+        throw new Error(
+          "This account does not have dispatch access."
+        );
+      }
+
+      window.dispatchEvent(
+        new CustomEvent(
+          "mg-dispatch-ready",
+          {
+            detail: {
+              email:
+                session.user.email
+            }
+          }
+        )
+      );
+
+      return session;
+    }
+
+    async function loadReports() {
+      const jobsResult =
+        await client
+          .from("quotes")
+          .select("*")
+          .order(
+            "created_at",
+            {
+              ascending: false
+            }
+          );
+
+      if (jobsResult.error) {
+        throw jobsResult.error;
+      }
+
+      const driversResult =
+        await client
+          .from("drivers")
+          .select(
+            "id,full_name,email"
+          );
+
+      if (driversResult.error) {
+        throw driversResult.error;
+      }
+
+      allJobs =
+        jobsResult.data || [];
+
+      drivers =
+        driversResult.data || [];
+
+      driversById = {};
+
+      drivers.forEach(driver => {
+        driversById[
+          String(driver.id)
+        ] =
+          driver.full_name ||
+          driver.email ||
+          "Driver";
+      });
+
+      loadInvoiceRecords();
+      setPeriod("week");
+    }
+
+    document
+      .querySelectorAll(
+        "[data-period]"
+      )
+      .forEach(button => {
+        button.addEventListener(
+          "click",
+          function () {
+            setPeriod(
+              this.dataset.period
+            );
+          }
+        );
+      });
+
+    document
+      .getElementById(
+        "applyCustomButton"
+      )
+      .addEventListener(
+        "click",
+        function () {
+          const fromValue =
+            document
+              .getElementById(
+                "dateFrom"
+              )
+              .value;
+
+          const toValue =
+            document
+              .getElementById(
+                "dateTo"
+              )
+              .value;
+
+          if (!fromValue || !toValue) {
+            alert(
+              "Select both a starting and ending date."
+            );
+
+            return;
+          }
+
+          rangeStart =
+            new Date(
+              fromValue +
+              "T00:00:00"
+            );
+
+          rangeEnd =
+            new Date(
+              toValue +
+              "T23:59:59.999"
+            );
+
+          rangeEnd.setMilliseconds(
+            rangeEnd.getMilliseconds() + 1
+          );
+
+          selectedPeriod = "custom";
+
+          document
+            .querySelectorAll(
+              "[data-period]"
+            )
+            .forEach(button => {
+              button.classList.remove(
+                "active"
+              );
+            });
+
+          updatePeriodLabel();
+          renderReport();
+        }
+      );
+
+    document
+      .getElementById(
+        "printButton"
+      )
+      .addEventListener(
+        "click",
+        function () {
+          window.print();
+        }
+      );
+
+    (async function startPage() {
+      try {
+        const session =
+          await verifyDispatchUser();
+
+        if (!session) {
+          return;
+        }
+
+        await loadReports();
+      } catch (error) {
+        document
+          .querySelector(
+            ".section-grid"
+          )
+          .innerHTML = `
+            <div class="error">
+              ${escapeHtml(
+                error.message ||
+                "Unable to load reports."
+              )}
+            </div>
+          `;
+      }
+    })();
+  </script>
+
+  <script src="/dispatch-menu-v3.js"></script>
+</body>
+</html>
