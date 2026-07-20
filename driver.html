@@ -2,58 +2,586 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>MG Express Driver</title>
+
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1"
+  >
+
+  <title>MG Express Drivers</title>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
   <style>
-    *{box-sizing:border-box}
-    body{margin:0;font-family:Arial,sans-serif;background:#f3f8f6;color:#17221e}
-    header{background:#064f3b;color:#fff;padding:18px;display:flex;justify-content:space-between;align-items:center;gap:12px}
-    .brand{font-size:22px;font-weight:800}
-    .brand span{color:#ff665c}
-    #email{font-size:12px;margin-top:5px;opacity:.85;overflow-wrap:anywhere}
-    button{border:0;border-radius:12px;padding:13px 16px;font-size:15px;font-weight:700}
-    .logout{background:#fff;color:#064f3b}
-    main{max-width:800px;margin:auto;padding:26px 18px}
-    h1{font-size:38px;margin:5px 0 22px}
-    .small{color:#68756f;font-size:18px}
-    .summary,.card,.message{background:#fff;border:1px solid #dfe8e4;border-radius:20px;padding:20px;margin-bottom:18px;box-shadow:0 8px 24px rgba(0,0,0,.05)}
-    .count{font-size:38px;font-weight:800;color:#087455}
-    .top{display:flex;justify-content:space-between;gap:12px;align-items:start}
-    .job{font-size:22px;font-weight:800;color:#064f3b}
-    .status{background:#e7f5ef;color:#087455;border-radius:20px;padding:8px 11px;font-size:12px;font-weight:800}
-    .label{font-size:12px;font-weight:800;color:#728079;text-transform:uppercase;margin-top:16px}
-    .value{font-size:17px;line-height:1.4;overflow-wrap:anywhere}
-    .arrow{font-size:22px;color:#087455;margin:8px 0}
-    .actions{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:18px}
-    .primary{background:#087455;color:#fff}
-    .secondary{background:#e8efec;color:#064f3b}
-    .error{color:#9b2929}
-    @media(max-width:520px){.actions{grid-template-columns:1fr}h1{font-size:34px}}
+    * {
+      box-sizing: border-box;
+    }
+
+    :root {
+      --dark-green: #064f3b;
+      --green: #087455;
+      --light-green: #e7f5ef;
+      --coral: #ff665c;
+      --background: #f3f8f6;
+      --white: #ffffff;
+      --ink: #17221e;
+      --muted: #68756f;
+      --line: #dfe8e4;
+      --danger: #9b2929;
+      --danger-bg: #fff0f0;
+      --warning: #986200;
+      --warning-bg: #fff5d8;
+      --blue: #245d9c;
+      --blue-bg: #eaf3ff;
+    }
+
+    body {
+      margin: 0;
+      font-family: Arial, Helvetica, sans-serif;
+      background: var(--background);
+      color: var(--ink);
+    }
+
+    button,
+    input,
+    select {
+      font: inherit;
+    }
+
+    .topbar {
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      padding: 18px 20px;
+      background: var(--dark-green);
+      color: white;
+    }
+
+    .topbar-inner {
+      width: min(1050px, 100%);
+      margin: auto;
+    }
+
+    .brand {
+      font-size: 23px;
+      font-weight: 900;
+      line-height: 1.08;
+    }
+
+    .brand span {
+      color: var(--coral);
+    }
+
+    .staff-email {
+      margin-top: 7px;
+      font-size: 13px;
+      opacity: .82;
+      overflow-wrap: anywhere;
+    }
+
+    .container {
+      width: min(1050px, 100%);
+      margin: auto;
+      padding: 28px 18px 75px;
+    }
+
+    .heading-row {
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+
+    .eyebrow {
+      margin-bottom: 6px;
+      color: var(--muted);
+      font-size: 17px;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(39px, 8vw, 55px);
+      line-height: 1.03;
+    }
+
+    .dashboard-button {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 52px;
+      padding: 13px 18px;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      background: white;
+      color: var(--dark-green);
+      text-decoration: none;
+      font-weight: 900;
+      white-space: nowrap;
+    }
+
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 12px;
+      margin-bottom: 21px;
+    }
+
+    .stat-card {
+      min-width: 0;
+      padding: 18px;
+      border: 1px solid var(--line);
+      border-radius: 19px;
+      background: white;
+      box-shadow: 0 7px 22px rgba(0, 0, 0, .04);
+    }
+
+    .stat-number {
+      color: var(--green);
+      font-size: 31px;
+      font-weight: 900;
+      overflow-wrap: anywhere;
+    }
+
+    .stat-label {
+      margin-top: 7px;
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.35;
+    }
+
+    .filters {
+      padding: 18px;
+      border: 1px solid var(--line);
+      border-radius: 21px;
+      background: white;
+      box-shadow: 0 8px 25px rgba(0, 0, 0, .04);
+    }
+
+    .filter-grid {
+      display: grid;
+      grid-template-columns:
+        minmax(0, 2fr)
+        minmax(170px, 1fr)
+        auto;
+      gap: 12px;
+    }
+
+    .field label {
+      display: block;
+      margin-bottom: 7px;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 900;
+      letter-spacing: .04em;
+      text-transform: uppercase;
+    }
+
+    .field input,
+    .field select {
+      width: 100%;
+      min-height: 51px;
+      padding: 12px 14px;
+      border: 1px solid var(--line);
+      border-radius: 13px;
+      background: white;
+      color: var(--ink);
+    }
+
+    .refresh-button {
+      align-self: end;
+      min-height: 51px;
+      padding: 12px 18px;
+      border: 1px solid var(--line);
+      border-radius: 13px;
+      background: white;
+      color: var(--dark-green);
+      font-weight: 900;
+      cursor: pointer;
+    }
+
+    .list-heading {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 14px;
+      margin: 27px 2px 13px;
+    }
+
+    .list-heading h2 {
+      margin: 0;
+      font-size: 28px;
+    }
+
+    .visible-count {
+      color: var(--muted);
+      font-size: 14px;
+      font-weight: 800;
+    }
+
+    .driver-list {
+      overflow: hidden;
+      border: 1px solid var(--line);
+      border-radius: 20px;
+      background: white;
+      box-shadow: 0 8px 25px rgba(0, 0, 0, .04);
+    }
+
+    .driver-row {
+      display: grid;
+      grid-template-columns:
+        minmax(0, 1.35fr)
+        minmax(110px, .55fr)
+        minmax(110px, .55fr)
+        minmax(125px, .65fr)
+        minmax(125px, .65fr)
+        auto;
+      gap: 15px;
+      align-items: center;
+      min-height: 94px;
+      padding: 16px 18px;
+      border-bottom: 1px solid var(--line);
+      background: white;
+      color: inherit;
+      text-decoration: none;
+    }
+
+    .driver-row:last-child {
+      border-bottom: 0;
+    }
+
+    .driver-row:active {
+      background: #f7faf9;
+    }
+
+    .driver-main {
+      min-width: 0;
+    }
+
+    .driver-name {
+      color: var(--dark-green);
+      font-size: 18px;
+      font-weight: 900;
+      overflow-wrap: anywhere;
+    }
+
+    .driver-email {
+      margin-top: 5px;
+      color: var(--muted);
+      font-size: 13px;
+      overflow-wrap: anywhere;
+    }
+
+    .status-pill {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: fit-content;
+      padding: 8px 11px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 900;
+      white-space: nowrap;
+    }
+
+    .status-available {
+      background: var(--light-green);
+      color: var(--green);
+    }
+
+    .status-busy {
+      background: var(--warning-bg);
+      color: var(--warning);
+    }
+
+    .status-inactive {
+      background: var(--danger-bg);
+      color: var(--danger);
+    }
+
+    .meta-label {
+      display: block;
+      margin-bottom: 5px;
+      color: var(--muted);
+      font-size: 10px;
+      font-weight: 900;
+      letter-spacing: .04em;
+      text-transform: uppercase;
+    }
+
+    .meta-value {
+      font-size: 14px;
+      font-weight: 800;
+      line-height: 1.35;
+      overflow-wrap: anywhere;
+    }
+
+    .pay-value {
+      color: var(--green);
+    }
+
+    .arrow {
+      color: var(--green);
+      font-size: 27px;
+      font-weight: 900;
+    }
+
+    .empty,
+    .error {
+      padding: 31px 22px;
+      border-radius: 19px;
+      text-align: center;
+      line-height: 1.55;
+    }
+
+    .empty {
+      border: 1px solid var(--line);
+      background: white;
+      color: var(--muted);
+    }
+
+    .error {
+      background: var(--danger-bg);
+      color: var(--danger);
+    }
+
+    @media (max-width: 900px) {
+      .driver-row {
+        grid-template-columns:
+          minmax(0, 1.3fr)
+          minmax(105px, .55fr)
+          minmax(105px, .55fr)
+          minmax(115px, .6fr)
+          auto;
+      }
+
+      .week-pay-block {
+        display: none;
+      }
+    }
+
+    @media (max-width: 720px) {
+      .heading-row {
+        align-items: flex-start;
+        flex-direction: column;
+      }
+
+      .dashboard-button {
+        width: 100%;
+      }
+
+      .stats {
+        grid-template-columns:
+          repeat(2, minmax(0, 1fr));
+      }
+
+      .filter-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .refresh-button {
+        width: 100%;
+      }
+
+      .driver-row {
+        grid-template-columns:
+          minmax(0, 1fr)
+          auto;
+        gap: 8px 12px;
+        min-height: 150px;
+      }
+
+      .driver-main {
+        grid-column: 1 / 2;
+      }
+
+      .status-pill {
+        grid-column: 2 / 3;
+        grid-row: 1 / 2;
+      }
+
+      .active-jobs-block {
+        grid-column: 1 / 2;
+      }
+
+      .completed-block {
+        grid-column: 1 / 2;
+      }
+
+      .today-pay-block {
+        grid-column: 1 / 2;
+      }
+
+      .week-pay-block {
+        display: block;
+        grid-column: 1 / 2;
+      }
+
+      .arrow {
+        grid-column: 2 / 3;
+        grid-row: 2 / 6;
+        align-self: center;
+      }
+    }
+
+    @media (max-width: 430px) {
+      .stats {
+        grid-template-columns: 1fr;
+      }
+    }
   </style>
 </head>
 
 <body>
-  <header>
-    <div>
-      <div class="brand">MG EXPRESS <span>DRIVER</span></div>
-      <div id="email"></div>
+  <header class="topbar">
+    <div class="topbar-inner">
+      <div class="brand">
+        MG <span>EXPRESS</span> DISPATCH
+      </div>
+
+      <div
+        class="staff-email"
+        id="staffEmail"
+      ></div>
     </div>
-    <button class="logout" id="logout">Sign Out</button>
   </header>
 
-  <main>
-    <div class="small">Driver mobile portal</div>
-    <h1>Assigned Jobs</h1>
+  <main class="container">
+    <div class="heading-row">
+      <div>
+        <div class="eyebrow">
+          Driver activity, assignments and pay
+        </div>
 
-    <div class="summary">
-      <div class="count" id="count">0</div>
-      <div class="small">Active assigned jobs</div>
+        <h1>Drivers</h1>
+      </div>
+
+      <a
+        class="dashboard-button"
+        href="https://portal.migenteexpress.com/dashboard.html"
+      >
+        ← Dashboard
+      </a>
     </div>
 
-    <div id="jobs" class="message">Loading assigned jobs...</div>
+    <section class="stats">
+      <div class="stat-card">
+        <div
+          class="stat-number"
+          id="totalDrivers"
+        >
+          0
+        </div>
+
+        <div class="stat-label">
+          Total Drivers
+        </div>
+      </div>
+
+      <div class="stat-card">
+        <div
+          class="stat-number"
+          id="availableDrivers"
+        >
+          0
+        </div>
+
+        <div class="stat-label">
+          Available
+        </div>
+      </div>
+
+      <div class="stat-card">
+        <div
+          class="stat-number"
+          id="busyDrivers"
+        >
+          0
+        </div>
+
+        <div class="stat-label">
+          Busy / Assigned
+        </div>
+      </div>
+
+      <div class="stat-card">
+        <div
+          class="stat-number"
+          id="inactiveDrivers"
+        >
+          0
+        </div>
+
+        <div class="stat-label">
+          Inactive
+        </div>
+      </div>
+    </section>
+
+    <section class="filters">
+      <div class="filter-grid">
+        <div class="field">
+          <label for="searchInput">
+            Search
+          </label>
+
+          <input
+            id="searchInput"
+            type="search"
+            placeholder="Search driver name or email"
+          >
+        </div>
+
+        <div class="field">
+          <label for="statusFilter">
+            Driver Status
+          </label>
+
+          <select id="statusFilter">
+            <option value="">
+              All Drivers
+            </option>
+
+            <option value="available">
+              Available
+            </option>
+
+            <option value="busy">
+              Busy / Assigned
+            </option>
+
+            <option value="inactive">
+              Inactive
+            </option>
+          </select>
+        </div>
+
+        <button
+          class="refresh-button"
+          id="refreshButton"
+          type="button"
+        >
+          Refresh
+        </button>
+      </div>
+    </section>
+
+    <div class="list-heading">
+      <h2>Driver List</h2>
+
+      <div
+        class="visible-count"
+        id="visibleCount"
+      >
+        0 drivers
+      </div>
+    </div>
+
+    <section id="driversBox">
+      <div class="empty">
+        Loading drivers...
+      </div>
+    </section>
   </main>
 
   <script>
@@ -62,137 +590,716 @@
       "sb_publishable_kcv_a78ZyUxMo2neKUANdw_XN7eAMpI"
     );
 
-    const jobsBox = document.getElementById("jobs");
-    const countBox = document.getElementById("count");
-    const emailBox = document.getElementById("email");
+    window.mgDispatchClient = client;
 
-    function safe(value) {
+    const driversBox =
+      document.getElementById("driversBox");
+
+    const searchInput =
+      document.getElementById("searchInput");
+
+    const statusFilter =
+      document.getElementById("statusFilter");
+
+    let drivers = [];
+    let jobs = [];
+    let driverSummaries = [];
+
+    function escapeHtml(value) {
       const div = document.createElement("div");
-      div.textContent = value || "";
+      div.textContent = value ?? "";
       return div.innerHTML;
     }
 
-    function mapUrl(address) {
-      return "https://www.google.com/maps/search/?api=1&query=" +
-        encodeURIComponent(address || "");
+    function cleanStatus(value) {
+      return String(value || "")
+        .trim()
+        .toLowerCase();
     }
 
-    document.getElementById("logout").onclick = async function () {
-      await client.auth.signOut();
-      location.href = "/index.html";
-    };
+    function money(value) {
+      return Number(value || 0).toLocaleString(
+        "en-US",
+        {
+          style: "currency",
+          currency: "USD"
+        }
+      );
+    }
 
-    async function changeStatus(id, status) {
-      const result = await client
-        .from("quotes")
-        .update({ status: status })
-        .eq("id", id);
+    function startOfToday() {
+      const date = new Date();
 
-      if (result.error) {
-        alert(result.error.message);
-        return;
+      date.setHours(0, 0, 0, 0);
+
+      return date;
+    }
+
+    function startOfTomorrow() {
+      const date = startOfToday();
+
+      date.setDate(
+        date.getDate() + 1
+      );
+
+      return date;
+    }
+
+    function startOfCurrentWeek() {
+      const date = startOfToday();
+
+      const day = date.getDay();
+
+      const daysSinceMonday =
+        day === 0
+          ? 6
+          : day - 1;
+
+      date.setDate(
+        date.getDate() -
+        daysSinceMonday
+      );
+
+      return date;
+    }
+
+    function endOfCurrentWeek() {
+      const date =
+        startOfCurrentWeek();
+
+      date.setDate(
+        date.getDate() + 7
+      );
+
+      return date;
+    }
+
+    function jobCompletedDate(job) {
+      const value =
+        job.completed_at ||
+        job.delivery_photo_uploaded_at ||
+        job.created_at;
+
+      if (!value) {
+        return null;
       }
 
-      load();
+      const date =
+        new Date(value);
+
+      if (
+        Number.isNaN(
+          date.getTime()
+        )
+      ) {
+        return null;
+      }
+
+      return date;
     }
 
-    async function load() {
-      const sessionResult = await client.auth.getSession();
-      const session = sessionResult.data.session;
+    function isClosedJob(job) {
+      return [
+        "delivered",
+        "cancelled",
+        "canceled"
+      ].includes(
+        cleanStatus(job.status)
+      );
+    }
+
+    function isDeliveredJob(job) {
+      return (
+        cleanStatus(job.status) ===
+        "delivered"
+      );
+    }
+
+    function buildDriverSummaries() {
+      const todayStart =
+        startOfToday();
+
+      const tomorrowStart =
+        startOfTomorrow();
+
+      const weekStart =
+        startOfCurrentWeek();
+
+      const weekEnd =
+        endOfCurrentWeek();
+
+      driverSummaries =
+        drivers.map(driver => {
+          const driverJobs =
+            jobs.filter(job =>
+              String(
+                job.assigned_driver_id || ""
+              ) ===
+              String(driver.id)
+            );
+
+          const activeJobs =
+            driverJobs.filter(job =>
+              !isClosedJob(job)
+            );
+
+          const completedToday =
+            driverJobs.filter(job => {
+              if (!isDeliveredJob(job)) {
+                return false;
+              }
+
+              const completed =
+                jobCompletedDate(job);
+
+              return (
+                completed &&
+                completed >= todayStart &&
+                completed < tomorrowStart
+              );
+            });
+
+          const completedThisWeek =
+            driverJobs.filter(job => {
+              if (!isDeliveredJob(job)) {
+                return false;
+              }
+
+              const completed =
+                jobCompletedDate(job);
+
+              return (
+                completed &&
+                completed >= weekStart &&
+                completed < weekEnd
+              );
+            });
+
+          const todayPay =
+            completedToday.reduce(
+              (total, job) =>
+                total +
+                Number(
+                  job.driver_pay || 0
+                ),
+              0
+            );
+
+          const weekPay =
+            completedThisWeek.reduce(
+              (total, job) =>
+                total +
+                Number(
+                  job.driver_pay || 0
+                ),
+              0
+            );
+
+          let displayStatus =
+            "available";
+
+          if (
+            driver.active === false
+          ) {
+            displayStatus =
+              "inactive";
+          } else if (
+            activeJobs.length > 0
+          ) {
+            displayStatus =
+              "busy";
+          }
+
+          return {
+            id: driver.id,
+
+            name:
+              driver.full_name ||
+              driver.email ||
+              "Driver",
+
+            email:
+              driver.email || "",
+
+            active:
+              driver.active !== false,
+
+            displayStatus:
+              displayStatus,
+
+            activeJobs:
+              activeJobs.length,
+
+            completedToday:
+              completedToday.length,
+
+            todayPay:
+              todayPay,
+
+            weekPay:
+              weekPay
+          };
+        });
+
+      driverSummaries.sort(
+        (first, second) => {
+          const statusOrder = {
+            busy: 0,
+            available: 1,
+            inactive: 2
+          };
+
+          const statusDifference =
+            statusOrder[
+              first.displayStatus
+            ] -
+            statusOrder[
+              second.displayStatus
+            ];
+
+          if (
+            statusDifference !== 0
+          ) {
+            return statusDifference;
+          }
+
+          return first.name.localeCompare(
+            second.name
+          );
+        }
+      );
+    }
+
+    function statusLabel(status) {
+      const labels = {
+        available: "Available",
+        busy: "Busy",
+        inactive: "Inactive"
+      };
+
+      return labels[status] ||
+        "Driver";
+    }
+
+    async function verifyDispatchUser() {
+      const sessionResult =
+        await client.auth.getSession();
+
+      const session =
+        sessionResult.data.session;
 
       if (!session) {
-        location.href = "/index.html";
-        return;
+        location.replace(
+          "/index.html"
+        );
+
+        return null;
       }
 
-      emailBox.textContent = session.user.email || "";
+      document
+        .getElementById(
+          "staffEmail"
+        )
+        .textContent =
+          session.user.email || "";
 
-      const driverResult = await client
-        .from("drivers")
-        .select("id,full_name")
-        .eq("auth_user_id", session.user.id)
-        .maybeSingle();
+      const profileResult =
+        await client
+          .from("profiles")
+          .select("role")
+          .eq(
+            "id",
+            session.user.id
+          )
+          .maybeSingle();
 
-      if (driverResult.error) {
-        jobsBox.className = "message error";
-        jobsBox.textContent = driverResult.error.message;
-        return;
+      if (
+        profileResult.error ||
+        !profileResult.data
+      ) {
+        throw new Error(
+          profileResult.error?.message ||
+          "No MG Express profile was found."
+        );
       }
 
-      if (!driverResult.data) {
-        jobsBox.className = "message error";
-        jobsBox.textContent = "This login is not connected to a driver profile.";
-        return;
+      const role =
+        String(
+          profileResult.data.role || ""
+        ).toLowerCase();
+
+      if (
+        ![
+          "admin",
+          "staff",
+          "dispatcher"
+        ].includes(role)
+      ) {
+        if (role === "driver") {
+          location.replace(
+            "https://drivers.migenteexpress.com"
+          );
+
+          return null;
+        }
+
+        if (role === "customer") {
+          location.replace(
+            "/customer.html"
+          );
+
+          return null;
+        }
+
+        throw new Error(
+          "This account does not have dispatch access."
+        );
       }
 
-      const jobsResult = await client
-        .from("quotes")
-        .select("id,job_number,customer_name,pickup_address,delivery_address,special_instructions,status,created_at")
-        .eq("assigned_driver_id", driverResult.data.id)
-        .neq("status", "cancelled")
-        .order("created_at", { ascending: false });
+      window.dispatchEvent(
+        new CustomEvent(
+          "mg-dispatch-ready",
+          {
+            detail: {
+              email:
+                session.user.email
+            }
+          }
+        )
+      );
 
-      if (jobsResult.error) {
-        jobsBox.className = "message error";
-        jobsBox.textContent = jobsResult.error.message;
-        return;
-      }
-
-      const jobs = jobsResult.data || [];
-      countBox.textContent = jobs.length;
-
-      if (!jobs.length) {
-        jobsBox.className = "message";
-        jobsBox.innerHTML = "<strong>No jobs assigned yet.</strong><p>Contact MG Express Dispatch.</p>";
-        return;
-      }
-
-      jobsBox.className = "";
-      jobsBox.innerHTML = jobs.map(function (job) {
-        return `
-          <div class="card">
-            <div class="top">
-              <div class="job">${safe(job.job_number)}</div>
-              <div class="status">${safe((job.status || "assigned").replaceAll("_"," "))}</div>
-            </div>
-
-            <div class="label">Customer</div>
-            <div class="value">${safe(job.customer_name)}</div>
-
-            <div class="label">Pickup</div>
-            <div class="value">${safe(job.pickup_address)}</div>
-
-            <div class="arrow">↓</div>
-
-            <div class="label">Delivery</div>
-            <div class="value">${safe(job.delivery_address)}</div>
-
-            <div class="label">Instructions</div>
-            <div class="value">${safe(job.special_instructions || "No special instructions")}</div>
-
-            <div class="actions">
-              <button class="secondary" onclick="window.open('${mapUrl(job.pickup_address)}','_blank')">
-                Pickup Directions
-              </button>
-
-              <button class="secondary" onclick="window.open('${mapUrl(job.delivery_address)}','_blank')">
-                Delivery Directions
-              </button>
-
-              <button class="primary" onclick="changeStatus('${job.id}','in_transit')">
-                Start Delivery
-              </button>
-
-              <button class="primary" onclick="changeStatus('${job.id}','delivered')">
-                Mark Delivered
-              </button>
-            </div>
-          </div>
-        `;
-      }).join("");
+      return session;
     }
 
-    load();
+    async function loadDriverData() {
+      driversBox.className = "";
+
+      driversBox.innerHTML = `
+        <div class="empty">
+          Loading drivers...
+        </div>
+      `;
+
+      const driverResult =
+        await client
+          .from("drivers")
+          .select("*")
+          .order(
+            "full_name",
+            {
+              ascending: true
+            }
+          );
+
+      if (driverResult.error) {
+        throw driverResult.error;
+      }
+
+      const jobResult =
+        await client
+          .from("quotes")
+          .select("*")
+          .order(
+            "created_at",
+            {
+              ascending: false
+            }
+          );
+
+      if (jobResult.error) {
+        throw jobResult.error;
+      }
+
+      drivers =
+        driverResult.data || [];
+
+      jobs =
+        jobResult.data || [];
+
+      buildDriverSummaries();
+      updateStatistics();
+      renderDrivers();
+    }
+
+    function filteredDrivers() {
+      const search =
+        searchInput.value
+          .trim()
+          .toLowerCase();
+
+      const selectedStatus =
+        statusFilter.value;
+
+      return driverSummaries.filter(
+        driver => {
+          if (
+            selectedStatus &&
+            driver.displayStatus !==
+              selectedStatus
+          ) {
+            return false;
+          }
+
+          if (!search) {
+            return true;
+          }
+
+          const searchable = [
+            driver.name,
+            driver.email
+          ]
+            .filter(Boolean)
+            .join(" ")
+            .toLowerCase();
+
+          return searchable.includes(
+            search
+          );
+        }
+      );
+    }
+
+    function updateStatistics() {
+      document
+        .getElementById(
+          "totalDrivers"
+        )
+        .textContent =
+          driverSummaries.length;
+
+      document
+        .getElementById(
+          "availableDrivers"
+        )
+        .textContent =
+          driverSummaries.filter(
+            driver =>
+              driver.displayStatus ===
+              "available"
+          ).length;
+
+      document
+        .getElementById(
+          "busyDrivers"
+        )
+        .textContent =
+          driverSummaries.filter(
+            driver =>
+              driver.displayStatus ===
+              "busy"
+          ).length;
+
+      document
+        .getElementById(
+          "inactiveDrivers"
+        )
+        .textContent =
+          driverSummaries.filter(
+            driver =>
+              driver.displayStatus ===
+              "inactive"
+          ).length;
+    }
+
+    function renderDrivers() {
+      const shownDrivers =
+        filteredDrivers();
+
+      document
+        .getElementById(
+          "visibleCount"
+        )
+        .textContent =
+          shownDrivers.length +
+          (
+            shownDrivers.length === 1
+              ? " driver"
+              : " drivers"
+          );
+
+      if (!shownDrivers.length) {
+        driversBox.className = "";
+
+        driversBox.innerHTML = `
+          <div class="empty">
+            No drivers match the selected filters.
+          </div>
+        `;
+
+        return;
+      }
+
+      driversBox.className =
+        "driver-list";
+
+      driversBox.innerHTML =
+        shownDrivers
+          .map(driver => {
+            const driverUrl =
+              "https://portal.migenteexpress.com/" +
+              "driver-details.html?id=" +
+              encodeURIComponent(
+                String(driver.id)
+              );
+
+            return `
+              <a
+                class="driver-row"
+                href="${escapeHtml(
+                  driverUrl
+                )}"
+              >
+                <div class="driver-main">
+                  <div class="driver-name">
+                    ${escapeHtml(
+                      driver.name
+                    )}
+                  </div>
+
+                  <div class="driver-email">
+                    ${escapeHtml(
+                      driver.email ||
+                      "No email recorded"
+                    )}
+                  </div>
+                </div>
+
+                <div
+                  class="status-pill status-${escapeHtml(
+                    driver.displayStatus
+                  )}"
+                >
+                  ${escapeHtml(
+                    statusLabel(
+                      driver.displayStatus
+                    )
+                  )}
+                </div>
+
+                <div class="active-jobs-block">
+                  <span class="meta-label">
+                    Active Jobs
+                  </span>
+
+                  <div class="meta-value">
+                    ${driver.activeJobs}
+                  </div>
+                </div>
+
+                <div class="completed-block">
+                  <span class="meta-label">
+                    Completed Today
+                  </span>
+
+                  <div class="meta-value">
+                    ${driver.completedToday}
+                  </div>
+                </div>
+
+                <div class="today-pay-block">
+                  <span class="meta-label">
+                    Today’s Pay
+                  </span>
+
+                  <div class="meta-value pay-value">
+                    ${escapeHtml(
+                      money(
+                        driver.todayPay
+                      )
+                    )}
+                  </div>
+                </div>
+
+                <div class="week-pay-block">
+                  <span class="meta-label">
+                    Week Pay
+                  </span>
+
+                  <div class="meta-value pay-value">
+                    ${escapeHtml(
+                      money(
+                        driver.weekPay
+                      )
+                    )}
+                  </div>
+                </div>
+
+                <div class="arrow">
+                  ›
+                </div>
+              </a>
+            `;
+          })
+          .join("");
+    }
+
+    searchInput.addEventListener(
+      "input",
+      renderDrivers
+    );
+
+    statusFilter.addEventListener(
+      "change",
+      renderDrivers
+    );
+
+    document
+      .getElementById(
+        "refreshButton"
+      )
+      .addEventListener(
+        "click",
+        async function () {
+          this.disabled = true;
+          this.textContent =
+            "Refreshing...";
+
+          try {
+            await loadDriverData();
+          } catch (error) {
+            driversBox.className = "";
+
+            driversBox.innerHTML = `
+              <div class="error">
+                ${escapeHtml(
+                  error.message ||
+                  "Unable to refresh drivers."
+                )}
+              </div>
+            `;
+          } finally {
+            this.disabled = false;
+            this.textContent =
+              "Refresh";
+          }
+        }
+      );
+
+    (async function startPage() {
+      try {
+        const session =
+          await verifyDispatchUser();
+
+        if (!session) {
+          return;
+        }
+
+        await loadDriverData();
+      } catch (error) {
+        driversBox.className = "";
+
+        driversBox.innerHTML = `
+          <div class="error">
+            ${escapeHtml(
+              error.message ||
+              "Unable to load drivers."
+            )}
+          </div>
+        `;
+      }
+    })();
   </script>
+
+  <script src="/dispatch-menu-v3.js"></script>
 </body>
 </html>
