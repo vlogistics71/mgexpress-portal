@@ -35,11 +35,19 @@
       --blue-bg: #eaf3ff;
     }
 
+    html {
+      scroll-behavior: smooth;
+    }
+
     body {
       margin: 0;
       font-family: Arial, Helvetica, sans-serif;
       background: var(--background);
       color: var(--ink);
+    }
+
+    body.menu-open {
+      overflow: hidden;
     }
 
     button,
@@ -69,14 +77,13 @@
     .topbar-inner {
       position: relative;
       width: min(1000px, 100%);
-      min-height: 74px;
+      min-height: 75px;
       margin: auto;
       padding-right: 82px;
     }
 
     .brand {
-      max-width: calc(100% - 4px);
-      font-size: clamp(21px, 5.7vw, 30px);
+      font-size: clamp(21px, 5.8vw, 30px);
       font-weight: 900;
       line-height: 1.08;
     }
@@ -86,20 +93,18 @@
     }
 
     .staff-email {
-      max-width: calc(100% - 4px);
       margin-top: 9px;
       font-size: 14px;
       opacity: .84;
       overflow-wrap: anywhere;
     }
 
-    .dashboard-hamburger {
+    .hamburger {
       position: absolute;
       top: 50%;
       right: 0;
-      display: flex;
-      align-items: center;
-      justify-content: center;
+      display: grid;
+      place-items: center;
       width: 64px;
       height: 64px;
       padding: 0;
@@ -111,11 +116,124 @@
       font-weight: 900;
       line-height: 1;
       transform: translateY(-50%);
-      z-index: 10000;
     }
 
-    .dashboard-hamburger:active {
+    .hamburger:active {
       transform: translateY(-50%) scale(.97);
+    }
+
+    .menu-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 500;
+      background: rgba(8, 25, 20, .58);
+      opacity: 0;
+      visibility: hidden;
+      transition: opacity .2s ease;
+    }
+
+    .menu-overlay.open {
+      opacity: 1;
+      visibility: visible;
+    }
+
+    .side-menu {
+      position: fixed;
+      top: 0;
+      right: 0;
+      z-index: 501;
+      width: min(365px, 88vw);
+      height: 100%;
+      padding: 22px 18px;
+      background: white;
+      box-shadow: -12px 0 30px rgba(0, 0, 0, .17);
+      transform: translateX(105%);
+      transition: transform .24s ease;
+      overflow-y: auto;
+    }
+
+    .side-menu.open {
+      transform: translateX(0);
+    }
+
+    .menu-top {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 5px 3px 20px;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .menu-brand {
+      color: var(--dark-green);
+      font-size: 22px;
+      font-weight: 900;
+      line-height: 1.15;
+    }
+
+    .menu-brand span {
+      color: var(--coral);
+    }
+
+    .menu-user {
+      margin-top: 7px;
+      color: var(--muted);
+      font-size: 12px;
+      overflow-wrap: anywhere;
+    }
+
+    .menu-close {
+      display: grid;
+      place-items: center;
+      width: 45px;
+      height: 45px;
+      flex: 0 0 45px;
+      border: 0;
+      border-radius: 13px;
+      background: var(--background);
+      color: var(--dark-green);
+      font-size: 27px;
+    }
+
+    .menu-links {
+      display: grid;
+      gap: 9px;
+      margin-top: 19px;
+    }
+
+    .menu-link {
+      display: flex;
+      align-items: center;
+      gap: 13px;
+      min-height: 56px;
+      padding: 13px 15px;
+      border-radius: 14px;
+      color: var(--dark-green);
+      text-decoration: none;
+      font-weight: 900;
+    }
+
+    .menu-link:hover,
+    .menu-link.active {
+      background: var(--light-green);
+    }
+
+    .menu-icon {
+      width: 25px;
+      text-align: center;
+      font-size: 19px;
+    }
+
+    .signout-button {
+      width: 100%;
+      min-height: 54px;
+      margin-top: 22px;
+      border: 1px solid #f0caca;
+      border-radius: 14px;
+      background: var(--danger-bg);
+      color: var(--danger);
+      font-weight: 900;
     }
 
     .container {
@@ -174,7 +292,6 @@
       color: var(--green);
       font-size: 36px;
       font-weight: 900;
-      overflow-wrap: anywhere;
     }
 
     .stat-label {
@@ -324,7 +441,6 @@
       color: var(--green);
       font-size: 22px;
       font-weight: 900;
-      overflow-wrap: anywhere;
     }
 
     .summary-value.profit {
@@ -399,20 +515,20 @@
         min-height: 135px;
       }
 
-      .brand {
-        font-size: 20px;
-      }
-
       .topbar {
         padding-left: 16px;
         padding-right: 16px;
       }
 
       .topbar-inner {
-        padding-right: 74px;
+        padding-right: 73px;
       }
 
-      .dashboard-hamburger {
+      .brand {
+        font-size: 20px;
+      }
+
+      .hamburger {
         width: 58px;
         height: 58px;
         border-radius: 16px;
@@ -435,8 +551,8 @@
       ></div>
 
       <button
-        class="dashboard-hamburger"
-        id="dashboardHamburger"
+        class="hamburger"
+        id="hamburgerButton"
         type="button"
         aria-label="Open dispatch menu"
       >
@@ -444,6 +560,89 @@
       </button>
     </div>
   </header>
+
+  <div
+    class="menu-overlay"
+    id="menuOverlay"
+  ></div>
+
+  <aside
+    class="side-menu"
+    id="sideMenu"
+  >
+    <div class="menu-top">
+      <div>
+        <div class="menu-brand">
+          MG <span>EXPRESS</span><br>
+          COMMAND CENTER
+        </div>
+
+        <div
+          class="menu-user"
+          id="menuUser"
+        ></div>
+      </div>
+
+      <button
+        class="menu-close"
+        id="menuCloseButton"
+        type="button"
+        aria-label="Close menu"
+      >
+        ×
+      </button>
+    </div>
+
+    <nav class="menu-links">
+      <a class="menu-link active" href="/dashboard.html">
+        <span class="menu-icon">🏠</span>
+        Dashboard
+      </a>
+
+      <a class="menu-link" href="/jobs.html">
+        <span class="menu-icon">📦</span>
+        Active Jobs
+      </a>
+
+      <a class="menu-link" href="/history.html">
+        <span class="menu-icon">📚</span>
+        Job History
+      </a>
+
+      <a class="menu-link" href="/customer.html">
+        <span class="menu-icon">👥</span>
+        Customers
+      </a>
+
+      <a class="menu-link" href="/driver.html">
+        <span class="menu-icon">🚚</span>
+        Drivers
+      </a>
+
+      <a class="menu-link" href="/payroll.html">
+        <span class="menu-icon">💵</span>
+        Payroll
+      </a>
+
+      <a class="menu-link" href="/invoices.html">
+        <span class="menu-icon">📄</span>
+        Invoices
+      </a>
+
+      <a class="menu-link" href="/reports.html">
+        <span class="menu-icon">📊</span>
+        Reports
+      </a>
+    </nav>
+
+    <button
+      class="signout-button"
+      id="signOutButton"
+      type="button"
+    >
+      Sign Out
+    </button>
+  </aside>
 
   <main class="container">
     <div class="eyebrow">
@@ -463,106 +662,46 @@
     <section class="stats">
       <article class="stat-card blue">
         <div class="stat-icon">📋</div>
-
-        <div
-          class="stat-number"
-          id="quotedPendingCount"
-        >
-          0
-        </div>
-
-        <div class="stat-label">
-          Quoted Jobs Pending
-        </div>
+        <div class="stat-number" id="quotedPendingCount">0</div>
+        <div class="stat-label">Quoted Jobs Pending</div>
       </article>
 
       <article class="stat-card">
         <div class="stat-icon">✅</div>
-
-        <div
-          class="stat-number"
-          id="approvedCount"
-        >
-          0
-        </div>
-
-        <div class="stat-label">
-          Jobs Approved
-        </div>
+        <div class="stat-number" id="approvedCount">0</div>
+        <div class="stat-label">Jobs Approved</div>
       </article>
 
       <article class="stat-card warning">
         <div class="stat-icon">💳</div>
-
-        <div
-          class="stat-number"
-          id="waitingPaymentCount"
-        >
-          0
-        </div>
-
-        <div class="stat-label">
-          Waiting for Payment
-        </div>
+        <div class="stat-number" id="waitingPaymentCount">0</div>
+        <div class="stat-label">Waiting for Payment</div>
       </article>
 
       <article class="stat-card">
         <div class="stat-icon">📦</div>
-
-        <div
-          class="stat-number"
-          id="todayJobsCount"
-        >
-          0
-        </div>
-
-        <div class="stat-label">
-          Jobs for Today
-        </div>
+        <div class="stat-number" id="todayJobsCount">0</div>
+        <div class="stat-label">Jobs for Today</div>
       </article>
 
       <article class="stat-card">
         <div class="stat-icon">📅</div>
-
-        <div
-          class="stat-number"
-          id="tomorrowJobsCount"
-        >
-          0
-        </div>
-
-        <div class="stat-label">
-          Jobs for Tomorrow
-        </div>
+        <div class="stat-number" id="tomorrowJobsCount">0</div>
+        <div class="stat-label">Jobs for Tomorrow</div>
       </article>
 
       <article class="stat-card">
         <div class="stat-icon">🚚</div>
-
-        <div
-          class="stat-number"
-          id="availableDriversCount"
-        >
-          0
-        </div>
-
-        <div class="stat-label">
-          Available Drivers
-        </div>
+        <div class="stat-number" id="availableDriversCount">0</div>
+        <div class="stat-label">Available Drivers</div>
       </article>
     </section>
 
-    <div
-      class="dashboard-message"
-      id="dashboardMessage"
-    >
+    <div class="dashboard-message" id="dashboardMessage">
       Loading dispatch totals...
     </div>
 
-    <section
-      class="panel hidden"
-      id="jobFormPanel"
-    >
+    <section class="panel hidden" id="jobFormPanel">
       <div class="panel-heading">
         <h2>Create Quote or Job</h2>
 
@@ -788,10 +927,7 @@
                 Customer Charge
               </div>
 
-              <div
-                class="summary-value"
-                id="chargePreview"
-              >
+              <div class="summary-value" id="chargePreview">
                 $0.00
               </div>
             </div>
@@ -801,10 +937,7 @@
                 Driver Pay
               </div>
 
-              <div
-                class="summary-value"
-                id="payPreview"
-              >
+              <div class="summary-value" id="payPreview">
                 $0.00
               </div>
             </div>
@@ -814,10 +947,7 @@
                 Estimated Gross Profit
               </div>
 
-              <div
-                class="summary-value profit"
-                id="profitPreview"
-              >
+              <div class="summary-value profit" id="profitPreview">
                 $0.00
               </div>
             </div>
@@ -873,7 +1003,6 @@
             class="create-button"
             id="createQuoteButton"
             type="submit"
-            name="submit_action"
             value="quote"
           >
             Save as Pending Quote
@@ -881,19 +1010,15 @@
 
           <button
             class="invoice-button"
-            id="createJobInvoiceButton"
+            id="createInvoiceButton"
             type="submit"
-            name="submit_action"
             value="approved-invoice"
           >
             Approve Job & Prepare Invoice
           </button>
         </div>
 
-        <div
-          class="message hidden"
-          id="formMessage"
-        ></div>
+        <div class="message hidden" id="formMessage"></div>
       </form>
     </section>
   </main>
@@ -905,9 +1030,6 @@
     );
 
     window.mgDispatchClient = client;
-
-    const PORTAL_BASE =
-      "https://portal.migenteexpress.com";
 
     const jobForm =
       document.getElementById("jobForm");
@@ -933,6 +1055,14 @@
       return div.innerHTML;
     }
 
+    function cleanStatus(value) {
+      return String(value || "")
+        .trim()
+        .toLowerCase()
+        .replaceAll(" ", "_")
+        .replaceAll("-", "_");
+    }
+
     function money(value) {
       return Number(value || 0).toLocaleString(
         "en-US",
@@ -941,14 +1071,6 @@
           currency: "USD"
         }
       );
-    }
-
-    function cleanStatus(value) {
-      return String(value || "")
-        .trim()
-        .toLowerCase()
-        .replaceAll(" ", "_")
-        .replaceAll("-", "_");
     }
 
     function localDateString(date) {
@@ -965,20 +1087,101 @@
       return `${year}-${month}-${day}`;
     }
 
-    function getJobScheduleDate(job) {
-      const value =
+    function setMessage(message, type) {
+      formMessage.textContent = message || "";
+
+      formMessage.className =
+        message
+          ? `message ${type || ""}`
+          : "message hidden";
+    }
+
+    function openMenu() {
+      document
+        .getElementById("sideMenu")
+        .classList.add("open");
+
+      document
+        .getElementById("menuOverlay")
+        .classList.add("open");
+
+      document.body.classList.add("menu-open");
+    }
+
+    function closeMenu() {
+      document
+        .getElementById("sideMenu")
+        .classList.remove("open");
+
+      document
+        .getElementById("menuOverlay")
+        .classList.remove("open");
+
+      document.body.classList.remove("menu-open");
+    }
+
+    function updateMoneyPreview() {
+      const customerCharge =
+        Number(customerChargeInput.value || 0);
+
+      const driverPay =
+        Number(driverPayInput.value || 0);
+
+      document.getElementById("chargePreview").textContent =
+        money(customerCharge);
+
+      document.getElementById("payPreview").textContent =
+        money(driverPay);
+
+      document.getElementById("profitPreview").textContent =
+        money(customerCharge - driverPay);
+    }
+
+    function setDefaultDates() {
+      const today = new Date();
+
+      const dueDate = new Date(today);
+
+      dueDate.setDate(
+        dueDate.getDate() + 30
+      );
+
+      document.getElementById("scheduledDate").value =
+        localDateString(today);
+
+      document.getElementById("invoiceDueDate").value =
+        localDateString(dueDate);
+    }
+
+    function openJobForm() {
+      jobFormPanel.classList.remove("hidden");
+
+      setMessage("", "");
+      setDefaultDates();
+
+      jobFormPanel.scrollIntoView({
+        behavior: "smooth",
+        block: "start"
+      });
+    }
+
+    function closeJobForm() {
+      jobFormPanel.classList.add("hidden");
+      setMessage("", "");
+    }
+
+    function getJobDate(job) {
+      return String(
         job.scheduled_date ||
         job.pickup_date ||
         job.delivery_date ||
         job.service_date ||
-        job.job_date ||
         job.created_at ||
-        "";
-
-      return String(value).slice(0, 10);
+        ""
+      ).slice(0, 10);
     }
 
-    function isClosedJob(job) {
+    function isClosed(job) {
       return [
         "delivered",
         "completed",
@@ -998,7 +1201,7 @@
       ].includes(cleanStatus(job.status));
     }
 
-    function isApprovedJob(job) {
+    function isApproved(job) {
       return [
         "approved",
         "accepted",
@@ -1050,76 +1253,7 @@
       return driver.active !== false;
     }
 
-    function setMessage(message, type) {
-      formMessage.textContent = message || "";
-
-      formMessage.className =
-        message
-          ? `message ${type || ""}`
-          : "message hidden";
-    }
-
-    function updateMoneyPreview() {
-      const customerCharge =
-        Number(customerChargeInput.value || 0);
-
-      const driverPay =
-        Number(driverPayInput.value || 0);
-
-      document
-        .getElementById("chargePreview")
-        .textContent =
-          money(customerCharge);
-
-      document
-        .getElementById("payPreview")
-        .textContent =
-          money(driverPay);
-
-      document
-        .getElementById("profitPreview")
-        .textContent =
-          money(customerCharge - driverPay);
-    }
-
-    function setDefaultDates() {
-      const today = new Date();
-
-      const dueDate = new Date(today);
-
-      dueDate.setDate(
-        dueDate.getDate() + 30
-      );
-
-      document
-        .getElementById("scheduledDate")
-        .value =
-          localDateString(today);
-
-      document
-        .getElementById("invoiceDueDate")
-        .value =
-          localDateString(dueDate);
-    }
-
-    function openJobForm() {
-      jobFormPanel.classList.remove("hidden");
-
-      setMessage("", "");
-      setDefaultDates();
-
-      jobFormPanel.scrollIntoView({
-        behavior: "smooth",
-        block: "start"
-      });
-    }
-
-    function closeJobForm() {
-      jobFormPanel.classList.add("hidden");
-      setMessage("", "");
-    }
-
-    function renderDashboardCounts() {
+    function renderCounts() {
       const today = new Date();
 
       const tomorrow = new Date(today);
@@ -1128,60 +1262,42 @@
         tomorrow.getDate() + 1
       );
 
-      const todayString =
+      const todayValue =
         localDateString(today);
 
-      const tomorrowString =
+      const tomorrowValue =
         localDateString(tomorrow);
 
       const openJobs =
-        jobs.filter(job =>
-          !isClosedJob(job)
-        );
+        jobs.filter(job => !isClosed(job));
 
-      document
-        .getElementById("quotedPendingCount")
-        .textContent =
-          openJobs.filter(isPendingQuote).length;
+      document.getElementById("quotedPendingCount").textContent =
+        openJobs.filter(isPendingQuote).length;
 
-      document
-        .getElementById("approvedCount")
-        .textContent =
-          openJobs.filter(isApprovedJob).length;
+      document.getElementById("approvedCount").textContent =
+        openJobs.filter(isApproved).length;
 
-      document
-        .getElementById("waitingPaymentCount")
-        .textContent =
-          openJobs.filter(isWaitingPayment).length;
+      document.getElementById("waitingPaymentCount").textContent =
+        openJobs.filter(isWaitingPayment).length;
 
-      document
-        .getElementById("todayJobsCount")
-        .textContent =
-          openJobs.filter(job =>
-            getJobScheduleDate(job) ===
-            todayString
-          ).length;
+      document.getElementById("todayJobsCount").textContent =
+        openJobs.filter(job =>
+          getJobDate(job) === todayValue
+        ).length;
 
-      document
-        .getElementById("tomorrowJobsCount")
-        .textContent =
-          openJobs.filter(job =>
-            getJobScheduleDate(job) ===
-            tomorrowString
-          ).length;
+      document.getElementById("tomorrowJobsCount").textContent =
+        openJobs.filter(job =>
+          getJobDate(job) === tomorrowValue
+        ).length;
 
-      document
-        .getElementById("availableDriversCount")
-        .textContent =
-          drivers.filter(isAvailableDriver).length;
+      document.getElementById("availableDriversCount").textContent =
+        drivers.filter(isAvailableDriver).length;
 
-      document
-        .getElementById("dashboardMessage")
-        .textContent =
-          "Dashboard totals are current.";
+      document.getElementById("dashboardMessage").textContent =
+        "Dashboard totals are current.";
     }
 
-    async function verifyDispatchUser() {
+    async function verifyUser() {
       const sessionResult =
         await client.auth.getSession();
 
@@ -1193,10 +1309,14 @@
         return null;
       }
 
-      document
-        .getElementById("staffEmail")
-        .textContent =
-          session.user.email || "";
+      const email =
+        session.user.email || "";
+
+      document.getElementById("staffEmail").textContent =
+        email;
+
+      document.getElementById("menuUser").textContent =
+        email;
 
       const profileResult =
         await client
@@ -1230,17 +1350,6 @@
         );
       }
 
-      window.dispatchEvent(
-        new CustomEvent(
-          "mg-dispatch-ready",
-          {
-            detail: {
-              email: session.user.email
-            }
-          }
-        )
-      );
-
       return session;
     }
 
@@ -1260,28 +1369,26 @@
       drivers =
         result.data || [];
 
-      document
-        .getElementById("driverSelect")
-        .innerHTML = `
-          <option value="">
-            Unassigned
-          </option>
+      document.getElementById("driverSelect").innerHTML = `
+        <option value="">
+          Unassigned
+        </option>
 
-          ${drivers
-            .filter(driver =>
-              driver.active !== false
-            )
-            .map(driver => `
-              <option value="${escapeHtml(driver.id)}">
-                ${escapeHtml(
-                  driver.full_name ||
-                  driver.email ||
-                  "Driver"
-                )}
-              </option>
-            `)
-            .join("")}
-        `;
+        ${drivers
+          .filter(driver =>
+            driver.active !== false
+          )
+          .map(driver => `
+            <option value="${escapeHtml(driver.id)}">
+              ${escapeHtml(
+                driver.full_name ||
+                driver.email ||
+                "Driver"
+              )}
+            </option>
+          `)
+          .join("")}
+      `;
     }
 
     async function loadJobs() {
@@ -1336,12 +1443,11 @@
       let highest = 0;
 
       (result.data || []).forEach(job => {
-        const ending =
-          String(job.job_number || "")
-            .slice(prefix.length);
-
         const number =
-          Number(ending);
+          Number(
+            String(job.job_number || "")
+              .slice(prefix.length)
+          );
 
         if (
           Number.isInteger(number) &&
@@ -1358,7 +1464,7 @@
       );
     }
 
-    function createInvoiceNumber(jobNumber) {
+    function invoiceNumber(jobNumber) {
       return (
         "INV-" +
         String(jobNumber || "")
@@ -1367,19 +1473,17 @@
       );
     }
 
-    async function createInvoice(
-      job,
-      payload
-    ) {
+    async function createInvoice(job, payload) {
       const result =
         await client
           .from("invoices")
           .upsert(
             {
-              job_id: job.id,
+              job_id:
+                job.id,
 
               invoice_number:
-                createInvoiceNumber(
+                invoiceNumber(
                   job.job_number
                 ),
 
@@ -1400,7 +1504,8 @@
                 null
             },
             {
-              onConflict: "job_id"
+              onConflict:
+                "job_id"
             }
           )
           .select("*")
@@ -1427,7 +1532,7 @@
 
       const invoiceButton =
         document.getElementById(
-          "createJobInvoiceButton"
+          "createInvoiceButton"
         );
 
       quoteButton.disabled = true;
@@ -1445,21 +1550,12 @@
         const jobNumber =
           await createJobNumber();
 
-        const assignedDriverId =
+        const assignedDriver =
           String(
             formData.get(
               "assigned_driver_id"
             ) || ""
           ).trim();
-
-        const scheduledDate =
-          formData.get("scheduled_date") ||
-          null;
-
-        const estimatedTime =
-          formData.get(
-            "estimated_delivery_time"
-          ) || null;
 
         const payload = {
           job_number:
@@ -1501,10 +1597,14 @@
             ).trim(),
 
           scheduled_date:
-            scheduledDate,
+            formData.get(
+              "scheduled_date"
+            ) || null,
 
           estimated_delivery_time:
-            estimatedTime,
+            formData.get(
+              "estimated_delivery_time"
+            ) || null,
 
           vehicle_type:
             String(
@@ -1549,8 +1649,7 @@
             ),
 
           assigned_driver_id:
-            assignedDriverId ||
-            null,
+            assignedDriver || null,
 
           invoice_delivery_method:
             String(
@@ -1588,14 +1687,11 @@
           throw insertResult.error;
         }
 
-        const createdJob =
-          insertResult.data;
-
         if (
           action === "approved-invoice"
         ) {
           await createInvoice(
-            createdJob,
+            insertResult.data,
             payload
           );
 
@@ -1616,11 +1712,11 @@
         updateMoneyPreview();
 
         await Promise.all([
-          loadJobs(),
-          loadDrivers()
+          loadDrivers(),
+          loadJobs()
         ]);
 
-        renderDashboardCounts();
+        renderCounts();
 
         setTimeout(() => {
           closeJobForm();
@@ -1629,7 +1725,7 @@
             action === "approved-invoice"
           ) {
             location.href =
-              `${PORTAL_BASE}/invoices.html`;
+              "/invoices.html";
           }
         }, 1300);
       } catch (error) {
@@ -1644,15 +1740,48 @@
       }
     }
 
-    customerChargeInput.addEventListener(
-      "input",
-      updateMoneyPreview
-    );
+    document
+      .getElementById("hamburgerButton")
+      .addEventListener(
+        "click",
+        openMenu
+      );
 
-    driverPayInput.addEventListener(
-      "input",
-      updateMoneyPreview
-    );
+    document
+      .getElementById("menuCloseButton")
+      .addEventListener(
+        "click",
+        closeMenu
+      );
+
+    document
+      .getElementById("menuOverlay")
+      .addEventListener(
+        "click",
+        closeMenu
+      );
+
+    document
+      .getElementById("signOutButton")
+      .addEventListener(
+        "click",
+        async function () {
+          this.disabled = true;
+          this.textContent =
+            "Signing Out...";
+
+          try {
+            await client.auth.signOut();
+          } finally {
+            localStorage.clear();
+            sessionStorage.clear();
+
+            location.replace(
+              "/index.html?loggedout=1"
+            );
+          }
+        }
+      );
 
     document
       .getElementById("openJobFormButton")
@@ -1668,15 +1797,34 @@
         closeJobForm
       );
 
+    customerChargeInput.addEventListener(
+      "input",
+      updateMoneyPreview
+    );
+
+    driverPayInput.addEventListener(
+      "input",
+      updateMoneyPreview
+    );
+
     jobForm.addEventListener(
       "submit",
       submitJob
     );
 
+    document.addEventListener(
+      "keydown",
+      function (event) {
+        if (event.key === "Escape") {
+          closeMenu();
+        }
+      }
+    );
+
     (async function startPage() {
       try {
         const session =
-          await verifyDispatchUser();
+          await verifyUser();
 
         if (!session) {
           return;
@@ -1689,7 +1837,7 @@
 
         setDefaultDates();
         updateMoneyPreview();
-        renderDashboardCounts();
+        renderCounts();
       } catch (error) {
         document
           .getElementById(
@@ -1706,34 +1854,5 @@
       }
     })();
   </script>
-
-  <script src="/dispatch-menu-v3.js?v=9"></script>
-
-  <script>
-  document
-    .getElementById("dashboardHamburger")
-    .addEventListener("click", function () {
-      const sharedMenuButton =
-        document.querySelector(
-          ".dispatch-menu-button"
-        );
-
-      if (sharedMenuButton) {
-        sharedMenuButton.click();
-        return;
-      }
-
-      setTimeout(function () {
-        const delayedMenuButton =
-          document.querySelector(
-            ".dispatch-menu-button"
-          );
-
-        if (delayedMenuButton) {
-          delayedMenuButton.click();
-        }
-      }, 500);
-    });
-</script>
 </body>
 </html>
