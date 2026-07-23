@@ -389,6 +389,29 @@
         font-size: 21px;
       }
     }
+    .dashboard-hamburger {
+  position: absolute;
+  top: 50%;
+  right: 0;
+  transform: translateY(-50%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 64px;
+  height: 64px;
+  border: 0;
+  border-radius: 18px;
+  background: #fff;
+  color: #064f3b;
+  font-size: 36px;
+  font-weight: bold;
+  cursor: pointer;
+  z-index: 9999;
+}
+
+.dashboard-hamburger:active {
+  transform: translateY(-50%) scale(.97);
+}
   </style>
 </head>
 
@@ -403,6 +426,15 @@
         class="staff-email"
         id="staffEmail"
       ></div>
+
+      <button
+  class="dashboard-hamburger"
+  id="dashboardHamburger"
+  type="button"
+  aria-label="Open menu"
+>
+  ☰
+</button>
     </div>
   </header>
 
@@ -1783,6 +1815,36 @@
     })();
   </script>
 
-  <script src="/dispatch-menu-v3.js?v=6"></script>
+  <script src="/dispatch-menu-v3.js?v=7"></script>
+
+<script>
+  window.addEventListener("load", function () {
+    const button =
+      document.getElementById("dashboardHamburger");
+
+    button.addEventListener("click", function () {
+      const menu =
+        document.querySelector(".dispatch-side-menu");
+
+      const overlay =
+        document.querySelector(".dispatch-menu-overlay");
+
+      if (!menu || !overlay) {
+        alert(
+          "The dispatch menu did not load. Please refresh the page."
+        );
+
+        return;
+      }
+
+      menu.classList.add("open");
+      overlay.classList.add("open");
+
+      document.body.classList.add(
+        "dispatch-menu-open"
+      );
+    });
+  });
+</script>
 </body>
 </html>
