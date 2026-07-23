@@ -69,13 +69,14 @@
     .topbar-inner {
       position: relative;
       width: min(1000px, 100%);
-      min-height: 72px;
+      min-height: 74px;
       margin: auto;
-      padding-right: 92px;
+      padding-right: 82px;
     }
 
     .brand {
-      font-size: 23px;
+      max-width: calc(100% - 4px);
+      font-size: clamp(21px, 5.7vw, 30px);
       font-weight: 900;
       line-height: 1.08;
     }
@@ -85,19 +86,36 @@
     }
 
     .staff-email {
-      margin-top: 8px;
-      font-size: 13px;
-      opacity: .82;
+      max-width: calc(100% - 4px);
+      margin-top: 9px;
+      font-size: 14px;
+      opacity: .84;
       overflow-wrap: anywhere;
     }
 
-    .dispatch-menu-button {
-      display: flex !important;
-      position: absolute !important;
-      top: 50% !important;
-      right: 0 !important;
-      transform: translateY(-50%) !important;
-      z-index: 9999 !important;
+    .dashboard-hamburger {
+      position: absolute;
+      top: 50%;
+      right: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 64px;
+      height: 64px;
+      padding: 0;
+      border: 0;
+      border-radius: 18px;
+      background: white;
+      color: var(--dark-green);
+      font-size: 38px;
+      font-weight: 900;
+      line-height: 1;
+      transform: translateY(-50%);
+      z-index: 10000;
+    }
+
+    .dashboard-hamburger:active {
+      transform: translateY(-50%) scale(.97);
     }
 
     .container {
@@ -128,10 +146,6 @@
       color: white;
       font-size: 17px;
       font-weight: 900;
-    }
-
-    .new-job-button:active {
-      transform: translateY(1px);
     }
 
     .stats {
@@ -177,6 +191,16 @@
 
     .stat-card.blue .stat-number {
       color: var(--blue);
+    }
+
+    .dashboard-message {
+      margin-top: 22px;
+      padding: 15px;
+      border: 1px solid var(--line);
+      border-radius: 15px;
+      background: white;
+      color: var(--muted);
+      text-align: center;
     }
 
     .panel {
@@ -348,16 +372,6 @@
       color: var(--danger);
     }
 
-    .dashboard-message {
-      margin-top: 22px;
-      padding: 16px;
-      border-radius: 15px;
-      background: white;
-      border: 1px solid var(--line);
-      color: var(--muted);
-      text-align: center;
-    }
-
     @media (max-width: 760px) {
       .stats {
         grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -386,32 +400,25 @@
       }
 
       .brand {
-        font-size: 21px;
+        font-size: 20px;
+      }
+
+      .topbar {
+        padding-left: 16px;
+        padding-right: 16px;
+      }
+
+      .topbar-inner {
+        padding-right: 74px;
+      }
+
+      .dashboard-hamburger {
+        width: 58px;
+        height: 58px;
+        border-radius: 16px;
+        font-size: 34px;
       }
     }
-    .dashboard-hamburger {
-  position: absolute;
-  top: 50%;
-  right: 0;
-  transform: translateY(-50%);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 64px;
-  height: 64px;
-  border: 0;
-  border-radius: 18px;
-  background: #fff;
-  color: #064f3b;
-  font-size: 36px;
-  font-weight: bold;
-  cursor: pointer;
-  z-index: 9999;
-}
-
-.dashboard-hamburger:active {
-  transform: translateY(-50%) scale(.97);
-}
   </style>
 </head>
 
@@ -428,13 +435,13 @@
       ></div>
 
       <button
-  class="dashboard-hamburger"
-  id="dashboardHamburger"
-  type="button"
-  aria-label="Open menu"
->
-  ☰
-</button>
+        class="dashboard-hamburger"
+        id="dashboardHamburger"
+        type="button"
+        aria-label="Open dispatch menu"
+      >
+        ☰
+      </button>
     </div>
   </header>
 
@@ -673,17 +680,9 @@
               id="vehicleType"
               name="vehicle_type"
             >
-              <option value="Sedan">
-                Sedan
-              </option>
-
-              <option value="Small Cargo Van">
-                Small Cargo Van
-              </option>
-
-              <option value="Sprinter Van">
-                Sprinter Van
-              </option>
+              <option value="Sedan">Sedan</option>
+              <option value="Small Cargo Van">Small Cargo Van</option>
+              <option value="Sprinter Van">Sprinter Van</option>
             </select>
           </div>
 
@@ -696,29 +695,12 @@
               id="deliverySpeed"
               name="delivery_speed"
             >
-              <option value="2 Hour">
-                2 Hour
-              </option>
-
-              <option value="3 Hour">
-                3 Hour
-              </option>
-
-              <option value="4 Hour">
-                4 Hour
-              </option>
-
-              <option value="5 Hour">
-                5 Hour
-              </option>
-
-              <option value="6 Hour">
-                6 Hour
-              </option>
-
-              <option value="Next Day">
-                Next Day
-              </option>
+              <option value="2 Hour">2 Hour</option>
+              <option value="3 Hour">3 Hour</option>
+              <option value="4 Hour">4 Hour</option>
+              <option value="5 Hour">5 Hour</option>
+              <option value="6 Hour">6 Hour</option>
+              <option value="Next Day">Next Day</option>
             </select>
           </div>
 
@@ -743,9 +725,7 @@
               id="driverSelect"
               name="assigned_driver_id"
             >
-              <option value="">
-                Unassigned
-              </option>
+              <option value="">Unassigned</option>
             </select>
           </div>
 
@@ -856,21 +836,10 @@
               id="invoiceDeliveryMethod"
               name="invoice_delivery_method"
             >
-              <option value="none">
-                Do Not Send Yet
-              </option>
-
-              <option value="email">
-                Email
-              </option>
-
-              <option value="text">
-                Text Message
-              </option>
-
-              <option value="both">
-                Email and Text
-              </option>
+              <option value="none">Do Not Send Yet</option>
+              <option value="email">Email</option>
+              <option value="text">Text Message</option>
+              <option value="both">Email and Text</option>
             </select>
           </div>
 
@@ -958,6 +927,12 @@
     let jobs = [];
     let drivers = [];
 
+    function escapeHtml(value) {
+      const div = document.createElement("div");
+      div.textContent = value ?? "";
+      return div.innerHTML;
+    }
+
     function money(value) {
       return Number(value || 0).toLocaleString(
         "en-US",
@@ -997,11 +972,8 @@
         job.delivery_date ||
         job.service_date ||
         job.job_date ||
-        null;
-
-      if (!value) {
-        return "";
-      }
+        job.created_at ||
+        "";
 
       return String(value).slice(0, 10);
     }
@@ -1050,15 +1022,14 @@
         return false;
       }
 
-      if (driver.available === true) {
+      if (
+        driver.available === true ||
+        driver.is_available === true
+      ) {
         return true;
       }
 
-      if (driver.is_available === true) {
-        return true;
-      }
-
-      const driverStatus =
+      const status =
         cleanStatus(
           driver.availability_status ||
           driver.driver_status ||
@@ -1066,22 +1037,21 @@
           ""
         );
 
-      if (driverStatus) {
+      if (status) {
         return [
           "available",
           "ready",
           "active",
           "on_duty",
           "waiting"
-        ].includes(driverStatus);
+        ].includes(status);
       }
 
       return driver.active !== false;
     }
 
     function setMessage(message, type) {
-      formMessage.textContent =
-        message || "";
+      formMessage.textContent = message || "";
 
       formMessage.className =
         message
@@ -1091,14 +1061,10 @@
 
     function updateMoneyPreview() {
       const customerCharge =
-        Number(
-          customerChargeInput.value || 0
-        );
+        Number(customerChargeInput.value || 0);
 
       const driverPay =
-        Number(
-          driverPayInput.value || 0
-        );
+        Number(driverPayInput.value || 0);
 
       document
         .getElementById("chargePreview")
@@ -1113,16 +1079,14 @@
       document
         .getElementById("profitPreview")
         .textContent =
-          money(
-            customerCharge -
-            driverPay
-          );
+          money(customerCharge - driverPay);
     }
 
     function setDefaultDates() {
       const today = new Date();
 
       const dueDate = new Date(today);
+
       dueDate.setDate(
         dueDate.getDate() + 30
       );
@@ -1139,9 +1103,7 @@
     }
 
     function openJobForm() {
-      jobFormPanel.classList.remove(
-        "hidden"
-      );
+      jobFormPanel.classList.remove("hidden");
 
       setMessage("", "");
       setDefaultDates();
@@ -1153,10 +1115,7 @@
     }
 
     function closeJobForm() {
-      jobFormPanel.classList.add(
-        "hidden"
-      );
-
+      jobFormPanel.classList.add("hidden");
       setMessage("", "");
     }
 
@@ -1164,6 +1123,7 @@
       const today = new Date();
 
       const tomorrow = new Date(today);
+
       tomorrow.setDate(
         tomorrow.getDate() + 1
       );
@@ -1179,84 +1139,44 @@
           !isClosedJob(job)
         );
 
-      const quotedPending =
-        openJobs.filter(
-          isPendingQuote
-        ).length;
-
-      const approved =
-        openJobs.filter(
-          isApprovedJob
-        ).length;
-
-      const waitingPayment =
-        openJobs.filter(
-          isWaitingPayment
-        ).length;
-
-      const todayJobs =
-        openJobs.filter(job =>
-          getJobScheduleDate(job) ===
-          todayString
-        ).length;
-
-      const tomorrowJobs =
-        openJobs.filter(job =>
-          getJobScheduleDate(job) ===
-          tomorrowString
-        ).length;
-
-      const availableDrivers =
-        drivers.filter(
-          isAvailableDriver
-        ).length;
-
       document
-        .getElementById(
-          "quotedPendingCount"
-        )
+        .getElementById("quotedPendingCount")
         .textContent =
-          quotedPending;
+          openJobs.filter(isPendingQuote).length;
 
       document
-        .getElementById(
-          "approvedCount"
-        )
+        .getElementById("approvedCount")
         .textContent =
-          approved;
+          openJobs.filter(isApprovedJob).length;
 
       document
-        .getElementById(
-          "waitingPaymentCount"
-        )
+        .getElementById("waitingPaymentCount")
         .textContent =
-          waitingPayment;
+          openJobs.filter(isWaitingPayment).length;
 
       document
-        .getElementById(
-          "todayJobsCount"
-        )
+        .getElementById("todayJobsCount")
         .textContent =
-          todayJobs;
+          openJobs.filter(job =>
+            getJobScheduleDate(job) ===
+            todayString
+          ).length;
 
       document
-        .getElementById(
-          "tomorrowJobsCount"
-        )
+        .getElementById("tomorrowJobsCount")
         .textContent =
-          tomorrowJobs;
+          openJobs.filter(job =>
+            getJobScheduleDate(job) ===
+            tomorrowString
+          ).length;
 
       document
-        .getElementById(
-          "availableDriversCount"
-        )
+        .getElementById("availableDriversCount")
         .textContent =
-          availableDrivers;
+          drivers.filter(isAvailableDriver).length;
 
       document
-        .getElementById(
-          "dashboardMessage"
-        )
+        .getElementById("dashboardMessage")
         .textContent =
           "Dashboard totals are current.";
     }
@@ -1269,10 +1189,7 @@
         sessionResult.data.session;
 
       if (!session) {
-        location.replace(
-          "/index.html"
-        );
-
+        location.replace("/index.html");
         return null;
       }
 
@@ -1285,10 +1202,7 @@
         await client
           .from("profiles")
           .select("role")
-          .eq(
-            "id",
-            session.user.id
-          )
+          .eq("id", session.user.id)
           .maybeSingle();
 
       if (
@@ -1302,9 +1216,7 @@
       }
 
       const role =
-        cleanStatus(
-          profileResult.data.role
-        );
+        cleanStatus(profileResult.data.role);
 
       if (
         ![
@@ -1323,8 +1235,7 @@
           "mg-dispatch-ready",
           {
             detail: {
-              email:
-                session.user.email
+              email: session.user.email
             }
           }
         )
@@ -1338,12 +1249,9 @@
         await client
           .from("drivers")
           .select("*")
-          .order(
-            "full_name",
-            {
-              ascending: true
-            }
-          );
+          .order("full_name", {
+            ascending: true
+          });
 
       if (result.error) {
         throw result.error;
@@ -1352,33 +1260,28 @@
       drivers =
         result.data || [];
 
-      const driverSelect =
-        document.getElementById(
-          "driverSelect"
-        );
+      document
+        .getElementById("driverSelect")
+        .innerHTML = `
+          <option value="">
+            Unassigned
+          </option>
 
-      driverSelect.innerHTML = `
-        <option value="">
-          Unassigned
-        </option>
-
-        ${drivers
-          .filter(driver =>
-            driver.active !== false
-          )
-          .map(driver => `
-            <option value="${String(
-              driver.id
-            )}">
-              ${String(
-                driver.full_name ||
-                driver.email ||
-                "Driver"
-              )}
-            </option>
-          `)
-          .join("")}
-      `;
+          ${drivers
+            .filter(driver =>
+              driver.active !== false
+            )
+            .map(driver => `
+              <option value="${escapeHtml(driver.id)}">
+                ${escapeHtml(
+                  driver.full_name ||
+                  driver.email ||
+                  "Driver"
+                )}
+              </option>
+            `)
+            .join("")}
+        `;
     }
 
     async function loadJobs() {
@@ -1386,12 +1289,9 @@
         await client
           .from("quotes")
           .select("*")
-          .order(
-            "created_at",
-            {
-              ascending: false
-            }
-          );
+          .order("created_at", {
+            ascending: false
+          });
 
       if (result.error) {
         throw result.error;
@@ -1405,19 +1305,16 @@
       const now = new Date();
 
       const year =
-        String(
-          now.getFullYear()
-        ).slice(-2);
+        String(now.getFullYear())
+          .slice(-2);
 
       const month =
-        String(
-          now.getMonth() + 1
-        ).padStart(2, "0");
+        String(now.getMonth() + 1)
+          .padStart(2, "0");
 
       const day =
-        String(
-          now.getDate()
-        ).padStart(2, "0");
+        String(now.getDate())
+          .padStart(2, "0");
 
       return `MG-${year}${month}${day}-`;
     }
@@ -1430,10 +1327,7 @@
         await client
           .from("quotes")
           .select("job_number")
-          .like(
-            "job_number",
-            `${prefix}%`
-          );
+          .like("job_number", `${prefix}%`);
 
       if (result.error) {
         throw result.error;
@@ -1441,23 +1335,21 @@
 
       let highest = 0;
 
-      (result.data || [])
-        .forEach(job => {
-          const ending =
-            String(
-              job.job_number || ""
-            ).slice(prefix.length);
+      (result.data || []).forEach(job => {
+        const ending =
+          String(job.job_number || "")
+            .slice(prefix.length);
 
-          const number =
-            Number(ending);
+        const number =
+          Number(ending);
 
-          if (
-            Number.isInteger(number) &&
-            number > highest
-          ) {
-            highest = number;
-          }
-        });
+        if (
+          Number.isInteger(number) &&
+          number > highest
+        ) {
+          highest = number;
+        }
+      });
 
       return (
         prefix +
@@ -1466,16 +1358,11 @@
       );
     }
 
-    function createInvoiceNumber(
-      jobNumber
-    ) {
+    function createInvoiceNumber(jobNumber) {
       return (
         "INV-" +
         String(jobNumber || "")
-          .replace(
-            /[^a-z0-9]/gi,
-            ""
-          )
+          .replace(/[^a-z0-9]/gi, "")
           .toUpperCase()
       );
     }
@@ -1489,8 +1376,7 @@
           .from("invoices")
           .upsert(
             {
-              job_id:
-                job.id,
+              job_id: job.id,
 
               invoice_number:
                 createInvoiceNumber(
@@ -1514,8 +1400,7 @@
                 null
             },
             {
-              onConflict:
-                "job_id"
+              onConflict: "job_id"
             }
           )
           .select("*")
@@ -1535,18 +1420,18 @@
         event.submitter?.value ||
         "quote";
 
-      const createQuoteButton =
+      const quoteButton =
         document.getElementById(
           "createQuoteButton"
         );
 
-      const createInvoiceButton =
+      const invoiceButton =
         document.getElementById(
           "createJobInvoiceButton"
         );
 
-      createQuoteButton.disabled = true;
-      createInvoiceButton.disabled = true;
+      quoteButton.disabled = true;
+      invoiceButton.disabled = true;
 
       setMessage(
         "Creating record...",
@@ -1566,6 +1451,15 @@
               "assigned_driver_id"
             ) || ""
           ).trim();
+
+        const scheduledDate =
+          formData.get("scheduled_date") ||
+          null;
+
+        const estimatedTime =
+          formData.get(
+            "estimated_delivery_time"
+          ) || null;
 
         const payload = {
           job_number:
@@ -1605,6 +1499,12 @@
                 "delivery_address"
               ) || ""
             ).trim(),
+
+          scheduled_date:
+            scheduledDate,
+
+          estimated_delivery_time:
+            estimatedTime,
 
           vehicle_type:
             String(
@@ -1672,8 +1572,7 @@
             ).trim(),
 
           status:
-            action ===
-              "approved-invoice"
+            action === "approved-invoice"
               ? "waiting_payment"
               : "quoted"
         };
@@ -1693,8 +1592,7 @@
           insertResult.data;
 
         if (
-          action ===
-          "approved-invoice"
+          action === "approved-invoice"
         ) {
           await createInvoice(
             createdJob,
@@ -1713,11 +1611,14 @@
         }
 
         jobForm.reset();
+
         setDefaultDates();
         updateMoneyPreview();
 
-        await loadJobs();
-        await loadDrivers();
+        await Promise.all([
+          loadJobs(),
+          loadDrivers()
+        ]);
 
         renderDashboardCounts();
 
@@ -1725,8 +1626,7 @@
           closeJobForm();
 
           if (
-            action ===
-            "approved-invoice"
+            action === "approved-invoice"
           ) {
             location.href =
               `${PORTAL_BASE}/invoices.html`;
@@ -1739,39 +1639,30 @@
           "error"
         );
       } finally {
-        createQuoteButton.disabled =
-          false;
-
-        createInvoiceButton.disabled =
-          false;
+        quoteButton.disabled = false;
+        invoiceButton.disabled = false;
       }
     }
 
-    customerChargeInput
-      .addEventListener(
-        "input",
-        updateMoneyPreview
-      );
+    customerChargeInput.addEventListener(
+      "input",
+      updateMoneyPreview
+    );
 
-    driverPayInput
-      .addEventListener(
-        "input",
-        updateMoneyPreview
-      );
+    driverPayInput.addEventListener(
+      "input",
+      updateMoneyPreview
+    );
 
     document
-      .getElementById(
-        "openJobFormButton"
-      )
+      .getElementById("openJobFormButton")
       .addEventListener(
         "click",
         openJobForm
       );
 
     document
-      .getElementById(
-        "closeJobFormButton"
-      )
+      .getElementById("closeJobFormButton")
       .addEventListener(
         "click",
         closeJobForm
@@ -1804,34 +1695,35 @@
           .getElementById(
             "dashboardMessage"
           )
-          .innerHTML =
-            `<span style="color:#9b2929;">
-              ${
+          .innerHTML = `
+            <span style="color:#9b2929;">
+              ${escapeHtml(
                 error.message ||
                 "Unable to load dashboard."
-              }
-            </span>`;
+              )}
+            </span>
+          `;
       }
     })();
   </script>
 
-  <script src="/dispatch-menu-v3.js?v=7"></script>
+  <script src="/dispatch-menu-v3.js?v=8"></script>
 
-<script>
-  window.addEventListener("load", function () {
-    const button =
-      document.getElementById("dashboardHamburger");
-
-    button.addEventListener("click", function () {
+  <script>
+    function openSharedDispatchMenu() {
       const menu =
-        document.querySelector(".dispatch-side-menu");
+        document.querySelector(
+          ".dispatch-side-menu"
+        );
 
       const overlay =
-        document.querySelector(".dispatch-menu-overlay");
+        document.querySelector(
+          ".dispatch-menu-overlay"
+        );
 
       if (!menu || !overlay) {
         alert(
-          "The dispatch menu did not load. Please refresh the page."
+          "The menu is still loading. Please tap the button again."
         );
 
         return;
@@ -1843,8 +1735,16 @@
       document.body.classList.add(
         "dispatch-menu-open"
       );
-    });
-  });
-</script>
+    }
+
+    document
+      .getElementById(
+        "dashboardHamburger"
+      )
+      .addEventListener(
+        "click",
+        openSharedDispatchMenu
+      );
+  </script>
 </body>
 </html>
