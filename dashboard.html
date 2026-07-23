@@ -49,6 +49,10 @@
       font: inherit;
     }
 
+    button {
+      cursor: pointer;
+    }
+
     .hidden {
       display: none !important;
     }
@@ -56,15 +60,18 @@
     .topbar {
       position: sticky;
       top: 0;
-      z-index: 50;
+      z-index: 100;
       padding: 18px 20px;
       background: var(--dark-green);
       color: white;
     }
 
     .topbar-inner {
+      position: relative;
       width: min(1000px, 100%);
+      min-height: 72px;
       margin: auto;
+      padding-right: 92px;
     }
 
     .brand {
@@ -78,20 +85,29 @@
     }
 
     .staff-email {
-      margin-top: 7px;
+      margin-top: 8px;
       font-size: 13px;
       opacity: .82;
       overflow-wrap: anywhere;
     }
 
+    .dispatch-menu-button {
+      display: flex !important;
+      position: absolute !important;
+      top: 50% !important;
+      right: 0 !important;
+      transform: translateY(-50%) !important;
+      z-index: 9999 !important;
+    }
+
     .container {
       width: min(1000px, 100%);
       margin: auto;
-      padding: 28px 18px 75px;
+      padding: 28px 18px 80px;
     }
 
     .eyebrow {
-      margin-bottom: 6px;
+      margin-bottom: 7px;
       color: var(--muted);
       font-size: 17px;
     }
@@ -104,64 +120,63 @@
 
     .new-job-button {
       width: 100%;
-      min-height: 57px;
-      margin-top: 25px;
+      min-height: 59px;
+      margin-top: 24px;
       border: 0;
-      border-radius: 16px;
+      border-radius: 17px;
       background: var(--green);
       color: white;
+      font-size: 17px;
       font-weight: 900;
-      cursor: pointer;
     }
 
-    .quick-links {
-      display: grid;
-      grid-template-columns: repeat(3, minmax(0, 1fr));
-      gap: 12px;
-      margin-top: 18px;
-    }
-
-    .quick-link {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      min-height: 70px;
-      padding: 14px;
-      border: 1px solid var(--line);
-      border-radius: 17px;
-      background: white;
-      color: var(--dark-green);
-      text-align: center;
-      text-decoration: none;
-      font-weight: 900;
-      box-shadow: 0 6px 20px rgba(0, 0, 0, .035);
+    .new-job-button:active {
+      transform: translateY(1px);
     }
 
     .stats {
       display: grid;
-      grid-template-columns: repeat(4, minmax(0, 1fr));
-      gap: 12px;
-      margin-top: 27px;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 14px;
+      margin-top: 26px;
     }
 
     .stat-card {
-      padding: 19px;
+      min-width: 0;
+      min-height: 150px;
+      padding: 20px;
       border: 1px solid var(--line);
-      border-radius: 20px;
+      border-radius: 21px;
       background: white;
-      box-shadow: 0 7px 22px rgba(0, 0, 0, .04);
+      box-shadow: 0 8px 25px rgba(0, 0, 0, .04);
+    }
+
+    .stat-icon {
+      margin-bottom: 13px;
+      font-size: 25px;
     }
 
     .stat-number {
       color: var(--green);
-      font-size: 34px;
+      font-size: 36px;
       font-weight: 900;
+      overflow-wrap: anywhere;
     }
 
     .stat-label {
       margin-top: 8px;
       color: var(--muted);
       font-size: 14px;
+      font-weight: 700;
+      line-height: 1.35;
+    }
+
+    .stat-card.warning .stat-number {
+      color: var(--warning);
+    }
+
+    .stat-card.blue .stat-number {
+      color: var(--blue);
     }
 
     .panel {
@@ -178,34 +193,21 @@
       align-items: center;
       justify-content: space-between;
       gap: 15px;
-      margin-bottom: 17px;
+      margin-bottom: 18px;
     }
 
     .panel-heading h2 {
       margin: 0;
-      font-size: 29px;
+      font-size: 28px;
     }
 
-    .close-button,
-    .refresh-button {
-      min-height: 48px;
-      padding: 11px 17px;
+    .close-button {
+      min-height: 46px;
+      padding: 10px 16px;
       border: 1px solid var(--line);
       border-radius: 13px;
       background: white;
       color: var(--dark-green);
-      font-weight: 900;
-      cursor: pointer;
-    }
-
-    .form-section-title {
-      grid-column: 1 / -1;
-      margin: 10px 0 0;
-      padding: 13px 15px;
-      border-radius: 14px;
-      background: #f0f7f4;
-      color: var(--dark-green);
-      font-size: 16px;
       font-weight: 900;
     }
 
@@ -213,6 +215,17 @@
       display: grid;
       grid-template-columns: repeat(2, minmax(0, 1fr));
       gap: 15px;
+    }
+
+    .form-section-title {
+      grid-column: 1 / -1;
+      margin-top: 7px;
+      padding: 13px 15px;
+      border-radius: 14px;
+      background: #f0f7f4;
+      color: var(--dark-green);
+      font-size: 16px;
+      font-weight: 900;
     }
 
     .field {
@@ -227,7 +240,7 @@
       display: block;
       margin-bottom: 7px;
       color: var(--muted);
-      font-size: 12px;
+      font-size: 11px;
       font-weight: 900;
       letter-spacing: .04em;
       text-transform: uppercase;
@@ -237,7 +250,7 @@
     .field select,
     .field textarea {
       width: 100%;
-      min-height: 50px;
+      min-height: 51px;
       padding: 12px 14px;
       border: 1px solid var(--line);
       border-radius: 13px;
@@ -263,29 +276,31 @@
       grid-template-columns: repeat(3, minmax(0, 1fr));
       gap: 12px;
       padding: 16px;
-      border-radius: 16px;
+      border-radius: 17px;
       background: #f7faf9;
     }
 
     .summary-box {
+      min-width: 0;
       padding: 14px;
       border: 1px solid var(--line);
-      border-radius: 13px;
+      border-radius: 14px;
       background: white;
     }
 
     .summary-label {
       color: var(--muted);
-      font-size: 11px;
+      font-size: 10px;
       font-weight: 900;
       text-transform: uppercase;
     }
 
     .summary-value {
-      margin-top: 6px;
+      margin-top: 7px;
       color: var(--green);
-      font-size: 21px;
+      font-size: 22px;
       font-weight: 900;
+      overflow-wrap: anywhere;
     }
 
     .summary-value.profit {
@@ -294,22 +309,21 @@
 
     .form-actions {
       display: grid;
-      grid-template-columns: 1fr 1fr auto;
+      grid-template-columns: 1fr 1fr;
       gap: 12px;
-      margin-top: 18px;
+      margin-top: 19px;
     }
 
-    .save-button,
+    .create-button,
     .invoice-button {
-      min-height: 55px;
+      min-height: 56px;
       border: 0;
       border-radius: 14px;
       color: white;
       font-weight: 900;
-      cursor: pointer;
     }
 
-    .save-button {
+    .create-button {
       background: var(--green);
     }
 
@@ -334,113 +348,17 @@
       color: var(--danger);
     }
 
-    .search-box {
-      width: 100%;
-      min-height: 50px;
-      margin-bottom: 15px;
-      padding: 12px 14px;
+    .dashboard-message {
+      margin-top: 22px;
+      padding: 16px;
+      border-radius: 15px;
+      background: white;
       border: 1px solid var(--line);
-      border-radius: 13px;
-    }
-
-    .jobs-list {
-      overflow: hidden;
-      border: 1px solid var(--line);
-      border-radius: 18px;
-    }
-
-    .job-row {
-      display: grid;
-      grid-template-columns:
-        minmax(125px, .7fr)
-        minmax(0, 1.2fr)
-        minmax(120px, .65fr)
-        minmax(120px, .65fr)
-        auto;
-      gap: 14px;
-      align-items: center;
-      min-height: 85px;
-      padding: 15px 17px;
-      border-bottom: 1px solid var(--line);
-      color: inherit;
-      text-decoration: none;
-    }
-
-    .job-row:last-child {
-      border-bottom: 0;
-    }
-
-    .job-number {
-      color: var(--dark-green);
-      font-size: 18px;
-      font-weight: 900;
-      overflow-wrap: anywhere;
-    }
-
-    .customer-name {
-      font-size: 16px;
-      font-weight: 800;
-      overflow-wrap: anywhere;
-    }
-
-    .customer-email {
-      margin-top: 4px;
-      color: var(--muted);
-      font-size: 12px;
-      overflow-wrap: anywhere;
-    }
-
-    .status-pill {
-      display: inline-flex;
-      width: fit-content;
-      padding: 8px 11px;
-      border-radius: 999px;
-      background: var(--light-green);
-      color: var(--green);
-      font-size: 12px;
-      font-weight: 900;
-    }
-
-    .status-new {
-      background: var(--blue-bg);
-      color: var(--blue);
-    }
-
-    .status-waiting_payment {
-      background: var(--warning-bg);
-      color: var(--warning);
-    }
-
-    .meta-label {
-      display: block;
-      margin-bottom: 4px;
-      color: var(--muted);
-      font-size: 10px;
-      font-weight: 900;
-      text-transform: uppercase;
-    }
-
-    .meta-value {
-      font-size: 13px;
-      font-weight: 800;
-    }
-
-    .arrow {
-      color: var(--green);
-      font-size: 26px;
-      font-weight: 900;
-    }
-
-    .empty {
-      padding: 28px 20px;
-      border-radius: 17px;
-      background: #f7faf9;
       color: var(--muted);
       text-align: center;
     }
 
     @media (max-width: 760px) {
-      .quick-links,
       .stats {
         grid-template-columns: repeat(2, minmax(0, 1fr));
       }
@@ -456,30 +374,19 @@
       .billing-summary {
         grid-column: auto;
       }
-
-      .job-row {
-        grid-template-columns: minmax(0, 1fr) auto;
-        min-height: 120px;
-      }
-
-      .job-main,
-      .customer-block,
-      .status-block,
-      .driver-block {
-        grid-column: 1 / 2;
-      }
-
-      .arrow {
-        grid-column: 2 / 3;
-        grid-row: 1 / 5;
-        align-self: center;
-      }
     }
 
     @media (max-width: 430px) {
-      .quick-links,
       .stats {
         grid-template-columns: 1fr;
+      }
+
+      .stat-card {
+        min-height: 135px;
+      }
+
+      .brand {
+        font-size: 21px;
       }
     }
   </style>
@@ -501,7 +408,7 @@
 
   <main class="container">
     <div class="eyebrow">
-      Dispatch control center
+      Dispatch operations overview
     </div>
 
     <h1>Dashboard</h1>
@@ -511,88 +418,114 @@
       id="openJobFormButton"
       type="button"
     >
-      + New Job
+      + Create Quote or Job
     </button>
 
-    <section class="quick-links">
-      <a
-        class="quick-link"
-        href="https://portal.migenteexpress.com/jobs.html"
-      >
-        Active Jobs
-      </a>
-
-      <a
-        class="quick-link"
-        href="https://portal.migenteexpress.com/history.html"
-      >
-        Job History
-      </a>
-
-      <a
-        class="quick-link"
-        href="https://portal.migenteexpress.com/customer.html"
-      >
-        Customers
-      </a>
-
-      <a
-        class="quick-link"
-        href="https://portal.migenteexpress.com/driver.html"
-      >
-        Drivers
-      </a>
-
-      <a
-        class="quick-link"
-        href="https://portal.migenteexpress.com/payroll.html"
-      >
-        Payroll
-      </a>
-
-      <a
-        class="quick-link"
-        href="https://portal.migenteexpress.com/invoices.html"
-      >
-        Invoices
-      </a>
-
-      <a
-        class="quick-link"
-        href="https://portal.migenteexpress.com/reports.html"
-      >
-        Reports
-      </a>
-    </section>
-
     <section class="stats">
-      <div class="stat-card">
-        <div class="stat-number" id="countNew">0</div>
-        <div class="stat-label">New</div>
-      </div>
+      <article class="stat-card blue">
+        <div class="stat-icon">📋</div>
 
-      <div class="stat-card">
-        <div class="stat-number" id="countWaiting">0</div>
-        <div class="stat-label">Waiting Payment</div>
-      </div>
+        <div
+          class="stat-number"
+          id="quotedPendingCount"
+        >
+          0
+        </div>
 
-      <div class="stat-card">
-        <div class="stat-number" id="countReady">0</div>
-        <div class="stat-label">Paid / Ready</div>
-      </div>
+        <div class="stat-label">
+          Quoted Jobs Pending
+        </div>
+      </article>
 
-      <div class="stat-card">
-        <div class="stat-number" id="countTransit">0</div>
-        <div class="stat-label">In Transit</div>
-      </div>
+      <article class="stat-card">
+        <div class="stat-icon">✅</div>
+
+        <div
+          class="stat-number"
+          id="approvedCount"
+        >
+          0
+        </div>
+
+        <div class="stat-label">
+          Jobs Approved
+        </div>
+      </article>
+
+      <article class="stat-card warning">
+        <div class="stat-icon">💳</div>
+
+        <div
+          class="stat-number"
+          id="waitingPaymentCount"
+        >
+          0
+        </div>
+
+        <div class="stat-label">
+          Waiting for Payment
+        </div>
+      </article>
+
+      <article class="stat-card">
+        <div class="stat-icon">📦</div>
+
+        <div
+          class="stat-number"
+          id="todayJobsCount"
+        >
+          0
+        </div>
+
+        <div class="stat-label">
+          Jobs for Today
+        </div>
+      </article>
+
+      <article class="stat-card">
+        <div class="stat-icon">📅</div>
+
+        <div
+          class="stat-number"
+          id="tomorrowJobsCount"
+        >
+          0
+        </div>
+
+        <div class="stat-label">
+          Jobs for Tomorrow
+        </div>
+      </article>
+
+      <article class="stat-card">
+        <div class="stat-icon">🚚</div>
+
+        <div
+          class="stat-number"
+          id="availableDriversCount"
+        >
+          0
+        </div>
+
+        <div class="stat-label">
+          Available Drivers
+        </div>
+      </article>
     </section>
+
+    <div
+      class="dashboard-message"
+      id="dashboardMessage"
+    >
+      Loading dispatch totals...
+    </div>
 
     <section
       class="panel hidden"
       id="jobFormPanel"
     >
       <div class="panel-heading">
-        <h2>Create New Job</h2>
+        <h2>Create Quote or Job</h2>
 
         <button
           class="close-button"
@@ -647,7 +580,7 @@
           </div>
 
           <div class="form-section-title">
-            Route and Delivery
+            Route and Schedule
           </div>
 
           <div class="field full">
@@ -675,6 +608,31 @@
           </div>
 
           <div class="field">
+            <label for="scheduledDate">
+              Scheduled Date
+            </label>
+
+            <input
+              id="scheduledDate"
+              name="scheduled_date"
+              type="date"
+              required
+            >
+          </div>
+
+          <div class="field">
+            <label for="estimatedDeliveryTime">
+              Estimated Drop-Off Time
+            </label>
+
+            <input
+              id="estimatedDeliveryTime"
+              name="estimated_delivery_time"
+              type="time"
+            >
+          </div>
+
+          <div class="field">
             <label for="vehicleType">
               Vehicle Type
             </label>
@@ -683,7 +641,9 @@
               id="vehicleType"
               name="vehicle_type"
             >
-              <option value="Sedan">Sedan</option>
+              <option value="Sedan">
+                Sedan
+              </option>
 
               <option value="Small Cargo Van">
                 Small Cargo Van
@@ -738,31 +698,8 @@
             <input
               id="packageType"
               name="package_type"
-              placeholder="Example: 3 medical boxes"
+              placeholder="Example: Three medical boxes"
             >
-          </div>
-
-          <div class="field">
-            <label for="deliveryMethod">
-              Delivery Method
-            </label>
-
-            <select
-              id="deliveryMethod"
-              name="delivery_method"
-            >
-              <option value="Hand Delivery">
-                Hand Delivery
-              </option>
-
-              <option value="Leave at Door">
-                Leave at Door
-              </option>
-
-              <option value="Receiving Department">
-                Receiving Department
-              </option>
-            </select>
           </div>
 
           <div class="field">
@@ -932,31 +869,23 @@
 
         <div class="form-actions">
           <button
-            class="save-button"
-            id="createJobOnlyButton"
+            class="create-button"
+            id="createQuoteButton"
             type="submit"
-            value="job-only"
             name="submit_action"
+            value="quote"
           >
-            Create Job Only
+            Save as Pending Quote
           </button>
 
           <button
             class="invoice-button"
-            id="createInvoiceButton"
+            id="createJobInvoiceButton"
             type="submit"
-            value="prepare-invoice"
             name="submit_action"
+            value="approved-invoice"
           >
-            Create Job & Prepare Invoice
-          </button>
-
-          <button
-            class="close-button"
-            id="cancelJobButton"
-            type="button"
-          >
-            Cancel
+            Approve Job & Prepare Invoice
           </button>
         </div>
 
@@ -965,33 +894,6 @@
           id="formMessage"
         ></div>
       </form>
-    </section>
-
-    <section class="panel">
-      <div class="panel-heading">
-        <h2>Quotes & Jobs</h2>
-
-        <button
-          class="refresh-button"
-          id="refreshButton"
-          type="button"
-        >
-          Refresh
-        </button>
-      </div>
-
-      <input
-        class="search-box"
-        id="searchInput"
-        type="search"
-        placeholder="Search job number, customer or driver"
-      >
-
-      <div id="jobsBox">
-        <div class="empty">
-          Loading active jobs...
-        </div>
-      </div>
     </section>
   </main>
 
@@ -1005,9 +907,6 @@
 
     const PORTAL_BASE =
       "https://portal.migenteexpress.com";
-
-    const jobsBox =
-      document.getElementById("jobsBox");
 
     const jobForm =
       document.getElementById("jobForm");
@@ -1026,13 +925,6 @@
 
     let jobs = [];
     let drivers = [];
-    let driversById = {};
-
-    function escapeHtml(value) {
-      const div = document.createElement("div");
-      div.textContent = value ?? "";
-      return div.innerHTML;
-    }
 
     function money(value) {
       return Number(value || 0).toLocaleString(
@@ -1045,27 +937,119 @@
     }
 
     function cleanStatus(value) {
-      return String(value || "new")
+      return String(value || "")
         .trim()
-        .toLowerCase();
+        .toLowerCase()
+        .replaceAll(" ", "_")
+        .replaceAll("-", "_");
     }
 
-    function statusLabel(value) {
-      const labels = {
-        new: "New",
-        waiting_payment: "Waiting Payment",
-        paid: "Paid",
-        ready: "Ready",
-        in_transit: "In Transit"
-      };
+    function localDateString(date) {
+      const year = date.getFullYear();
 
-      return labels[cleanStatus(value)] ||
-        String(value || "Open")
-          .replaceAll("_", " ");
+      const month =
+        String(date.getMonth() + 1)
+          .padStart(2, "0");
+
+      const day =
+        String(date.getDate())
+          .padStart(2, "0");
+
+      return `${year}-${month}-${day}`;
+    }
+
+    function getJobScheduleDate(job) {
+      const value =
+        job.scheduled_date ||
+        job.pickup_date ||
+        job.delivery_date ||
+        job.service_date ||
+        job.job_date ||
+        null;
+
+      if (!value) {
+        return "";
+      }
+
+      return String(value).slice(0, 10);
+    }
+
+    function isClosedJob(job) {
+      return [
+        "delivered",
+        "completed",
+        "cancelled",
+        "canceled"
+      ].includes(cleanStatus(job.status));
+    }
+
+    function isPendingQuote(job) {
+      return [
+        "quote",
+        "quoted",
+        "pending_quote",
+        "quote_pending",
+        "pending",
+        "new_quote"
+      ].includes(cleanStatus(job.status));
+    }
+
+    function isApprovedJob(job) {
+      return [
+        "approved",
+        "accepted",
+        "ready",
+        "paid",
+        "assigned"
+      ].includes(cleanStatus(job.status));
+    }
+
+    function isWaitingPayment(job) {
+      return [
+        "waiting_payment",
+        "payment_pending",
+        "pending_payment",
+        "unpaid"
+      ].includes(cleanStatus(job.status));
+    }
+
+    function isAvailableDriver(driver) {
+      if (driver.active === false) {
+        return false;
+      }
+
+      if (driver.available === true) {
+        return true;
+      }
+
+      if (driver.is_available === true) {
+        return true;
+      }
+
+      const driverStatus =
+        cleanStatus(
+          driver.availability_status ||
+          driver.driver_status ||
+          driver.status ||
+          ""
+        );
+
+      if (driverStatus) {
+        return [
+          "available",
+          "ready",
+          "active",
+          "on_duty",
+          "waiting"
+        ].includes(driverStatus);
+      }
+
+      return driver.active !== false;
     }
 
     function setMessage(message, type) {
-      formMessage.textContent = message || "";
+      formMessage.textContent =
+        message || "";
 
       formMessage.className =
         message
@@ -1074,111 +1058,175 @@
     }
 
     function updateMoneyPreview() {
-      const charge =
-        Number(customerChargeInput.value || 0);
+      const customerCharge =
+        Number(
+          customerChargeInput.value || 0
+        );
 
-      const pay =
-        Number(driverPayInput.value || 0);
+      const driverPay =
+        Number(
+          driverPayInput.value || 0
+        );
 
       document
         .getElementById("chargePreview")
-        .textContent = money(charge);
+        .textContent =
+          money(customerCharge);
 
       document
         .getElementById("payPreview")
-        .textContent = money(pay);
+        .textContent =
+          money(driverPay);
 
       document
         .getElementById("profitPreview")
         .textContent =
-          money(charge - pay);
+          money(
+            customerCharge -
+            driverPay
+          );
     }
 
-    function setDefaultDueDate() {
-      const date = new Date();
-      date.setDate(date.getDate() + 30);
+    function setDefaultDates() {
+      const today = new Date();
+
+      const dueDate = new Date(today);
+      dueDate.setDate(
+        dueDate.getDate() + 30
+      );
+
+      document
+        .getElementById("scheduledDate")
+        .value =
+          localDateString(today);
 
       document
         .getElementById("invoiceDueDate")
         .value =
-          date.toISOString().slice(0, 10);
+          localDateString(dueDate);
     }
 
     function openJobForm() {
-      jobFormPanel.classList.remove("hidden");
+      jobFormPanel.classList.remove(
+        "hidden"
+      );
+
       setMessage("", "");
-      setDefaultDueDate();
+      setDefaultDates();
 
       jobFormPanel.scrollIntoView({
-        behavior: "smooth"
+        behavior: "smooth",
+        block: "start"
       });
     }
 
     function closeJobForm() {
-      jobFormPanel.classList.add("hidden");
+      jobFormPanel.classList.add(
+        "hidden"
+      );
+
       setMessage("", "");
     }
 
-    function datePrefix() {
-      const now = new Date();
+    function renderDashboardCounts() {
+      const today = new Date();
 
-      const year =
-        String(now.getFullYear()).slice(-2);
-
-      const month =
-        String(now.getMonth() + 1)
-          .padStart(2, "0");
-
-      const day =
-        String(now.getDate())
-          .padStart(2, "0");
-
-      return `MG-${year}${month}${day}-`;
-    }
-
-    async function createJobNumber() {
-      const prefix = datePrefix();
-
-      const result = await client
-        .from("quotes")
-        .select("job_number")
-        .like("job_number", `${prefix}%`);
-
-      if (result.error) {
-        throw result.error;
-      }
-
-      let highest = 0;
-
-      (result.data || []).forEach(job => {
-        const ending =
-          String(job.job_number || "")
-            .slice(prefix.length);
-
-        const number = Number(ending);
-
-        if (
-          Number.isInteger(number) &&
-          number > highest
-        ) {
-          highest = number;
-        }
-      });
-
-      return (
-        prefix +
-        String(highest + 1)
-          .padStart(3, "0")
+      const tomorrow = new Date(today);
+      tomorrow.setDate(
+        tomorrow.getDate() + 1
       );
-    }
 
-    function createInvoiceNumber(jobNumber) {
-      return (
-        "INV-" +
-        String(jobNumber || "")
-          .replace(/[^a-z0-9]/gi, "")
-          .toUpperCase()
-      );
+      const todayString =
+        localDateString(today);
+
+      const tomorrowString =
+        localDateString(tomorrow);
+
+      const openJobs =
+        jobs.filter(job =>
+          !isClosedJob(job)
+        );
+
+      const quotedPending =
+        openJobs.filter(
+          isPendingQuote
+        ).length;
+
+      const approved =
+        openJobs.filter(
+          isApprovedJob
+        ).length;
+
+      const waitingPayment =
+        openJobs.filter(
+          isWaitingPayment
+        ).length;
+
+      const todayJobs =
+        openJobs.filter(job =>
+          getJobScheduleDate(job) ===
+          todayString
+        ).length;
+
+      const tomorrowJobs =
+        openJobs.filter(job =>
+          getJobScheduleDate(job) ===
+          tomorrowString
+        ).length;
+
+      const availableDrivers =
+        drivers.filter(
+          isAvailableDriver
+        ).length;
+
+      document
+        .getElementById(
+          "quotedPendingCount"
+        )
+        .textContent =
+          quotedPending;
+
+      document
+        .getElementById(
+          "approvedCount"
+        )
+        .textContent =
+          approved;
+
+      document
+        .getElementById(
+          "waitingPaymentCount"
+        )
+        .textContent =
+          waitingPayment;
+
+      document
+        .getElementById(
+          "todayJobsCount"
+        )
+        .textContent =
+          todayJobs;
+
+      document
+        .getElementById(
+          "tomorrowJobsCount"
+        )
+        .textContent =
+          tomorrowJobs;
+
+      document
+        .getElementById(
+          "availableDriversCount"
+        )
+        .textContent =
+          availableDrivers;
+
+      document
+        .getElementById(
+          "dashboardMessage"
+        )
+        .textContent =
+          "Dashboard totals are current.";
     }
 
     async function verifyDispatchUser() {
@@ -1189,7 +1237,10 @@
         sessionResult.data.session;
 
       if (!session) {
-        location.replace("/index.html");
+        location.replace(
+          "/index.html"
+        );
+
         return null;
       }
 
@@ -1198,11 +1249,15 @@
         .textContent =
           session.user.email || "";
 
-      const profileResult = await client
-        .from("profiles")
-        .select("role")
-        .eq("id", session.user.id)
-        .maybeSingle();
+      const profileResult =
+        await client
+          .from("profiles")
+          .select("role")
+          .eq(
+            "id",
+            session.user.id
+          )
+          .maybeSingle();
 
       if (
         profileResult.error ||
@@ -1215,9 +1270,9 @@
       }
 
       const role =
-        String(
-          profileResult.data.role || ""
-        ).toLowerCase();
+        cleanStatus(
+          profileResult.data.role
+        );
 
       if (
         ![
@@ -1236,7 +1291,8 @@
           "mg-dispatch-ready",
           {
             detail: {
-              email: session.user.email
+              email:
+                session.user.email
             }
           }
         )
@@ -1246,253 +1302,192 @@
     }
 
     async function loadDrivers() {
-      const result = await client
-        .from("drivers")
-        .select("id,full_name,email,active")
-        .order("full_name", {
-          ascending: true
-        });
+      const result =
+        await client
+          .from("drivers")
+          .select("*")
+          .order(
+            "full_name",
+            {
+              ascending: true
+            }
+          );
 
       if (result.error) {
         throw result.error;
       }
 
-      drivers = result.data || [];
-      driversById = {};
+      drivers =
+        result.data || [];
 
-      drivers.forEach(driver => {
-        driversById[String(driver.id)] =
-          driver.full_name ||
-          driver.email ||
-          "Driver";
-      });
+      const driverSelect =
+        document.getElementById(
+          "driverSelect"
+        );
 
-      document
-        .getElementById("driverSelect")
-        .innerHTML = `
-          <option value="">Unassigned</option>
+      driverSelect.innerHTML = `
+        <option value="">
+          Unassigned
+        </option>
 
-          ${drivers
-            .filter(driver =>
-              driver.active !== false
-            )
-            .map(driver => `
-              <option value="${escapeHtml(driver.id)}">
-                ${escapeHtml(
-                  driver.full_name ||
-                  driver.email ||
-                  "Driver"
-                )}
-              </option>
-            `)
-            .join("")}
-        `;
+        ${drivers
+          .filter(driver =>
+            driver.active !== false
+          )
+          .map(driver => `
+            <option value="${String(
+              driver.id
+            )}">
+              ${String(
+                driver.full_name ||
+                driver.email ||
+                "Driver"
+              )}
+            </option>
+          `)
+          .join("")}
+      `;
     }
 
     async function loadJobs() {
-      const result = await client
-        .from("quotes")
-        .select("*")
-        .order("created_at", {
-          ascending: false
-        });
+      const result =
+        await client
+          .from("quotes")
+          .select("*")
+          .order(
+            "created_at",
+            {
+              ascending: false
+            }
+          );
 
       if (result.error) {
         throw result.error;
       }
 
-      jobs = (result.data || []).filter(job =>
-        ![
-          "delivered",
-          "cancelled",
-          "canceled"
-        ].includes(cleanStatus(job.status))
-      );
-
-      updateCounts();
-      renderJobs();
+      jobs =
+        result.data || [];
     }
 
-    function updateCounts() {
-      const count = status =>
-        jobs.filter(job =>
-          cleanStatus(job.status) === status
-        ).length;
+    function datePrefix() {
+      const now = new Date();
 
-      document
-        .getElementById("countNew")
-        .textContent = count("new");
+      const year =
+        String(
+          now.getFullYear()
+        ).slice(-2);
 
-      document
-        .getElementById("countWaiting")
-        .textContent =
-          count("waiting_payment");
+      const month =
+        String(
+          now.getMonth() + 1
+        ).padStart(2, "0");
 
-      document
-        .getElementById("countReady")
-        .textContent =
-          count("paid") + count("ready");
+      const day =
+        String(
+          now.getDate()
+        ).padStart(2, "0");
 
-      document
-        .getElementById("countTransit")
-        .textContent =
-          count("in_transit");
+      return `MG-${year}${month}${day}-`;
     }
 
-    function renderJobs() {
-      const search =
-        document
-          .getElementById("searchInput")
-          .value
-          .trim()
-          .toLowerCase();
+    async function createJobNumber() {
+      const prefix =
+        datePrefix();
 
-      const visible = jobs.filter(job => {
-        if (!search) {
-          return true;
-        }
+      const result =
+        await client
+          .from("quotes")
+          .select("job_number")
+          .like(
+            "job_number",
+            `${prefix}%`
+          );
 
-        const driverName =
-          driversById[
-            String(
-              job.assigned_driver_id || ""
-            )
-          ] || "";
-
-        return [
-          job.job_number,
-          job.customer_name,
-          job.customer_email,
-          driverName
-        ]
-          .filter(Boolean)
-          .join(" ")
-          .toLowerCase()
-          .includes(search);
-      });
-
-      if (!visible.length) {
-        jobsBox.className = "";
-
-        jobsBox.innerHTML = `
-          <div class="empty">
-            No active jobs match your search.
-          </div>
-        `;
-
-        return;
+      if (result.error) {
+        throw result.error;
       }
 
-      jobsBox.className = "jobs-list";
+      let highest = 0;
 
-      jobsBox.innerHTML =
-        visible.map(job => {
-          const driverName =
-            driversById[
-              String(
-                job.assigned_driver_id || ""
-              )
-            ] || "Unassigned";
+      (result.data || [])
+        .forEach(job => {
+          const ending =
+            String(
+              job.job_number || ""
+            ).slice(prefix.length);
 
-          const url =
-            `${PORTAL_BASE}/job.html?id=` +
-            encodeURIComponent(job.id);
+          const number =
+            Number(ending);
 
-          return `
-            <a
-              class="job-row"
-              href="${escapeHtml(url)}"
-            >
-              <div class="job-main">
-                <div class="job-number">
-                  ${escapeHtml(
-                    job.job_number || "Job"
-                  )}
-                </div>
-              </div>
+          if (
+            Number.isInteger(number) &&
+            number > highest
+          ) {
+            highest = number;
+          }
+        });
 
-              <div class="customer-block">
-                <div class="customer-name">
-                  ${escapeHtml(
-                    job.customer_name ||
-                    "Customer"
-                  )}
-                </div>
+      return (
+        prefix +
+        String(highest + 1)
+          .padStart(3, "0")
+      );
+    }
 
-                <div class="customer-email">
-                  ${escapeHtml(
-                    job.customer_email ||
-                    "No email recorded"
-                  )}
-                </div>
-              </div>
-
-              <div class="status-block">
-                <div
-                  class="status-pill status-${escapeHtml(
-                    cleanStatus(job.status)
-                  )}"
-                >
-                  ${escapeHtml(
-                    statusLabel(job.status)
-                  )}
-                </div>
-              </div>
-
-              <div class="driver-block">
-                <span class="meta-label">
-                  Driver
-                </span>
-
-                <div class="meta-value">
-                  ${escapeHtml(driverName)}
-                </div>
-              </div>
-
-              <div class="arrow">›</div>
-            </a>
-          `;
-        }).join("");
+    function createInvoiceNumber(
+      jobNumber
+    ) {
+      return (
+        "INV-" +
+        String(jobNumber || "")
+          .replace(
+            /[^a-z0-9]/gi,
+            ""
+          )
+          .toUpperCase()
+      );
     }
 
     async function createInvoice(
       job,
       payload
     ) {
-      const invoicePayload = {
-        job_id: job.id,
+      const result =
+        await client
+          .from("invoices")
+          .upsert(
+            {
+              job_id:
+                job.id,
 
-        invoice_number:
-          createInvoiceNumber(
-            job.job_number
-          ),
+              invoice_number:
+                createInvoiceNumber(
+                  job.job_number
+                ),
 
-        customer_name:
-          payload.customer_name,
+              customer_name:
+                payload.customer_name,
 
-        customer_email:
-          payload.customer_email,
+              customer_email:
+                payload.customer_email,
 
-        amount:
-          payload.customer_charge,
+              amount:
+                payload.customer_charge,
 
-        payment_status: "unpaid",
+              payment_status:
+                "unpaid",
 
-        due_date:
-          payload.invoice_due_date ||
-          null
-      };
-
-      const result = await client
-        .from("invoices")
-        .upsert(
-          invoicePayload,
-          {
-            onConflict: "job_id"
-          }
-        )
-        .select("*")
-        .maybeSingle();
+              due_date:
+                payload.invoice_due_date ||
+                null
+            },
+            {
+              onConflict:
+                "job_id"
+            }
+          )
+          .select("*")
+          .maybeSingle();
 
       if (result.error) {
         throw result.error;
@@ -1504,28 +1499,25 @@
     async function submitJob(event) {
       event.preventDefault();
 
-      const clickedButton =
-        event.submitter;
-
       const action =
-        clickedButton?.value ||
-        "job-only";
+        event.submitter?.value ||
+        "quote";
 
-      const buttons = [
+      const createQuoteButton =
         document.getElementById(
-          "createJobOnlyButton"
-        ),
-        document.getElementById(
-          "createInvoiceButton"
-        )
-      ];
+          "createQuoteButton"
+        );
 
-      buttons.forEach(button => {
-        button.disabled = true;
-      });
+      const createInvoiceButton =
+        document.getElementById(
+          "createJobInvoiceButton"
+        );
+
+      createQuoteButton.disabled = true;
+      createInvoiceButton.disabled = true;
 
       setMessage(
-        "Creating job...",
+        "Creating record...",
         "success"
       );
 
@@ -1536,29 +1528,16 @@
         const jobNumber =
           await createJobNumber();
 
-        const assignedDriver =
+        const assignedDriverId =
           String(
             formData.get(
               "assigned_driver_id"
             ) || ""
           ).trim();
 
-        const customerCharge =
-          Number(
-            formData.get(
-              "customer_charge"
-            ) || 0
-          );
-
-        const driverPay =
-          Number(
-            formData.get(
-              "driver_pay"
-            ) || 0
-          );
-
         const payload = {
-          job_number: jobNumber,
+          job_number:
+            jobNumber,
 
           customer_name:
             String(
@@ -1616,13 +1595,6 @@
               ) || ""
             ).trim(),
 
-          delivery_method:
-            String(
-              formData.get(
-                "delivery_method"
-              ) || ""
-            ).trim(),
-
           special_instructions:
             String(
               formData.get(
@@ -1631,13 +1603,22 @@
             ).trim(),
 
           customer_charge:
-            customerCharge,
+            Number(
+              formData.get(
+                "customer_charge"
+              ) || 0
+            ),
 
           driver_pay:
-            driverPay,
+            Number(
+              formData.get(
+                "driver_pay"
+              ) || 0
+            ),
 
           assigned_driver_id:
-            assignedDriver || null,
+            assignedDriverId ||
+            null,
 
           invoice_delivery_method:
             String(
@@ -1659,26 +1640,29 @@
             ).trim(),
 
           status:
-            assignedDriver
-              ? "ready"
-              : "new"
+            action ===
+              "approved-invoice"
+              ? "waiting_payment"
+              : "quoted"
         };
 
-        const result = await client
-          .from("quotes")
-          .insert(payload)
-          .select("*")
-          .maybeSingle();
+        const insertResult =
+          await client
+            .from("quotes")
+            .insert(payload)
+            .select("*")
+            .maybeSingle();
 
-        if (result.error) {
-          throw result.error;
+        if (insertResult.error) {
+          throw insertResult.error;
         }
 
         const createdJob =
-          result.data;
+          insertResult.data;
 
         if (
-          action === "prepare-invoice"
+          action ===
+          "approved-invoice"
         ) {
           await createInvoice(
             createdJob,
@@ -1686,99 +1670,79 @@
           );
 
           setMessage(
-            `${jobNumber} and its invoice were created successfully.`,
+            `${jobNumber} was approved and its invoice was prepared.`,
             "success"
           );
-
-          setTimeout(() => {
-            location.href =
-              `${PORTAL_BASE}/invoices.html`;
-          }, 1200);
-
-          return;
+        } else {
+          setMessage(
+            `${jobNumber} was saved as a pending quote.`,
+            "success"
+          );
         }
 
-        setMessage(
-          `${jobNumber} was created successfully.`,
-          "success"
-        );
-
         jobForm.reset();
-        setDefaultDueDate();
+        setDefaultDates();
         updateMoneyPreview();
+
         await loadJobs();
+        await loadDrivers();
+
+        renderDashboardCounts();
 
         setTimeout(() => {
           closeJobForm();
-        }, 1200);
+
+          if (
+            action ===
+            "approved-invoice"
+          ) {
+            location.href =
+              `${PORTAL_BASE}/invoices.html`;
+          }
+        }, 1300);
       } catch (error) {
         setMessage(
           error.message ||
-          "Unable to create this job.",
+          "Unable to create this quote or job.",
           "error"
         );
       } finally {
-        buttons.forEach(button => {
-          button.disabled = false;
-        });
+        createQuoteButton.disabled =
+          false;
+
+        createInvoiceButton.disabled =
+          false;
       }
     }
 
-    customerChargeInput.addEventListener(
-      "input",
-      updateMoneyPreview
-    );
+    customerChargeInput
+      .addEventListener(
+        "input",
+        updateMoneyPreview
+      );
 
-    driverPayInput.addEventListener(
-      "input",
-      updateMoneyPreview
-    );
+    driverPayInput
+      .addEventListener(
+        "input",
+        updateMoneyPreview
+      );
 
     document
-      .getElementById("openJobFormButton")
+      .getElementById(
+        "openJobFormButton"
+      )
       .addEventListener(
         "click",
         openJobForm
       );
 
     document
-      .getElementById("closeJobFormButton")
+      .getElementById(
+        "closeJobFormButton"
+      )
       .addEventListener(
         "click",
         closeJobForm
-      );
-
-    document
-      .getElementById("cancelJobButton")
-      .addEventListener(
-        "click",
-        closeJobForm
-      );
-
-    document
-      .getElementById("searchInput")
-      .addEventListener(
-        "input",
-        renderJobs
-      );
-
-    document
-      .getElementById("refreshButton")
-      .addEventListener(
-        "click",
-        async function () {
-          this.disabled = true;
-          this.textContent =
-            "Refreshing...";
-
-          try {
-            await loadDrivers();
-            await loadJobs();
-          } finally {
-            this.disabled = false;
-            this.textContent = "Refresh";
-          }
-        }
       );
 
     jobForm.addEventListener(
@@ -1795,23 +1759,30 @@
           return;
         }
 
-        await loadDrivers();
-        await loadJobs();
-        setDefaultDueDate();
+        await Promise.all([
+          loadDrivers(),
+          loadJobs()
+        ]);
+
+        setDefaultDates();
         updateMoneyPreview();
+        renderDashboardCounts();
       } catch (error) {
-        jobsBox.innerHTML = `
-          <div class="message error">
-            ${escapeHtml(
-              error.message ||
-              "Unable to load dashboard."
-            )}
-          </div>
-        `;
+        document
+          .getElementById(
+            "dashboardMessage"
+          )
+          .innerHTML =
+            `<span style="color:#9b2929;">
+              ${
+                error.message ||
+                "Unable to load dashboard."
+              }
+            </span>`;
       }
     })();
   </script>
 
-  <script src="/dispatch-menu-v3.js?v=5"></script>
+  <script src="/dispatch-menu-v3.js?v=6"></script>
 </body>
 </html>
