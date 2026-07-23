@@ -63,7 +63,7 @@
     }
 
     .topbar-inner {
-      width: min(950px, 100%);
+      width: min(1000px, 100%);
       margin: auto;
     }
 
@@ -85,7 +85,7 @@
     }
 
     .container {
-      width: min(950px, 100%);
+      width: min(1000px, 100%);
       margin: auto;
       padding: 28px 18px 75px;
     }
@@ -145,7 +145,6 @@
     }
 
     .stat-card {
-      min-width: 0;
       padding: 19px;
       border: 1px solid var(--line);
       border-radius: 20px;
@@ -163,7 +162,6 @@
       margin-top: 8px;
       color: var(--muted);
       font-size: 14px;
-      line-height: 1.35;
     }
 
     .panel {
@@ -188,8 +186,8 @@
       font-size: 29px;
     }
 
-    .refresh-button,
-    .close-button {
+    .close-button,
+    .refresh-button {
       min-height: 48px;
       padding: 11px 17px;
       border: 1px solid var(--line);
@@ -200,140 +198,15 @@
       cursor: pointer;
     }
 
-    .search-box {
-      width: 100%;
-      min-height: 50px;
-      margin-bottom: 15px;
-      padding: 12px 14px;
-      border: 1px solid var(--line);
-      border-radius: 13px;
-      background: white;
-      color: var(--ink);
-    }
-
-    .jobs-list {
-      overflow: hidden;
-      border: 1px solid var(--line);
-      border-radius: 18px;
-    }
-
-    .job-row {
-      display: grid;
-      grid-template-columns:
-        minmax(120px, .8fr)
-        minmax(0, 1.3fr)
-        minmax(130px, .8fr)
-        minmax(120px, .8fr)
-        auto;
-      gap: 14px;
-      align-items: center;
-      min-height: 85px;
-      padding: 15px 17px;
-      border-bottom: 1px solid var(--line);
-      background: white;
-      color: inherit;
-      text-decoration: none;
-    }
-
-    .job-row:last-child {
-      border-bottom: 0;
-    }
-
-    .job-row:active {
-      background: #f7faf9;
-    }
-
-    .job-number {
+    .form-section-title {
+      grid-column: 1 / -1;
+      margin: 10px 0 0;
+      padding: 13px 15px;
+      border-radius: 14px;
+      background: #f0f7f4;
       color: var(--dark-green);
-      font-size: 18px;
-      font-weight: 900;
-      overflow-wrap: anywhere;
-    }
-
-    .customer-name {
       font-size: 16px;
-      font-weight: 800;
-      overflow-wrap: anywhere;
-    }
-
-    .customer-email {
-      margin-top: 4px;
-      color: var(--muted);
-      font-size: 12px;
-      overflow-wrap: anywhere;
-    }
-
-    .status-pill {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      width: fit-content;
-      padding: 8px 11px;
-      border-radius: 999px;
-      font-size: 12px;
       font-weight: 900;
-      white-space: nowrap;
-    }
-
-    .status-new {
-      background: var(--blue-bg);
-      color: var(--blue);
-    }
-
-    .status-waiting_payment {
-      background: var(--warning-bg);
-      color: var(--warning);
-    }
-
-    .status-paid,
-    .status-ready,
-    .status-in_transit {
-      background: var(--light-green);
-      color: var(--green);
-    }
-
-    .driver-label {
-      display: block;
-      margin-bottom: 4px;
-      color: var(--muted);
-      font-size: 10px;
-      font-weight: 900;
-      text-transform: uppercase;
-    }
-
-    .driver-name {
-      font-size: 13px;
-      font-weight: 800;
-      overflow-wrap: anywhere;
-    }
-
-    .arrow {
-      color: var(--green);
-      font-size: 26px;
-      font-weight: 900;
-    }
-
-    .empty,
-    .message {
-      padding: 28px 20px;
-      border-radius: 17px;
-      text-align: center;
-      line-height: 1.55;
-    }
-
-    .empty {
-      background: #f7faf9;
-      color: var(--muted);
-    }
-
-    .message.success {
-      background: var(--light-green);
-      color: var(--dark-green);
-    }
-
-    .message.error {
-      background: var(--danger-bg);
-      color: var(--danger);
     }
 
     .form-grid {
@@ -373,72 +246,239 @@
     }
 
     .field textarea {
-      min-height: 110px;
+      min-height: 105px;
       resize: vertical;
+    }
+
+    .money-note {
+      margin-top: 7px;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.4;
+    }
+
+    .billing-summary {
+      grid-column: 1 / -1;
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 12px;
+      padding: 16px;
+      border-radius: 16px;
+      background: #f7faf9;
+    }
+
+    .summary-box {
+      padding: 14px;
+      border: 1px solid var(--line);
+      border-radius: 13px;
+      background: white;
+    }
+
+    .summary-label {
+      color: var(--muted);
+      font-size: 11px;
+      font-weight: 900;
+      text-transform: uppercase;
+    }
+
+    .summary-value {
+      margin-top: 6px;
+      color: var(--green);
+      font-size: 21px;
+      font-weight: 900;
+    }
+
+    .summary-value.profit {
+      color: var(--dark-green);
     }
 
     .form-actions {
       display: grid;
-      grid-template-columns: 1fr auto;
+      grid-template-columns: 1fr 1fr auto;
       gap: 12px;
       margin-top: 18px;
     }
 
-    .save-button {
-      min-height: 54px;
+    .save-button,
+    .invoice-button {
+      min-height: 55px;
       border: 0;
       border-radius: 14px;
-      background: var(--green);
       color: white;
       font-weight: 900;
       cursor: pointer;
     }
 
-    @media (max-width: 760px) {
-      .quick-links {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-      }
+    .save-button {
+      background: var(--green);
+    }
 
+    .invoice-button {
+      background: var(--dark-green);
+    }
+
+    .message {
+      margin-top: 14px;
+      padding: 14px;
+      border-radius: 13px;
+      line-height: 1.5;
+    }
+
+    .message.success {
+      background: var(--light-green);
+      color: var(--dark-green);
+    }
+
+    .message.error {
+      background: var(--danger-bg);
+      color: var(--danger);
+    }
+
+    .search-box {
+      width: 100%;
+      min-height: 50px;
+      margin-bottom: 15px;
+      padding: 12px 14px;
+      border: 1px solid var(--line);
+      border-radius: 13px;
+    }
+
+    .jobs-list {
+      overflow: hidden;
+      border: 1px solid var(--line);
+      border-radius: 18px;
+    }
+
+    .job-row {
+      display: grid;
+      grid-template-columns:
+        minmax(125px, .7fr)
+        minmax(0, 1.2fr)
+        minmax(120px, .65fr)
+        minmax(120px, .65fr)
+        auto;
+      gap: 14px;
+      align-items: center;
+      min-height: 85px;
+      padding: 15px 17px;
+      border-bottom: 1px solid var(--line);
+      color: inherit;
+      text-decoration: none;
+    }
+
+    .job-row:last-child {
+      border-bottom: 0;
+    }
+
+    .job-number {
+      color: var(--dark-green);
+      font-size: 18px;
+      font-weight: 900;
+      overflow-wrap: anywhere;
+    }
+
+    .customer-name {
+      font-size: 16px;
+      font-weight: 800;
+      overflow-wrap: anywhere;
+    }
+
+    .customer-email {
+      margin-top: 4px;
+      color: var(--muted);
+      font-size: 12px;
+      overflow-wrap: anywhere;
+    }
+
+    .status-pill {
+      display: inline-flex;
+      width: fit-content;
+      padding: 8px 11px;
+      border-radius: 999px;
+      background: var(--light-green);
+      color: var(--green);
+      font-size: 12px;
+      font-weight: 900;
+    }
+
+    .status-new {
+      background: var(--blue-bg);
+      color: var(--blue);
+    }
+
+    .status-waiting_payment {
+      background: var(--warning-bg);
+      color: var(--warning);
+    }
+
+    .meta-label {
+      display: block;
+      margin-bottom: 4px;
+      color: var(--muted);
+      font-size: 10px;
+      font-weight: 900;
+      text-transform: uppercase;
+    }
+
+    .meta-value {
+      font-size: 13px;
+      font-weight: 800;
+    }
+
+    .arrow {
+      color: var(--green);
+      font-size: 26px;
+      font-weight: 900;
+    }
+
+    .empty {
+      padding: 28px 20px;
+      border-radius: 17px;
+      background: #f7faf9;
+      color: var(--muted);
+      text-align: center;
+    }
+
+    @media (max-width: 760px) {
+      .quick-links,
       .stats {
         grid-template-columns: repeat(2, minmax(0, 1fr));
       }
 
+      .form-grid,
+      .billing-summary,
+      .form-actions {
+        grid-template-columns: 1fr;
+      }
+
+      .field.full,
+      .form-section-title,
+      .billing-summary {
+        grid-column: auto;
+      }
+
       .job-row {
         grid-template-columns: minmax(0, 1fr) auto;
-        gap: 7px 12px;
-        min-height: 105px;
+        min-height: 120px;
       }
 
-      .customer-block {
-        grid-column: 1 / 2;
-      }
-
-      .status-pill {
-        grid-column: 2 / 3;
-        grid-row: 1 / 2;
-      }
-
+      .job-main,
+      .customer-block,
+      .status-block,
       .driver-block {
         grid-column: 1 / 2;
       }
 
       .arrow {
         grid-column: 2 / 3;
-        grid-row: 2 / 4;
+        grid-row: 1 / 5;
         align-self: center;
-      }
-
-      .form-grid {
-        grid-template-columns: 1fr;
-      }
-
-      .field.full {
-        grid-column: auto;
       }
     }
 
     @media (max-width: 430px) {
-      .quick-links {
+      .quick-links,
+      .stats {
         grid-template-columns: 1fr;
       }
     }
@@ -475,75 +515,75 @@
     </button>
 
     <section class="quick-links">
-      <a class="quick-link" href="/jobs.html">
+      <a
+        class="quick-link"
+        href="https://portal.migenteexpress.com/jobs.html"
+      >
         Active Jobs
       </a>
 
-      <a class="quick-link" href="/history.html">
+      <a
+        class="quick-link"
+        href="https://portal.migenteexpress.com/history.html"
+      >
         Job History
       </a>
 
-      <a class="quick-link"
-  href="https://portal.migenteexpress.com/customer.html"
->
-  Customers
-</a>
+      <a
+        class="quick-link"
+        href="https://portal.migenteexpress.com/customer.html"
+      >
+        Customers
+      </a>
 
       <a
-  class="quick-link"
-  href="https://portal.migenteexpress.com/driver.html"
->
-  Drivers
-</a>
+        class="quick-link"
+        href="https://portal.migenteexpress.com/driver.html"
+      >
+        Drivers
+      </a>
 
-      <a class="quick-link" href="/payroll.html">
+      <a
+        class="quick-link"
+        href="https://portal.migenteexpress.com/payroll.html"
+      >
         Payroll
       </a>
 
-      <a class="quick-link" href="/invoices.html">
+      <a
+        class="quick-link"
+        href="https://portal.migenteexpress.com/invoices.html"
+      >
         Invoices
+      </a>
+
+      <a
+        class="quick-link"
+        href="https://portal.migenteexpress.com/reports.html"
+      >
+        Reports
       </a>
     </section>
 
     <section class="stats">
       <div class="stat-card">
-        <div class="stat-number" id="countNew">
-          0
-        </div>
-
-        <div class="stat-label">
-          New
-        </div>
+        <div class="stat-number" id="countNew">0</div>
+        <div class="stat-label">New</div>
       </div>
 
       <div class="stat-card">
-        <div class="stat-number" id="countWaiting">
-          0
-        </div>
-
-        <div class="stat-label">
-          Waiting Payment
-        </div>
+        <div class="stat-number" id="countWaiting">0</div>
+        <div class="stat-label">Waiting Payment</div>
       </div>
 
       <div class="stat-card">
-        <div class="stat-number" id="countReady">
-          0
-        </div>
-
-        <div class="stat-label">
-          Paid / Ready
-        </div>
+        <div class="stat-number" id="countReady">0</div>
+        <div class="stat-label">Paid / Ready</div>
       </div>
 
       <div class="stat-card">
-        <div class="stat-number" id="countTransit">
-          0
-        </div>
-
-        <div class="stat-label">
-          In Transit
-        </div>
+        <div class="stat-number" id="countTransit">0</div>
+        <div class="stat-label">In Transit</div>
       </div>
     </section>
 
@@ -565,6 +605,10 @@
 
       <form id="jobForm">
         <div class="form-grid">
+          <div class="form-section-title">
+            Customer Information
+          </div>
+
           <div class="field">
             <label for="customerName">
               Customer Name
@@ -573,12 +617,24 @@
             <input
               id="customerName"
               name="customer_name"
-              type="text"
               required
             >
           </div>
 
           <div class="field">
+            <label for="customerPhone">
+              Customer Phone
+            </label>
+
+            <input
+              id="customerPhone"
+              name="customer_phone"
+              type="tel"
+              placeholder="303-555-1234"
+            >
+          </div>
+
+          <div class="field full">
             <label for="customerEmail">
               Customer Email
             </label>
@@ -590,6 +646,10 @@
             >
           </div>
 
+          <div class="form-section-title">
+            Route and Delivery
+          </div>
+
           <div class="field full">
             <label for="pickupAddress">
               Pickup Address
@@ -598,7 +658,6 @@
             <input
               id="pickupAddress"
               name="pickup_address"
-              type="text"
               required
             >
           </div>
@@ -611,7 +670,6 @@
             <input
               id="deliveryAddress"
               name="delivery_address"
-              type="text"
               required
             >
           </div>
@@ -625,9 +683,7 @@
               id="vehicleType"
               name="vehicle_type"
             >
-              <option value="Car">
-                Car
-              </option>
+              <option value="Sedan">Sedan</option>
 
               <option value="Small Cargo Van">
                 Small Cargo Van
@@ -635,10 +691,6 @@
 
               <option value="Sprinter Van">
                 Sprinter Van
-              </option>
-
-              <option value="Box Truck">
-                Box Truck
               </option>
             </select>
           </div>
@@ -652,34 +704,41 @@
               id="deliverySpeed"
               name="delivery_speed"
             >
-              <option value="Standard Delivery">
-                Standard Delivery
+              <option value="2 Hour">
+                2 Hour
               </option>
 
-              <option value="Same-Day Delivery">
-                Same-Day Delivery
+              <option value="3 Hour">
+                3 Hour
               </option>
 
-              <option value="3-Hour Delivery">
-                3-Hour Delivery
+              <option value="4 Hour">
+                4 Hour
               </option>
 
-              <option value="Rush Delivery">
-                Rush Delivery
+              <option value="5 Hour">
+                5 Hour
+              </option>
+
+              <option value="6 Hour">
+                6 Hour
+              </option>
+
+              <option value="Next Day">
+                Next Day
               </option>
             </select>
           </div>
 
           <div class="field">
             <label for="packageType">
-              Package
+              Package Description
             </label>
 
             <input
               id="packageType"
               name="package_type"
-              type="text"
-              placeholder="Example: 3 boxes"
+              placeholder="Example: 3 medical boxes"
             >
           </div>
 
@@ -700,8 +759,8 @@
                 Leave at Door
               </option>
 
-              <option value="Signature Required">
-                Signature Required
+              <option value="Receiving Department">
+                Receiving Department
               </option>
             </select>
           </div>
@@ -721,6 +780,40 @@
             </select>
           </div>
 
+          <div class="field full">
+            <label for="specialInstructions">
+              Delivery Instructions
+            </label>
+
+            <textarea
+              id="specialInstructions"
+              name="special_instructions"
+            ></textarea>
+          </div>
+
+          <div class="form-section-title">
+            Customer Billing and Driver Pay
+          </div>
+
+          <div class="field">
+            <label for="customerCharge">
+              Customer Charge
+            </label>
+
+            <input
+              id="customerCharge"
+              name="customer_charge"
+              type="number"
+              min="0"
+              step="0.01"
+              value="0.00"
+            >
+
+            <div class="money-note">
+              This amount appears on the customer invoice.
+            </div>
+          </div>
+
           <div class="field">
             <label for="driverPay">
               Driver Pay
@@ -732,18 +825,107 @@
               type="number"
               min="0"
               step="0.01"
-              placeholder="0.00"
+              value="0.00"
+            >
+
+            <div class="money-note">
+              This amount appears only in Payroll.
+            </div>
+          </div>
+
+          <div class="billing-summary">
+            <div class="summary-box">
+              <div class="summary-label">
+                Customer Charge
+              </div>
+
+              <div
+                class="summary-value"
+                id="chargePreview"
+              >
+                $0.00
+              </div>
+            </div>
+
+            <div class="summary-box">
+              <div class="summary-label">
+                Driver Pay
+              </div>
+
+              <div
+                class="summary-value"
+                id="payPreview"
+              >
+                $0.00
+              </div>
+            </div>
+
+            <div class="summary-box">
+              <div class="summary-label">
+                Estimated Gross Profit
+              </div>
+
+              <div
+                class="summary-value profit"
+                id="profitPreview"
+              >
+                $0.00
+              </div>
+            </div>
+          </div>
+
+          <div class="form-section-title">
+            Invoice Options
+          </div>
+
+          <div class="field">
+            <label for="invoiceDeliveryMethod">
+              Invoice Delivery
+            </label>
+
+            <select
+              id="invoiceDeliveryMethod"
+              name="invoice_delivery_method"
+            >
+              <option value="none">
+                Do Not Send Yet
+              </option>
+
+              <option value="email">
+                Email
+              </option>
+
+              <option value="text">
+                Text Message
+              </option>
+
+              <option value="both">
+                Email and Text
+              </option>
+            </select>
+          </div>
+
+          <div class="field">
+            <label for="invoiceDueDate">
+              Invoice Due Date
+            </label>
+
+            <input
+              id="invoiceDueDate"
+              name="invoice_due_date"
+              type="date"
             >
           </div>
 
           <div class="field full">
-            <label for="specialInstructions">
-              Special Instructions
+            <label for="billingNotes">
+              Billing Notes
             </label>
 
             <textarea
-              id="specialInstructions"
-              name="special_instructions"
+              id="billingNotes"
+              name="billing_notes"
+              placeholder="Example: Payment due within 30 days."
             ></textarea>
           </div>
         </div>
@@ -751,10 +933,22 @@
         <div class="form-actions">
           <button
             class="save-button"
-            id="saveJobButton"
+            id="createJobOnlyButton"
             type="submit"
+            value="job-only"
+            name="submit_action"
           >
-            Create Job
+            Create Job Only
+          </button>
+
+          <button
+            class="invoice-button"
+            id="createInvoiceButton"
+            type="submit"
+            value="prepare-invoice"
+            name="submit_action"
+          >
+            Create Job & Prepare Invoice
           </button>
 
           <button
@@ -809,23 +1003,26 @@
 
     window.mgDispatchClient = client;
 
+    const PORTAL_BASE =
+      "https://portal.migenteexpress.com";
+
     const jobsBox =
       document.getElementById("jobsBox");
-
-    const searchInput =
-      document.getElementById("searchInput");
-
-    const jobFormPanel =
-      document.getElementById("jobFormPanel");
 
     const jobForm =
       document.getElementById("jobForm");
 
+    const jobFormPanel =
+      document.getElementById("jobFormPanel");
+
     const formMessage =
       document.getElementById("formMessage");
 
-    const saveJobButton =
-      document.getElementById("saveJobButton");
+    const customerChargeInput =
+      document.getElementById("customerCharge");
+
+    const driverPayInput =
+      document.getElementById("driverPay");
 
     let jobs = [];
     let drivers = [];
@@ -835,6 +1032,16 @@
       const div = document.createElement("div");
       div.textContent = value ?? "";
       return div.innerHTML;
+    }
+
+    function money(value) {
+      return Number(value || 0).toLocaleString(
+        "en-US",
+        {
+          style: "currency",
+          currency: "USD"
+        }
+      );
     }
 
     function cleanStatus(value) {
@@ -857,7 +1064,7 @@
           .replaceAll("_", " ");
     }
 
-    function setFormMessage(message, type) {
+    function setMessage(message, type) {
       formMessage.textContent = message || "";
 
       formMessage.className =
@@ -866,20 +1073,112 @@
           : "message hidden";
     }
 
+    function updateMoneyPreview() {
+      const charge =
+        Number(customerChargeInput.value || 0);
+
+      const pay =
+        Number(driverPayInput.value || 0);
+
+      document
+        .getElementById("chargePreview")
+        .textContent = money(charge);
+
+      document
+        .getElementById("payPreview")
+        .textContent = money(pay);
+
+      document
+        .getElementById("profitPreview")
+        .textContent =
+          money(charge - pay);
+    }
+
+    function setDefaultDueDate() {
+      const date = new Date();
+      date.setDate(date.getDate() + 30);
+
+      document
+        .getElementById("invoiceDueDate")
+        .value =
+          date.toISOString().slice(0, 10);
+    }
+
     function openJobForm() {
       jobFormPanel.classList.remove("hidden");
-
-      setFormMessage("", "");
+      setMessage("", "");
+      setDefaultDueDate();
 
       jobFormPanel.scrollIntoView({
-        behavior: "smooth",
-        block: "start"
+        behavior: "smooth"
       });
     }
 
     function closeJobForm() {
       jobFormPanel.classList.add("hidden");
-      setFormMessage("", "");
+      setMessage("", "");
+    }
+
+    function datePrefix() {
+      const now = new Date();
+
+      const year =
+        String(now.getFullYear()).slice(-2);
+
+      const month =
+        String(now.getMonth() + 1)
+          .padStart(2, "0");
+
+      const day =
+        String(now.getDate())
+          .padStart(2, "0");
+
+      return `MG-${year}${month}${day}-`;
+    }
+
+    async function createJobNumber() {
+      const prefix = datePrefix();
+
+      const result = await client
+        .from("quotes")
+        .select("job_number")
+        .like("job_number", `${prefix}%`);
+
+      if (result.error) {
+        throw result.error;
+      }
+
+      let highest = 0;
+
+      (result.data || []).forEach(job => {
+        const ending =
+          String(job.job_number || "")
+            .slice(prefix.length);
+
+        const number = Number(ending);
+
+        if (
+          Number.isInteger(number) &&
+          number > highest
+        ) {
+          highest = number;
+        }
+      });
+
+      return (
+        prefix +
+        String(highest + 1)
+          .padStart(3, "0")
+      );
+    }
+
+    function createInvoiceNumber(jobNumber) {
+      return (
+        "INV-" +
+        String(jobNumber || "")
+          .replace(/[^a-z0-9]/gi, "")
+          .toUpperCase()
+      );
     }
 
     async function verifyDispatchUser() {
@@ -915,9 +1214,10 @@
         );
       }
 
-      const role = String(
-        profileResult.data.role || ""
-      ).toLowerCase();
+      const role =
+        String(
+          profileResult.data.role || ""
+        ).toLowerCase();
 
       if (
         ![
@@ -926,27 +1226,20 @@
           "dispatcher"
         ].includes(role)
       ) {
-        if (role === "driver") {
-          location.replace("/driver.html");
-          return null;
-        }
-
-        if (role === "customer") {
-          location.replace("/customer.html");
-          return null;
-        }
-
         throw new Error(
           "This account does not have dispatch access."
         );
       }
 
       window.dispatchEvent(
-        new CustomEvent("mg-dispatch-ready", {
-          detail: {
-            email: session.user.email
+        new CustomEvent(
+          "mg-dispatch-ready",
+          {
+            detail: {
+              email: session.user.email
+            }
           }
-        })
+        )
       );
 
       return session;
@@ -961,9 +1254,7 @@
         });
 
       if (result.error) {
-        drivers = [];
-        driversById = {};
-        return;
+        throw result.error;
       }
 
       drivers = result.data || [];
@@ -999,12 +1290,6 @@
     }
 
     async function loadJobs() {
-      jobsBox.innerHTML = `
-        <div class="empty">
-          Loading active jobs...
-        </div>
-      `;
-
       const result = await client
         .from("quotes")
         .select("*")
@@ -1016,13 +1301,13 @@
         throw result.error;
       }
 
-      jobs = (result.data || []).filter(job => {
-        return ![
+      jobs = (result.data || []).filter(job =>
+        ![
           "delivered",
           "cancelled",
           "canceled"
-        ].includes(cleanStatus(job.status));
-      });
+        ].includes(cleanStatus(job.status))
+      );
 
       updateCounts();
       renderJobs();
@@ -1054,43 +1339,39 @@
           count("in_transit");
     }
 
-    function visibleJobs() {
+    function renderJobs() {
       const search =
-        searchInput.value
+        document
+          .getElementById("searchInput")
+          .value
           .trim()
           .toLowerCase();
 
-      if (!search) {
-        return jobs;
-      }
+      const visible = jobs.filter(job => {
+        if (!search) {
+          return true;
+        }
 
-      return jobs.filter(job => {
         const driverName =
           driversById[
-            String(job.assigned_driver_id || "")
+            String(
+              job.assigned_driver_id || ""
+            )
           ] || "";
 
-        const searchable = [
+        return [
           job.job_number,
           job.customer_name,
           job.customer_email,
-          driverName,
-          job.pickup_address,
-          job.delivery_address
+          driverName
         ]
           .filter(Boolean)
           .join(" ")
-          .toLowerCase();
-
-        return searchable.includes(search);
+          .toLowerCase()
+          .includes(search);
       });
-    }
 
-    function renderJobs() {
-      const shownJobs =
-        visibleJobs();
-
-      if (!shownJobs.length) {
+      if (!visible.length) {
         jobsBox.className = "";
 
         jobsBox.innerHTML = `
@@ -1105,35 +1386,29 @@
       jobsBox.className = "jobs-list";
 
       jobsBox.innerHTML =
-        shownJobs.map(job => {
-          const status =
-            cleanStatus(job.status);
-
-          const jobId =
-            String(job.id || "").trim();
-
-          const jobUrl =
-            "/job.html?id=" +
-            encodeURIComponent(jobId);
-
+        visible.map(job => {
           const driverName =
-            job.assigned_driver_id
-              ? (
-                  driversById[
-                    String(job.assigned_driver_id)
-                  ] || "Assigned Driver"
-                )
-              : "Unassigned";
+            driversById[
+              String(
+                job.assigned_driver_id || ""
+              )
+            ] || "Unassigned";
+
+          const url =
+            `${PORTAL_BASE}/job.html?id=` +
+            encodeURIComponent(job.id);
 
           return `
             <a
               class="job-row"
-              href="${escapeHtml(jobUrl)}"
+              href="${escapeHtml(url)}"
             >
-              <div class="job-number">
-                ${escapeHtml(
-                  job.job_number || "Job"
-                )}
+              <div class="job-main">
+                <div class="job-number">
+                  ${escapeHtml(
+                    job.job_number || "Job"
+                  )}
+                </div>
               </div>
 
               <div class="customer-block">
@@ -1144,35 +1419,32 @@
                   )}
                 </div>
 
-                ${
-                  job.customer_email
-                    ? `
-                      <div class="customer-email">
-                        ${escapeHtml(
-                          job.customer_email
-                        )}
-                      </div>
-                    `
-                    : ""
-                }
+                <div class="customer-email">
+                  ${escapeHtml(
+                    job.customer_email ||
+                    "No email recorded"
+                  )}
+                </div>
               </div>
 
-              <div
-                class="status-pill status-${escapeHtml(
-                  status
-                )}"
-              >
-                ${escapeHtml(
-                  statusLabel(status)
-                )}
+              <div class="status-block">
+                <div
+                  class="status-pill status-${escapeHtml(
+                    cleanStatus(job.status)
+                  )}"
+                >
+                  ${escapeHtml(
+                    statusLabel(job.status)
+                  )}
+                </div>
               </div>
 
               <div class="driver-block">
-                <span class="driver-label">
+                <span class="meta-label">
                   Driver
                 </span>
 
-                <div class="driver-name">
+                <div class="meta-value">
                   ${escapeHtml(driverName)}
                 </div>
               </div>
@@ -1183,66 +1455,76 @@
         }).join("");
     }
 
-    function datePrefix() {
-      const now = new Date();
+    async function createInvoice(
+      job,
+      payload
+    ) {
+      const invoicePayload = {
+        job_id: job.id,
 
-      const year =
-        String(now.getFullYear()).slice(-2);
+        invoice_number:
+          createInvoiceNumber(
+            job.job_number
+          ),
 
-      const month =
-        String(now.getMonth() + 1)
-          .padStart(2, "0");
+        customer_name:
+          payload.customer_name,
 
-      const day =
-        String(now.getDate())
-          .padStart(2, "0");
+        customer_email:
+          payload.customer_email,
 
-      return `MG-${year}${month}${day}-`;
-    }
+        amount:
+          payload.customer_charge,
 
-    async function createJobNumber() {
-      const prefix = datePrefix();
+        payment_status: "unpaid",
+
+        due_date:
+          payload.invoice_due_date ||
+          null
+      };
 
       const result = await client
-        .from("quotes")
-        .select("job_number")
-        .like("job_number", `${prefix}%`);
+        .from("invoices")
+        .upsert(
+          invoicePayload,
+          {
+            onConflict: "job_id"
+          }
+        )
+        .select("*")
+        .maybeSingle();
 
       if (result.error) {
         throw result.error;
       }
 
-      let highest = 0;
-
-      (result.data || []).forEach(job => {
-        const ending = String(
-          job.job_number || ""
-        ).slice(prefix.length);
-
-        const number = Number(ending);
-
-        if (
-          Number.isInteger(number) &&
-          number > highest
-        ) {
-          highest = number;
-        }
-      });
-
-      return (
-        prefix +
-        String(highest + 1).padStart(3, "0")
-      );
+      return result.data;
     }
 
-    async function createJob(event) {
+    async function submitJob(event) {
       event.preventDefault();
 
-      saveJobButton.disabled = true;
-      saveJobButton.textContent =
-        "Creating Job...";
+      const clickedButton =
+        event.submitter;
 
-      setFormMessage(
+      const action =
+        clickedButton?.value ||
+        "job-only";
+
+      const buttons = [
+        document.getElementById(
+          "createJobOnlyButton"
+        ),
+        document.getElementById(
+          "createInvoiceButton"
+        )
+      ];
+
+      buttons.forEach(button => {
+        button.disabled = true;
+      });
+
+      setMessage(
         "Creating job...",
         "success"
       );
@@ -1261,6 +1543,20 @@
             ) || ""
           ).trim();
 
+        const customerCharge =
+          Number(
+            formData.get(
+              "customer_charge"
+            ) || 0
+          );
+
+        const driverPay =
+          Number(
+            formData.get(
+              "driver_pay"
+            ) || 0
+          );
+
         const payload = {
           job_number: jobNumber,
 
@@ -1268,6 +1564,13 @@
             String(
               formData.get(
                 "customer_name"
+              ) || ""
+            ).trim(),
+
+          customer_phone:
+            String(
+              formData.get(
+                "customer_phone"
               ) || ""
             ).trim(),
 
@@ -1327,15 +1630,33 @@
               ) || ""
             ).trim(),
 
+          customer_charge:
+            customerCharge,
+
+          driver_pay:
+            driverPay,
+
           assigned_driver_id:
             assignedDriver || null,
 
-          driver_pay:
-            Number(
+          invoice_delivery_method:
+            String(
               formData.get(
-                "driver_pay"
-              ) || 0
+                "invoice_delivery_method"
+              ) || "none"
             ),
+
+          invoice_due_date:
+            formData.get(
+              "invoice_due_date"
+            ) || null,
+
+          billing_notes:
+            String(
+              formData.get(
+                "billing_notes"
+              ) || ""
+            ).trim(),
 
           status:
             assignedDriver
@@ -1353,34 +1674,65 @@
           throw result.error;
         }
 
-        jobForm.reset();
+        const createdJob =
+          result.data;
 
-        document
-          .getElementById("driverSelect")
-          .value = "";
+        if (
+          action === "prepare-invoice"
+        ) {
+          await createInvoice(
+            createdJob,
+            payload
+          );
 
-        setFormMessage(
+          setMessage(
+            `${jobNumber} and its invoice were created successfully.`,
+            "success"
+          );
+
+          setTimeout(() => {
+            location.href =
+              `${PORTAL_BASE}/invoices.html`;
+          }, 1200);
+
+          return;
+        }
+
+        setMessage(
           `${jobNumber} was created successfully.`,
           "success"
         );
 
+        jobForm.reset();
+        setDefaultDueDate();
+        updateMoneyPreview();
         await loadJobs();
 
         setTimeout(() => {
           closeJobForm();
         }, 1200);
       } catch (error) {
-        setFormMessage(
+        setMessage(
           error.message ||
           "Unable to create this job.",
           "error"
         );
       } finally {
-        saveJobButton.disabled = false;
-        saveJobButton.textContent =
-          "Create Job";
+        buttons.forEach(button => {
+          button.disabled = false;
+        });
       }
     }
+
+    customerChargeInput.addEventListener(
+      "input",
+      updateMoneyPreview
+    );
+
+    driverPayInput.addEventListener(
+      "input",
+      updateMoneyPreview
+    );
 
     document
       .getElementById("openJobFormButton")
@@ -1403,15 +1755,12 @@
         closeJobForm
       );
 
-    jobForm.addEventListener(
-      "submit",
-      createJob
-    );
-
-    searchInput.addEventListener(
-      "input",
-      renderJobs
-    );
+    document
+      .getElementById("searchInput")
+      .addEventListener(
+        "input",
+        renderJobs
+      );
 
     document
       .getElementById("refreshButton")
@@ -1425,23 +1774,17 @@
           try {
             await loadDrivers();
             await loadJobs();
-          } catch (error) {
-            jobsBox.className = "";
-
-            jobsBox.innerHTML = `
-              <div class="message error">
-                ${escapeHtml(
-                  error.message ||
-                  "Unable to refresh dashboard."
-                )}
-              </div>
-            `;
           } finally {
             this.disabled = false;
             this.textContent = "Refresh";
           }
         }
       );
+
+    jobForm.addEventListener(
+      "submit",
+      submitJob
+    );
 
     (async function startPage() {
       try {
@@ -1454,9 +1797,9 @@
 
         await loadDrivers();
         await loadJobs();
+        setDefaultDueDate();
+        updateMoneyPreview();
       } catch (error) {
-        jobsBox.className = "";
-
         jobsBox.innerHTML = `
           <div class="message error">
             ${escapeHtml(
