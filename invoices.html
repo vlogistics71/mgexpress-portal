@@ -35,6 +35,10 @@
       --blue-bg: #eaf3ff;
     }
 
+    html {
+      scroll-behavior: smooth;
+    }
+
     body {
       margin: 0;
       font-family: Arial, Helvetica, sans-serif;
@@ -42,10 +46,20 @@
       color: var(--ink);
     }
 
+    body.menu-open,
+    body.modal-open {
+      overflow: hidden;
+    }
+
     button,
     input,
-    select {
+    select,
+    textarea {
       font: inherit;
+    }
+
+    button {
+      cursor: pointer;
     }
 
     .hidden {
@@ -55,19 +69,22 @@
     .topbar {
       position: sticky;
       top: 0;
-      z-index: 50;
+      z-index: 100;
       padding: 18px 20px;
       background: var(--dark-green);
       color: white;
     }
 
     .topbar-inner {
+      position: relative;
       width: min(1050px, 100%);
+      min-height: 75px;
       margin: auto;
+      padding-right: 82px;
     }
 
     .brand {
-      font-size: 23px;
+      font-size: clamp(21px, 5.8vw, 30px);
       font-weight: 900;
       line-height: 1.08;
     }
@@ -77,16 +94,153 @@
     }
 
     .staff-email {
-      margin-top: 7px;
-      font-size: 13px;
-      opacity: .82;
+      margin-top: 9px;
+      font-size: 14px;
+      opacity: .84;
       overflow-wrap: anywhere;
+    }
+
+    .hamburger {
+      position: absolute;
+      top: 50%;
+      right: 0;
+      display: grid;
+      place-items: center;
+      width: 64px;
+      height: 64px;
+      padding: 0;
+      border: 0;
+      border-radius: 18px;
+      background: white;
+      color: var(--dark-green);
+      font-size: 38px;
+      font-weight: 900;
+      line-height: 1;
+      transform: translateY(-50%);
+    }
+
+    .hamburger:active {
+      transform: translateY(-50%) scale(.97);
+    }
+
+    .menu-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 500;
+      background: rgba(8, 25, 20, .58);
+      opacity: 0;
+      visibility: hidden;
+      transition: opacity .2s ease;
+    }
+
+    .menu-overlay.open {
+      opacity: 1;
+      visibility: visible;
+    }
+
+    .side-menu {
+      position: fixed;
+      top: 0;
+      right: 0;
+      z-index: 501;
+      width: min(365px, 88vw);
+      height: 100%;
+      padding: 22px 18px;
+      background: white;
+      box-shadow: -12px 0 30px rgba(0, 0, 0, .17);
+      transform: translateX(105%);
+      transition: transform .24s ease;
+      overflow-y: auto;
+    }
+
+    .side-menu.open {
+      transform: translateX(0);
+    }
+
+    .menu-top {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 5px 3px 20px;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .menu-brand {
+      color: var(--dark-green);
+      font-size: 22px;
+      font-weight: 900;
+      line-height: 1.15;
+    }
+
+    .menu-brand span {
+      color: var(--coral);
+    }
+
+    .menu-user {
+      margin-top: 7px;
+      color: var(--muted);
+      font-size: 12px;
+      overflow-wrap: anywhere;
+    }
+
+    .menu-close {
+      display: grid;
+      place-items: center;
+      width: 45px;
+      height: 45px;
+      flex: 0 0 45px;
+      border: 0;
+      border-radius: 13px;
+      background: var(--background);
+      color: var(--dark-green);
+      font-size: 27px;
+    }
+
+    .menu-links {
+      display: grid;
+      gap: 9px;
+      margin-top: 19px;
+    }
+
+    .menu-link {
+      display: flex;
+      align-items: center;
+      gap: 13px;
+      min-height: 56px;
+      padding: 13px 15px;
+      border-radius: 14px;
+      color: var(--dark-green);
+      text-decoration: none;
+      font-weight: 900;
+    }
+
+    .menu-link:hover,
+    .menu-link.active {
+      background: var(--light-green);
+    }
+
+    .menu-icon {
+      width: 25px;
+      text-align: center;
+      font-size: 19px;
+    }
+
+    .signout-button {
+      width: 100%;
+      min-height: 54px;
+      margin-top: 22px;
+      border: 1px solid #f0caca;
+      border-radius: 14px;
+      background: var(--danger-bg);
+      color: var(--danger);
+      font-weight: 900;
     }
 
     .container {
       width: min(1050px, 100%);
       margin: auto;
-      padding: 28px 18px 75px;
+      padding: 28px 18px 80px;
     }
 
     .heading-row {
@@ -109,80 +263,66 @@
       line-height: 1.03;
     }
 
-    .dashboard-button {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
+    .refresh-button {
       min-height: 52px;
       padding: 13px 18px;
       border: 1px solid var(--line);
       border-radius: 14px;
       background: white;
       color: var(--dark-green);
-      text-decoration: none;
       font-weight: 900;
-      white-space: nowrap;
     }
 
     .stats {
       display: grid;
       grid-template-columns: repeat(4, minmax(0, 1fr));
-      gap: 12px;
-      margin-bottom: 22px;
+      gap: 13px;
     }
 
     .stat-card {
       min-width: 0;
-      padding: 18px;
+      padding: 19px;
       border: 1px solid var(--line);
-      border-radius: 19px;
+      border-radius: 20px;
       background: white;
-      box-shadow: 0 7px 22px rgba(0, 0, 0, .04);
+      box-shadow: 0 7px 23px rgba(0, 0, 0, .04);
     }
 
     .stat-number {
       color: var(--green);
-      font-size: 30px;
+      font-size: 29px;
       font-weight: 900;
       overflow-wrap: anywhere;
+    }
+
+    .stat-card.warning .stat-number {
+      color: var(--warning);
+    }
+
+    .stat-card.danger .stat-number {
+      color: var(--danger);
     }
 
     .stat-label {
       margin-top: 7px;
       color: var(--muted);
-      font-size: 14px;
-      line-height: 1.35;
+      font-size: 13px;
+      font-weight: 700;
     }
 
-    .filters {
-      padding: 18px;
-      border: 1px solid var(--line);
-      border-radius: 21px;
-      background: white;
-      box-shadow: 0 8px 25px rgba(0, 0, 0, .04);
-    }
-
-    .filter-grid {
+    .toolbar {
       display: grid;
-      grid-template-columns:
-        minmax(0, 2fr)
-        minmax(165px, 1fr)
-        auto;
+      grid-template-columns: minmax(0, 1fr) 190px;
       gap: 12px;
+      margin-top: 22px;
+      padding: 16px;
+      border: 1px solid var(--line);
+      border-radius: 19px;
+      background: white;
     }
 
-    .field label {
-      display: block;
-      margin-bottom: 7px;
-      color: var(--muted);
-      font-size: 12px;
-      font-weight: 900;
-      letter-spacing: .04em;
-      text-transform: uppercase;
-    }
-
-    .field input,
-    .field select {
+    .toolbar input,
+    .toolbar select {
       width: 100%;
       min-height: 51px;
       padding: 12px 14px;
@@ -192,77 +332,52 @@
       color: var(--ink);
     }
 
-    .refresh-button {
-      align-self: end;
-      min-height: 51px;
-      padding: 12px 18px;
-      border: 1px solid var(--line);
-      border-radius: 13px;
-      background: white;
+    .message {
+      margin-top: 18px;
+      padding: 15px;
+      border-radius: 14px;
+      line-height: 1.45;
+    }
+
+    .message.error {
+      background: var(--danger-bg);
+      color: var(--danger);
+    }
+
+    .message.success {
+      background: var(--light-green);
       color: var(--dark-green);
-      font-weight: 900;
-      cursor: pointer;
-    }
-
-    .list-heading {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 14px;
-      margin: 27px 2px 13px;
-    }
-
-    .list-heading h2 {
-      margin: 0;
-      font-size: 28px;
-    }
-
-    .visible-count {
-      color: var(--muted);
-      font-size: 14px;
-      font-weight: 800;
     }
 
     .invoice-list {
       display: grid;
-      gap: 13px;
+      gap: 14px;
+      margin-top: 20px;
     }
 
     .invoice-card {
       overflow: hidden;
       border: 1px solid var(--line);
-      border-radius: 20px;
+      border-radius: 21px;
       background: white;
-      box-shadow: 0 8px 25px rgba(0, 0, 0, .04);
+      box-shadow: 0 7px 24px rgba(0, 0, 0, .04);
     }
 
-    .invoice-summary {
+    .invoice-main {
       display: grid;
       grid-template-columns:
-        minmax(130px, .7fr)
-        minmax(0, 1.25fr)
+        minmax(150px, .8fr)
+        minmax(0, 1.3fr)
         minmax(125px, .65fr)
-        minmax(125px, .65fr)
-        auto;
+        minmax(125px, .65fr);
       gap: 15px;
       align-items: center;
-      width: 100%;
-      min-height: 92px;
-      padding: 17px 18px;
-      border: 0;
-      background: white;
-      color: inherit;
-      text-align: left;
-      cursor: pointer;
-    }
-
-    .invoice-summary:active {
-      background: #f7faf9;
+      padding: 19px;
     }
 
     .invoice-number {
       color: var(--dark-green);
-      font-size: 18px;
+      font-size: 19px;
       font-weight: 900;
       overflow-wrap: anywhere;
     }
@@ -271,8 +386,7 @@
       margin-top: 5px;
       color: var(--muted);
       font-size: 12px;
-      font-weight: 800;
-      overflow-wrap: anywhere;
+      font-weight: 700;
     }
 
     .customer-name {
@@ -288,27 +402,16 @@
       overflow-wrap: anywhere;
     }
 
-    .meta-label {
-      display: block;
-      margin-bottom: 5px;
+    .amount {
+      color: var(--dark-green);
+      font-size: 21px;
+      font-weight: 900;
+    }
+
+    .due-date {
+      margin-top: 5px;
       color: var(--muted);
-      font-size: 10px;
-      font-weight: 900;
-      letter-spacing: .04em;
-      text-transform: uppercase;
-    }
-
-    .meta-value {
-      font-size: 14px;
-      font-weight: 800;
-      line-height: 1.35;
-      overflow-wrap: anywhere;
-    }
-
-    .amount-value {
-      color: var(--green);
-      font-size: 18px;
-      font-weight: 900;
+      font-size: 12px;
     }
 
     .status-pill {
@@ -316,255 +419,261 @@
       align-items: center;
       justify-content: center;
       width: fit-content;
+      min-width: 82px;
       padding: 8px 11px;
       border-radius: 999px;
+      background: var(--warning-bg);
+      color: var(--warning);
       font-size: 12px;
       font-weight: 900;
-      white-space: nowrap;
+      text-transform: uppercase;
     }
 
-    .status-paid {
+    .status-pill.paid {
       background: var(--light-green);
       color: var(--green);
     }
 
-    .status-unpaid {
-      background: var(--warning-bg);
-      color: var(--warning);
-    }
-
-    .status-overdue {
+    .status-pill.overdue {
       background: var(--danger-bg);
       color: var(--danger);
     }
 
-    .expand-arrow {
-      color: var(--green);
-      font-size: 25px;
-      font-weight: 900;
-      transition: transform .2s ease;
-    }
-
-    .invoice-card.open .expand-arrow {
-      transform: rotate(90deg);
-    }
-
-    .invoice-details {
-      display: none;
-      padding: 18px;
-      border-top: 1px solid var(--line);
-      background: #fbfdfc;
-    }
-
-    .invoice-card.open .invoice-details {
-      display: block;
-    }
-
-    .details-grid {
+    .invoice-actions {
       display: grid;
-      grid-template-columns:
-        repeat(2, minmax(0, 1fr));
-      gap: 12px;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 10px;
+      padding: 14px 19px 19px;
+      border-top: 1px solid var(--line);
     }
 
-    .detail {
-      min-width: 0;
-      padding: 15px;
-      border-radius: 15px;
-      background: white;
+    .action-button {
+      min-height: 48px;
+      padding: 10px 12px;
       border: 1px solid var(--line);
+      border-radius: 13px;
+      background: white;
+      color: var(--dark-green);
+      font-weight: 900;
     }
 
-    .detail.full {
+    .action-button.primary {
+      border-color: var(--green);
+      background: var(--green);
+      color: white;
+    }
+
+    .action-button.warning {
+      border-color: #efd58c;
+      background: var(--warning-bg);
+      color: var(--warning);
+    }
+
+    .action-button.danger {
+      border-color: #efc7c7;
+      background: var(--danger-bg);
+      color: var(--danger);
+    }
+
+    .empty {
+      margin-top: 20px;
+      padding: 32px 20px;
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      background: white;
+      color: var(--muted);
+      text-align: center;
+    }
+
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 700;
+      display: grid;
+      place-items: center;
+      padding: 18px;
+      background: rgba(8, 25, 20, .62);
+      opacity: 0;
+      visibility: hidden;
+    }
+
+    .modal-overlay.open {
+      opacity: 1;
+      visibility: visible;
+    }
+
+    .modal {
+      width: min(590px, 100%);
+      max-height: 92vh;
+      overflow-y: auto;
+      padding: 21px;
+      border-radius: 22px;
+      background: white;
+      box-shadow: 0 18px 50px rgba(0, 0, 0, .22);
+    }
+
+    .modal-heading {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 14px;
+      margin-bottom: 18px;
+    }
+
+    .modal-heading h2 {
+      margin: 0;
+      color: var(--dark-green);
+      font-size: 28px;
+    }
+
+    .modal-close {
+      display: grid;
+      place-items: center;
+      width: 43px;
+      height: 43px;
+      flex: 0 0 43px;
+      border: 0;
+      border-radius: 13px;
+      background: var(--background);
+      color: var(--dark-green);
+      font-size: 26px;
+    }
+
+    .modal-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 14px;
+    }
+
+    .field.full {
       grid-column: 1 / -1;
     }
 
-    .detail-label {
+    .field label {
       display: block;
-      margin-bottom: 6px;
+      margin-bottom: 7px;
       color: var(--muted);
-      font-size: 10px;
+      font-size: 11px;
       font-weight: 900;
       letter-spacing: .04em;
       text-transform: uppercase;
     }
 
-    .detail-value {
-      font-size: 15px;
-      font-weight: 800;
-      line-height: 1.45;
-      overflow-wrap: anywhere;
-    }
-
-    .invoice-controls {
-      display: grid;
-      grid-template-columns:
-        minmax(150px, 1fr)
-        minmax(150px, 1fr)
-        repeat(3, auto);
-      gap: 10px;
-      align-items: end;
-      margin-top: 15px;
-      padding-top: 15px;
-      border-top: 1px solid var(--line);
-    }
-
-    .control-field label {
-      display: block;
-      margin-bottom: 7px;
-      color: var(--muted);
-      font-size: 10px;
-      font-weight: 900;
-      text-transform: uppercase;
-    }
-
-    .control-field input,
-    .control-field select {
+    .field input,
+    .field select,
+    .field textarea {
       width: 100%;
-      min-height: 46px;
-      padding: 10px 12px;
+      min-height: 51px;
+      padding: 12px 14px;
       border: 1px solid var(--line);
-      border-radius: 11px;
+      border-radius: 13px;
       background: white;
       color: var(--ink);
     }
 
-    .save-button,
-    .print-button,
-    .job-button {
-      min-height: 46px;
-      padding: 10px 13px;
-      border-radius: 11px;
-      font-size: 13px;
-      font-weight: 900;
-      cursor: pointer;
-      text-align: center;
-      text-decoration: none;
+    .field textarea {
+      min-height: 90px;
+      resize: vertical;
+    }
+
+    .modal-actions {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 11px;
+      margin-top: 18px;
     }
 
     .save-button {
+      min-height: 54px;
       border: 0;
+      border-radius: 14px;
       background: var(--green);
       color: white;
+      font-weight: 900;
     }
 
-    .print-button,
-    .job-button {
+    .cancel-button {
+      min-height: 54px;
       border: 1px solid var(--line);
+      border-radius: 14px;
       background: white;
       color: var(--dark-green);
+      font-weight: 900;
     }
 
-    .invoice-message {
+    .print-sheet {
       display: none;
-      margin-top: 12px;
-      padding: 11px 13px;
-      border-radius: 11px;
-      font-size: 13px;
-      line-height: 1.4;
     }
 
-    .invoice-message.success {
-      display: block;
-      background: var(--light-green);
-      color: var(--dark-green);
-    }
-
-    .invoice-message.error {
-      display: block;
-      background: var(--danger-bg);
-      color: var(--danger);
-    }
-
-    .empty,
-    .error {
-      padding: 31px 22px;
-      border-radius: 19px;
-      text-align: center;
-      line-height: 1.55;
-    }
-
-    .empty {
-      border: 1px solid var(--line);
-      background: white;
-      color: var(--muted);
-    }
-
-    .error {
-      background: var(--danger-bg);
-      color: var(--danger);
-    }
-
-    @media (max-width: 850px) {
-      .invoice-summary {
-        grid-template-columns:
-          minmax(0, 1fr)
-          auto;
-        gap: 8px 12px;
-        min-height: 135px;
+    @media (max-width: 800px) {
+      .stats {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
       }
 
-      .invoice-main,
-      .customer-block,
-      .amount-block {
-        grid-column: 1 / 2;
-      }
-
-      .status-pill {
-        grid-column: 2 / 3;
-        grid-row: 1 / 2;
-      }
-
-      .expand-arrow {
-        grid-column: 2 / 3;
-        grid-row: 2 / 4;
-        align-self: center;
-      }
-
-      .invoice-controls {
+      .invoice-main {
         grid-template-columns: 1fr 1fr;
       }
+
+      .invoice-actions {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
     }
 
-    @media (max-width: 720px) {
+    @media (max-width: 560px) {
       .heading-row {
-        align-items: flex-start;
+        align-items: stretch;
         flex-direction: column;
-      }
-
-      .dashboard-button {
-        width: 100%;
-      }
-
-      .stats {
-        grid-template-columns:
-          repeat(2, minmax(0, 1fr));
-      }
-
-      .filter-grid {
-        grid-template-columns: 1fr;
       }
 
       .refresh-button {
         width: 100%;
       }
 
-      .details-grid {
+      .toolbar {
         grid-template-columns: 1fr;
       }
 
-      .detail.full {
+      .invoice-main {
+        grid-template-columns: 1fr;
+      }
+
+      .invoice-actions {
+        grid-template-columns: 1fr;
+      }
+
+      .modal-grid,
+      .modal-actions {
+        grid-template-columns: 1fr;
+      }
+
+      .field.full {
         grid-column: auto;
-      }
-
-      .invoice-controls {
-        grid-template-columns: 1fr;
       }
     }
 
     @media (max-width: 430px) {
       .stats {
         grid-template-columns: 1fr;
+      }
+
+      .topbar {
+        padding-left: 16px;
+        padding-right: 16px;
+      }
+
+      .topbar-inner {
+        padding-right: 73px;
+      }
+
+      .brand {
+        font-size: 20px;
+      }
+
+      .hamburger {
+        width: 58px;
+        height: 58px;
+        border-radius: 16px;
+        font-size: 34px;
       }
     }
 
@@ -573,63 +682,107 @@
         background: white;
       }
 
-      .topbar,
-      .heading-row,
-      .stats,
-      .filters,
-      .list-heading,
-      .dispatch-menu-button,
-      .dispatch-side-menu,
-      .dispatch-menu-overlay,
-      .invoice-summary,
-      .invoice-controls,
-      .invoice-message {
-        display: none !important;
+      body * {
+        visibility: hidden;
       }
 
-      .container {
+      .print-sheet,
+      .print-sheet * {
+        visibility: visible;
+      }
+
+      .print-sheet {
+        position: absolute;
+        inset: 0;
+        display: block;
         width: 100%;
-        padding: 0;
+        padding: 35px;
+        color: #111;
+        font-family: Arial, Helvetica, sans-serif;
       }
 
-      .invoice-card {
-        display: none;
-        border: 0;
-        box-shadow: none;
+      .print-header {
+        display: flex;
+        justify-content: space-between;
+        gap: 20px;
+        padding-bottom: 25px;
+        border-bottom: 3px solid #064f3b;
       }
 
-      .invoice-card.printing {
-        display: block;
-      }
-
-      .invoice-card.printing
-      .invoice-details {
-        display: block;
-        padding: 0;
-        border: 0;
-        background: white;
-      }
-
-      .invoice-card.printing::before {
-        content: "MG EXPRESS";
-        display: block;
-        margin-bottom: 10px;
+      .print-brand {
         color: #064f3b;
-        font-size: 30px;
+        font-size: 29px;
         font-weight: 900;
       }
 
-      .invoice-card.printing::after {
-        content:
-          "Thank you for choosing MG Express.";
-        display: block;
-        margin-top: 25px;
-        color: #68756f;
-        font-size: 13px;
+      .print-brand span {
+        color: #ff665c;
       }
 
-      .detail {
-        break-inside: avoid;
+      .print-title {
+        text-align: right;
+      }
+
+      .print-title h2 {
+        margin: 0;
+        font-size: 30px;
+      }
+
+      .print-section {
+        margin-top: 25px;
+      }
+
+      .print-label {
+        color: #555;
+        font-size: 11px;
+        font-weight: 900;
+        text-transform: uppercase;
+      }
+
+      .print-value {
+        margin-top: 5px;
+        font-size: 15px;
+        line-height: 1.45;
+      }
+
+      .print-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 24px;
+      }
+
+      .print-table {
+        width: 100%;
+        margin-top: 25px;
+        border-collapse: collapse;
+      }
+
+      .print-table th,
+      .print-table td {
+        padding: 13px;
+        border-bottom: 1px solid #ddd;
+        text-align: left;
+      }
+
+      .print-table th:last-child,
+      .print-table td:last-child {
+        text-align: right;
+      }
+
+      .print-total {
+        margin-top: 20px;
+        text-align: right;
+        font-size: 24px;
+        font-weight: 900;
+      }
+
+      .print-footer {
+        margin-top: 45px;
+        padding-top: 18px;
+        border-top: 1px solid #ddd;
+        color: #555;
+        font-size: 12px;
+        text-align: center;
       }
     }
   </style>
@@ -646,149 +799,310 @@
         class="staff-email"
         id="staffEmail"
       ></div>
+
+      <button
+        class="hamburger"
+        id="hamburgerButton"
+        type="button"
+        aria-label="Open dispatch menu"
+      >
+        ☰
+      </button>
     </div>
   </header>
+
+  <div
+    class="menu-overlay"
+    id="menuOverlay"
+  ></div>
+
+  <aside
+    class="side-menu"
+    id="sideMenu"
+  >
+    <div class="menu-top">
+      <div>
+        <div class="menu-brand">
+          MG <span>EXPRESS</span><br>
+          COMMAND CENTER
+        </div>
+
+        <div
+          class="menu-user"
+          id="menuUser"
+        ></div>
+      </div>
+
+      <button
+        class="menu-close"
+        id="menuCloseButton"
+        type="button"
+        aria-label="Close menu"
+      >
+        ×
+      </button>
+    </div>
+
+    <nav class="menu-links">
+      <a class="menu-link" href="/dashboard.html">
+        <span class="menu-icon">🏠</span>
+        Dashboard
+      </a>
+
+      <a class="menu-link" href="/jobs.html">
+        <span class="menu-icon">📦</span>
+        Active Jobs
+      </a>
+
+      <a class="menu-link" href="/history.html">
+        <span class="menu-icon">📚</span>
+        Job History
+      </a>
+
+      <a class="menu-link" href="/customer.html">
+        <span class="menu-icon">👥</span>
+        Customers
+      </a>
+
+      <a class="menu-link" href="/driver.html">
+        <span class="menu-icon">🚚</span>
+        Drivers
+      </a>
+
+      <a class="menu-link" href="/payroll.html">
+        <span class="menu-icon">💵</span>
+        Payroll
+      </a>
+
+      <a class="menu-link active" href="/invoices.html">
+        <span class="menu-icon">📄</span>
+        Invoices
+      </a>
+
+      <a class="menu-link" href="/reports.html">
+        <span class="menu-icon">📊</span>
+        Reports
+      </a>
+    </nav>
+
+    <button
+      class="signout-button"
+      id="signOutButton"
+      type="button"
+    >
+      Sign Out
+    </button>
+  </aside>
 
   <main class="container">
     <div class="heading-row">
       <div>
         <div class="eyebrow">
-          Customer billing and payment tracking
+          Customer billing and payment records
         </div>
 
         <h1>Invoices</h1>
       </div>
 
-      <a
-        class="dashboard-button"
-        href="https://portal.migenteexpress.com/dashboard.html"
+      <button
+        class="refresh-button"
+        id="refreshButton"
+        type="button"
       >
-        ← Dashboard
-      </a>
+        Refresh
+      </button>
     </div>
 
     <section class="stats">
-      <div class="stat-card">
-        <div
-          class="stat-number"
-          id="outstandingTotal"
-        >
+      <article class="stat-card">
+        <div class="stat-number" id="totalInvoiced">
           $0.00
         </div>
 
         <div class="stat-label">
-          Outstanding
+          Total Invoiced
         </div>
-      </div>
+      </article>
 
-      <div class="stat-card">
-        <div
-          class="stat-number"
-          id="paidTotal"
-        >
+      <article class="stat-card">
+        <div class="stat-number" id="totalPaid">
           $0.00
         </div>
 
         <div class="stat-label">
           Paid
         </div>
-      </div>
+      </article>
 
-      <div class="stat-card">
-        <div
-          class="stat-number"
-          id="overdueTotal"
-        >
+      <article class="stat-card warning">
+        <div class="stat-number" id="totalUnpaid">
+          $0.00
+        </div>
+
+        <div class="stat-label">
+          Unpaid
+        </div>
+      </article>
+
+      <article class="stat-card danger">
+        <div class="stat-number" id="totalOverdue">
           $0.00
         </div>
 
         <div class="stat-label">
           Overdue
         </div>
-      </div>
-
-      <div class="stat-card">
-        <div
-          class="stat-number"
-          id="invoiceCount"
-        >
-          0
-        </div>
-
-        <div class="stat-label">
-          Total Invoices
-        </div>
-      </div>
+      </article>
     </section>
 
-    <section class="filters">
-      <div class="filter-grid">
-        <div class="field">
-          <label for="searchInput">
-            Search
-          </label>
-
-          <input
-            id="searchInput"
-            type="search"
-            placeholder="Invoice, job number, customer or email"
-          >
-        </div>
-
-        <div class="field">
-          <label for="statusFilter">
-            Invoice Status
-          </label>
-
-          <select id="statusFilter">
-            <option value="">
-              All Invoices
-            </option>
-
-            <option value="unpaid">
-              Unpaid
-            </option>
-
-            <option value="paid">
-              Paid
-            </option>
-
-            <option value="overdue">
-              Overdue
-            </option>
-          </select>
-        </div>
-
-        <button
-          class="refresh-button"
-          id="refreshButton"
-          type="button"
-        >
-          Refresh
-        </button>
-      </div>
-    </section>
-
-    <div class="list-heading">
-      <h2>Customer Invoices</h2>
-
-      <div
-        class="visible-count"
-        id="visibleCount"
+    <section class="toolbar">
+      <input
+        id="searchInput"
+        type="search"
+        placeholder="Search invoice, customer, email or job number"
       >
-        0 invoices
-      </div>
-    </div>
+
+      <select id="statusFilter">
+        <option value="all">All Invoices</option>
+        <option value="unpaid">Unpaid</option>
+        <option value="paid">Paid</option>
+        <option value="overdue">Overdue</option>
+      </select>
+    </section>
+
+    <div
+      class="message hidden"
+      id="pageMessage"
+    ></div>
 
     <section
       class="invoice-list"
-      id="invoicesBox"
+      id="invoiceList"
     >
       <div class="empty">
         Loading invoices...
       </div>
     </section>
   </main>
+
+  <div
+    class="modal-overlay"
+    id="editModalOverlay"
+  >
+    <section class="modal">
+      <div class="modal-heading">
+        <div>
+          <div class="eyebrow">
+            Update customer invoice
+          </div>
+
+          <h2>Edit Invoice</h2>
+        </div>
+
+        <button
+          class="modal-close"
+          id="closeEditModalButton"
+          type="button"
+        >
+          ×
+        </button>
+      </div>
+
+      <form id="editInvoiceForm">
+        <input
+          id="editInvoiceId"
+          type="hidden"
+        >
+
+        <div class="modal-grid">
+          <div class="field full">
+            <label for="editInvoiceNumber">
+              Invoice Number
+            </label>
+
+            <input
+              id="editInvoiceNumber"
+              disabled
+            >
+          </div>
+
+          <div class="field">
+            <label for="editAmount">
+              Customer Amount
+            </label>
+
+            <input
+              id="editAmount"
+              type="number"
+              min="0"
+              step="0.01"
+              required
+            >
+          </div>
+
+          <div class="field">
+            <label for="editDueDate">
+              Due Date
+            </label>
+
+            <input
+              id="editDueDate"
+              type="date"
+            >
+          </div>
+
+          <div class="field">
+            <label for="editStatus">
+              Payment Status
+            </label>
+
+            <select id="editStatus">
+              <option value="unpaid">Unpaid</option>
+              <option value="paid">Paid</option>
+            </select>
+          </div>
+
+          <div class="field">
+            <label for="editCustomerEmail">
+              Customer Email
+            </label>
+
+            <input
+              id="editCustomerEmail"
+              type="email"
+            >
+          </div>
+        </div>
+
+        <div class="modal-actions">
+          <button
+            class="save-button"
+            type="submit"
+          >
+            Save Changes
+          </button>
+
+          <button
+            class="cancel-button"
+            id="cancelEditButton"
+            type="button"
+          >
+            Cancel
+          </button>
+        </div>
+
+        <div
+          class="message hidden"
+          id="editMessage"
+        ></div>
+      </form>
+    </section>
+  </div>
+
+  <section
+    class="print-sheet"
+    id="printSheet"
+  ></section>
 
   <script>
     const client = supabase.createClient(
@@ -798,11 +1112,8 @@
 
     window.mgDispatchClient = client;
 
-    const STORAGE_KEY =
-      "mg-express-invoice-records-v1";
-
-    const invoicesBox =
-      document.getElementById("invoicesBox");
+    const invoiceList =
+      document.getElementById("invoiceList");
 
     const searchInput =
       document.getElementById("searchInput");
@@ -810,20 +1121,29 @@
     const statusFilter =
       document.getElementById("statusFilter");
 
-    let deliveredJobs = [];
-    let invoiceRecords = {};
+    const pageMessage =
+      document.getElementById("pageMessage");
+
+    const editModalOverlay =
+      document.getElementById("editModalOverlay");
+
+    const editInvoiceForm =
+      document.getElementById("editInvoiceForm");
+
+    const editMessage =
+      document.getElementById("editMessage");
+
     let invoices = [];
+    let jobsById = {};
 
     function escapeHtml(value) {
-      const div = document.createElement("div");
-      div.textContent = value ?? "";
-      return div.innerHTML;
-    }
+      const div =
+        document.createElement("div");
 
-    function cleanStatus(value) {
-      return String(value || "")
-        .trim()
-        .toLowerCase();
+      div.textContent =
+        value ?? "";
+
+      return div.innerHTML;
     }
 
     function money(value) {
@@ -836,787 +1156,198 @@
       );
     }
 
-    function formatDate(value) {
+    function cleanStatus(value) {
+      return String(value || "unpaid")
+        .trim()
+        .toLowerCase()
+        .replaceAll(" ", "_")
+        .replaceAll("-", "_");
+    }
+
+    function localDateString(date) {
+      const year =
+        date.getFullYear();
+
+      const month =
+        String(date.getMonth() + 1)
+          .padStart(2, "0");
+
+      const day =
+        String(date.getDate())
+          .padStart(2, "0");
+
+      return `${year}-${month}-${day}`;
+    }
+
+    function displayDate(value) {
       if (!value) {
-        return "Not recorded";
+        return "No due date";
       }
 
       const date =
-        value instanceof Date
-          ? value
-          : new Date(value);
+        new Date(`${String(value).slice(0, 10)}T12:00:00`);
 
-      if (Number.isNaN(date.getTime())) {
-        return "Not recorded";
+      if (
+        Number.isNaN(date.getTime())
+      ) {
+        return String(value);
       }
 
-      return new Intl.DateTimeFormat(
+      return date.toLocaleDateString(
         "en-US",
         {
           month: "short",
           day: "numeric",
-          year: "numeric",
-          hour: "numeric",
-          minute: "2-digit"
+          year: "numeric"
         }
-      ).format(date);
-    }
-
-    function completedDate(job) {
-      const value =
-        job.completed_at ||
-        job.delivery_photo_uploaded_at ||
-        job.created_at;
-
-      if (!value) {
-        return null;
-      }
-
-      const date = new Date(value);
-
-      return Number.isNaN(date.getTime())
-        ? null
-        : date;
-    }
-
-    function loadSavedRecords() {
-      try {
-        invoiceRecords =
-          JSON.parse(
-            localStorage.getItem(
-              STORAGE_KEY
-            ) || "{}"
-          );
-      } catch {
-        invoiceRecords = {};
-      }
-    }
-
-    function saveRecords() {
-      localStorage.setItem(
-        STORAGE_KEY,
-        JSON.stringify(invoiceRecords)
       );
     }
 
-    function invoiceNumber(job) {
-      const jobNumber =
-        String(
-          job.job_number || job.id || ""
-        )
-          .replace(/[^a-z0-9]/gi, "")
-          .toUpperCase();
+    function setPageMessage(message, type) {
+      pageMessage.textContent =
+        message || "";
+
+      pageMessage.className =
+        message
+          ? `message ${type || ""}`
+          : "message hidden";
+    }
+
+    function setEditMessage(message, type) {
+      editMessage.textContent =
+        message || "";
+
+      editMessage.className =
+        message
+          ? `message ${type || ""}`
+          : "message hidden";
+    }
+
+    function openMenu() {
+      document
+        .getElementById("sideMenu")
+        .classList.add("open");
+
+      document
+        .getElementById("menuOverlay")
+        .classList.add("open");
+
+      document.body.classList.add(
+        "menu-open"
+      );
+    }
+
+    function closeMenu() {
+      document
+        .getElementById("sideMenu")
+        .classList.remove("open");
+
+      document
+        .getElementById("menuOverlay")
+        .classList.remove("open");
+
+      document.body.classList.remove(
+        "menu-open"
+      );
+    }
+
+    function isPaid(invoice) {
+      return cleanStatus(
+        invoice.payment_status ||
+        invoice.status
+      ) === "paid";
+    }
+
+    function isOverdue(invoice) {
+      if (
+        isPaid(invoice) ||
+        !invoice.due_date
+      ) {
+        return false;
+      }
 
       return (
-        "INV-" +
-        (
-          jobNumber ||
-          String(job.id || "")
-            .slice(0, 8)
-            .toUpperCase()
-        )
+        String(invoice.due_date).slice(0, 10) <
+        localDateString(new Date())
       );
     }
 
-    function originalCharge(job) {
-      const possibleValues = [
-        job.customer_charge,
-        job.customer_price,
-        job.quoted_price,
-        job.quote_amount,
-        job.price,
-        job.total_price,
-        job.total_amount,
-        job.amount,
-        job.charge
-      ];
+    function invoiceStatus(invoice) {
+      if (isPaid(invoice)) {
+        return "paid";
+      }
 
-      const value =
-        possibleValues.find(item =>
-          item !== null &&
-          item !== undefined &&
-          item !== "" &&
-          !Number.isNaN(Number(item))
-        );
+      if (isOverdue(invoice)) {
+        return "overdue";
+      }
 
-      return Number(value || 0);
+      return "unpaid";
     }
 
-    function dueDate(job) {
-      const completed =
-        completedDate(job) ||
-        new Date(job.created_at);
-
-      const due = new Date(completed);
-      due.setDate(due.getDate() + 30);
-
-      return due;
+    function getJob(invoice) {
+      return (
+        jobsById[
+          String(invoice.job_id || "")
+        ] || {}
+      );
     }
 
-    function buildInvoices() {
-      const now = new Date();
+    function combinedInvoice(invoice) {
+      const job =
+        getJob(invoice);
 
-      invoices =
-        deliveredJobs.map(job => {
-          const id =
-            String(job.id || "");
+      return {
+        ...invoice,
 
-          const saved =
-            invoiceRecords[id] || {};
+        job,
 
-          const amount =
-            saved.amount !== undefined
-              ? Number(saved.amount)
-              : originalCharge(job);
+        display_customer_name:
+          invoice.customer_name ||
+          job.customer_name ||
+          "Customer",
 
-          let paymentStatus =
-            saved.paymentStatus ||
-            "unpaid";
+        display_customer_email:
+          invoice.customer_email ||
+          job.customer_email ||
+          "",
 
-          const due = dueDate(job);
+        display_customer_phone:
+          invoice.customer_phone ||
+          job.customer_phone ||
+          "",
 
-          if (
-            paymentStatus !== "paid" &&
-            due < now
-          ) {
-            paymentStatus = "overdue";
-          }
+        display_job_number:
+          job.job_number ||
+          "",
 
-          return {
-            id,
-            invoiceNumber:
-              invoiceNumber(job),
+        display_pickup_address:
+          job.pickup_address ||
+          "",
 
-            job,
-            amount,
-            paymentStatus,
+        display_delivery_address:
+          job.delivery_address ||
+          "",
 
-            paidAt:
-              saved.paidAt || null,
+        display_vehicle_type:
+          job.vehicle_type ||
+          "",
 
-            dueDate: due
-          };
-        });
+        display_delivery_speed:
+          job.delivery_speed ||
+          "",
 
-      invoices.sort((first, second) => {
-        const firstDate =
-          completedDate(
-            first.job
-          )?.getTime() || 0;
+        display_package_type:
+          job.package_type ||
+          "Courier delivery",
 
-        const secondDate =
-          completedDate(
-            second.job
-          )?.getTime() || 0;
-
-        return secondDate - firstDate;
-      });
-
-      updateStatistics();
-    }
-
-    function updateStatistics() {
-      const outstanding =
-        invoices
-          .filter(invoice =>
-            invoice.paymentStatus !==
-            "paid"
-          )
-          .reduce(
-            (total, invoice) =>
-              total +
-              Number(invoice.amount || 0),
-            0
-          );
-
-      const paid =
-        invoices
-          .filter(invoice =>
-            invoice.paymentStatus ===
-            "paid"
-          )
-          .reduce(
-            (total, invoice) =>
-              total +
-              Number(invoice.amount || 0),
-            0
-          );
-
-      const overdue =
-        invoices
-          .filter(invoice =>
-            invoice.paymentStatus ===
-            "overdue"
-          )
-          .reduce(
-            (total, invoice) =>
-              total +
-              Number(invoice.amount || 0),
-            0
-          );
-
-      document
-        .getElementById(
-          "outstandingTotal"
-        )
-        .textContent = money(outstanding);
-
-      document
-        .getElementById("paidTotal")
-        .textContent = money(paid);
-
-      document
-        .getElementById("overdueTotal")
-        .textContent = money(overdue);
-
-      document
-        .getElementById("invoiceCount")
-        .textContent = invoices.length;
-    }
-
-    function filteredInvoices() {
-      const search =
-        searchInput.value
-          .trim()
-          .toLowerCase();
-
-      const selectedStatus =
-        statusFilter.value;
-
-      return invoices.filter(invoice => {
-        if (
-          selectedStatus &&
-          invoice.paymentStatus !==
-          selectedStatus
-        ) {
-          return false;
-        }
-
-        if (!search) {
-          return true;
-        }
-
-        const job = invoice.job;
-
-        const searchable = [
-          invoice.invoiceNumber,
-          job.job_number,
-          job.customer_name,
-          job.customer_email,
-          job.pickup_address,
-          job.delivery_address
-        ]
-          .filter(Boolean)
-          .join(" ")
-          .toLowerCase();
-
-        return searchable.includes(search);
-      });
-    }
-
-    function paymentLabel(value) {
-      const labels = {
-        paid: "Paid",
-        unpaid: "Unpaid",
-        overdue: "Overdue"
+        display_billing_notes:
+          invoice.notes ||
+          job.billing_notes ||
+          ""
       };
-
-      return labels[value] || "Unpaid";
     }
 
-    function renderInvoices() {
-      const shownInvoices =
-        filteredInvoices();
-
-      document
-        .getElementById("visibleCount")
-        .textContent =
-          shownInvoices.length +
-          (
-            shownInvoices.length === 1
-              ? " invoice"
-              : " invoices"
-          );
-
-      if (!shownInvoices.length) {
-        invoicesBox.innerHTML = `
-          <div class="empty">
-            No delivered customer jobs match
-            the selected invoice filters.
-          </div>
-        `;
-
-        return;
-      }
-
-      invoicesBox.innerHTML =
-        shownInvoices.map(invoice => {
-          const job = invoice.job;
-
-          const jobUrl =
-            "https://portal.migenteexpress.com/" +
-            "job.html?id=" +
-            encodeURIComponent(invoice.id);
-
-          return `
-            <article
-              class="invoice-card"
-              id="invoice-card-${escapeHtml(
-                invoice.id
-              )}"
-            >
-              <button
-                class="invoice-summary"
-                type="button"
-                data-toggle-invoice="${escapeHtml(
-                  invoice.id
-                )}"
-              >
-                <div class="invoice-main">
-                  <div class="invoice-number">
-                    ${escapeHtml(
-                      invoice.invoiceNumber
-                    )}
-                  </div>
-
-                  <div class="job-number">
-                    ${escapeHtml(
-                      job.job_number ||
-                      "Completed Job"
-                    )}
-                  </div>
-                </div>
-
-                <div class="customer-block">
-                  <div class="customer-name">
-                    ${escapeHtml(
-                      job.customer_name ||
-                      "Customer"
-                    )}
-                  </div>
-
-                  <div class="customer-email">
-                    ${escapeHtml(
-                      job.customer_email ||
-                      "No email recorded"
-                    )}
-                  </div>
-                </div>
-
-                <div class="amount-block">
-                  <span class="meta-label">
-                    Amount
-                  </span>
-
-                  <div class="amount-value">
-                    ${escapeHtml(
-                      money(invoice.amount)
-                    )}
-                  </div>
-                </div>
-
-                <div
-                  class="status-pill status-${escapeHtml(
-                    invoice.paymentStatus
-                  )}"
-                >
-                  ${escapeHtml(
-                    paymentLabel(
-                      invoice.paymentStatus
-                    )
-                  )}
-                </div>
-
-                <div class="expand-arrow">
-                  ›
-                </div>
-              </button>
-
-              <div class="invoice-details">
-                <div class="details-grid">
-                  <div class="detail">
-                    <span class="detail-label">
-                      Invoice Number
-                    </span>
-
-                    <div class="detail-value">
-                      ${escapeHtml(
-                        invoice.invoiceNumber
-                      )}
-                    </div>
-                  </div>
-
-                  <div class="detail">
-                    <span class="detail-label">
-                      Customer
-                    </span>
-
-                    <div class="detail-value">
-                      ${escapeHtml(
-                        job.customer_name ||
-                        "Customer"
-                      )}
-                    </div>
-                  </div>
-
-                  <div class="detail full">
-                    <span class="detail-label">
-                      Pickup
-                    </span>
-
-                    <div class="detail-value">
-                      ${escapeHtml(
-                        job.pickup_address ||
-                        "Not provided"
-                      )}
-                    </div>
-                  </div>
-
-                  <div class="detail full">
-                    <span class="detail-label">
-                      Delivery
-                    </span>
-
-                    <div class="detail-value">
-                      ${escapeHtml(
-                        job.delivery_address ||
-                        "Not provided"
-                      )}
-                    </div>
-                  </div>
-
-                  <div class="detail">
-                    <span class="detail-label">
-                      Vehicle
-                    </span>
-
-                    <div class="detail-value">
-                      ${escapeHtml(
-                        job.vehicle_type ||
-                        "Not provided"
-                      )}
-                    </div>
-                  </div>
-
-                  <div class="detail">
-                    <span class="detail-label">
-                      Completed
-                    </span>
-
-                    <div class="detail-value">
-                      ${escapeHtml(
-                        formatDate(
-                          completedDate(job)
-                        )
-                      )}
-                    </div>
-                  </div>
-
-                  <div class="detail">
-                    <span class="detail-label">
-                      Due Date
-                    </span>
-
-                    <div class="detail-value">
-                      ${escapeHtml(
-                        formatDate(
-                          invoice.dueDate
-                        )
-                      )}
-                    </div>
-                  </div>
-
-                  <div class="detail">
-                    <span class="detail-label">
-                      Payment Status
-                    </span>
-
-                    <div class="detail-value">
-                      ${escapeHtml(
-                        paymentLabel(
-                          invoice.paymentStatus
-                        )
-                      )}
-                    </div>
-                  </div>
-                </div>
-
-                <div class="invoice-controls">
-                  <div class="control-field">
-                    <label
-                      for="amount-${escapeHtml(
-                        invoice.id
-                      )}"
-                    >
-                      Customer Charge
-                    </label>
-
-                    <input
-                      id="amount-${escapeHtml(
-                        invoice.id
-                      )}"
-                      type="number"
-                      min="0"
-                      step="0.01"
-                      value="${escapeHtml(
-                        Number(
-                          invoice.amount || 0
-                        ).toFixed(2)
-                      )}"
-                    >
-                  </div>
-
-                  <div class="control-field">
-                    <label
-                      for="status-${escapeHtml(
-                        invoice.id
-                      )}"
-                    >
-                      Payment Status
-                    </label>
-
-                    <select
-                      id="status-${escapeHtml(
-                        invoice.id
-                      )}"
-                    >
-                      <option
-                        value="unpaid"
-                        ${
-                          invoice.paymentStatus ===
-                          "unpaid"
-                            ? "selected"
-                            : ""
-                        }
-                      >
-                        Unpaid
-                      </option>
-
-                      <option
-                        value="paid"
-                        ${
-                          invoice.paymentStatus ===
-                          "paid"
-                            ? "selected"
-                            : ""
-                        }
-                      >
-                        Paid
-                      </option>
-
-                      <option
-                        value="overdue"
-                        ${
-                          invoice.paymentStatus ===
-                          "overdue"
-                            ? "selected"
-                            : ""
-                        }
-                      >
-                        Overdue
-                      </option>
-                    </select>
-                  </div>
-
-                  <button
-                    class="save-button"
-                    type="button"
-                    data-save-invoice="${escapeHtml(
-                      invoice.id
-                    )}"
-                  >
-                    Save
-                  </button>
-
-                  <button
-                    class="print-button"
-                    type="button"
-                    data-print-invoice="${escapeHtml(
-                      invoice.id
-                    )}"
-                  >
-                    Print
-                  </button>
-
-                  <a
-                    class="job-button"
-                    href="${escapeHtml(jobUrl)}"
-                  >
-                    Open Job
-                  </a>
-                </div>
-
-                <div
-                  class="invoice-message"
-                  id="message-${escapeHtml(
-                    invoice.id
-                  )}"
-                ></div>
-              </div>
-            </article>
-          `;
-        }).join("");
-
-      document
-        .querySelectorAll(
-          "[data-toggle-invoice]"
-        )
-        .forEach(button => {
-          button.addEventListener(
-            "click",
-            function () {
-              document
-                .getElementById(
-                  "invoice-card-" +
-                  this.dataset.toggleInvoice
-                )
-                .classList
-                .toggle("open");
-            }
-          );
-        });
-
-      document
-        .querySelectorAll(
-          "[data-save-invoice]"
-        )
-        .forEach(button => {
-          button.addEventListener(
-            "click",
-            function () {
-              saveInvoice(
-                this.dataset.saveInvoice,
-                this
-              );
-            }
-          );
-        });
-
-      document
-        .querySelectorAll(
-          "[data-print-invoice]"
-        )
-        .forEach(button => {
-          button.addEventListener(
-            "click",
-            function () {
-              printInvoice(
-                this.dataset.printInvoice
-              );
-            }
-          );
-        });
-    }
-
-    function saveInvoice(
-      invoiceId,
-      button
-    ) {
-      const amountInput =
-        document.getElementById(
-          "amount-" + invoiceId
-        );
-
-      const statusInput =
-        document.getElementById(
-          "status-" + invoiceId
-        );
-
-      const message =
-        document.getElementById(
-          "message-" + invoiceId
-        );
-
-      const amount =
-        Number(amountInput.value || 0);
-
-      if (
-        Number.isNaN(amount) ||
-        amount < 0
-      ) {
-        message.className =
-          "invoice-message error";
-
-        message.textContent =
-          "Enter a valid customer charge.";
-
-        return;
-      }
-
-      button.disabled = true;
-      button.textContent = "Saving...";
-
-      try {
-        const paymentStatus =
-          statusInput.value;
-
-        invoiceRecords[invoiceId] = {
-          amount,
-          paymentStatus,
-
-          paidAt:
-            paymentStatus === "paid"
-              ? (
-                  invoiceRecords[
-                    invoiceId
-                  ]?.paidAt ||
-                  new Date().toISOString()
-                )
-              : null
-        };
-
-        saveRecords();
-        buildInvoices();
-        renderInvoices();
-
-        const updatedMessage =
-          document.getElementById(
-            "message-" + invoiceId
-          );
-
-        if (updatedMessage) {
-          updatedMessage.className =
-            "invoice-message success";
-
-          updatedMessage.textContent =
-            "Invoice updated successfully.";
-        }
-      } catch (error) {
-        message.className =
-          "invoice-message error";
-
-        message.textContent =
-          error.message ||
-          "Unable to update invoice.";
-      } finally {
-        button.disabled = false;
-        button.textContent = "Save";
-      }
-    }
-
-    function printInvoice(invoiceId) {
-      const card =
-        document.getElementById(
-          "invoice-card-" + invoiceId
-        );
-
-      if (!card) {
-        return;
-      }
-
-      card.classList.add("printing");
-      card.classList.add("open");
-
-      window.print();
-
-      setTimeout(() => {
-        card.classList.remove(
-          "printing"
-        );
-      }, 500);
-    }
-
-    async function verifyDispatchUser() {
+    async function verifyUser() {
       const sessionResult =
         await client.auth.getSession();
 
@@ -1628,16 +1359,23 @@
         return null;
       }
 
+      const email =
+        session.user.email || "";
+
       document
         .getElementById("staffEmail")
-        .textContent =
-          session.user.email || "";
+        .textContent = email;
 
-      const profileResult = await client
-        .from("profiles")
-        .select("role")
-        .eq("id", session.user.id)
-        .maybeSingle();
+      document
+        .getElementById("menuUser")
+        .textContent = email;
+
+      const profileResult =
+        await client
+          .from("profiles")
+          .select("role")
+          .eq("id", session.user.id)
+          .maybeSingle();
 
       if (
         profileResult.error ||
@@ -1650,9 +1388,9 @@
       }
 
       const role =
-        String(
-          profileResult.data.role || ""
-        ).toLowerCase();
+        cleanStatus(
+          profileResult.data.role
+        );
 
       if (
         ![
@@ -1666,47 +1404,800 @@
         );
       }
 
-      window.dispatchEvent(
-        new CustomEvent(
-          "mg-dispatch-ready",
-          {
-            detail: {
-              email:
-                session.user.email
-            }
-          }
-        )
-      );
-
       return session;
     }
 
     async function loadInvoices() {
-      invoicesBox.innerHTML = `
+      invoiceList.innerHTML = `
         <div class="empty">
           Loading invoices...
         </div>
       `;
 
-      const result = await client
-        .from("quotes")
-        .select("*")
-        .eq("status", "delivered")
-        .order("created_at", {
-          ascending: false
-        });
+      setPageMessage("", "");
+
+      const invoiceResult =
+        await client
+          .from("invoices")
+          .select("*")
+          .order("created_at", {
+            ascending: false
+          });
+
+      if (invoiceResult.error) {
+        throw invoiceResult.error;
+      }
+
+      invoices =
+        invoiceResult.data || [];
+
+      const jobIds = [
+        ...new Set(
+          invoices
+            .map(invoice =>
+              invoice.job_id
+            )
+            .filter(Boolean)
+        )
+      ];
+
+      jobsById = {};
+
+      if (jobIds.length) {
+        const jobsResult =
+          await client
+            .from("quotes")
+            .select("*")
+            .in("id", jobIds);
+
+        if (jobsResult.error) {
+          throw jobsResult.error;
+        }
+
+        (jobsResult.data || [])
+          .forEach(job => {
+            jobsById[
+              String(job.id)
+            ] = job;
+          });
+      }
+
+      updateTotals();
+      renderInvoices();
+    }
+
+    function updateTotals() {
+      const totalInvoiced =
+        invoices.reduce(
+          (sum, invoice) =>
+            sum + Number(invoice.amount || 0),
+          0
+        );
+
+      const totalPaid =
+        invoices
+          .filter(isPaid)
+          .reduce(
+            (sum, invoice) =>
+              sum + Number(invoice.amount || 0),
+            0
+          );
+
+      const totalUnpaid =
+        invoices
+          .filter(invoice =>
+            !isPaid(invoice)
+          )
+          .reduce(
+            (sum, invoice) =>
+              sum + Number(invoice.amount || 0),
+            0
+          );
+
+      const totalOverdue =
+        invoices
+          .filter(isOverdue)
+          .reduce(
+            (sum, invoice) =>
+              sum + Number(invoice.amount || 0),
+            0
+          );
+
+      document
+        .getElementById("totalInvoiced")
+        .textContent =
+          money(totalInvoiced);
+
+      document
+        .getElementById("totalPaid")
+        .textContent =
+          money(totalPaid);
+
+      document
+        .getElementById("totalUnpaid")
+        .textContent =
+          money(totalUnpaid);
+
+      document
+        .getElementById("totalOverdue")
+        .textContent =
+          money(totalOverdue);
+    }
+
+    function visibleInvoices() {
+      const search =
+        searchInput.value
+          .trim()
+          .toLowerCase();
+
+      const filter =
+        statusFilter.value;
+
+      return invoices.filter(invoice => {
+        const combined =
+          combinedInvoice(invoice);
+
+        const status =
+          invoiceStatus(invoice);
+
+        if (
+          filter !== "all" &&
+          status !== filter
+        ) {
+          return false;
+        }
+
+        if (!search) {
+          return true;
+        }
+
+        return [
+          invoice.invoice_number,
+          combined.display_customer_name,
+          combined.display_customer_email,
+          combined.display_customer_phone,
+          combined.display_job_number
+        ]
+          .filter(Boolean)
+          .join(" ")
+          .toLowerCase()
+          .includes(search);
+      });
+    }
+
+    function renderInvoices() {
+      const visible =
+        visibleInvoices();
+
+      if (!visible.length) {
+        invoiceList.innerHTML = `
+          <div class="empty">
+            No invoices match your search or filter.
+          </div>
+        `;
+
+        return;
+      }
+
+      invoiceList.innerHTML =
+        visible
+          .map(invoice => {
+            const combined =
+              combinedInvoice(invoice);
+
+            const status =
+              invoiceStatus(invoice);
+
+            const nextStatus =
+              isPaid(invoice)
+                ? "unpaid"
+                : "paid";
+
+            const statusButtonLabel =
+              isPaid(invoice)
+                ? "Mark Unpaid"
+                : "Mark Paid";
+
+            return `
+              <article class="invoice-card">
+                <div class="invoice-main">
+                  <div>
+                    <div class="invoice-number">
+                      ${escapeHtml(
+                        invoice.invoice_number ||
+                        "Invoice"
+                      )}
+                    </div>
+
+                    <div class="job-number">
+                      ${
+                        combined.display_job_number
+                          ? `Job ${escapeHtml(
+                              combined.display_job_number
+                            )}`
+                          : "No job number"
+                      }
+                    </div>
+                  </div>
+
+                  <div>
+                    <div class="customer-name">
+                      ${escapeHtml(
+                        combined.display_customer_name
+                      )}
+                    </div>
+
+                    <div class="customer-email">
+                      ${escapeHtml(
+                        combined.display_customer_email ||
+                        "No email recorded"
+                      )}
+                    </div>
+                  </div>
+
+                  <div>
+                    <div class="amount">
+                      ${money(invoice.amount)}
+                    </div>
+
+                    <div class="due-date">
+                      Due ${escapeHtml(
+                        displayDate(invoice.due_date)
+                      )}
+                    </div>
+                  </div>
+
+                  <div>
+                    <span class="status-pill ${status}">
+                      ${escapeHtml(status)}
+                    </span>
+                  </div>
+                </div>
+
+                <div class="invoice-actions">
+                  <button
+                    class="action-button primary"
+                    type="button"
+                    data-action="print"
+                    data-id="${escapeHtml(invoice.id)}"
+                  >
+                    Print Invoice
+                  </button>
+
+                  <button
+                    class="action-button"
+                    type="button"
+                    data-action="edit"
+                    data-id="${escapeHtml(invoice.id)}"
+                  >
+                    Edit
+                  </button>
+
+                  <button
+                    class="action-button ${
+                      nextStatus === "paid"
+                        ? "warning"
+                        : ""
+                    }"
+                    type="button"
+                    data-action="status"
+                    data-id="${escapeHtml(invoice.id)}"
+                    data-status="${nextStatus}"
+                  >
+                    ${statusButtonLabel}
+                  </button>
+
+                  <button
+                    class="action-button danger"
+                    type="button"
+                    data-action="delete"
+                    data-id="${escapeHtml(invoice.id)}"
+                  >
+                    Delete
+                  </button>
+                </div>
+              </article>
+            `;
+          })
+          .join("");
+    }
+
+    function findInvoice(id) {
+      return invoices.find(
+        invoice =>
+          String(invoice.id) ===
+          String(id)
+      );
+    }
+
+    function openEditModal(invoice) {
+      document
+        .getElementById("editInvoiceId")
+        .value =
+          invoice.id || "";
+
+      document
+        .getElementById("editInvoiceNumber")
+        .value =
+          invoice.invoice_number || "";
+
+      document
+        .getElementById("editAmount")
+        .value =
+          Number(invoice.amount || 0)
+            .toFixed(2);
+
+      document
+        .getElementById("editDueDate")
+        .value =
+          invoice.due_date
+            ? String(invoice.due_date).slice(0, 10)
+            : "";
+
+      document
+        .getElementById("editStatus")
+        .value =
+          isPaid(invoice)
+            ? "paid"
+            : "unpaid";
+
+      document
+        .getElementById("editCustomerEmail")
+        .value =
+          invoice.customer_email ||
+          getJob(invoice).customer_email ||
+          "";
+
+      setEditMessage("", "");
+
+      editModalOverlay.classList.add(
+        "open"
+      );
+
+      document.body.classList.add(
+        "modal-open"
+      );
+    }
+
+    function closeEditModal() {
+      editModalOverlay.classList.remove(
+        "open"
+      );
+
+      document.body.classList.remove(
+        "modal-open"
+      );
+
+      setEditMessage("", "");
+    }
+
+    async function updateInvoiceStatus(
+      invoiceId,
+      newStatus
+    ) {
+      const result =
+        await client
+          .from("invoices")
+          .update({
+            payment_status:
+              newStatus
+          })
+          .eq("id", invoiceId)
+          .select("*")
+          .maybeSingle();
 
       if (result.error) {
         throw result.error;
       }
 
-      deliveredJobs =
-        result.data || [];
+      const index =
+        invoices.findIndex(
+          invoice =>
+            String(invoice.id) ===
+            String(invoiceId)
+        );
 
-      loadSavedRecords();
-      buildInvoices();
+      if (index >= 0) {
+        invoices[index] =
+          result.data;
+      }
+
+      updateTotals();
       renderInvoices();
+
+      setPageMessage(
+        newStatus === "paid"
+          ? "Invoice marked paid."
+          : "Invoice marked unpaid.",
+        "success"
+      );
     }
+
+    async function deleteInvoice(invoiceId) {
+      const confirmed =
+        window.confirm(
+          "Delete this invoice permanently?"
+        );
+
+      if (!confirmed) {
+        return;
+      }
+
+      const result =
+        await client
+          .from("invoices")
+          .delete()
+          .eq("id", invoiceId);
+
+      if (result.error) {
+        throw result.error;
+      }
+
+      invoices =
+        invoices.filter(
+          invoice =>
+            String(invoice.id) !==
+            String(invoiceId)
+        );
+
+      updateTotals();
+      renderInvoices();
+
+      setPageMessage(
+        "Invoice deleted.",
+        "success"
+      );
+    }
+
+    function printInvoice(invoice) {
+      const combined =
+        combinedInvoice(invoice);
+
+      const status =
+        invoiceStatus(invoice);
+
+      const printSheet =
+        document.getElementById(
+          "printSheet"
+        );
+
+      printSheet.innerHTML = `
+        <div class="print-header">
+          <div>
+            <div class="print-brand">
+              MG <span>EXPRESS</span>
+            </div>
+
+            <div style="margin-top:7px;">
+              Professional Courier Services
+            </div>
+          </div>
+
+          <div class="print-title">
+            <h2>INVOICE</h2>
+
+            <div style="margin-top:7px;">
+              ${escapeHtml(
+                invoice.invoice_number ||
+                ""
+              )}
+            </div>
+
+            <div style="margin-top:5px;">
+              Status: ${escapeHtml(
+                status.toUpperCase()
+              )}
+            </div>
+          </div>
+        </div>
+
+        <div class="print-section print-grid">
+          <div>
+            <div class="print-label">
+              Bill To
+            </div>
+
+            <div class="print-value">
+              <strong>
+                ${escapeHtml(
+                  combined.display_customer_name
+                )}
+              </strong><br>
+
+              ${escapeHtml(
+                combined.display_customer_email
+              )}<br>
+
+              ${escapeHtml(
+                combined.display_customer_phone
+              )}
+            </div>
+          </div>
+
+          <div>
+            <div class="print-label">
+              Invoice Details
+            </div>
+
+            <div class="print-value">
+              Invoice Date:
+              ${escapeHtml(
+                displayDate(invoice.created_at)
+              )}<br>
+
+              Due Date:
+              ${escapeHtml(
+                displayDate(invoice.due_date)
+              )}<br>
+
+              Job Number:
+              ${escapeHtml(
+                combined.display_job_number ||
+                "N/A"
+              )}
+            </div>
+          </div>
+        </div>
+
+        <div class="print-section print-grid">
+          <div>
+            <div class="print-label">
+              Pickup
+            </div>
+
+            <div class="print-value">
+              ${escapeHtml(
+                combined.display_pickup_address ||
+                "Not recorded"
+              )}
+            </div>
+          </div>
+
+          <div>
+            <div class="print-label">
+              Delivery
+            </div>
+
+            <div class="print-value">
+              ${escapeHtml(
+                combined.display_delivery_address ||
+                "Not recorded"
+              )}
+            </div>
+          </div>
+        </div>
+
+        <table class="print-table">
+          <thead>
+            <tr>
+              <th>Description</th>
+              <th>Amount</th>
+            </tr>
+          </thead>
+
+          <tbody>
+            <tr>
+              <td>
+                ${escapeHtml(
+                  combined.display_package_type ||
+                  "Courier service"
+                )}
+
+                ${
+                  combined.display_vehicle_type
+                    ? `<br><small>
+                        Vehicle:
+                        ${escapeHtml(
+                          combined.display_vehicle_type
+                        )}
+                      </small>`
+                    : ""
+                }
+
+                ${
+                  combined.display_delivery_speed
+                    ? `<br><small>
+                        Service:
+                        ${escapeHtml(
+                          combined.display_delivery_speed
+                        )}
+                      </small>`
+                    : ""
+                }
+              </td>
+
+              <td>
+                ${money(invoice.amount)}
+              </td>
+            </tr>
+          </tbody>
+        </table>
+
+        <div class="print-total">
+          Total: ${money(invoice.amount)}
+        </div>
+
+        ${
+          combined.display_billing_notes
+            ? `
+              <div class="print-section">
+                <div class="print-label">
+                  Notes
+                </div>
+
+                <div class="print-value">
+                  ${escapeHtml(
+                    combined.display_billing_notes
+                  )}
+                </div>
+              </div>
+            `
+            : ""
+        }
+
+        <div class="print-footer">
+          Thank you for choosing MG Express.
+        </div>
+      `;
+
+      window.print();
+    }
+
+    invoiceList.addEventListener(
+      "click",
+      async function (event) {
+        const button =
+          event.target.closest(
+            "[data-action]"
+          );
+
+        if (!button) {
+          return;
+        }
+
+        const action =
+          button.dataset.action;
+
+        const invoiceId =
+          button.dataset.id;
+
+        const invoice =
+          findInvoice(invoiceId);
+
+        if (!invoice) {
+          return;
+        }
+
+        button.disabled = true;
+
+        try {
+          if (action === "print") {
+            printInvoice(invoice);
+          }
+
+          if (action === "edit") {
+            openEditModal(invoice);
+          }
+
+          if (action === "status") {
+            await updateInvoiceStatus(
+              invoiceId,
+              button.dataset.status
+            );
+          }
+
+          if (action === "delete") {
+            await deleteInvoice(
+              invoiceId
+            );
+          }
+        } catch (error) {
+          setPageMessage(
+            error.message ||
+            "Unable to update this invoice.",
+            "error"
+          );
+        } finally {
+          button.disabled = false;
+        }
+      }
+    );
+
+    editInvoiceForm.addEventListener(
+      "submit",
+      async function (event) {
+        event.preventDefault();
+
+        const invoiceId =
+          document
+            .getElementById("editInvoiceId")
+            .value;
+
+        const payload = {
+          amount:
+            Number(
+              document
+                .getElementById("editAmount")
+                .value || 0
+            ),
+
+          due_date:
+            document
+              .getElementById("editDueDate")
+              .value || null,
+
+          payment_status:
+            document
+              .getElementById("editStatus")
+              .value,
+
+          customer_email:
+            document
+              .getElementById("editCustomerEmail")
+              .value
+              .trim()
+        };
+
+        const submitButton =
+          editInvoiceForm.querySelector(
+            'button[type="submit"]'
+          );
+
+        submitButton.disabled = true;
+
+        setEditMessage(
+          "Saving changes...",
+          "success"
+        );
+
+        try {
+          const result =
+            await client
+              .from("invoices")
+              .update(payload)
+              .eq("id", invoiceId)
+              .select("*")
+              .maybeSingle();
+
+          if (result.error) {
+            throw result.error;
+          }
+
+          const index =
+            invoices.findIndex(
+              invoice =>
+                String(invoice.id) ===
+                String(invoiceId)
+            );
+
+          if (index >= 0) {
+            invoices[index] =
+              result.data;
+          }
+
+          updateTotals();
+          renderInvoices();
+
+          setEditMessage(
+            "Invoice updated.",
+            "success"
+          );
+
+          setTimeout(
+            closeEditModal,
+            700
+          );
+        } catch (error) {
+          setEditMessage(
+            error.message ||
+            "Unable to save invoice.",
+            "error"
+          );
+        } finally {
+          submitButton.disabled = false;
+        }
+      }
+    );
 
     searchInput.addEventListener(
       "input",
@@ -1729,26 +2220,108 @@
 
           try {
             await loadInvoices();
+
+            setPageMessage(
+              "Invoices refreshed.",
+              "success"
+            );
           } catch (error) {
-            invoicesBox.innerHTML = `
-              <div class="error">
-                ${escapeHtml(
-                  error.message ||
-                  "Unable to refresh invoices."
-                )}
-              </div>
-            `;
+            setPageMessage(
+              error.message ||
+              "Unable to refresh invoices.",
+              "error"
+            );
           } finally {
             this.disabled = false;
-            this.textContent = "Refresh";
+            this.textContent =
+              "Refresh";
           }
         }
       );
 
+    document
+      .getElementById("hamburgerButton")
+      .addEventListener(
+        "click",
+        openMenu
+      );
+
+    document
+      .getElementById("menuCloseButton")
+      .addEventListener(
+        "click",
+        closeMenu
+      );
+
+    document
+      .getElementById("menuOverlay")
+      .addEventListener(
+        "click",
+        closeMenu
+      );
+
+    document
+      .getElementById("closeEditModalButton")
+      .addEventListener(
+        "click",
+        closeEditModal
+      );
+
+    document
+      .getElementById("cancelEditButton")
+      .addEventListener(
+        "click",
+        closeEditModal
+      );
+
+    editModalOverlay.addEventListener(
+      "click",
+      function (event) {
+        if (
+          event.target ===
+          editModalOverlay
+        ) {
+          closeEditModal();
+        }
+      }
+    );
+
+    document
+      .getElementById("signOutButton")
+      .addEventListener(
+        "click",
+        async function () {
+          this.disabled = true;
+          this.textContent =
+            "Signing Out...";
+
+          try {
+            await client.auth.signOut();
+          } finally {
+            localStorage.clear();
+            sessionStorage.clear();
+
+            location.replace(
+              "/index.html?loggedout=1"
+            );
+          }
+        }
+      );
+
+    document.addEventListener(
+      "keydown",
+      function (event) {
+        if (event.key === "Escape") {
+          closeMenu();
+          closeEditModal();
+        }
+      }
+    );
+
     (async function startPage() {
       try {
         const session =
-          await verifyDispatchUser();
+          await verifyUser();
 
         if (!session) {
           return;
@@ -1756,8 +2329,8 @@
 
         await loadInvoices();
       } catch (error) {
-        invoicesBox.innerHTML = `
-          <div class="error">
+        invoiceList.innerHTML = `
+          <div class="empty">
             ${escapeHtml(
               error.message ||
               "Unable to load invoices."
@@ -1767,7 +2340,5 @@
       }
     })();
   </script>
-
-  <script src="/dispatch-menu-v3.js"></script>
 </body>
 </html>
