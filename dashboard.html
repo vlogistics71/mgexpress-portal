@@ -1707,44 +1707,33 @@
     })();
   </script>
 
-  <script src="/dispatch-menu-v3.js?v=8"></script>
+  <script src="/dispatch-menu-v3.js?v=9"></script>
 
   <script>
-    function openSharedDispatchMenu() {
-      const menu =
+  document
+    .getElementById("dashboardHamburger")
+    .addEventListener("click", function () {
+      const sharedMenuButton =
         document.querySelector(
-          ".dispatch-side-menu"
+          ".dispatch-menu-button"
         );
 
-      const overlay =
-        document.querySelector(
-          ".dispatch-menu-overlay"
-        );
-
-      if (!menu || !overlay) {
-        alert(
-          "The menu is still loading. Please tap the button again."
-        );
-
+      if (sharedMenuButton) {
+        sharedMenuButton.click();
         return;
       }
 
-      menu.classList.add("open");
-      overlay.classList.add("open");
+      setTimeout(function () {
+        const delayedMenuButton =
+          document.querySelector(
+            ".dispatch-menu-button"
+          );
 
-      document.body.classList.add(
-        "dispatch-menu-open"
-      );
-    }
-
-    document
-      .getElementById(
-        "dashboardHamburger"
-      )
-      .addEventListener(
-        "click",
-        openSharedDispatchMenu
-      );
-  </script>
+        if (delayedMenuButton) {
+          delayedMenuButton.click();
+        }
+      }, 500);
+    });
+</script>
 </body>
 </html>
