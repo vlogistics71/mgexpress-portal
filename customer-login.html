@@ -1,1 +1,1060 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
 
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1"
+  >
+
+  <title>MG Express Customer Login</title>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    :root {
+      --dark-green: #064f3b;
+      --green: #087455;
+      --light-green: #e7f5ef;
+      --coral: #ff665c;
+      --background: #f3f8f6;
+      --white: #ffffff;
+      --ink: #17221e;
+      --muted: #68756f;
+      --line: #dfe8e4;
+      --danger: #9b2929;
+      --danger-bg: #fff0f0;
+    }
+
+    body {
+      min-height: 100vh;
+      margin: 0;
+      padding: 22px;
+      display: grid;
+      place-items: center;
+      font-family: Arial, Helvetica, sans-serif;
+      background:
+        linear-gradient(
+          145deg,
+          #064f3b 0%,
+          #087455 44%,
+          #f3f8f6 44%,
+          #f3f8f6 100%
+        );
+      color: var(--ink);
+    }
+
+    button,
+    input {
+      font: inherit;
+    }
+
+    .login-shell {
+      width: min(470px, 100%);
+    }
+
+    .brand-block {
+      margin-bottom: 22px;
+      color: white;
+      text-align: center;
+    }
+
+    .brand {
+      font-size: clamp(30px, 9vw, 43px);
+      font-weight: 900;
+      line-height: 1;
+    }
+
+    .brand span {
+      color: var(--coral);
+    }
+
+    .brand-subtitle {
+      margin-top: 9px;
+      font-size: 15px;
+      opacity: .85;
+    }
+
+    .login-card {
+      padding: 27px;
+      border-radius: 24px;
+      background: white;
+      box-shadow: 0 20px 55px rgba(0, 0, 0, .18);
+    }
+
+    .eyebrow {
+      margin-bottom: 7px;
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 900;
+      letter-spacing: .04em;
+      text-transform: uppercase;
+    }
+
+    h1 {
+      margin: 0;
+      color: var(--dark-green);
+      font-size: 32px;
+      line-height: 1.08;
+    }
+
+    .intro {
+      margin: 12px 0 22px;
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.55;
+    }
+
+    .form-section {
+      display: none;
+    }
+
+    .form-section.active {
+      display: block;
+    }
+
+    .field {
+      margin-top: 15px;
+    }
+
+    .field label {
+      display: block;
+      margin-bottom: 7px;
+      color: var(--muted);
+      font-size: 11px;
+      font-weight: 900;
+      letter-spacing: .04em;
+      text-transform: uppercase;
+    }
+
+    .field input {
+      width: 100%;
+      min-height: 53px;
+      padding: 13px 14px;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      background: white;
+      color: var(--ink);
+    }
+
+    .field input:focus {
+      outline: 3px solid rgba(8, 116, 85, .12);
+      border-color: var(--green);
+    }
+
+    .password-wrap {
+      position: relative;
+    }
+
+    .password-wrap input {
+      padding-right: 75px;
+    }
+
+    .show-password {
+      position: absolute;
+      top: 50%;
+      right: 10px;
+      min-height: 36px;
+      padding: 6px 10px;
+      border: 0;
+      border-radius: 9px;
+      background: var(--light-green);
+      color: var(--dark-green);
+      font-size: 12px;
+      font-weight: 900;
+      transform: translateY(-50%);
+      cursor: pointer;
+    }
+
+    .primary-button {
+      width: 100%;
+      min-height: 55px;
+      margin-top: 20px;
+      border: 0;
+      border-radius: 14px;
+      background: var(--green);
+      color: white;
+      font-weight: 900;
+      cursor: pointer;
+    }
+
+    .primary-button:disabled {
+      cursor: wait;
+      opacity: .65;
+    }
+
+    .secondary-link {
+      display: block;
+      width: 100%;
+      margin-top: 15px;
+      padding: 0;
+      border: 0;
+      background: transparent;
+      color: var(--green);
+      font-weight: 900;
+      text-align: center;
+      cursor: pointer;
+    }
+
+    .message {
+      margin-top: 17px;
+      padding: 14px;
+      border-radius: 13px;
+      font-size: 14px;
+      line-height: 1.5;
+    }
+
+    .message.success {
+      background: var(--light-green);
+      color: var(--dark-green);
+    }
+
+    .message.error {
+      background: var(--danger-bg);
+      color: var(--danger);
+    }
+
+    .message.hidden {
+      display: none;
+    }
+
+    .security-note {
+      margin-top: 20px;
+      padding-top: 18px;
+      border-top: 1px solid var(--line);
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.5;
+      text-align: center;
+    }
+
+    @media (max-width: 480px) {
+      body {
+        padding: 16px;
+        align-items: start;
+        background:
+          linear-gradient(
+            180deg,
+            #064f3b 0,
+            #064f3b 265px,
+            #f3f8f6 265px,
+            #f3f8f6 100%
+          );
+      }
+
+      .login-shell {
+        margin-top: 42px;
+      }
+
+      .login-card {
+        padding: 22px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <main class="login-shell">
+    <div class="brand-block">
+      <div class="brand">
+        MG <span>EXPRESS</span>
+      </div>
+
+      <div class="brand-subtitle">
+        Secure Customer Portal
+      </div>
+    </div>
+
+    <section class="login-card">
+      <div
+        class="form-section"
+        id="loadingSection"
+      >
+        <div class="eyebrow">
+          Secure access
+        </div>
+
+        <h1>Preparing your account</h1>
+
+        <p class="intro">
+          Please wait while we verify your invitation.
+        </p>
+
+        <div class="message success">
+          Verifying secure login link...
+        </div>
+      </div>
+
+      <div
+        class="form-section"
+        id="passwordSection"
+      >
+        <div class="eyebrow">
+          Invitation accepted
+        </div>
+
+        <h1>Create your password</h1>
+
+        <p class="intro">
+          Choose a secure password to finish creating your
+          recurring-customer portal account.
+        </p>
+
+        <form id="passwordForm">
+          <div class="field">
+            <label for="newPassword">
+              New Password
+            </label>
+
+            <div class="password-wrap">
+              <input
+                id="newPassword"
+                type="password"
+                minlength="8"
+                autocomplete="new-password"
+                required
+              >
+
+              <button
+                class="show-password"
+                type="button"
+                data-password-target="newPassword"
+              >
+                Show
+              </button>
+            </div>
+          </div>
+
+          <div class="field">
+            <label for="confirmPassword">
+              Confirm Password
+            </label>
+
+            <div class="password-wrap">
+              <input
+                id="confirmPassword"
+                type="password"
+                minlength="8"
+                autocomplete="new-password"
+                required
+              >
+
+              <button
+                class="show-password"
+                type="button"
+                data-password-target="confirmPassword"
+              >
+                Show
+              </button>
+            </div>
+          </div>
+
+          <button
+            class="primary-button"
+            id="savePasswordButton"
+            type="submit"
+          >
+            Create Password & Continue
+          </button>
+
+          <div
+            class="message hidden"
+            id="passwordMessage"
+          ></div>
+        </form>
+      </div>
+
+      <div
+        class="form-section"
+        id="loginSection"
+      >
+        <div class="eyebrow">
+          Recurring customers
+        </div>
+
+        <h1>Customer Login</h1>
+
+        <p class="intro">
+          Sign in to view deliveries, invoices, saved locations
+          and account information.
+        </p>
+
+        <form id="loginForm">
+          <div class="field">
+            <label for="loginEmail">
+              Email Address
+            </label>
+
+            <input
+              id="loginEmail"
+              type="email"
+              autocomplete="email"
+              required
+            >
+          </div>
+
+          <div class="field">
+            <label for="loginPassword">
+              Password
+            </label>
+
+            <div class="password-wrap">
+              <input
+                id="loginPassword"
+                type="password"
+                autocomplete="current-password"
+                required
+              >
+
+              <button
+                class="show-password"
+                type="button"
+                data-password-target="loginPassword"
+              >
+                Show
+              </button>
+            </div>
+          </div>
+
+          <button
+            class="primary-button"
+            id="loginButton"
+            type="submit"
+          >
+            Sign In
+          </button>
+
+          <button
+            class="secondary-link"
+            id="forgotPasswordButton"
+            type="button"
+          >
+            Forgot Password?
+          </button>
+
+          <div
+            class="message hidden"
+            id="loginMessage"
+          ></div>
+        </form>
+      </div>
+
+      <div
+        class="form-section"
+        id="resetSection"
+      >
+        <div class="eyebrow">
+          Account recovery
+        </div>
+
+        <h1>Reset Password</h1>
+
+        <p class="intro">
+          Enter your approved customer email and we will send a
+          secure password-reset link.
+        </p>
+
+        <form id="resetForm">
+          <div class="field">
+            <label for="resetEmail">
+              Email Address
+            </label>
+
+            <input
+              id="resetEmail"
+              type="email"
+              autocomplete="email"
+              required
+            >
+          </div>
+
+          <button
+            class="primary-button"
+            id="resetButton"
+            type="submit"
+          >
+            Send Reset Link
+          </button>
+
+          <button
+            class="secondary-link"
+            id="backToLoginButton"
+            type="button"
+          >
+            Back to Login
+          </button>
+
+          <div
+            class="message hidden"
+            id="resetMessage"
+          ></div>
+        </form>
+      </div>
+
+      <div class="security-note">
+        Accounts are available only to recurring customers who
+        have been approved and invited by MG Express.
+      </div>
+    </section>
+  </main>
+
+  <script src="/assets/js/config.js"></script>
+
+  <script>
+    (function () {
+      "use strict";
+
+      const client =
+        window.mgSupabase;
+
+      const CUSTOMER_DASHBOARD =
+        "/customer-portal.html";
+
+      const sections = [
+        "loadingSection",
+        "passwordSection",
+        "loginSection",
+        "resetSection"
+      ];
+
+      function showSection(sectionId) {
+        sections.forEach(id => {
+          document
+            .getElementById(id)
+            .classList.toggle(
+              "active",
+              id === sectionId
+            );
+        });
+      }
+
+      function setMessage(
+        elementId,
+        message,
+        type
+      ) {
+        const element =
+          document.getElementById(
+            elementId
+          );
+
+        element.textContent =
+          message || "";
+
+        element.className =
+          message
+            ? `message ${type || ""}`
+            : "message hidden";
+      }
+
+      function queryValue(name) {
+        return new URLSearchParams(
+          window.location.search
+        ).get(name);
+      }
+
+      function hashValue(name) {
+        return new URLSearchParams(
+          window.location.hash
+            .replace(/^#/, "")
+        ).get(name);
+      }
+
+      async function getSession() {
+        const result =
+          await client.auth.getSession();
+
+        if (result.error) {
+          throw result.error;
+        }
+
+        return result.data.session || null;
+      }
+
+      async function verifyCustomerAccess(
+        userId
+      ) {
+        const result =
+          await client
+            .from(
+              "customer_portal_accounts"
+            )
+            .select(
+              "id, is_recurring_customer, portal_access_enabled"
+            )
+            .eq(
+              "auth_user_id",
+              userId
+            )
+            .eq(
+              "is_recurring_customer",
+              true
+            )
+            .eq(
+              "portal_access_enabled",
+              true
+            )
+            .maybeSingle();
+
+        if (result.error) {
+          throw result.error;
+        }
+
+        if (!result.data) {
+          throw new Error(
+            "This account does not currently have customer portal access."
+          );
+        }
+
+        return result.data;
+      }
+
+      async function sendCustomerToPortal(
+        session
+      ) {
+        await verifyCustomerAccess(
+          session.user.id
+        );
+
+        window.location.replace(
+          CUSTOMER_DASHBOARD
+        );
+      }
+
+      async function initializePage() {
+        showSection(
+          "loadingSection"
+        );
+
+        try {
+          const errorDescription =
+            queryValue(
+              "error_description"
+            ) ||
+            hashValue(
+              "error_description"
+            );
+
+          if (errorDescription) {
+            throw new Error(
+              decodeURIComponent(
+                errorDescription
+              )
+            );
+          }
+
+          /*
+           * Supabase's browser client detects an authentication
+           * session returned in the URL. The short delay gives it
+           * time to process the invitation or password-reset link.
+           */
+          await new Promise(resolve =>
+            setTimeout(resolve, 500)
+          );
+
+          const session =
+            await getSession();
+
+          const linkType =
+            queryValue("type") ||
+            hashValue("type");
+
+          const hasInviteTokens =
+            Boolean(
+              hashValue("access_token") ||
+              queryValue("code") ||
+              linkType === "invite" ||
+              linkType === "recovery"
+            );
+
+          if (
+            session &&
+            hasInviteTokens
+          ) {
+            showSection(
+              "passwordSection"
+            );
+
+            return;
+          }
+
+          if (session) {
+            await sendCustomerToPortal(
+              session
+            );
+
+            return;
+          }
+
+          showSection(
+            "loginSection"
+          );
+        } catch (error) {
+          showSection(
+            "loginSection"
+          );
+
+          setMessage(
+            "loginMessage",
+            error.message ||
+              "Unable to verify this login link.",
+            "error"
+          );
+        }
+      }
+
+      document
+        .getElementById(
+          "passwordForm"
+        )
+        .addEventListener(
+          "submit",
+          async function (event) {
+            event.preventDefault();
+
+            const password =
+              document
+                .getElementById(
+                  "newPassword"
+                )
+                .value;
+
+            const confirmation =
+              document
+                .getElementById(
+                  "confirmPassword"
+                )
+                .value;
+
+            const button =
+              document.getElementById(
+                "savePasswordButton"
+              );
+
+            if (
+              password.length < 8
+            ) {
+              setMessage(
+                "passwordMessage",
+                "Password must contain at least 8 characters.",
+                "error"
+              );
+
+              return;
+            }
+
+            if (
+              password !== confirmation
+            ) {
+              setMessage(
+                "passwordMessage",
+                "The passwords do not match.",
+                "error"
+              );
+
+              return;
+            }
+
+            button.disabled = true;
+            button.textContent =
+              "Creating Account...";
+
+            setMessage(
+              "passwordMessage",
+              "Saving your secure password...",
+              "success"
+            );
+
+            try {
+              const updateResult =
+                await client.auth
+                  .updateUser({
+                    password
+                  });
+
+              if (
+                updateResult.error
+              ) {
+                throw updateResult.error;
+              }
+
+              const session =
+                await getSession();
+
+              if (!session) {
+                throw new Error(
+                  "Your login session expired. Please open the invitation email again."
+                );
+              }
+
+              await verifyCustomerAccess(
+                session.user.id
+              );
+
+              setMessage(
+                "passwordMessage",
+                "Your password was created successfully. Opening your portal...",
+                "success"
+              );
+
+              setTimeout(() => {
+                window.location.replace(
+                  CUSTOMER_DASHBOARD
+                );
+              }, 850);
+            } catch (error) {
+              setMessage(
+                "passwordMessage",
+                error.message ||
+                  "Unable to create your password.",
+                "error"
+              );
+            } finally {
+              button.disabled = false;
+              button.textContent =
+                "Create Password & Continue";
+            }
+          }
+        );
+
+      document
+        .getElementById(
+          "loginForm"
+        )
+        .addEventListener(
+          "submit",
+          async function (event) {
+            event.preventDefault();
+
+            const email =
+              document
+                .getElementById(
+                  "loginEmail"
+                )
+                .value
+                .trim()
+                .toLowerCase();
+
+            const password =
+              document
+                .getElementById(
+                  "loginPassword"
+                )
+                .value;
+
+            const button =
+              document.getElementById(
+                "loginButton"
+              );
+
+            button.disabled = true;
+            button.textContent =
+              "Signing In...";
+
+            setMessage(
+              "loginMessage",
+              "Verifying your account...",
+              "success"
+            );
+
+            try {
+              const signInResult =
+                await client.auth
+                  .signInWithPassword({
+                    email,
+                    password
+                  });
+
+              if (
+                signInResult.error
+              ) {
+                throw signInResult.error;
+              }
+
+              await sendCustomerToPortal(
+                signInResult.data.session
+              );
+            } catch (error) {
+              await client.auth.signOut();
+
+              setMessage(
+                "loginMessage",
+                error.message ||
+                  "Unable to sign in.",
+                "error"
+              );
+            } finally {
+              button.disabled = false;
+              button.textContent =
+                "Sign In";
+            }
+          }
+        );
+
+      document
+        .getElementById(
+          "resetForm"
+        )
+        .addEventListener(
+          "submit",
+          async function (event) {
+            event.preventDefault();
+
+            const email =
+              document
+                .getElementById(
+                  "resetEmail"
+                )
+                .value
+                .trim()
+                .toLowerCase();
+
+            const button =
+              document.getElementById(
+                "resetButton"
+              );
+
+            button.disabled = true;
+            button.textContent =
+              "Sending...";
+
+            try {
+              const resetResult =
+                await client.auth
+                  .resetPasswordForEmail(
+                    email,
+                    {
+                      redirectTo:
+                        "https://portal.migenteexpress.com/customer-login.html"
+                    }
+                  );
+
+              if (
+                resetResult.error
+              ) {
+                throw resetResult.error;
+              }
+
+              setMessage(
+                "resetMessage",
+                "Check your email for the secure password-reset link.",
+                "success"
+              );
+            } catch (error) {
+              setMessage(
+                "resetMessage",
+                error.message ||
+                  "Unable to send the reset email.",
+                "error"
+              );
+            } finally {
+              button.disabled = false;
+              button.textContent =
+                "Send Reset Link";
+            }
+          }
+        );
+
+      document
+        .getElementById(
+          "forgotPasswordButton"
+        )
+        .addEventListener(
+          "click",
+          function () {
+            const loginEmail =
+              document
+                .getElementById(
+                  "loginEmail"
+                )
+                .value;
+
+            document
+              .getElementById(
+                "resetEmail"
+              )
+              .value =
+                loginEmail;
+
+            setMessage(
+              "resetMessage",
+              "",
+              ""
+            );
+
+            showSection(
+              "resetSection"
+            );
+          }
+        );
+
+      document
+        .getElementById(
+          "backToLoginButton"
+        )
+        .addEventListener(
+          "click",
+          function () {
+            showSection(
+              "loginSection"
+            );
+          }
+        );
+
+      document
+        .querySelectorAll(
+          "[data-password-target]"
+        )
+        .forEach(button => {
+          button.addEventListener(
+            "click",
+            function () {
+              const input =
+                document.getElementById(
+                  this.dataset
+                    .passwordTarget
+                );
+
+              const showing =
+                input.type === "text";
+
+              input.type =
+                showing
+                  ? "password"
+                  : "text";
+
+              this.textContent =
+                showing
+                  ? "Show"
+                  : "Hide";
+            }
+          );
+        });
+
+      client.auth.onAuthStateChange(
+        function (
+          event,
+          session
+        ) {
+          if (
+            event ===
+              "PASSWORD_RECOVERY" &&
+            session
+          ) {
+            showSection(
+              "passwordSection"
+            );
+          }
+        }
+      );
+
+      initializePage();
+    })();
+  </script>
+</body>
+</html>
