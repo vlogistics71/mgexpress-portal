@@ -8,376 +8,34 @@
     content="width=device-width, initial-scale=1"
   >
 
-  <title>MG Express Customers</title>
+  <title>MG Express Customer CRM</title>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
-  <style>
-    * {
-      box-sizing: border-box;
-    }
+  <link
+    rel="stylesheet"
+    href="/assets/css/dispatch.css"
+  >
 
-    :root {
-      --dark-green: #064f3b;
-      --green: #087455;
-      --light-green: #e7f5ef;
-      --coral: #ff665c;
-      --background: #f3f8f6;
-      --white: #ffffff;
-      --ink: #17221e;
-      --muted: #68756f;
-      --line: #dfe8e4;
-      --danger: #9b2929;
-      --danger-background: #fff0f0;
-    }
-
-    body {
-      margin: 0;
-      font-family: Arial, Helvetica, sans-serif;
-      background: var(--background);
-      color: var(--ink);
-    }
-
-    button,
-    input {
-      font: inherit;
-    }
-
-    .topbar {
-      position: sticky;
-      top: 0;
-      z-index: 50;
-      padding: 18px 20px;
-      background: var(--dark-green);
-      color: white;
-    }
-
-    .topbar-inner {
-      width: min(950px, 100%);
-      margin: auto;
-    }
-
-    .brand {
-      font-size: 23px;
-      font-weight: 900;
-      line-height: 1.08;
-    }
-
-    .brand span {
-      color: var(--coral);
-    }
-
-    .staff-email {
-      margin-top: 7px;
-      font-size: 13px;
-      opacity: .82;
-      overflow-wrap: anywhere;
-    }
-
-    .container {
-      width: min(950px, 100%);
-      margin: auto;
-      padding: 28px 18px 75px;
-    }
-
-    .heading-row {
-      display: flex;
-      align-items: flex-end;
-      justify-content: space-between;
-      gap: 16px;
-      margin-bottom: 24px;
-    }
-
-    .eyebrow {
-      margin-bottom: 6px;
-      color: var(--muted);
-      font-size: 17px;
-    }
-
-    h1 {
-      margin: 0;
-      font-size: clamp(39px, 8vw, 55px);
-      line-height: 1.03;
-    }
-
-    .dashboard-button {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      min-height: 52px;
-      padding: 13px 18px;
-      border: 1px solid var(--line);
-      border-radius: 14px;
-      background: white;
-      color: var(--dark-green);
-      text-decoration: none;
-      font-weight: 900;
-      white-space: nowrap;
-    }
-
-    .stats {
-      display: grid;
-      grid-template-columns: repeat(3, minmax(0, 1fr));
-      gap: 12px;
-      margin-bottom: 21px;
-    }
-
-    .stat-card {
-      min-width: 0;
-      padding: 18px;
-      border: 1px solid var(--line);
-      border-radius: 19px;
-      background: white;
-      box-shadow: 0 7px 22px rgba(0, 0, 0, .04);
-    }
-
-    .stat-number {
-      color: var(--green);
-      font-size: 31px;
-      font-weight: 900;
-      overflow-wrap: anywhere;
-    }
-
-    .stat-label {
-      margin-top: 7px;
-      color: var(--muted);
-      font-size: 14px;
-      line-height: 1.35;
-    }
-
-    .filters {
-      padding: 18px;
-      border: 1px solid var(--line);
-      border-radius: 21px;
-      background: white;
-      box-shadow: 0 8px 25px rgba(0, 0, 0, .04);
-    }
-
-    .filter-grid {
-      display: grid;
-      grid-template-columns: minmax(0, 1fr) auto;
-      gap: 12px;
-    }
-
-    .search-input {
-      width: 100%;
-      min-height: 51px;
-      padding: 12px 14px;
-      border: 1px solid var(--line);
-      border-radius: 13px;
-      background: white;
-      color: var(--ink);
-    }
-
-    .refresh-button {
-      min-height: 51px;
-      padding: 12px 18px;
-      border: 1px solid var(--line);
-      border-radius: 13px;
-      background: white;
-      color: var(--dark-green);
-      font-weight: 900;
-      cursor: pointer;
-    }
-
-    .list-heading {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 14px;
-      margin: 27px 2px 13px;
-    }
-
-    .list-heading h2 {
-      margin: 0;
-      font-size: 28px;
-    }
-
-    .visible-count {
-      color: var(--muted);
-      font-size: 14px;
-      font-weight: 800;
-    }
-
-    .customer-list {
-      overflow: hidden;
-      border: 1px solid var(--line);
-      border-radius: 20px;
-      background: white;
-      box-shadow: 0 8px 25px rgba(0, 0, 0, .04);
-    }
-
-    .customer-row {
-      display: grid;
-      grid-template-columns:
-        minmax(0, 1.4fr)
-        minmax(90px, .5fr)
-        minmax(120px, .65fr)
-        minmax(145px, .75fr)
-        auto;
-      gap: 15px;
-      align-items: center;
-      min-height: 88px;
-      padding: 16px 18px;
-      border-bottom: 1px solid var(--line);
-      background: white;
-      color: inherit;
-      text-decoration: none;
-    }
-
-    .customer-row:last-child {
-      border-bottom: 0;
-    }
-
-    .customer-row:active {
-      background: #f7faf9;
-    }
-
-    .customer-name {
-      color: var(--dark-green);
-      font-size: 18px;
-      font-weight: 900;
-      overflow-wrap: anywhere;
-    }
-
-    .customer-email {
-      margin-top: 5px;
-      color: var(--muted);
-      font-size: 13px;
-      overflow-wrap: anywhere;
-    }
-
-    .meta-label {
-      display: block;
-      margin-bottom: 5px;
-      color: var(--muted);
-      font-size: 10px;
-      font-weight: 900;
-      letter-spacing: .04em;
-      text-transform: uppercase;
-    }
-
-    .meta-value {
-      font-size: 14px;
-      font-weight: 800;
-      line-height: 1.35;
-      overflow-wrap: anywhere;
-    }
-
-    .status-pill {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      width: fit-content;
-      padding: 8px 11px;
-      border-radius: 999px;
-      background: var(--light-green);
-      color: var(--green);
-      font-size: 12px;
-      font-weight: 900;
-      white-space: nowrap;
-    }
-
-    .arrow {
-      color: var(--green);
-      font-size: 27px;
-      font-weight: 900;
-    }
-
-    .empty,
-    .error {
-      padding: 31px 22px;
-      border-radius: 19px;
-      text-align: center;
-      line-height: 1.55;
-    }
-
-    .empty {
-      border: 1px solid var(--line);
-      background: white;
-      color: var(--muted);
-    }
-
-    .error {
-      background: var(--danger-background);
-      color: var(--danger);
-    }
-
-    @media (max-width: 760px) {
-      .heading-row {
-        align-items: flex-start;
-        flex-direction: column;
-      }
-
-      .dashboard-button {
-        width: 100%;
-      }
-
-      .stats {
-        grid-template-columns: repeat(3, minmax(0, 1fr));
-      }
-
-      .filter-grid {
-        grid-template-columns: 1fr;
-      }
-
-      .refresh-button {
-        width: 100%;
-      }
-
-      .customer-row {
-        grid-template-columns: minmax(0, 1fr) auto;
-        gap: 8px 12px;
-        min-height: 125px;
-      }
-
-      .customer-main {
-        grid-column: 1 / 2;
-      }
-
-      .jobs-block {
-        grid-column: 1 / 2;
-      }
-
-      .active-block {
-        grid-column: 1 / 2;
-      }
-
-      .last-job-block {
-        grid-column: 1 / 2;
-      }
-
-      .status-pill {
-        grid-column: 2 / 3;
-        grid-row: 1 / 2;
-      }
-
-      .arrow {
-        grid-column: 2 / 3;
-        grid-row: 2 / 5;
-        align-self: center;
-      }
-    }
-
-    @media (max-width: 430px) {
-      .stats {
-        grid-template-columns: 1fr;
-      }
-    }
-  </style>
+  <link
+    rel="stylesheet"
+    href="/assets/css/customers.css"
+  >
 </head>
 
 <body>
   <header class="topbar">
     <div class="topbar-inner">
-      <div class="brand">
-        MG <span>EXPRESS</span> DISPATCH
-      </div>
+      <div class="topbar-copy">
+        <div class="brand">
+          MG <span>EXPRESS</span> DISPATCH
+        </div>
 
-      <div
-        class="staff-email"
-        id="staffEmail"
-      ></div>
+        <div
+          class="staff-email"
+          id="staffEmail"
+        ></div>
+      </div>
     </div>
   </header>
 
@@ -385,22 +43,23 @@
     <div class="heading-row">
       <div>
         <div class="eyebrow">
-          Customer accounts and delivery records
+          Customer accounts, deliveries and billing
         </div>
 
-        <h1>Customers</h1>
+        <h1>Customer CRM</h1>
       </div>
 
-      <a
-        class="dashboard-button"
-        href="/dashboard.html"
+      <button
+        class="primary-button"
+        id="newCustomerButton"
+        type="button"
       >
-        ← Dashboard
-      </a>
+        + New Customer
+      </button>
     </div>
 
     <section class="stats">
-      <div class="stat-card">
+      <article class="stat-card">
         <div
           class="stat-number"
           id="totalCustomers"
@@ -411,617 +70,365 @@
         <div class="stat-label">
           Total Customers
         </div>
-      </div>
+      </article>
 
-      <div class="stat-card">
+      <article class="stat-card">
         <div
           class="stat-number"
-          id="totalJobs"
+          id="recurringCustomers"
         >
           0
         </div>
 
         <div class="stat-label">
-          Total Customer Jobs
+          Recurring Customers
         </div>
-      </div>
+      </article>
 
-      <div class="stat-card">
+      <article class="stat-card">
         <div
           class="stat-number"
-          id="customersWithActiveJobs"
+          id="portalCustomers"
         >
           0
         </div>
 
         <div class="stat-label">
-          Customers With Active Jobs
+          Portal Access Enabled
         </div>
-      </div>
+      </article>
+
+      <article class="stat-card">
+        <div
+          class="stat-number"
+          id="outstandingBalance"
+        >
+          $0.00
+        </div>
+
+        <div class="stat-label">
+          Outstanding Invoices
+        </div>
+      </article>
     </section>
 
-    <section class="filters">
-      <div class="filter-grid">
+    <section class="customer-toolbar panel">
+      <div class="field">
+        <label for="customerSearch">
+          Search Customers
+        </label>
+
         <input
-          class="search-input"
-          id="searchInput"
+          id="customerSearch"
           type="search"
-          placeholder="Search customer name, email or address"
+          placeholder="Name, company, email or phone"
         >
-
-        <button
-          class="refresh-button"
-          id="refreshButton"
-          type="button"
-        >
-          Refresh
-        </button>
       </div>
+
+      <div class="field">
+        <label for="customerFilter">
+          Customer Type
+        </label>
+
+        <select id="customerFilter">
+          <option value="all">
+            All Customers
+          </option>
+
+          <option value="recurring">
+            Recurring Customers
+          </option>
+
+          <option value="portal">
+            Portal Enabled
+          </option>
+
+          <option value="standard">
+            Standard Customers
+          </option>
+        </select>
+      </div>
+
+      <button
+        class="secondary-button"
+        id="refreshCustomersButton"
+        type="button"
+      >
+        Refresh
+      </button>
     </section>
 
-    <div class="list-heading">
-      <h2>Customer List</h2>
+    <div
+      class="message hidden"
+      id="customerPageMessage"
+    ></div>
 
-      <div
-        class="visible-count"
-        id="visibleCount"
-      >
-        0 customers
-      </div>
-    </div>
-
-    <section id="customersBox">
+    <section
+      class="customer-list"
+      id="customerList"
+    >
       <div class="empty">
         Loading customers...
       </div>
     </section>
   </main>
 
-  <script>
-    const client = supabase.createClient(
-      "https://dczlucwfjayymlwbzzdi.supabase.co",
-      "sb_publishable_kcv_a78ZyUxMo2neKUANdw_XN7eAMpI"
-    );
+  <div
+    class="customer-modal-overlay"
+    id="customerModalOverlay"
+  >
+    <section class="customer-modal">
+      <div class="customer-modal-heading">
+        <div>
+          <div class="eyebrow">
+            Customer account
+          </div>
 
-    window.mgDispatchClient = client;
-
-    const customersBox =
-      document.getElementById("customersBox");
-
-    const searchInput =
-      document.getElementById("searchInput");
-
-    let allJobs = [];
-    let customers = [];
-
-    function escapeHtml(value) {
-      const div = document.createElement("div");
-      div.textContent = value ?? "";
-      return div.innerHTML;
-    }
-
-    function normalizeEmail(value) {
-      return String(value || "")
-        .trim()
-        .toLowerCase();
-    }
-
-    function normalizeName(value) {
-      return String(value || "Customer")
-        .trim()
-        .toLowerCase();
-    }
-
-    function cleanStatus(value) {
-      return String(value || "")
-        .trim()
-        .toLowerCase();
-    }
-
-    function isClosedJob(job) {
-      return [
-        "delivered",
-        "cancelled",
-        "canceled"
-      ].includes(cleanStatus(job.status));
-    }
-
-    function formatDate(value) {
-      if (!value) {
-        return "No jobs";
-      }
-
-      const date =
-        value instanceof Date
-          ? value
-          : new Date(value);
-
-      if (Number.isNaN(date.getTime())) {
-        return "Not recorded";
-      }
-
-      return new Intl.DateTimeFormat(
-        "en-US",
-        {
-          month: "short",
-          day: "numeric",
-          year: "numeric"
-        }
-      ).format(date);
-    }
-
-    function getCustomerKey(job) {
-      const email =
-        normalizeEmail(job.customer_email);
-
-      if (email) {
-        return "email:" + email;
-      }
-
-      return (
-        "name:" +
-        normalizeName(job.customer_name)
-      );
-    }
-
-    function buildCustomerList() {
-      const groupedCustomers = new Map();
-
-      allJobs.forEach(job => {
-        const key = getCustomerKey(job);
-
-        if (!groupedCustomers.has(key)) {
-          groupedCustomers.set(key, {
-            key: key,
-            name:
-              String(
-                job.customer_name ||
-                "Customer"
-              ).trim(),
-
-            email:
-              normalizeEmail(
-                job.customer_email
-              ),
-
-            jobs: [],
-            activeJobs: 0,
-            lastJobAt: null,
-            addresses: new Set()
-          });
-        }
-
-        const customer =
-          groupedCustomers.get(key);
-
-        customer.jobs.push(job);
-
-        if (!isClosedJob(job)) {
-          customer.activeJobs += 1;
-        }
-
-        [
-          job.pickup_address,
-          job.delivery_address
-        ].forEach(address => {
-          const cleanAddress =
-            String(address || "").trim();
-
-          if (cleanAddress) {
-            customer.addresses.add(
-              cleanAddress
-            );
-          }
-        });
-
-        if (job.created_at) {
-          const jobDate =
-            new Date(job.created_at);
-
-          if (
-            !Number.isNaN(
-              jobDate.getTime()
-            ) &&
-            (
-              !customer.lastJobAt ||
-              jobDate >
-                customer.lastJobAt
-            )
-          ) {
-            customer.lastJobAt =
-              jobDate;
-          }
-        }
-      });
-
-      customers =
-        Array.from(
-          groupedCustomers.values()
-        ).sort((first, second) => {
-          const firstTime =
-            first.lastJobAt?.getTime() || 0;
-
-          const secondTime =
-            second.lastJobAt?.getTime() || 0;
-
-          return secondTime - firstTime;
-        });
-    }
-
-    async function verifyDispatchUser() {
-      const sessionResult =
-        await client.auth.getSession();
-
-      const session =
-        sessionResult.data.session;
-
-      if (!session) {
-        location.replace(
-          "/index.html"
-        );
-
-        return null;
-      }
-
-      document
-        .getElementById("staffEmail")
-        .textContent =
-          session.user.email || "";
-
-      const profileResult =
-        await client
-          .from("profiles")
-          .select("role")
-          .eq(
-            "id",
-            session.user.id
-          )
-          .maybeSingle();
-
-      if (
-        profileResult.error ||
-        !profileResult.data
-      ) {
-        throw new Error(
-          profileResult.error?.message ||
-          "No MG Express profile was found."
-        );
-      }
-
-      const role =
-        String(
-          profileResult.data.role || ""
-        ).toLowerCase();
-
-      if (
-        ![
-          "admin",
-          "staff",
-          "dispatcher"
-        ].includes(role)
-      ) {
-        if (role === "driver") {
-          location.replace(
-            "/driver.html"
-          );
-
-          return null;
-        }
-
-        if (role === "customer") {
-          location.replace(
-            "/customer.html"
-          );
-
-          return null;
-        }
-
-        throw new Error(
-          "This account does not have dispatch access."
-        );
-      }
-
-      window.dispatchEvent(
-        new CustomEvent(
-          "mg-dispatch-ready",
-          {
-            detail: {
-              email:
-                session.user.email
-            }
-          }
-        )
-      );
-
-      return session;
-    }
-
-    async function loadCustomers() {
-      customersBox.className = "";
-
-      customersBox.innerHTML = `
-        <div class="empty">
-          Loading customers...
+          <h2 id="customerModalTitle">
+            New Customer
+          </h2>
         </div>
-      `;
 
-      const result =
-        await client
-          .from("quotes")
-          .select(`
-            id,
-            job_number,
-            customer_name,
-            customer_email,
-            pickup_address,
-            delivery_address,
-            status,
-            created_at
-          `)
-          .order(
-            "created_at",
-            {
-              ascending: false
-            }
-          );
+        <button
+          class="customer-modal-close"
+          id="closeCustomerModalButton"
+          type="button"
+          aria-label="Close customer form"
+        >
+          ×
+        </button>
+      </div>
 
-      if (result.error) {
-        throw result.error;
-      }
+      <form id="customerForm">
+        <input
+          id="customerAccountId"
+          type="hidden"
+        >
 
-      allJobs =
-        result.data || [];
+        <div class="customer-form-grid">
+          <div class="field">
+            <label for="customerName">
+              Contact Name
+            </label>
 
-      buildCustomerList();
-      updateStatistics();
-      renderCustomers();
-    }
-
-    function filteredCustomers() {
-      const search =
-        searchInput.value
-          .trim()
-          .toLowerCase();
-
-      if (!search) {
-        return customers;
-      }
-
-      return customers.filter(
-        customer => {
-          const searchableText = [
-            customer.name,
-            customer.email,
-            ...Array.from(
-              customer.addresses
-            )
-          ]
-            .filter(Boolean)
-            .join(" ")
-            .toLowerCase();
-
-          return searchableText.includes(
-            search
-          );
-        }
-      );
-    }
-
-    function updateStatistics() {
-      document
-        .getElementById(
-          "totalCustomers"
-        )
-        .textContent =
-          customers.length;
-
-      document
-        .getElementById(
-          "totalJobs"
-        )
-        .textContent =
-          allJobs.length;
-
-      document
-        .getElementById(
-          "customersWithActiveJobs"
-        )
-        .textContent =
-          customers.filter(
-            customer =>
-              customer.activeJobs > 0
-          ).length;
-    }
-
-    function createCustomerUrl(customer) {
-  const portalBase =
-    "https://portal.migenteexpress.com";
-
-  if (customer.email) {
-    return (
-      portalBase +
-      "/customer-details.html?email=" +
-      encodeURIComponent(customer.email)
-    );
-  }
-
-  return (
-    portalBase +
-    "/customer-details.html?name=" +
-    encodeURIComponent(customer.name)
-  );
-}
-
-    function renderCustomers() {
-      const shownCustomers =
-        filteredCustomers();
-
-      document
-        .getElementById(
-          "visibleCount"
-        )
-        .textContent =
-          shownCustomers.length +
-          (
-            shownCustomers.length === 1
-              ? " customer"
-              : " customers"
-          );
-
-      if (!shownCustomers.length) {
-        customersBox.className = "";
-
-        customersBox.innerHTML = `
-          <div class="empty">
-            No customers match your search.
+            <input
+              id="customerName"
+              required
+            >
           </div>
-        `;
 
-        return;
-      }
+          <div class="field">
+            <label for="companyName">
+              Company Name
+            </label>
 
-      customersBox.className =
-        "customer-list";
+            <input id="companyName">
+          </div>
 
-      customersBox.innerHTML =
-        shownCustomers
-          .map(customer => {
-            const customerUrl =
-              createCustomerUrl(
-                customer
-              );
+          <div class="field">
+            <label for="customerEmail">
+              Email
+            </label>
 
-            return `
-              <a
-                class="customer-row"
-                href="${escapeHtml(
-                  customerUrl
-                )}"
+            <input
+              id="customerEmail"
+              type="email"
+              required
+            >
+          </div>
+
+          <div class="field">
+            <label for="customerPhone">
+              Phone
+            </label>
+
+            <input
+              id="customerPhone"
+              type="tel"
+            >
+          </div>
+
+          <div class="customer-checkbox-row">
+            <label>
+              <input
+                id="isRecurringCustomer"
+                type="checkbox"
               >
-                <div class="customer-main">
-                  <div class="customer-name">
-                    ${escapeHtml(
-                      customer.name
-                    )}
-                  </div>
 
-                  <div class="customer-email">
-                    ${escapeHtml(
-                      customer.email ||
-                      "No email recorded"
-                    )}
-                  </div>
-                </div>
+              Recurring Customer
+            </label>
 
-                <div class="jobs-block">
-                  <span class="meta-label">
-                    Jobs
-                  </span>
+            <label>
+              <input
+                id="portalAccessEnabled"
+                type="checkbox"
+              >
 
-                  <div class="meta-value">
-                    ${customer.jobs.length}
-                  </div>
-                </div>
-
-                <div class="active-block">
-                  <span class="meta-label">
-                    Active
-                  </span>
-
-                  <div class="meta-value">
-                    ${customer.activeJobs}
-                  </div>
-                </div>
-
-                <div class="last-job-block">
-                  <span class="meta-label">
-                    Last Job
-                  </span>
-
-                  <div class="meta-value">
-                    ${escapeHtml(
-                      formatDate(
-                        customer.lastJobAt
-                      )
-                    )}
-                  </div>
-                </div>
-
-                <div class="status-pill">
-                  Customer
-                </div>
-
-                <div class="arrow">
-                  ›
-                </div>
-              </a>
-            `;
-          })
-          .join("");
-    }
-
-    searchInput.addEventListener(
-      "input",
-      renderCustomers
-    );
-
-    document
-      .getElementById(
-        "refreshButton"
-      )
-      .addEventListener(
-        "click",
-        async function () {
-          this.disabled = true;
-          this.textContent =
-            "Refreshing...";
-
-          try {
-            await loadCustomers();
-          } catch (error) {
-            customersBox.className = "";
-
-            customersBox.innerHTML = `
-              <div class="error">
-                ${escapeHtml(
-                  error.message ||
-                  "Unable to refresh customers."
-                )}
-              </div>
-            `;
-          } finally {
-            this.disabled = false;
-            this.textContent =
-              "Refresh";
-          }
-        }
-      );
-
-    (async function startPage() {
-      try {
-        const session =
-          await verifyDispatchUser();
-
-        if (!session) {
-          return;
-        }
-
-        await loadCustomers();
-      } catch (error) {
-        customersBox.className = "";
-
-        customersBox.innerHTML = `
-          <div class="error">
-            ${escapeHtml(
-              error.message ||
-              "Unable to load customers."
-            )}
+              Portal Access Enabled
+            </label>
           </div>
-        `;
-      }
-    })();
-  </script>
+        </div>
 
-  <script src="/dispatch-menu.js"></script>
+        <div class="customer-modal-actions">
+          <button
+            class="primary-button"
+            id="saveCustomerButton"
+            type="submit"
+          >
+            Save Customer
+          </button>
+
+          <button
+            class="secondary-button"
+            id="cancelCustomerButton"
+            type="button"
+          >
+            Cancel
+          </button>
+        </div>
+
+        <div
+          class="message hidden"
+          id="customerFormMessage"
+        ></div>
+      </form>
+    </section>
+  </div>
+
+  <div
+    class="location-modal-overlay"
+    id="locationModalOverlay"
+  >
+    <section class="customer-modal">
+      <div class="customer-modal-heading">
+        <div>
+          <div class="eyebrow">
+            Recurring customer location
+          </div>
+
+          <h2>Add Saved Location</h2>
+        </div>
+
+        <button
+          class="customer-modal-close"
+          id="closeLocationModalButton"
+          type="button"
+        >
+          ×
+        </button>
+      </div>
+
+      <form id="locationForm">
+        <input
+          id="locationCustomerAccountId"
+          type="hidden"
+        >
+
+        <div class="customer-form-grid">
+          <div class="field">
+            <label for="locationName">
+              Location Name
+            </label>
+
+            <input
+              id="locationName"
+              placeholder="Main Office, Warehouse, Lab"
+              required
+            >
+          </div>
+
+          <div class="field">
+            <label for="locationContactName">
+              Contact Name
+            </label>
+
+            <input id="locationContactName">
+          </div>
+
+          <div class="field full">
+            <label for="locationAddress">
+              Address
+            </label>
+
+            <input
+              id="locationAddress"
+              required
+            >
+          </div>
+
+          <div class="field">
+            <label for="locationContactPhone">
+              Contact Phone
+            </label>
+
+            <input
+              id="locationContactPhone"
+              type="tel"
+            >
+          </div>
+
+          <div class="field full">
+            <label for="locationInstructions">
+              Instructions
+            </label>
+
+            <textarea
+              id="locationInstructions"
+              placeholder="Dock hours, gate code or receiving instructions"
+            ></textarea>
+          </div>
+
+          <div class="customer-checkbox-row">
+            <label>
+              <input
+                id="isPickupLocation"
+                type="checkbox"
+                checked
+              >
+
+              Pickup Location
+            </label>
+
+            <label>
+              <input
+                id="isDeliveryLocation"
+                type="checkbox"
+                checked
+              >
+
+              Delivery Location
+            </label>
+          </div>
+        </div>
+
+        <div class="customer-modal-actions">
+          <button
+            class="primary-button"
+            type="submit"
+          >
+            Save Location
+          </button>
+
+          <button
+            class="secondary-button"
+            id="cancelLocationButton"
+            type="button"
+          >
+            Cancel
+          </button>
+        </div>
+
+        <div
+          class="message hidden"
+          id="locationFormMessage"
+        ></div>
+      </form>
+    </section>
+  </div>
+
+  <script src="/assets/js/config.js"></script>
+  <script src="/assets/js/auth.js"></script>
+  <script src="/assets/js/menu.js"></script>
+  <script src="/assets/js/customers.js"></script>
 </body>
 </html>
