@@ -1,0 +1,672 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1"
+  >
+
+  <title>MG Express Customer Portal</title>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+  <link
+    rel="stylesheet"
+    href="/assets/css/customer-portal.css"
+  >
+</head>
+
+<body>
+  <header class="portal-header">
+    <div class="portal-header-inner">
+      <div>
+        <div class="portal-brand">
+          MG <span>EXPRESS</span>
+        </div>
+
+        <div class="portal-subtitle">
+          Customer Portal
+        </div>
+      </div>
+
+      <button
+        class="portal-menu-button"
+        id="portalMenuButton"
+        type="button"
+        aria-label="Open customer menu"
+      >
+        ☰
+      </button>
+    </div>
+  </header>
+
+  <div
+    class="portal-menu-overlay"
+    id="portalMenuOverlay"
+  ></div>
+
+  <aside
+    class="portal-side-menu"
+    id="portalSideMenu"
+  >
+    <div class="portal-menu-header">
+      <div>
+        <div class="portal-menu-brand">
+          MG <span>EXPRESS</span>
+        </div>
+
+        <div
+          class="portal-menu-user"
+          id="portalMenuUser"
+        ></div>
+      </div>
+
+      <button
+        class="portal-menu-close"
+        id="portalMenuClose"
+        type="button"
+      >
+        ×
+      </button>
+    </div>
+
+    <nav class="portal-menu-links">
+      <button
+        class="portal-menu-link active"
+        type="button"
+        data-view="dashboard"
+      >
+        <span>🏠</span>
+        Dashboard
+      </button>
+
+      <button
+        class="portal-menu-link"
+        type="button"
+        data-view="request"
+      >
+        <span>➕</span>
+        Request Delivery
+      </button>
+
+      <button
+        class="portal-menu-link"
+        type="button"
+        data-view="quotes"
+      >
+        <span>📋</span>
+        My Quotes
+      </button>
+
+      <button
+        class="portal-menu-link"
+        type="button"
+        data-view="active"
+      >
+        <span>🚚</span>
+        Active Deliveries
+      </button>
+
+      <button
+        class="portal-menu-link"
+        type="button"
+        data-view="history"
+      >
+        <span>📚</span>
+        Delivery History
+      </button>
+
+      <button
+        class="portal-menu-link"
+        type="button"
+        data-view="invoices"
+      >
+        <span>📄</span>
+        Invoices
+      </button>
+
+      <button
+        class="portal-menu-link"
+        type="button"
+        data-view="locations"
+      >
+        <span>📍</span>
+        Saved Locations
+      </button>
+
+      <button
+        class="portal-menu-link"
+        type="button"
+        data-view="profile"
+      >
+        <span>👤</span>
+        Profile
+      </button>
+    </nav>
+
+    <button
+      class="portal-signout-button"
+      id="portalSignOutButton"
+      type="button"
+    >
+      Sign Out
+    </button>
+  </aside>
+
+  <main class="portal-container">
+    <div
+      class="portal-message hidden"
+      id="portalMessage"
+    ></div>
+
+    <!-- Dashboard -->
+    <section
+      class="portal-view active"
+      id="dashboardView"
+      data-portal-view="dashboard"
+    >
+      <div class="portal-welcome">
+        <div class="portal-eyebrow">
+          Secure recurring-customer account
+        </div>
+
+        <h1>
+          Welcome,
+          <span id="welcomeCustomerName">
+            Customer
+          </span>
+        </h1>
+
+        <p id="welcomeCompanyName"></p>
+      </div>
+
+      <section class="portal-stats">
+        <article class="portal-stat-card">
+          <div
+            class="portal-stat-number"
+            id="activeDeliveryCount"
+          >
+            0
+          </div>
+
+          <div class="portal-stat-label">
+            Active Deliveries
+          </div>
+        </article>
+
+        <article class="portal-stat-card">
+          <div
+            class="portal-stat-number"
+            id="pendingQuoteCount"
+          >
+            0
+          </div>
+
+          <div class="portal-stat-label">
+            Pending Quotes
+          </div>
+        </article>
+
+        <article class="portal-stat-card warning">
+          <div
+            class="portal-stat-number"
+            id="invoiceDueCount"
+          >
+            0
+          </div>
+
+          <div class="portal-stat-label">
+            Invoices Due
+          </div>
+        </article>
+
+        <article class="portal-stat-card">
+          <div
+            class="portal-stat-number"
+            id="completedDeliveryCount"
+          >
+            0
+          </div>
+
+          <div class="portal-stat-label">
+            Completed Deliveries
+          </div>
+        </article>
+      </section>
+
+      <section class="portal-panel">
+        <div class="portal-panel-heading">
+          <div>
+            <div class="portal-eyebrow">
+              Current activity
+            </div>
+
+            <h2>Active Deliveries</h2>
+          </div>
+
+          <button
+            class="portal-secondary-button"
+            type="button"
+            data-open-view="active"
+          >
+            View All
+          </button>
+        </div>
+
+        <div id="dashboardActiveDeliveries">
+          <div class="portal-empty">
+            Loading active deliveries...
+          </div>
+        </div>
+      </section>
+
+      <section class="portal-panel">
+        <div class="portal-panel-heading">
+          <div>
+            <div class="portal-eyebrow">
+              Customer billing
+            </div>
+
+            <h2>Invoices Requiring Attention</h2>
+          </div>
+
+          <button
+            class="portal-secondary-button"
+            type="button"
+            data-open-view="invoices"
+          >
+            View Invoices
+          </button>
+        </div>
+
+        <div id="dashboardInvoices">
+          <div class="portal-empty">
+            Loading invoices...
+          </div>
+        </div>
+      </section>
+    </section>
+
+    <!-- Request Delivery -->
+    <section
+      class="portal-view"
+      id="requestView"
+      data-portal-view="request"
+    >
+      <div class="portal-page-heading">
+        <div>
+          <div class="portal-eyebrow">
+            New courier service request
+          </div>
+
+          <h1>Request Delivery</h1>
+        </div>
+      </div>
+
+      <section class="portal-panel">
+        <form id="deliveryRequestForm">
+          <div class="portal-form-grid">
+            <div class="portal-section-title">
+              Pickup
+            </div>
+
+            <div class="portal-field full">
+              <label for="pickupLocationSelect">
+                Saved Pickup Location
+              </label>
+
+              <select id="pickupLocationSelect">
+                <option value="">
+                  Enter a different address
+                </option>
+              </select>
+            </div>
+
+            <div class="portal-field full">
+              <label for="requestPickupAddress">
+                Pickup Address
+              </label>
+
+              <input
+                id="requestPickupAddress"
+                required
+              >
+            </div>
+
+            <div class="portal-section-title">
+              Delivery
+            </div>
+
+            <div class="portal-field full">
+              <label for="deliveryLocationSelect">
+                Saved Delivery Location
+              </label>
+
+              <select id="deliveryLocationSelect">
+                <option value="">
+                  Enter a different address
+                </option>
+              </select>
+            </div>
+
+            <div class="portal-field full">
+              <label for="requestDeliveryAddress">
+                Delivery Address
+              </label>
+
+              <input
+                id="requestDeliveryAddress"
+                required
+              >
+            </div>
+
+            <div class="portal-section-title">
+              Service Details
+            </div>
+
+            <div class="portal-field">
+              <label for="requestScheduledDate">
+                Requested Date
+              </label>
+
+              <input
+                id="requestScheduledDate"
+                type="date"
+                required
+              >
+            </div>
+
+            <div class="portal-field">
+              <label for="requestPickupTime">
+                Requested Pickup Time
+              </label>
+
+              <input
+                id="requestPickupTime"
+                type="time"
+              >
+            </div>
+
+            <div class="portal-field">
+              <label for="requestVehicleType">
+                Vehicle
+              </label>
+
+              <select id="requestVehicleType">
+                <option value="Sedan">
+                  Sedan
+                </option>
+
+                <option value="Small Cargo Van">
+                  Small Cargo Van
+                </option>
+
+                <option value="Sprinter Van">
+                  Sprinter Van
+                </option>
+              </select>
+            </div>
+
+            <div class="portal-field">
+              <label for="requestDeliverySpeed">
+                Delivery Speed
+              </label>
+
+              <select id="requestDeliverySpeed">
+                <option value="2 Hour">
+                  2 Hour
+                </option>
+
+                <option value="3 Hour">
+                  3 Hour
+                </option>
+
+                <option value="4 Hour">
+                  4 Hour
+                </option>
+
+                <option value="5 Hour">
+                  5 Hour
+                </option>
+
+                <option value="6 Hour">
+                  6 Hour
+                </option>
+
+                <option value="Next Day">
+                  Next Day
+                </option>
+              </select>
+            </div>
+
+            <div class="portal-field full">
+              <label for="requestPackageType">
+                Package Description
+              </label>
+
+              <input
+                id="requestPackageType"
+                placeholder="Example: Three sealed medical boxes"
+              >
+            </div>
+
+            <div class="portal-field full">
+              <label for="requestInstructions">
+                Special Instructions
+              </label>
+
+              <textarea
+                id="requestInstructions"
+                placeholder="Contact names, dock hours, access codes or delivery instructions"
+              ></textarea>
+            </div>
+          </div>
+
+          <button
+            class="portal-primary-button"
+            id="submitDeliveryRequestButton"
+            type="submit"
+          >
+            Submit Quote Request
+          </button>
+
+          <div
+            class="portal-message hidden"
+            id="requestMessage"
+          ></div>
+        </form>
+      </section>
+    </section>
+
+    <!-- Quotes -->
+    <section
+      class="portal-view"
+      id="quotesView"
+      data-portal-view="quotes"
+    >
+      <div class="portal-page-heading">
+        <div>
+          <div class="portal-eyebrow">
+            Pricing awaiting review or approval
+          </div>
+
+          <h1>My Quotes</h1>
+        </div>
+      </div>
+
+      <div id="quotesList">
+        <div class="portal-empty">
+          Loading quotes...
+        </div>
+      </div>
+    </section>
+
+    <!-- Active Deliveries -->
+    <section
+      class="portal-view"
+      id="activeView"
+      data-portal-view="active"
+    >
+      <div class="portal-page-heading">
+        <div>
+          <div class="portal-eyebrow">
+            Status and estimated drop-off time
+          </div>
+
+          <h1>Active Deliveries</h1>
+        </div>
+      </div>
+
+      <div id="activeDeliveriesList">
+        <div class="portal-empty">
+          Loading active deliveries...
+        </div>
+      </div>
+    </section>
+
+    <!-- History -->
+    <section
+      class="portal-view"
+      id="historyView"
+      data-portal-view="history"
+    >
+      <div class="portal-page-heading">
+        <div>
+          <div class="portal-eyebrow">
+            Completed courier services
+          </div>
+
+          <h1>Delivery History</h1>
+        </div>
+      </div>
+
+      <div id="deliveryHistoryList">
+        <div class="portal-empty">
+          Loading delivery history...
+        </div>
+      </div>
+    </section>
+
+    <!-- Invoices -->
+    <section
+      class="portal-view"
+      id="invoicesView"
+      data-portal-view="invoices"
+    >
+      <div class="portal-page-heading">
+        <div>
+          <div class="portal-eyebrow">
+            View balances and payment status
+          </div>
+
+          <h1>Invoices</h1>
+        </div>
+      </div>
+
+      <div id="customerInvoiceList">
+        <div class="portal-empty">
+          Loading invoices...
+        </div>
+      </div>
+    </section>
+
+    <!-- Saved Locations -->
+    <section
+      class="portal-view"
+      id="locationsView"
+      data-portal-view="locations"
+    >
+      <div class="portal-page-heading">
+        <div>
+          <div class="portal-eyebrow">
+            Approved recurring delivery addresses
+          </div>
+
+          <h1>Saved Locations</h1>
+        </div>
+      </div>
+
+      <div id="savedLocationList">
+        <div class="portal-empty">
+          Loading saved locations...
+        </div>
+      </div>
+    </section>
+
+    <!-- Profile -->
+    <section
+      class="portal-view"
+      id="profileView"
+      data-portal-view="profile"
+    >
+      <div class="portal-page-heading">
+        <div>
+          <div class="portal-eyebrow">
+            Secure account information
+          </div>
+
+          <h1>Profile</h1>
+        </div>
+      </div>
+
+      <section class="portal-panel">
+        <div class="portal-profile-grid">
+          <div class="portal-profile-box">
+            <span>Contact Name</span>
+
+            <strong id="profileCustomerName">
+              —
+            </strong>
+          </div>
+
+          <div class="portal-profile-box">
+            <span>Company</span>
+
+            <strong id="profileCompanyName">
+              —
+            </strong>
+          </div>
+
+          <div class="portal-profile-box">
+            <span>Email</span>
+
+            <strong id="profileEmail">
+              —
+            </strong>
+          </div>
+
+          <div class="portal-profile-box">
+            <span>Phone</span>
+
+            <strong id="profilePhone">
+              —
+            </strong>
+          </div>
+
+          <div class="portal-profile-box">
+            <span>Account Type</span>
+
+            <strong>
+              Recurring Customer
+            </strong>
+          </div>
+
+          <div class="portal-profile-box">
+            <span>Portal Access</span>
+
+            <strong>
+              Enabled
+            </strong>
+          </div>
+        </div>
+      </section>
+    </section>
+  </main>
+
+  <script src="/assets/js/config.js"></script>
+  <script src="/assets/js/auth.js"></script>
+  <script src="/assets/js/customer-portal.js"></script>
+</body>
+</html>
