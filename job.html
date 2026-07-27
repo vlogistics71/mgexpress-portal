@@ -2,20 +2,12 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
-
-  <meta
-    name="viewport"
-    content="width=device-width, initial-scale=1"
-  >
-
-  <title>MG Express Job Details</title>
-
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>MG Express Job Command Center</title>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
   <style>
-    * {
-      box-sizing: border-box;
-    }
+    * { box-sizing: border-box; }
 
     :root {
       --dark-green: #064f3b;
@@ -33,7 +25,10 @@
       --warning-bg: #fff5d8;
       --blue: #245d9c;
       --blue-bg: #eaf3ff;
+      --shadow: 0 8px 27px rgba(0,0,0,.05);
     }
+
+    html { scroll-behavior: smooth; }
 
     body {
       margin: 0;
@@ -42,12 +37,11 @@
       color: var(--ink);
     }
 
-    button,
-    input,
-    select,
-    textarea {
-      font: inherit;
-    }
+    body.modal-open { overflow: hidden; }
+
+    button, input, select, textarea { font: inherit; }
+    button { cursor: pointer; }
+    .hidden { display: none !important; }
 
     .topbar {
       position: sticky;
@@ -59,7 +53,7 @@
     }
 
     .topbar-inner {
-      width: min(950px, 100%);
+      width: min(1180px, 100%);
       margin: auto;
       display: flex;
       align-items: center;
@@ -73,9 +67,7 @@
       line-height: 1.08;
     }
 
-    .brand span {
-      color: var(--coral);
-    }
+    .brand span { color: var(--coral); }
 
     .staff-email {
       margin-top: 6px;
@@ -85,9 +77,9 @@
     }
 
     .container {
-      width: min(950px, 100%);
+      width: min(1180px, 100%);
       margin: auto;
-      padding: 25px 18px 70px;
+      padding: 24px 18px 75px;
     }
 
     .back-button {
@@ -95,7 +87,7 @@
       align-items: center;
       gap: 7px;
       min-height: 46px;
-      margin-bottom: 20px;
+      margin-bottom: 18px;
       padding: 10px 15px;
       border: 1px solid var(--line);
       border-radius: 13px;
@@ -105,24 +97,50 @@
       font-weight: 900;
     }
 
-    .job-heading {
+    .loading, .error-box {
+      padding: 32px 22px;
+      border-radius: 19px;
+      text-align: center;
+      line-height: 1.55;
+    }
+
+    .loading {
+      border: 1px solid var(--line);
+      background: white;
+      color: var(--muted);
+    }
+
+    .error-box {
+      background: var(--danger-bg);
+      color: var(--danger);
+    }
+
+    .hero {
+      padding: 22px;
+      border: 1px solid var(--line);
+      border-radius: 24px;
+      background: white;
+      box-shadow: var(--shadow);
+    }
+
+    .hero-row {
       display: flex;
       align-items: flex-start;
       justify-content: space-between;
       gap: 18px;
-      margin-bottom: 23px;
     }
 
     .eyebrow {
-      margin-bottom: 5px;
+      margin-bottom: 6px;
       color: var(--muted);
-      font-size: 16px;
+      font-size: 14px;
+      font-weight: 800;
     }
 
     h1 {
       margin: 0;
       color: var(--dark-green);
-      font-size: clamp(38px, 8vw, 55px);
+      font-size: clamp(34px, 7vw, 54px);
       line-height: 1.02;
       overflow-wrap: anywhere;
     }
@@ -134,68 +152,198 @@
       overflow-wrap: anywhere;
     }
 
-    .status-pill {
+    .badge-row {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+      gap: 9px;
+    }
+
+    .status-pill, .priority-pill {
       flex-shrink: 0;
       padding: 10px 14px;
       border-radius: 999px;
-      background: var(--light-green);
-      color: var(--green);
-      font-size: 13px;
+      font-size: 12px;
       font-weight: 900;
-      text-transform: capitalize;
+      text-transform: uppercase;
       white-space: nowrap;
     }
 
-    .status-new {
-      background: var(--blue-bg);
-      color: var(--blue);
+    .status-pill { background: var(--light-green); color: var(--green); }
+    .status-waiting_payment { background: var(--warning-bg); color: var(--warning); }
+    .status-cancelled, .status-canceled { background: var(--danger-bg); color: var(--danger); }
+    .status-new { background: var(--blue-bg); color: var(--blue); }
+
+    .priority-routine { background: var(--light-green); color: var(--green); }
+    .priority-scheduled { background: var(--blue-bg); color: var(--blue); }
+    .priority-rush { background: var(--warning-bg); color: var(--warning); }
+    .priority-emergency { background: var(--danger-bg); color: var(--danger); }
+
+    .progress-wrap {
+      margin-top: 22px;
+      overflow-x: auto;
+      padding-bottom: 2px;
     }
 
-    .status-waiting_payment {
+    .progress-track {
+      min-width: 760px;
+      display: grid;
+      grid-template-columns: repeat(7, minmax(90px, 1fr));
+      gap: 8px;
+    }
+
+    .progress-step {
+      position: relative;
+      min-height: 76px;
+      padding: 13px 10px;
+      border: 1px solid var(--line);
+      border-radius: 15px;
+      background: #f8fbfa;
+      text-align: center;
+    }
+
+    .progress-step.complete {
+      border-color: #a9d3c2;
+      background: var(--light-green);
+      color: var(--green);
+    }
+
+    .progress-step.current {
+      border-color: #e5c15e;
       background: var(--warning-bg);
       color: var(--warning);
     }
 
-    .status-delivered {
-      background: var(--light-green);
-      color: var(--green);
-    }
-
-    .status-cancelled,
-    .status-canceled {
+    .progress-step.problem {
+      border-color: #efb5b5;
       background: var(--danger-bg);
       color: var(--danger);
     }
 
-    .page-grid {
+    .step-icon { font-size: 20px; }
+    .step-label { margin-top: 7px; font-size: 12px; font-weight: 900; }
+
+    .summary-grid {
       display: grid;
-      grid-template-columns: minmax(0, 1.55fr) minmax(270px, .75fr);
-      gap: 18px;
-      align-items: start;
+      grid-template-columns: repeat(6, minmax(0, 1fr));
+      gap: 12px;
+      margin-top: 18px;
     }
 
-    .stack {
-      display: grid;
-      gap: 18px;
+    .summary-card {
+      min-width: 0;
+      padding: 14px;
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      background: #f8fbfa;
     }
+
+    .summary-label {
+      display: block;
+      margin-bottom: 6px;
+      color: var(--muted);
+      font-size: 10px;
+      font-weight: 900;
+      text-transform: uppercase;
+    }
+
+    .summary-value {
+      color: var(--dark-green);
+      font-size: 15px;
+      font-weight: 900;
+      overflow-wrap: anywhere;
+    }
+
+    .quick-actions {
+      display: grid;
+      grid-template-columns: repeat(8, minmax(120px, 1fr));
+      gap: 10px;
+      margin-top: 18px;
+      overflow-x: auto;
+      padding-bottom: 2px;
+    }
+
+    .quick-action {
+      min-height: 50px;
+      padding: 11px 12px;
+      border: 1px solid var(--line);
+      border-radius: 13px;
+      background: white;
+      color: var(--dark-green);
+      font-weight: 900;
+      white-space: nowrap;
+    }
+
+    .quick-action.primary {
+      border-color: var(--green);
+      background: var(--green);
+      color: white;
+    }
+
+    .quick-action.danger {
+      border-color: #e8bcbc;
+      background: var(--danger-bg);
+      color: var(--danger);
+    }
+
+    .tabs {
+      display: flex;
+      gap: 9px;
+      margin: 20px 0 14px;
+      overflow-x: auto;
+      padding-bottom: 2px;
+    }
+
+    .tab-button {
+      min-height: 48px;
+      padding: 11px 15px;
+      border: 1px solid var(--line);
+      border-radius: 13px;
+      background: white;
+      color: var(--dark-green);
+      font-weight: 900;
+      white-space: nowrap;
+    }
+
+    .tab-button.active {
+      border-color: var(--green);
+      background: var(--green);
+      color: white;
+    }
+
+    .tab-panel { display: none; }
+    .tab-panel.active { display: block; }
 
     .panel {
       padding: 21px;
       border: 1px solid var(--line);
       border-radius: 22px;
       background: white;
-      box-shadow: 0 8px 27px rgba(0, 0, 0, .045);
+      box-shadow: var(--shadow);
     }
 
-    .panel h2 {
-      margin: 0 0 18px;
-      font-size: 25px;
+    .panel + .panel { margin-top: 16px; }
+
+    .panel-heading {
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      gap: 14px;
+      margin-bottom: 18px;
+    }
+
+    .panel h2 { margin: 0; font-size: 25px; color: var(--dark-green); }
+
+    .two-column {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+      gap: 16px;
     }
 
     .detail-grid {
       display: grid;
       grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: 15px;
+      gap: 14px;
     }
 
     .detail {
@@ -205,9 +353,7 @@
       background: #f7faf9;
     }
 
-    .detail.full {
-      grid-column: 1 / -1;
-    }
+    .detail.full { grid-column: 1 / -1; }
 
     .detail-label {
       display: block;
@@ -227,38 +373,11 @@
       white-space: pre-wrap;
     }
 
-    .route-card {
-      display: grid;
-      gap: 14px;
-    }
-
-    .route-stop {
-      padding: 17px;
-      border-radius: 16px;
-      background: #f7faf9;
-    }
-
-    .route-stop-title {
-      margin-bottom: 7px;
-      color: var(--dark-green);
-      font-size: 14px;
-      font-weight: 900;
-      text-transform: uppercase;
-    }
-
-    .address {
-      font-size: 17px;
-      font-weight: 750;
-      line-height: 1.45;
-      overflow-wrap: anywhere;
-    }
-
-    .route-arrow {
-      margin-left: 18px;
-      color: var(--green);
-      font-size: 28px;
-      font-weight: 900;
-    }
+    .route-card { display: grid; gap: 14px; }
+    .route-stop { padding: 17px; border-radius: 16px; background: #f7faf9; }
+    .route-stop-title { margin-bottom: 7px; color: var(--dark-green); font-size: 13px; font-weight: 900; text-transform: uppercase; }
+    .address { font-size: 17px; font-weight: 750; line-height: 1.45; overflow-wrap: anywhere; }
+    .route-arrow { margin-left: 18px; color: var(--green); font-size: 28px; font-weight: 900; }
 
     .map-button {
       display: inline-flex;
@@ -275,27 +394,19 @@
       font-weight: 900;
     }
 
-    .field {
-      margin-bottom: 16px;
-    }
-
-    .field:last-child {
-      margin-bottom: 0;
-    }
+    .field { margin-bottom: 15px; }
 
     .field label {
       display: block;
       margin-bottom: 7px;
       color: var(--muted);
-      font-size: 12px;
+      font-size: 11px;
       font-weight: 900;
       letter-spacing: .04em;
       text-transform: uppercase;
     }
 
-    .field input,
-    .field select,
-    .field textarea {
+    .field input, .field select, .field textarea {
       width: 100%;
       min-height: 50px;
       padding: 12px 14px;
@@ -305,34 +416,27 @@
       color: var(--ink);
     }
 
-    .field textarea {
-      min-height: 110px;
-      resize: vertical;
+    .field textarea { min-height: 110px; resize: vertical; }
+
+    .button-row {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+      margin-top: 16px;
     }
 
-    .save-button,
-    .print-button {
-      width: 100%;
-      min-height: 55px;
-      border: 0;
+    .save-button, .secondary-button, .danger-button {
+      min-height: 52px;
+      padding: 11px 14px;
       border-radius: 14px;
       font-weight: 900;
-      cursor: pointer;
     }
 
-    .save-button {
-      background: var(--green);
-      color: white;
-    }
+    .save-button { border: 0; background: var(--green); color: white; }
+    .secondary-button { border: 1px solid var(--line); background: white; color: var(--dark-green); }
+    .danger-button { border: 1px solid #e5bcbc; background: var(--danger-bg); color: var(--danger); }
 
-    .print-button {
-      margin-top: 11px;
-      border: 1px solid var(--line);
-      background: white;
-      color: var(--dark-green);
-    }
-
-    .save-message {
+    .save-message, .page-message {
       display: none;
       margin-top: 13px;
       padding: 13px;
@@ -340,25 +444,16 @@
       line-height: 1.45;
     }
 
-    .save-message.success {
-      display: block;
-      background: var(--light-green);
-      color: var(--dark-green);
-    }
+    .save-message.success, .page-message.success { display: block; background: var(--light-green); color: var(--dark-green); }
+    .save-message.error, .page-message.error { display: block; background: var(--danger-bg); color: var(--danger); }
 
-    .save-message.error {
-      display: block;
-      background: var(--danger-bg);
-      color: var(--danger);
-    }
-
-    .photo-grid {
+    .photo-grid, .document-grid {
       display: grid;
       grid-template-columns: repeat(2, minmax(0, 1fr));
       gap: 14px;
     }
 
-    .photo-card {
+    .photo-card, .document-card {
       overflow: hidden;
       border: 1px solid var(--line);
       border-radius: 16px;
@@ -368,152 +463,145 @@
     .photo-card img {
       display: block;
       width: 100%;
-      height: 190px;
+      height: 210px;
       object-fit: cover;
       background: #edf2f0;
     }
 
-    .photo-content {
-      padding: 14px;
-    }
+    .photo-content, .document-content { padding: 14px; }
+    .photo-title, .document-title { color: var(--dark-green); font-weight: 900; overflow-wrap: anywhere; }
+    .photo-date, .document-meta { margin-top: 6px; color: var(--muted); font-size: 12px; line-height: 1.4; }
+    .photo-link, .document-link { display: inline-block; margin-top: 10px; color: var(--green); font-weight: 900; }
+    .photo-missing { display: grid; min-height: 190px; place-items: center; padding: 20px; color: var(--muted); text-align: center; }
 
-    .photo-title {
-      color: var(--dark-green);
-      font-weight: 900;
-    }
-
-    .photo-date {
-      margin-top: 6px;
-      color: var(--muted);
-      font-size: 12px;
-      line-height: 1.4;
-    }
-
-    .photo-link {
-      display: inline-block;
-      margin-top: 10px;
-      color: var(--green);
-      font-weight: 900;
-    }
-
-    .photo-missing {
+    .document-controls {
       display: grid;
-      min-height: 190px;
-      place-items: center;
-      padding: 20px;
-      color: var(--muted);
-      text-align: center;
+      gap: 9px;
+      margin-top: 13px;
+      padding-top: 12px;
+      border-top: 1px solid var(--line);
+    }
+
+    .check-row {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      color: var(--ink);
+      font-size: 13px;
+      font-weight: 800;
+    }
+
+    .check-row input { width: 18px; height: 18px; }
+
+    .upload-box {
+      padding: 17px;
+      border: 2px dashed #bcd5cb;
+      border-radius: 16px;
+      background: #f8fbfa;
     }
 
     .timeline {
-      position: relative;
       display: grid;
-      gap: 17px;
-      padding-left: 8px;
+      gap: 15px;
     }
 
     .timeline-item {
-      position: relative;
       display: grid;
-      grid-template-columns: 19px minmax(0, 1fr);
+      grid-template-columns: 18px minmax(0, 1fr);
       gap: 12px;
     }
 
     .timeline-dot {
       width: 16px;
       height: 16px;
-      margin-top: 2px;
-      border: 4px solid #b8d8cb;
+      margin-top: 3px;
+      border: 4px solid var(--green);
       border-radius: 50%;
-      background: white;
-    }
-
-    .timeline-dot.complete {
-      border-color: var(--green);
       background: var(--green);
     }
 
-    .timeline-title {
-      font-weight: 900;
-    }
+    .timeline-title { font-weight: 900; }
+    .timeline-date { margin-top: 4px; color: var(--muted); font-size: 13px; line-height: 1.4; }
+    .timeline-description { margin-top: 5px; color: var(--ink); line-height: 1.45; }
 
-    .timeline-date {
-      margin-top: 4px;
-      color: var(--muted);
-      font-size: 13px;
-      line-height: 1.4;
-    }
-
-    .loading,
-    .error-box {
-      padding: 32px 22px;
-      border-radius: 19px;
-      text-align: center;
-      line-height: 1.55;
-    }
-
-    .loading {
+    .empty {
+      padding: 28px 18px;
       border: 1px solid var(--line);
-      background: white;
+      border-radius: 16px;
+      background: #f8fbfa;
       color: var(--muted);
+      text-align: center;
     }
 
-    .error-box {
-      background: var(--danger-bg);
-      color: var(--danger);
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 500;
+      display: none;
+      place-items: center;
+      padding: 18px;
+      background: rgba(7, 28, 21, .62);
     }
 
-    .hidden {
-      display: none !important;
+    .modal-overlay.open { display: grid; }
+
+    .modal {
+      width: min(560px, 100%);
+      max-height: 90vh;
+      overflow-y: auto;
+      padding: 22px;
+      border-radius: 22px;
+      background: white;
+      box-shadow: 0 20px 60px rgba(0,0,0,.25);
     }
 
-    @media (max-width: 780px) {
-      .page-grid {
-        grid-template-columns: 1fr;
-      }
+    .modal-heading {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 13px;
+      margin-bottom: 18px;
+    }
 
-      .job-heading {
-        flex-direction: column;
-      }
+    .modal-close {
+      display: grid;
+      place-items: center;
+      width: 43px;
+      height: 43px;
+      border: 0;
+      border-radius: 12px;
+      background: var(--background);
+      color: var(--dark-green);
+      font-size: 25px;
+    }
 
-      .detail-grid,
-      .photo-grid {
-        grid-template-columns: 1fr;
-      }
+    @media (max-width: 980px) {
+      .summary-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+      .quick-actions { grid-template-columns: repeat(4, minmax(140px, 1fr)); }
+    }
 
-      .detail.full {
-        grid-column: auto;
-      }
+    @media (max-width: 760px) {
+      .hero-row, .panel-heading { flex-direction: column; align-items: stretch; }
+      .badge-row { justify-content: flex-start; }
+      .summary-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .two-column, .detail-grid, .photo-grid, .document-grid { grid-template-columns: 1fr; }
+      .detail.full { grid-column: auto; }
+      .button-row { grid-template-columns: 1fr; }
     }
 
     @media print {
-      .topbar,
-      .back-button,
-      .controls-panel,
-      .dispatch-menu-button,
-      .dispatch-menu-overlay,
-      .dispatch-side-menu {
+      .topbar, .back-button, .quick-actions, .tabs, .controls-only,
+      .dispatch-menu-button, .dispatch-menu-overlay, .dispatch-side-menu,
+      .modal-overlay, .page-message {
         display: none !important;
       }
 
-      body {
-        background: white;
-      }
-
-      .container {
-        width: 100%;
-        padding: 0;
-      }
-
-      .page-grid {
-        display: block;
-      }
-
-      .panel {
-        margin-bottom: 15px;
-        box-shadow: none;
-        break-inside: avoid;
-      }
+      body { background: white; }
+      .container { width: 100%; padding: 0; }
+      .hero, .panel { box-shadow: none; break-inside: avoid; }
+      .tab-panel { display: block !important; }
+      #timelinePanel { display: none !important; }
+      .document-controls { display: none !important; }
     }
   </style>
 </head>
@@ -522,330 +610,312 @@
   <header class="topbar">
     <div class="topbar-inner">
       <div>
-        <div class="brand">
-          MG <span>EXPRESS</span> DISPATCH
-        </div>
-
-        <div
-          class="staff-email"
-          id="staffEmail"
-        ></div>
+        <div class="brand">MG <span>EXPRESS</span> DISPATCH</div>
+        <div class="staff-email" id="staffEmail"></div>
       </div>
     </div>
   </header>
 
   <main class="container">
-    <a class="back-button" href="/jobs.html">
-      ← Active Jobs
-    </a>
+    <a class="back-button" href="/jobs.html">← Active Jobs</a>
 
-    <div id="loadingBox" class="loading">
-      Loading work order...
-    </div>
-
+    <div id="loadingBox" class="loading">Loading Job Command Center...</div>
     <div id="errorBox" class="error-box hidden"></div>
 
     <div id="jobPage" class="hidden">
-      <div class="job-heading">
-        <div>
-          <div class="eyebrow">MG Express Work Order</div>
+      <section class="hero">
+        <div class="hero-row">
+          <div>
+            <div class="eyebrow">MG Express Job Command Center</div>
+            <h1 id="jobNumber">Job</h1>
+            <div class="customer-heading" id="customerHeading"></div>
+          </div>
 
-          <h1 id="jobNumber">Job</h1>
-
-          <div
-            class="customer-heading"
-            id="customerHeading"
-          ></div>
+          <div class="badge-row">
+            <div class="priority-pill priority-routine" id="priorityPill">Routine</div>
+            <div class="status-pill" id="statusPill">Open</div>
+          </div>
         </div>
 
-        <div
-          class="status-pill"
-          id="statusPill"
-        >
-          Open
+        <div class="progress-wrap">
+          <div class="progress-track" id="progressTrack"></div>
         </div>
+
+        <div class="summary-grid">
+          <div class="summary-card"><span class="summary-label">Customer</span><div class="summary-value" id="summaryCustomer">—</div></div>
+          <div class="summary-card"><span class="summary-label">Driver</span><div class="summary-value" id="summaryDriver">Unassigned</div></div>
+          <div class="summary-card"><span class="summary-label">ETA</span><div class="summary-value" id="summaryEta">Pending</div></div>
+          <div class="summary-card"><span class="summary-label">Customer Charge</span><div class="summary-value" id="summaryCharge">$0.00</div></div>
+          <div class="summary-card"><span class="summary-label">Driver Pay</span><div class="summary-value" id="summaryDriverPay">$0.00</div></div>
+          <div class="summary-card"><span class="summary-label">Invoice</span><div class="summary-value" id="summaryInvoice">Pending</div></div>
+        </div>
+
+        <div class="quick-actions">
+          <button class="quick-action" id="callCustomerButton" type="button">📞 Call Customer</button>
+          <button class="quick-action" id="textCustomerButton" type="button">📱 Text Customer</button>
+          <button class="quick-action" data-open-tab="driver" type="button">🚚 Assign Driver</button>
+          <button class="quick-action primary" id="generatePacketButton" type="button">📄 Generate Job Packet</button>
+          <button class="quick-action" id="createInvoiceButton" type="button">💰 Create Invoice</button>
+          <button class="quick-action" id="sendProofButton" type="button">📧 Send Proof</button>
+          <button class="quick-action danger" id="exceptionButton" type="button">⚠ Exception</button>
+          <button class="quick-action" data-open-tab="details" type="button">✏ Edit Job</button>
+        </div>
+      </section>
+
+      <div id="pageMessage" class="page-message"></div>
+
+      <div class="tabs">
+        <button class="tab-button active" data-tab="details" type="button">Job Details</button>
+        <button class="tab-button" data-tab="billing" type="button">Billing</button>
+        <button class="tab-button" data-tab="driver" type="button">Driver</button>
+        <button class="tab-button" data-tab="documents" type="button">Documents (eBOL)</button>
+        <button class="tab-button" data-tab="timeline" type="button">Timeline — Dispatch Only</button>
       </div>
 
-      <div class="page-grid">
-        <div class="stack">
+      <section class="tab-panel active" data-panel="details">
+        <div class="two-column">
           <section class="panel">
-            <h2>Route</h2>
-
+            <div class="panel-heading"><h2>Route</h2></div>
             <div class="route-card">
               <div class="route-stop">
-                <div class="route-stop-title">
-                  Pickup Address
-                </div>
-
-                <div
-                  class="address"
-                  id="pickupAddress"
-                ></div>
-
-                <a
-                  class="map-button"
-                  id="pickupMap"
-                  target="_blank"
-                  rel="noopener"
-                >
-                  Open Pickup in Maps
-                </a>
+                <div class="route-stop-title">Pickup Address</div>
+                <div class="address" id="pickupAddress"></div>
+                <a class="map-button" id="pickupMap" target="_blank" rel="noopener">Open Pickup in Maps</a>
               </div>
-
               <div class="route-arrow">↓</div>
-
               <div class="route-stop">
-                <div class="route-stop-title">
-                  Delivery Address
-                </div>
-
-                <div
-                  class="address"
-                  id="deliveryAddress"
-                ></div>
-
-                <a
-                  class="map-button"
-                  id="deliveryMap"
-                  target="_blank"
-                  rel="noopener"
-                >
-                  Open Delivery in Maps
-                </a>
+                <div class="route-stop-title">Delivery Address</div>
+                <div class="address" id="deliveryAddress"></div>
+                <a class="map-button" id="deliveryMap" target="_blank" rel="noopener">Open Delivery in Maps</a>
               </div>
             </div>
           </section>
 
-          <section class="panel">
-            <h2>Customer & Package</h2>
-
-            <div class="detail-grid">
-              <div class="detail">
-                <span class="detail-label">
-                  Customer
-                </span>
-
-                <div
-                  class="detail-value"
-                  id="customerName"
-                ></div>
-              </div>
-
-              <div class="detail">
-                <span class="detail-label">
-                  Customer Email
-                </span>
-
-                <div
-                  class="detail-value"
-                  id="customerEmail"
-                ></div>
-              </div>
-
-              <div class="detail">
-                <span class="detail-label">
-                  Vehicle
-                </span>
-
-                <div
-                  class="detail-value"
-                  id="vehicleType"
-                ></div>
-              </div>
-
-              <div class="detail">
-                <span class="detail-label">
-                  Delivery Speed
-                </span>
-
-                <div
-                  class="detail-value"
-                  id="deliverySpeed"
-                ></div>
-              </div>
-
-              <div class="detail">
-                <span class="detail-label">
-                  Package
-                </span>
-
-                <div
-                  class="detail-value"
-                  id="packageType"
-                ></div>
-              </div>
-
-              <div class="detail">
-                <span class="detail-label">
-                  Delivery Method
-                </span>
-
-                <div
-                  class="detail-value"
-                  id="deliveryMethod"
-                ></div>
-              </div>
-
-              <div class="detail full">
-                <span class="detail-label">
-                  Special Instructions
-                </span>
-
-                <div
-                  class="detail-value"
-                  id="specialInstructions"
-                ></div>
-              </div>
-            </div>
-          </section>
-
-          <section class="panel">
-            <h2>Proof Photos</h2>
-
-            <div class="photo-grid">
-              <div
-                class="photo-card"
-                id="pickupPhotoCard"
-              ></div>
-
-              <div
-                class="photo-card"
-                id="deliveryPhotoCard"
-              ></div>
-            </div>
-          </section>
-
-          <section class="panel">
-            <h2>Job Timeline</h2>
-
-            <div class="timeline" id="timeline"></div>
-          </section>
-        </div>
-
-        <div class="stack">
-          <section class="panel controls-panel">
-            <h2>Dispatch Controls</h2>
+          <section class="panel controls-only">
+            <div class="panel-heading"><h2>Edit Job</h2></div>
 
             <div class="field">
-              <label for="driverSelect">
-                Assigned Driver
-              </label>
-
-              <select id="driverSelect">
-                <option value="">
-                  Unassigned
-                </option>
+              <label for="prioritySelect">Priority</label>
+              <select id="prioritySelect">
+                <option value="routine">Routine</option>
+                <option value="scheduled">Scheduled</option>
+                <option value="rush">Rush</option>
+                <option value="emergency">Emergency</option>
               </select>
             </div>
 
             <div class="field">
-              <label for="driverPay">
-                Driver Pay
-              </label>
-
-              <input
-                id="driverPay"
-                type="number"
-                min="0"
-                step="0.01"
-                placeholder="0.00"
-              >
-            </div>
-
-            <div class="field">
-              <label for="statusSelect">
-                Job Status
-              </label>
-
+              <label for="statusSelect">Job Status</label>
               <select id="statusSelect">
                 <option value="new">New</option>
-
-                <option value="waiting_payment">
-                  Waiting Payment
-                </option>
-
+                <option value="approved">Approved</option>
+                <option value="waiting_payment">Waiting Payment</option>
                 <option value="paid">Paid</option>
-
                 <option value="ready">Ready</option>
-
-                <option value="in_transit">
-                  In Transit
-                </option>
-
-                <option value="delivered">
-                  Delivered
-                </option>
-
-                <option value="cancelled">
-                  Cancelled
-                </option>
+                <option value="assigned">Assigned</option>
+                <option value="picked_up">Picked Up</option>
+                <option value="in_transit">In Transit</option>
+                <option value="delayed">Delayed</option>
+                <option value="delivered">Delivered</option>
+                <option value="closed">Closed</option>
+                <option value="cancelled">Cancelled</option>
               </select>
             </div>
 
-            <button
-              class="save-button"
-              id="saveButton"
-              type="button"
-            >
-              Save Changes
-            </button>
+            <div class="field">
+              <label for="customerVisibleNotes">Customer-Visible Notes</label>
+              <textarea id="customerVisibleNotes"></textarea>
+            </div>
 
-            <button
-              class="print-button"
-              id="printButton"
-              type="button"
-            >
-              Print Work Order
-            </button>
+            <div class="field">
+              <label for="internalDispatchNotes">Internal Dispatch Notes</label>
+              <textarea id="internalDispatchNotes"></textarea>
+            </div>
 
-            <div
-              class="save-message"
-              id="saveMessage"
-            ></div>
+            <button class="save-button" id="saveDetailsButton" type="button">Save Job Details</button>
+            <div class="save-message" id="detailsSaveMessage"></div>
+          </section>
+        </div>
+
+        <section class="panel">
+          <div class="panel-heading"><h2>Customer & Package</h2></div>
+          <div class="detail-grid">
+            <div class="detail"><span class="detail-label">Customer</span><div class="detail-value" id="customerName"></div></div>
+            <div class="detail"><span class="detail-label">Customer Email</span><div class="detail-value" id="customerEmail"></div></div>
+            <div class="detail"><span class="detail-label">Customer Phone</span><div class="detail-value" id="customerPhone"></div></div>
+            <div class="detail"><span class="detail-label">Vehicle</span><div class="detail-value" id="vehicleType"></div></div>
+            <div class="detail"><span class="detail-label">Delivery Speed</span><div class="detail-value" id="deliverySpeed"></div></div>
+            <div class="detail"><span class="detail-label">Package</span><div class="detail-value" id="packageType"></div></div>
+            <div class="detail"><span class="detail-label">Delivery Method</span><div class="detail-value" id="deliveryMethod"></div></div>
+            <div class="detail"><span class="detail-label">Scheduled Date</span><div class="detail-value" id="scheduledDate"></div></div>
+            <div class="detail full"><span class="detail-label">Special Instructions</span><div class="detail-value" id="specialInstructions"></div></div>
+          </div>
+        </section>
+      </section>
+
+      <section class="tab-panel" data-panel="billing">
+        <section class="panel">
+          <div class="panel-heading"><h2>Billing — Dispatch Only</h2></div>
+
+          <div class="detail-grid">
+            <div class="field">
+              <label for="customerCharge">Customer Charge</label>
+              <input id="customerCharge" type="number" min="0" step="0.01">
+            </div>
+
+            <div class="field">
+              <label for="driverPay">Driver Pay</label>
+              <input id="driverPay" type="number" min="0" step="0.01">
+            </div>
+
+            <div class="detail"><span class="detail-label">Estimated Gross Profit</span><div class="detail-value" id="grossProfit">$0.00</div></div>
+            <div class="detail"><span class="detail-label">Invoice Status</span><div class="detail-value" id="invoiceStatus">Pending</div></div>
+            <div class="detail"><span class="detail-label">Payment Status</span><div class="detail-value" id="paymentStatus">Pending</div></div>
+            <div class="detail"><span class="detail-label">Invoice Number</span><div class="detail-value" id="invoiceNumber">Not created</div></div>
+          </div>
+
+          <div class="button-row controls-only">
+            <button class="save-button" id="saveBillingButton" type="button">Save Billing</button>
+            <button class="secondary-button" id="billingInvoiceButton" type="button">Create / Open Invoice</button>
+          </div>
+
+          <div class="save-message" id="billingSaveMessage"></div>
+        </section>
+      </section>
+
+      <section class="tab-panel" data-panel="driver">
+        <div class="two-column">
+          <section class="panel controls-only">
+            <div class="panel-heading"><h2>Driver Assignment</h2></div>
+
+            <div class="field">
+              <label for="driverSelect">Assigned Driver</label>
+              <select id="driverSelect"><option value="">Unassigned</option></select>
+            </div>
+
+            <button class="save-button" id="saveDriverButton" type="button">Save Driver Assignment</button>
+            <div class="save-message" id="driverSaveMessage"></div>
           </section>
 
           <section class="panel">
-            <h2>Job Information</h2>
+            <div class="panel-heading"><h2>Driver Information</h2></div>
 
             <div class="detail-grid">
-              <div class="detail full">
-                <span class="detail-label">
-                  Created
-                </span>
-
-                <div
-                  class="detail-value"
-                  id="createdAt"
-                ></div>
-              </div>
-
-              <div class="detail full">
-                <span class="detail-label">
-                  Completed
-                </span>
-
-                <div
-                  class="detail-value"
-                  id="completedAt"
-                ></div>
-              </div>
-
-              <div class="detail full">
-                <span class="detail-label">
-                  Database ID
-                </span>
-
-                <div
-                  class="detail-value"
-                  id="databaseId"
-                ></div>
-              </div>
+              <div class="detail"><span class="detail-label">Driver</span><div class="detail-value" id="driverName">Unassigned</div></div>
+              <div class="detail"><span class="detail-label">Driver Email</span><div class="detail-value" id="driverEmail">Not provided</div></div>
+              <div class="detail"><span class="detail-label">Driver Phone</span><div class="detail-value" id="driverPhone">Not provided</div></div>
+              <div class="detail"><span class="detail-label">Pickup Time</span><div class="detail-value" id="pickupTime">Not recorded</div></div>
+              <div class="detail"><span class="detail-label">Delivery Time</span><div class="detail-value" id="deliveryTime">Not recorded</div></div>
+              <div class="detail"><span class="detail-label">Driver Pay</span><div class="detail-value" id="driverPayDisplay">$0.00</div></div>
             </div>
           </section>
         </div>
-      </div>
+
+        <section class="panel">
+          <div class="panel-heading"><h2>Internal Proof Photos</h2></div>
+          <p class="eyebrow">Driver photos stay internal unless dispatch chooses to share or include them in the Job Packet.</p>
+          <div class="photo-grid">
+            <div class="photo-card" id="pickupPhotoCard"></div>
+            <div class="photo-card" id="deliveryPhotoCard"></div>
+          </div>
+        </section>
+      </section>
+
+      <section class="tab-panel" data-panel="documents">
+        <section class="panel controls-only">
+          <div class="panel-heading">
+            <div>
+              <h2>Upload Document</h2>
+              <div class="eyebrow">Private by default. Dispatch controls customer access.</div>
+            </div>
+          </div>
+
+          <div class="upload-box">
+            <div class="field">
+              <label for="documentFile">File</label>
+              <input id="documentFile" type="file">
+            </div>
+
+            <div class="field">
+              <label for="documentType">Document Type</label>
+              <select id="documentType">
+                <option value="pickup_photo">Pickup Photo</option>
+                <option value="delivery_photo">Delivery Photo</option>
+                <option value="signed_bol">Signed BOL</option>
+                <option value="bill_of_lading">Bill of Lading</option>
+                <option value="proof_of_delivery">Proof of Delivery</option>
+                <option value="manifest">Manifest</option>
+                <option value="customer_document">Customer Document</option>
+                <option value="invoice_attachment">Invoice Attachment</option>
+                <option value="other">Other</option>
+              </select>
+            </div>
+
+            <button class="save-button" id="uploadDocumentButton" type="button">Upload Internal Document</button>
+            <div class="save-message" id="documentUploadMessage"></div>
+          </div>
+        </section>
+
+        <section class="panel">
+          <div class="panel-heading">
+            <div>
+              <h2>Documents & eBOL</h2>
+              <div class="eyebrow">Timeline and internal notes are never customer-visible.</div>
+            </div>
+          </div>
+
+          <div id="documentsList" class="empty">Loading documents...</div>
+        </section>
+      </section>
+
+      <section class="tab-panel" data-panel="timeline" id="timelinePanel">
+        <section class="panel">
+          <div class="panel-heading">
+            <div>
+              <h2>Dispatch-Only Timeline</h2>
+              <div class="eyebrow">Not visible in the customer portal, emails, or Job Packet.</div>
+            </div>
+          </div>
+
+          <div id="timeline" class="timeline"></div>
+        </section>
+      </section>
     </div>
   </main>
+
+  <div class="modal-overlay" id="exceptionModal">
+    <div class="modal">
+      <div class="modal-heading">
+        <div>
+          <div class="eyebrow">Dispatch exception</div>
+          <h2>Record an Exception</h2>
+        </div>
+        <button class="modal-close" id="closeExceptionModal" type="button">×</button>
+      </div>
+
+      <div class="field">
+        <label for="exceptionType">Exception Type</label>
+        <select id="exceptionType">
+          <option value="driver_running_late">Driver Running Late</option>
+          <option value="wrong_address">Wrong Address</option>
+          <option value="package_damaged">Package Damaged</option>
+          <option value="delivery_refused">Delivery Refused</option>
+          <option value="vehicle_breakdown">Vehicle Breakdown</option>
+          <option value="weather_delay">Weather Delay</option>
+          <option value="customer_not_available">Customer Not Available</option>
+          <option value="other">Other</option>
+        </select>
+      </div>
+
+      <div class="field">
+        <label for="exceptionNotes">Internal Notes</label>
+        <textarea id="exceptionNotes"></textarea>
+      </div>
+
+      <button class="danger-button" id="saveExceptionButton" type="button">Save Exception</button>
+      <div class="save-message" id="exceptionMessage"></div>
+    </div>
+  </div>
 
   <script>
     const client = supabase.createClient(
@@ -855,13 +925,15 @@
 
     window.mgDispatchClient = client;
 
-    const params =
-      new URLSearchParams(window.location.search);
-
+    const params = new URLSearchParams(window.location.search);
     const jobId = params.get("id");
 
     let currentJob = null;
     let drivers = [];
+    let invoices = [];
+    let documents = [];
+    let timelineEvents = [];
+    let currentSession = null;
 
     function escapeHtml(value) {
       const div = document.createElement("div");
@@ -870,116 +942,113 @@
     }
 
     function cleanStatus(value) {
-      return String(value || "new")
-        .trim()
-        .toLowerCase();
+      return String(value || "new").trim().toLowerCase();
+    }
+
+    function normalize(value) {
+      return String(value || "").trim().toLowerCase().replaceAll(" ", "_").replaceAll("-", "_");
     }
 
     function statusLabel(value) {
       const labels = {
         new: "New",
+        approved: "Approved",
         waiting_payment: "Waiting Payment",
         paid: "Paid",
         ready: "Ready",
+        assigned: "Assigned",
+        picked_up: "Picked Up",
         in_transit: "In Transit",
+        delayed: "Delayed",
         delivered: "Delivered",
+        closed: "Closed",
         cancelled: "Cancelled",
         canceled: "Cancelled"
       };
 
       return labels[cleanStatus(value)] ||
-        String(value || "Open")
-          .replaceAll("_", " ");
+        String(value || "Open").replaceAll("_", " ");
     }
 
     function formatDate(value) {
-      if (!value) {
-        return "Not recorded";
-      }
-
+      if (!value) return "Not recorded";
       const date = new Date(value);
+      if (Number.isNaN(date.getTime())) return String(value);
 
-      if (Number.isNaN(date.getTime())) {
-        return String(value);
-      }
+      return new Intl.DateTimeFormat("en-US", {
+        weekday: "short",
+        month: "short",
+        day: "numeric",
+        year: "numeric",
+        hour: "numeric",
+        minute: "2-digit"
+      }).format(date);
+    }
 
-      return new Intl.DateTimeFormat(
-        "en-US",
-        {
-          weekday: "short",
-          month: "short",
-          day: "numeric",
-          year: "numeric",
-          hour: "numeric",
-          minute: "2-digit"
-        }
-      ).format(date);
+    function formatDateOnly(value) {
+      if (!value) return "Not scheduled";
+      const date = new Date(String(value).slice(0, 10) + "T12:00:00");
+      if (Number.isNaN(date.getTime())) return String(value);
+
+      return new Intl.DateTimeFormat("en-US", {
+        month: "short",
+        day: "numeric",
+        year: "numeric"
+      }).format(date);
+    }
+
+    function money(value) {
+      return Number(value || 0).toLocaleString("en-US", {
+        style: "currency",
+        currency: "USD"
+      });
     }
 
     function displayValue(value) {
-      if (
-        value === null ||
-        value === undefined ||
-        value === ""
-      ) {
-        return "Not provided";
-      }
-
+      if (value === null || value === undefined || value === "") return "Not provided";
       return String(value);
     }
 
     function mapUrl(address) {
-      return (
-        "https://www.google.com/maps/search/?api=1&query=" +
-        encodeURIComponent(address || "")
-      );
+      return "https://www.google.com/maps/search/?api=1&query=" +
+        encodeURIComponent(address || "");
     }
 
     function setText(id, value) {
-      document
-        .getElementById(id)
-        .textContent = displayValue(value);
+      const element = document.getElementById(id);
+      if (element) element.textContent = displayValue(value);
+    }
+
+    function setPageMessage(message, type) {
+      const box = document.getElementById("pageMessage");
+      box.textContent = message || "";
+      box.className = message ? `page-message ${type || ""}` : "page-message";
+    }
+
+    function setSaveMessage(id, message, type) {
+      const box = document.getElementById(id);
+      box.textContent = message || "";
+      box.className = message ? `save-message ${type || ""}` : "save-message";
     }
 
     function showError(message) {
-      document
-        .getElementById("loadingBox")
-        .classList.add("hidden");
-
-      const errorBox =
-        document.getElementById("errorBox");
-
-      errorBox.textContent =
-        message || "Unable to load this job.";
-
+      document.getElementById("loadingBox").classList.add("hidden");
+      const errorBox = document.getElementById("errorBox");
+      errorBox.textContent = message || "Unable to load this job.";
       errorBox.classList.remove("hidden");
     }
 
-    function setSaveMessage(message, type) {
-      const box =
-        document.getElementById("saveMessage");
-
-      box.textContent = message;
-      box.className =
-        `save-message ${type || ""}`;
-    }
-
     async function requireDispatchAccess() {
-      const sessionResult =
-        await client.auth.getSession();
-
-      const session =
-        sessionResult.data.session;
+      const sessionResult = await client.auth.getSession();
+      const session = sessionResult.data.session;
 
       if (!session) {
         location.replace("/index.html");
         return null;
       }
 
-      document
-        .getElementById("staffEmail")
-        .textContent =
-          session.user.email || "";
+      currentSession = session;
+      document.getElementById("staffEmail").textContent = session.user.email || "";
 
       const profileResult = await client
         .from("profiles")
@@ -987,49 +1056,25 @@
         .eq("id", session.user.id)
         .maybeSingle();
 
-      if (
-        profileResult.error ||
-        !profileResult.data
-      ) {
-        throw new Error(
-          profileResult.error?.message ||
-          "No MG Express profile was found."
-        );
+      if (profileResult.error || !profileResult.data) {
+        throw new Error(profileResult.error?.message || "No MG Express profile was found.");
       }
 
-      const role = String(
-        profileResult.data.role || ""
-      ).toLowerCase();
+      const role = String(profileResult.data.role || "").toLowerCase();
 
-      if (
-        ![
-          "admin",
-          "staff",
-          "dispatcher"
-        ].includes(role)
-      ) {
+      if (!["admin", "staff", "dispatcher"].includes(role)) {
         if (role === "driver") {
           location.replace("/driver.html");
           return null;
         }
 
         if (role === "customer") {
-          location.replace("/customer.html");
+          location.replace("/customer-portal.html");
           return null;
         }
 
-        throw new Error(
-          "This account does not have dispatch access."
-        );
+        throw new Error("This account does not have dispatch access.");
       }
-
-      window.dispatchEvent(
-        new CustomEvent("mg-dispatch-ready", {
-          detail: {
-            email: session.user.email
-          }
-        })
-      );
 
       return session;
     }
@@ -1037,29 +1082,17 @@
     async function loadDrivers() {
       const result = await client
         .from("drivers")
-        .select("id,full_name,email,active")
-        .order("full_name", {
-          ascending: true
-        });
+        .select("*")
+        .order("full_name", { ascending: true });
 
-      if (result.error) {
-        throw result.error;
-      }
-
+      if (result.error) throw result.error;
       drivers = result.data || [];
 
-      const driverSelect =
-        document.getElementById("driverSelect");
-
-      driverSelect.innerHTML = `
+      document.getElementById("driverSelect").innerHTML = `
         <option value="">Unassigned</option>
         ${drivers.map(driver => `
           <option value="${escapeHtml(driver.id)}">
-            ${escapeHtml(
-              driver.full_name ||
-              driver.email ||
-              "Driver"
-            )}
+            ${escapeHtml(driver.full_name || driver.email || "Driver")}
             ${driver.active === false ? " — Inactive" : ""}
           </option>
         `).join("")}
@@ -1067,11 +1100,7 @@
     }
 
     async function loadJob() {
-      if (!jobId) {
-        throw new Error(
-          "No job ID was included in this link."
-        );
-      }
+      if (!jobId) throw new Error("No job ID was included in this link.");
 
       const result = await client
         .from("quotes")
@@ -1079,352 +1108,558 @@
         .eq("id", jobId)
         .maybeSingle();
 
-      if (result.error) {
-        throw result.error;
-      }
-
-      if (!result.data) {
-        throw new Error(
-          "This work order could not be found."
-        );
-      }
+      if (result.error) throw result.error;
+      if (!result.data) throw new Error("This work order could not be found.");
 
       currentJob = result.data;
-      renderJob();
     }
 
-    function photoCard(
-      title,
-      url,
-      uploadedAt
-    ) {
-      if (!url) {
+    async function loadInvoices() {
+      const result = await client
+        .from("invoices")
+        .select("*")
+        .eq("job_id", jobId)
+        .order("created_at", { ascending: false });
+
+      invoices = result.error ? [] : (result.data || []);
+    }
+
+    async function loadDocuments() {
+      const result = await client
+        .from("delivery_documents")
+        .select("*")
+        .eq("job_id", jobId)
+        .order("created_at", { ascending: false });
+
+      if (result.error) throw result.error;
+      documents = result.data || [];
+    }
+
+    async function loadTimeline() {
+      const result = await client
+        .from("job_timeline_events")
+        .select("*")
+        .eq("job_id", jobId)
+        .order("created_at", { ascending: false });
+
+      if (result.error) throw result.error;
+      timelineEvents = result.data || [];
+    }
+
+    function selectedDriver() {
+      return drivers.find(driver =>
+        String(driver.id) === String(currentJob.assigned_driver_id || "")
+      ) || null;
+    }
+
+    function primaryInvoice() {
+      return invoices[0] || null;
+    }
+
+    function renderProgress() {
+      const status = cleanStatus(currentJob.status);
+      const hasDriver = Boolean(currentJob.assigned_driver_id);
+      const hasPickup = Boolean(currentJob.pickup_photo_url || currentJob.pickup_photo_uploaded_at);
+      const isProblem = status === "delayed" || Boolean(currentJob.exception_type);
+
+      const stages = [
+        { key: "quote", label: "Quote", complete: Boolean(currentJob.created_at) },
+        { key: "approved", label: "Approved", complete: ["approved","waiting_payment","paid","ready","assigned","picked_up","in_transit","delayed","delivered","closed"].includes(status) },
+        { key: "assigned", label: "Assigned", complete: hasDriver },
+        { key: "picked_up", label: "Picked Up", complete: hasPickup || ["picked_up","in_transit","delayed","delivered","closed"].includes(status) },
+        { key: "in_transit", label: "In Transit", complete: ["in_transit","delayed","delivered","closed"].includes(status) },
+        { key: "delivered", label: "Delivered", complete: ["delivered","closed"].includes(status) },
+        { key: "closed", label: "Closed", complete: status === "closed" }
+      ];
+
+      let currentFound = false;
+
+      document.getElementById("progressTrack").innerHTML = stages.map(stage => {
+        let css = "";
+        let icon = "⚪";
+
+        if (stage.complete) {
+          css = "complete";
+          icon = "🟢";
+        } else if (!currentFound) {
+          css = isProblem && stage.key === "in_transit" ? "problem" : "current";
+          icon = css === "problem" ? "🔴" : "🟡";
+          currentFound = true;
+        }
+
         return `
-          <div class="photo-missing">
-            No ${escapeHtml(
-              title.toLowerCase()
-            )} has been uploaded.
+          <div class="progress-step ${css}">
+            <div class="step-icon">${icon}</div>
+            <div class="step-label">${escapeHtml(stage.label)}</div>
           </div>
+        `;
+      }).join("");
+    }
 
+    function photoCard(title, url, uploadedAt, documentType) {
+      const matchingDocument = documents.find(doc => doc.document_type === documentType);
+
+      if (!url && !matchingDocument) {
+        return `
+          <div class="photo-missing">No ${escapeHtml(title.toLowerCase())} has been uploaded.</div>
           <div class="photo-content">
-            <div class="photo-title">
-              ${escapeHtml(title)}
-            </div>
-
-            <div class="photo-date">
-              Not uploaded
-            </div>
+            <div class="photo-title">${escapeHtml(title)}</div>
+            <div class="photo-date">Internal only by default</div>
           </div>
         `;
       }
 
+      const finalUrl = url || "";
+      const visibilityText = matchingDocument?.visible_to_customer
+        ? "Customer can view"
+        : "Internal only";
+
       return `
-        <a
-          href="${escapeHtml(url)}"
-          target="_blank"
-          rel="noopener"
-        >
-          <img
-            src="${escapeHtml(url)}"
-            alt="${escapeHtml(title)}"
-          >
-        </a>
+        ${finalUrl ? `
+          <a href="${escapeHtml(finalUrl)}" target="_blank" rel="noopener">
+            <img src="${escapeHtml(finalUrl)}" alt="${escapeHtml(title)}">
+          </a>
+        ` : `
+          <div class="photo-missing">Photo stored in private delivery files.</div>
+        `}
 
         <div class="photo-content">
-          <div class="photo-title">
-            ${escapeHtml(title)}
-          </div>
-
-          <div class="photo-date">
-            ${escapeHtml(formatDate(uploadedAt))}
-          </div>
-
-          <a
-            class="photo-link"
-            href="${escapeHtml(url)}"
-            target="_blank"
-            rel="noopener"
-          >
-            View Full Photo
-          </a>
+          <div class="photo-title">${escapeHtml(title)}</div>
+          <div class="photo-date">${escapeHtml(formatDate(uploadedAt || matchingDocument?.created_at))}</div>
+          <div class="photo-date">${escapeHtml(visibilityText)}</div>
+          ${finalUrl ? `
+            <a class="photo-link" href="${escapeHtml(finalUrl)}" target="_blank" rel="noopener">View Full Photo</a>
+          ` : ""}
         </div>
       `;
     }
 
-    function renderTimeline() {
-      const status =
-        cleanStatus(currentJob.status);
+    function renderDocuments() {
+      const box = document.getElementById("documentsList");
 
-      const stages = [
-        {
-          title: "Job Created",
-          date: currentJob.created_at,
-          complete: Boolean(
-            currentJob.created_at
-          )
-        },
-        {
-          title: "Driver Assigned",
-          date: null,
-          complete: Boolean(
-            currentJob.assigned_driver_id
-          )
-        },
-        {
-          title: "Pickup Photo Uploaded",
-          date:
-            currentJob.pickup_photo_uploaded_at,
-          complete: Boolean(
-            currentJob.pickup_photo_url
-          )
-        },
-        {
-          title: "In Transit",
-          date: null,
-          complete: [
-            "in_transit",
-            "delivered"
-          ].includes(status)
-        },
-        {
-          title: "Delivery Photo Uploaded",
-          date:
-            currentJob.delivery_photo_uploaded_at,
-          complete: Boolean(
-            currentJob.delivery_photo_url
-          )
-        },
-        {
-          title: "Job Delivered",
-          date: currentJob.completed_at,
-          complete:
-            status === "delivered"
-        }
-      ];
+      if (!documents.length) {
+        box.className = "empty";
+        box.innerHTML = "No eBOL documents or delivery files have been added yet.";
+        return;
+      }
 
-      document
-        .getElementById("timeline")
-        .innerHTML =
-          stages.map(stage => `
-            <div class="timeline-item">
-              <div
-                class="timeline-dot ${
-                  stage.complete
-                    ? "complete"
-                    : ""
-                }"
-              ></div>
-
-              <div>
-                <div class="timeline-title">
-                  ${escapeHtml(stage.title)}
-                </div>
-
-                <div class="timeline-date">
-                  ${
-                    stage.date
-                      ? escapeHtml(
-                          formatDate(stage.date)
-                        )
-                      : (
-                          stage.complete
-                            ? "Completed"
-                            : "Pending"
-                        )
-                  }
-                </div>
-              </div>
+      box.className = "document-grid";
+      box.innerHTML = documents.map(doc => `
+        <article class="document-card">
+          <div class="document-content">
+            <div class="document-title">${escapeHtml(doc.file_name)}</div>
+            <div class="document-meta">
+              ${escapeHtml(String(doc.document_type || "other").replaceAll("_", " "))}
+              <br>
+              Uploaded ${escapeHtml(formatDate(doc.created_at))}
             </div>
-          `).join("");
+
+            <a class="document-link" href="#" data-open-document="${escapeHtml(doc.storage_path)}">Open / Download</a>
+
+            <div class="document-controls controls-only">
+              <label class="check-row">
+                <input type="checkbox" data-document-field="visible_to_customer" data-document-id="${escapeHtml(doc.id)}" ${doc.visible_to_customer ? "checked" : ""}>
+                Customer can view
+              </label>
+
+              <label class="check-row">
+                <input type="checkbox" data-document-field="include_in_job_packet" data-document-id="${escapeHtml(doc.id)}" ${doc.include_in_job_packet ? "checked" : ""}>
+                Include in Job Packet
+              </label>
+
+              <label class="check-row">
+                <input type="checkbox" data-document-field="attach_to_customer_email" data-document-id="${escapeHtml(doc.id)}" ${doc.attach_to_customer_email ? "checked" : ""}>
+                Attach to customer email
+              </label>
+
+              <button class="danger-button" type="button" data-delete-document="${escapeHtml(doc.id)}">Delete Document</button>
+            </div>
+          </div>
+        </article>
+      `).join("");
+    }
+
+    function renderTimeline() {
+      const box = document.getElementById("timeline");
+
+      const fallback = [
+        currentJob.created_at ? {
+          event_title: "Job Created",
+          event_description: "The job record was created.",
+          created_at: currentJob.created_at
+        } : null,
+
+        currentJob.assigned_driver_id ? {
+          event_title: "Driver Assigned",
+          event_description: selectedDriver()?.full_name || "Driver assigned.",
+          created_at: currentJob.updated_at || currentJob.created_at
+        } : null,
+
+        currentJob.pickup_photo_uploaded_at ? {
+          event_title: "Pickup Photo Uploaded",
+          event_description: "Internal pickup proof was uploaded.",
+          created_at: currentJob.pickup_photo_uploaded_at
+        } : null,
+
+        currentJob.completed_at ? {
+          event_title: "Job Delivered",
+          event_description: "The delivery was completed.",
+          created_at: currentJob.completed_at
+        } : null
+      ].filter(Boolean);
+
+      const records = timelineEvents.length ? timelineEvents : fallback;
+
+      if (!records.length) {
+        box.innerHTML = `<div class="empty">No dispatch timeline events yet.</div>`;
+        return;
+      }
+
+      box.innerHTML = records.map(event => `
+        <div class="timeline-item">
+          <div class="timeline-dot"></div>
+          <div>
+            <div class="timeline-title">${escapeHtml(event.event_title || event.event_type || "Job Event")}</div>
+            <div class="timeline-date">${escapeHtml(formatDate(event.created_at))}</div>
+            ${event.event_description ? `
+              <div class="timeline-description">${escapeHtml(event.event_description)}</div>
+            ` : ""}
+          </div>
+        </div>
+      `).join("");
     }
 
     function renderJob() {
-      document
-        .getElementById("loadingBox")
-        .classList.add("hidden");
+      document.getElementById("loadingBox").classList.add("hidden");
+      document.getElementById("errorBox").classList.add("hidden");
+      document.getElementById("jobPage").classList.remove("hidden");
 
-      document
-        .getElementById("errorBox")
-        .classList.add("hidden");
+      const status = cleanStatus(currentJob.status);
+      const priority = normalize(currentJob.priority || "routine");
+      const driver = selectedDriver();
+      const invoice = primaryInvoice();
 
-      document
-        .getElementById("jobPage")
-        .classList.remove("hidden");
+      setText("jobNumber", currentJob.job_number || "Job");
+      setText("customerHeading", currentJob.customer_name || "Customer");
+      setText("summaryCustomer", currentJob.customer_name || "Customer");
+      setText("summaryDriver", driver?.full_name || driver?.email || "Unassigned");
+      setText("summaryEta", currentJob.estimated_delivery_time || currentJob.eta || "Pending");
+      setText("summaryCharge", money(currentJob.customer_charge));
+      setText("summaryDriverPay", money(currentJob.driver_pay));
+      setText("summaryInvoice", invoice?.payment_status || invoice?.status || (invoice ? "Created" : "Pending"));
 
-      const status =
-        cleanStatus(currentJob.status);
+      setText("pickupAddress", currentJob.pickup_address);
+      setText("deliveryAddress", currentJob.delivery_address);
+      setText("customerName", currentJob.customer_name);
+      setText("customerEmail", currentJob.customer_email || currentJob.email);
+      setText("customerPhone", currentJob.customer_phone || currentJob.phone);
+      setText("vehicleType", currentJob.vehicle_type);
+      setText("deliverySpeed", currentJob.delivery_speed);
+      setText("packageType", currentJob.package_type);
+      setText("deliveryMethod", currentJob.delivery_method);
+      setText("scheduledDate", formatDateOnly(currentJob.scheduled_date || currentJob.created_at));
+      setText("specialInstructions", currentJob.special_instructions);
 
-      setText(
-        "jobNumber",
-        currentJob.job_number || "Job"
-      );
+      setText("driverName", driver?.full_name || "Unassigned");
+      setText("driverEmail", driver?.email || "Not provided");
+      setText("driverPhone", driver?.phone || driver?.phone_number || "Not provided");
+      setText("pickupTime", formatDate(currentJob.pickup_photo_uploaded_at || currentJob.picked_up_at));
+      setText("deliveryTime", formatDate(currentJob.completed_at || currentJob.delivered_at));
+      setText("driverPayDisplay", money(currentJob.driver_pay));
 
-      setText(
-        "customerHeading",
-        currentJob.customer_name || "Customer"
-      );
+      setText("invoiceStatus", invoice?.status || (invoice ? "Created" : "Pending"));
+      setText("paymentStatus", invoice?.payment_status || "Pending");
+      setText("invoiceNumber", invoice?.invoice_number || "Not created");
 
-      setText(
-        "customerName",
-        currentJob.customer_name
-      );
+      document.getElementById("grossProfit").textContent =
+        money(Number(currentJob.customer_charge || 0) - Number(currentJob.driver_pay || 0));
 
-      setText(
-        "customerEmail",
-        currentJob.customer_email
-      );
+      const statusPill = document.getElementById("statusPill");
+      statusPill.textContent = statusLabel(status);
+      statusPill.className = `status-pill status-${status}`;
 
-      setText(
-        "pickupAddress",
-        currentJob.pickup_address
-      );
+      const priorityPill = document.getElementById("priorityPill");
+      priorityPill.textContent = priority.charAt(0).toUpperCase() + priority.slice(1);
+      priorityPill.className = `priority-pill priority-${priority}`;
 
-      setText(
-        "deliveryAddress",
-        currentJob.delivery_address
-      );
+      document.getElementById("pickupMap").href = mapUrl(currentJob.pickup_address);
+      document.getElementById("deliveryMap").href = mapUrl(currentJob.delivery_address);
 
-      setText(
-        "vehicleType",
-        currentJob.vehicle_type
-      );
+      document.getElementById("prioritySelect").value = priority;
+      document.getElementById("statusSelect").value = status;
+      document.getElementById("customerVisibleNotes").value = currentJob.customer_visible_notes || "";
+      document.getElementById("internalDispatchNotes").value = currentJob.internal_dispatch_notes || "";
+      document.getElementById("customerCharge").value = Number(currentJob.customer_charge || 0).toFixed(2);
+      document.getElementById("driverPay").value = Number(currentJob.driver_pay || 0).toFixed(2);
+      document.getElementById("driverSelect").value = currentJob.assigned_driver_id || "";
 
-      setText(
-        "deliverySpeed",
-        currentJob.delivery_speed
-      );
+      document.getElementById("pickupPhotoCard").innerHTML =
+        photoCard("Pickup Photo", currentJob.pickup_photo_url, currentJob.pickup_photo_uploaded_at, "pickup_photo");
 
-      setText(
-        "packageType",
-        currentJob.package_type
-      );
+      document.getElementById("deliveryPhotoCard").innerHTML =
+        photoCard("Delivery Photo", currentJob.delivery_photo_url, currentJob.delivery_photo_uploaded_at, "delivery_photo");
 
-      setText(
-        "deliveryMethod",
-        currentJob.delivery_method
-      );
-
-      setText(
-        "specialInstructions",
-        currentJob.special_instructions
-      );
-
-      setText(
-        "createdAt",
-        formatDate(currentJob.created_at)
-      );
-
-      setText(
-        "completedAt",
-        formatDate(currentJob.completed_at)
-      );
-
-      setText(
-        "databaseId",
-        currentJob.id
-      );
-
-      const statusPill =
-        document.getElementById("statusPill");
-
-      statusPill.textContent =
-        statusLabel(status);
-
-      statusPill.className =
-        `status-pill status-${status}`;
-
-      document
-        .getElementById("pickupMap")
-        .href =
-          mapUrl(currentJob.pickup_address);
-
-      document
-        .getElementById("deliveryMap")
-        .href =
-          mapUrl(currentJob.delivery_address);
-
-      document
-        .getElementById("driverSelect")
-        .value =
-          currentJob.assigned_driver_id || "";
-
-      document
-        .getElementById("driverPay")
-        .value =
-          Number(currentJob.driver_pay || 0)
-            .toFixed(2);
-
-      document
-        .getElementById("statusSelect")
-        .value = status;
-
-      document
-        .getElementById("pickupPhotoCard")
-        .innerHTML =
-          photoCard(
-            "Pickup Photo",
-            currentJob.pickup_photo_url,
-            currentJob.pickup_photo_uploaded_at
-          );
-
-      document
-        .getElementById("deliveryPhotoCard")
-        .innerHTML =
-          photoCard(
-            "Delivery Photo",
-            currentJob.delivery_photo_url,
-            currentJob.delivery_photo_uploaded_at
-          );
-
+      renderProgress();
+      renderDocuments();
       renderTimeline();
 
-      document.title =
-        `${currentJob.job_number || "Job"} | MG Express`;
+      document.title = `${currentJob.job_number || "Job"} | MG Express`;
     }
 
-    async function saveJob() {
-      const saveButton =
-        document.getElementById("saveButton");
+    async function addTimelineEvent(type, title, description, metadata = {}) {
+      try {
+        const result = await client.rpc("add_job_timeline_event", {
+          p_job_id: currentJob.id,
+          p_event_type: type,
+          p_event_title: title,
+          p_event_description: description || null,
+          p_event_metadata: metadata
+        });
 
-      saveButton.disabled = true;
-      saveButton.textContent =
-        "Saving Changes...";
+        if (result.error) throw result.error;
+      } catch (error) {
+        console.warn("Timeline event was not recorded:", error.message);
+      }
+    }
 
-      setSaveMessage("", "");
+    async function updateJob(payload, messageId, successMessage) {
+      setSaveMessage(messageId, "", "");
+
+      const result = await client
+        .from("quotes")
+        .update(payload)
+        .eq("id", currentJob.id)
+        .select("*")
+        .maybeSingle();
+
+      if (result.error) throw result.error;
+
+      currentJob = result.data || { ...currentJob, ...payload };
+      setSaveMessage(messageId, successMessage, "success");
+
+      await Promise.all([loadInvoices(), loadDocuments(), loadTimeline()]);
+      renderJob();
+    }
+
+    async function saveDetails() {
+      const button = document.getElementById("saveDetailsButton");
+      button.disabled = true;
+      button.textContent = "Saving...";
 
       try {
-        const newStatus =
-          cleanStatus(
-            document
-              .getElementById("statusSelect")
-              .value
-          );
-
-        const driverId =
-          document
-            .getElementById("driverSelect")
-            .value || null;
-
-        const driverPay =
-          Number(
-            document
-              .getElementById("driverPay")
-              .value || 0
-          );
-
+        const newStatus = cleanStatus(document.getElementById("statusSelect").value);
         const payload = {
-          assigned_driver_id: driverId,
-          driver_pay: driverPay,
-          status: newStatus
+          priority: document.getElementById("prioritySelect").value,
+          status: newStatus,
+          customer_visible_notes: document.getElementById("customerVisibleNotes").value.trim() || null,
+          internal_dispatch_notes: document.getElementById("internalDispatchNotes").value.trim() || null
         };
 
-        if (
-          newStatus === "delivered" &&
-          !currentJob.completed_at
-        ) {
-          payload.completed_at =
-            new Date().toISOString();
+        if (newStatus === "delivered" && !currentJob.completed_at) {
+          payload.completed_at = new Date().toISOString();
         }
+
+        if (newStatus === "closed" && !currentJob.closed_at) {
+          payload.closed_at = new Date().toISOString();
+        }
+
+        const previousStatus = currentJob.status;
+        await updateJob(payload, "detailsSaveMessage", "Job details saved.");
+
+        if (cleanStatus(previousStatus) !== newStatus) {
+          await addTimelineEvent(
+            "status_changed",
+            `Status changed to ${statusLabel(newStatus)}`,
+            `Previous status: ${statusLabel(previousStatus)}`
+          );
+          await loadTimeline();
+          renderTimeline();
+        }
+      } catch (error) {
+        setSaveMessage("detailsSaveMessage", error.message || "Unable to save job details.", "error");
+      } finally {
+        button.disabled = false;
+        button.textContent = "Save Job Details";
+      }
+    }
+
+    async function saveBilling() {
+      const button = document.getElementById("saveBillingButton");
+      button.disabled = true;
+      button.textContent = "Saving...";
+
+      try {
+        const payload = {
+          customer_charge: Number(document.getElementById("customerCharge").value || 0),
+          driver_pay: Number(document.getElementById("driverPay").value || 0)
+        };
+
+        await updateJob(payload, "billingSaveMessage", "Billing amounts saved.");
+        await addTimelineEvent("billing_updated", "Billing Updated", "Customer charge and driver pay were updated.");
+      } catch (error) {
+        setSaveMessage("billingSaveMessage", error.message || "Unable to save billing.", "error");
+      } finally {
+        button.disabled = false;
+        button.textContent = "Save Billing";
+      }
+    }
+
+    async function saveDriver() {
+      const button = document.getElementById("saveDriverButton");
+      button.disabled = true;
+      button.textContent = "Saving...";
+
+      try {
+        const driverId = document.getElementById("driverSelect").value || null;
+        const chosen = drivers.find(driver => String(driver.id) === String(driverId));
+
+        await updateJob(
+          { assigned_driver_id: driverId, status: driverId && cleanStatus(currentJob.status) === "new" ? "assigned" : currentJob.status },
+          "driverSaveMessage",
+          "Driver assignment saved."
+        );
+
+        await addTimelineEvent(
+          driverId ? "driver_assigned" : "driver_unassigned",
+          driverId ? "Driver Assigned" : "Driver Unassigned",
+          chosen?.full_name || chosen?.email || null
+        );
+        await loadTimeline();
+        renderTimeline();
+      } catch (error) {
+        setSaveMessage("driverSaveMessage", error.message || "Unable to save driver assignment.", "error");
+      } finally {
+        button.disabled = false;
+        button.textContent = "Save Driver Assignment";
+      }
+    }
+
+    async function uploadDocument() {
+      const fileInput = document.getElementById("documentFile");
+      const file = fileInput.files?.[0];
+      const button = document.getElementById("uploadDocumentButton");
+
+      if (!file) {
+        setSaveMessage("documentUploadMessage", "Choose a file first.", "error");
+        return;
+      }
+
+      button.disabled = true;
+      button.textContent = "Uploading...";
+
+      try {
+        const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, "_");
+        const path = `${currentJob.job_number || currentJob.id}/${Date.now()}-${safeName}`;
+
+        const uploadResult = await client.storage
+          .from("delivery-files")
+          .upload(path, file, {
+            cacheControl: "3600",
+            upsert: false
+          });
+
+        if (uploadResult.error) throw uploadResult.error;
+
+        const insertResult = await client
+          .from("delivery_documents")
+          .insert({
+            job_id: currentJob.id,
+            file_name: file.name,
+            storage_path: path,
+            mime_type: file.type || null,
+            file_size_bytes: file.size,
+            document_type: document.getElementById("documentType").value,
+            uploaded_by_user_id: currentSession.user.id,
+            uploaded_by_role: "dispatcher",
+            visible_to_customer: false,
+            include_in_job_packet: false,
+            attach_to_customer_email: false
+          });
+
+        if (insertResult.error) throw insertResult.error;
+
+        await addTimelineEvent(
+          "document_uploaded",
+          "Document Uploaded",
+          `${file.name} uploaded as internal-only proof.`,
+          { document_type: document.getElementById("documentType").value }
+        );
+
+        fileInput.value = "";
+        setSaveMessage("documentUploadMessage", "Document uploaded as internal only.", "success");
+
+        await Promise.all([loadDocuments(), loadTimeline()]);
+        renderJob();
+      } catch (error) {
+        setSaveMessage("documentUploadMessage", error.message || "Unable to upload document.", "error");
+      } finally {
+        button.disabled = false;
+        button.textContent = "Upload Internal Document";
+      }
+    }
+
+    async function updateDocumentField(documentId, field, value) {
+      const result = await client
+        .from("delivery_documents")
+        .update({ [field]: value })
+        .eq("id", documentId);
+
+      if (result.error) throw result.error;
+
+      await Promise.all([loadDocuments(), loadTimeline()]);
+      renderJob();
+      setPageMessage("Document settings saved.", "success");
+    }
+
+    async function openPrivateDocument(storagePath) {
+      const result = await client.storage
+        .from("delivery-files")
+        .createSignedUrl(storagePath, 300);
+
+      if (result.error) throw result.error;
+      window.open(result.data.signedUrl, "_blank", "noopener");
+    }
+
+    async function deleteDocument(documentId) {
+      const doc = documents.find(item => String(item.id) === String(documentId));
+      if (!doc || !window.confirm(`Delete ${doc.file_name}?`)) return;
+
+      const storageResult = await client.storage
+        .from("delivery-files")
+        .remove([doc.storage_path]);
+
+      if (storageResult.error) throw storageResult.error;
+
+      const deleteResult = await client
+        .from("delivery_documents")
+        .delete()
+        .eq("id", documentId);
+
+      if (deleteResult.error) throw deleteResult.error;
+
+      await addTimelineEvent("document_deleted", "Document Deleted", doc.file_name);
+      await Promise.all([loadDocuments(), loadTimeline()]);
+      renderJob();
+      setPageMessage("Document deleted.", "success");
+    }
+
+    async function saveException() {
+      const button = document.getElementById("saveExceptionButton");
+      button.disabled = true;
+      button.textContent = "Saving...";
+
+      try {
+        const type = document.getElementById("exceptionType").value;
+        const notes = document.getElementById("exceptionNotes").value.trim();
+
+        const payload = {
+          exception_type: type,
+          exception_notes: notes || null,
+          exception_reported_at: new Date().toISOString(),
+          status: ["driver_running_late","vehicle_breakdown","weather_delay"].includes(type)
+            ? "delayed"
+            : currentJob.status
+        };
 
         const result = await client
           .from("quotes")
@@ -1433,114 +1668,150 @@
           .select("*")
           .maybeSingle();
 
-        if (result.error) {
-          /*
-            Some older databases may not have
-            completed_at. Retry without it.
-          */
-          if (
-            payload.completed_at &&
-            result.error.message
-              .toLowerCase()
-              .includes("completed_at")
-          ) {
-            delete payload.completed_at;
+        if (result.error) throw result.error;
 
-            const retryResult = await client
-              .from("quotes")
-              .update(payload)
-              .eq("id", currentJob.id)
-              .select("*")
-              .maybeSingle();
+        currentJob = result.data || { ...currentJob, ...payload };
 
-            if (retryResult.error) {
-              throw retryResult.error;
-            }
+        await addTimelineEvent(
+          "exception",
+          `Exception: ${type.replaceAll("_", " ")}`,
+          notes || "No internal notes were added."
+        );
 
-            currentJob =
-              retryResult.data || {
-                ...currentJob,
-                ...payload
-              };
-          } else {
-            throw result.error;
-          }
-        } else {
-          currentJob =
-            result.data || {
-              ...currentJob,
-              ...payload
-            };
-        }
-
+        setSaveMessage("exceptionMessage", "Exception recorded for dispatch.", "success");
+        await loadTimeline();
         renderJob();
 
-        setSaveMessage(
-          "Job changes saved successfully.",
-          "success"
-        );
-
-        if (
-          [
-            "delivered",
-            "cancelled",
-            "canceled"
-          ].includes(newStatus)
-        ) {
-          setSaveMessage(
-            "Job closed successfully. Returning to Job History...",
-            "success"
-          );
-
-          setTimeout(() => {
-            location.href = "/history.html";
-          }, 1200);
-        }
+        setTimeout(closeExceptionModal, 600);
       } catch (error) {
-        setSaveMessage(
-          error.message ||
-          "Unable to save this job.",
-          "error"
-        );
+        setSaveMessage("exceptionMessage", error.message || "Unable to record exception.", "error");
       } finally {
-        saveButton.disabled = false;
-        saveButton.textContent =
-          "Save Changes";
+        button.disabled = false;
+        button.textContent = "Save Exception";
       }
     }
 
-    document
-      .getElementById("saveButton")
-      .addEventListener(
-        "click",
-        saveJob
-      );
+    function openExceptionModal() {
+      document.getElementById("exceptionModal").classList.add("open");
+      document.body.classList.add("modal-open");
+    }
 
-    document
-      .getElementById("printButton")
-      .addEventListener(
-        "click",
-        function () {
-          window.print();
+    function closeExceptionModal() {
+      document.getElementById("exceptionModal").classList.remove("open");
+      document.body.classList.remove("modal-open");
+    }
+
+    function showTab(name) {
+      document.querySelectorAll("[data-tab]").forEach(button => {
+        button.classList.toggle("active", button.dataset.tab === name);
+      });
+
+      document.querySelectorAll("[data-panel]").forEach(panel => {
+        panel.classList.toggle("active", panel.dataset.panel === name);
+      });
+    }
+
+    function generateJobPacket() {
+      window.print();
+      addTimelineEvent("job_packet_generated", "Job Packet Generated", "Dispatch generated a printable Job Packet.");
+    }
+
+    function openInvoice() {
+      const invoice = primaryInvoice();
+      location.href = invoice
+        ? `/invoices.html?invoice=${encodeURIComponent(invoice.id)}`
+        : `/invoices.html?job=${encodeURIComponent(currentJob.id)}`;
+    }
+
+    document.querySelectorAll("[data-tab]").forEach(button => {
+      button.addEventListener("click", () => showTab(button.dataset.tab));
+    });
+
+    document.querySelectorAll("[data-open-tab]").forEach(button => {
+      button.addEventListener("click", () => showTab(button.dataset.openTab));
+    });
+
+    document.getElementById("saveDetailsButton").addEventListener("click", saveDetails);
+    document.getElementById("saveBillingButton").addEventListener("click", saveBilling);
+    document.getElementById("saveDriverButton").addEventListener("click", saveDriver);
+    document.getElementById("uploadDocumentButton").addEventListener("click", uploadDocument);
+    document.getElementById("exceptionButton").addEventListener("click", openExceptionModal);
+    document.getElementById("closeExceptionModal").addEventListener("click", closeExceptionModal);
+    document.getElementById("saveExceptionButton").addEventListener("click", saveException);
+    document.getElementById("generatePacketButton").addEventListener("click", generateJobPacket);
+    document.getElementById("createInvoiceButton").addEventListener("click", openInvoice);
+    document.getElementById("billingInvoiceButton").addEventListener("click", openInvoice);
+
+    document.getElementById("sendProofButton").addEventListener("click", function () {
+      showTab("documents");
+      setPageMessage("Select the documents or photos to attach to the customer email. Email sending will be connected during the email integration step.", "success");
+    });
+
+    document.getElementById("callCustomerButton").addEventListener("click", function () {
+      const phone = currentJob.customer_phone || currentJob.phone;
+      if (phone) location.href = `tel:${phone}`;
+    });
+
+    document.getElementById("textCustomerButton").addEventListener("click", function () {
+      const phone = currentJob.customer_phone || currentJob.phone;
+      if (phone) location.href = `sms:${phone}`;
+    });
+
+    document.getElementById("documentsList").addEventListener("change", async function (event) {
+      const input = event.target.closest("[data-document-field]");
+      if (!input) return;
+
+      try {
+        input.disabled = true;
+        await updateDocumentField(
+          input.dataset.documentId,
+          input.dataset.documentField,
+          input.checked
+        );
+      } catch (error) {
+        input.checked = !input.checked;
+        setPageMessage(error.message || "Unable to update document settings.", "error");
+      } finally {
+        input.disabled = false;
+      }
+    });
+
+    document.getElementById("documentsList").addEventListener("click", async function (event) {
+      const openButton = event.target.closest("[data-open-document]");
+      const deleteButton = event.target.closest("[data-delete-document]");
+
+      try {
+        if (openButton) {
+          event.preventDefault();
+          await openPrivateDocument(openButton.dataset.openDocument);
+        } else if (deleteButton) {
+          await deleteDocument(deleteButton.dataset.deleteDocument);
         }
-      );
+      } catch (error) {
+        setPageMessage(error.message || "Unable to complete document action.", "error");
+      }
+    });
+
+    document.getElementById("exceptionModal").addEventListener("click", function (event) {
+      if (event.target === this) closeExceptionModal();
+    });
 
     (async function startPage() {
       try {
-        const session =
-          await requireDispatchAccess();
+        const session = await requireDispatchAccess();
+        if (!session) return;
 
-        if (!session) {
-          return;
-        }
+        await Promise.all([
+          loadDrivers(),
+          loadJob(),
+          loadInvoices(),
+          loadDocuments(),
+          loadTimeline()
+        ]);
 
-        await loadDrivers();
-        await loadJob();
+        renderJob();
       } catch (error) {
-        showError(
-          error.message ||
-          "Unable to load this work order."
-        );
+        showError(error.message || "Unable to load this work order.");
       }
     })();
   </script>
