@@ -1,0 +1,1550 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1"
+  >
+
+  <title>MG Express Job Details</title>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    :root {
+      --dark-green: #064f3b;
+      --green: #087455;
+      --light-green: #e7f5ef;
+      --coral: #ff665c;
+      --background: #f3f8f6;
+      --white: #ffffff;
+      --ink: #17221e;
+      --muted: #68756f;
+      --line: #dfe8e4;
+      --danger: #9b2929;
+      --danger-bg: #fff0f0;
+      --warning: #986200;
+      --warning-bg: #fff5d8;
+      --blue: #245d9c;
+      --blue-bg: #eaf3ff;
+    }
+
+    body {
+      margin: 0;
+      font-family: Arial, Helvetica, sans-serif;
+      background: var(--background);
+      color: var(--ink);
+    }
+
+    button,
+    input,
+    select,
+    textarea {
+      font: inherit;
+    }
+
+    .topbar {
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      padding: 18px 20px;
+      background: var(--dark-green);
+      color: white;
+    }
+
+    .topbar-inner {
+      width: min(950px, 100%);
+      margin: auto;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 14px;
+    }
+
+    .brand {
+      font-size: 23px;
+      font-weight: 900;
+      line-height: 1.08;
+    }
+
+    .brand span {
+      color: var(--coral);
+    }
+
+    .staff-email {
+      margin-top: 6px;
+      font-size: 13px;
+      opacity: .82;
+      overflow-wrap: anywhere;
+    }
+
+    .container {
+      width: min(950px, 100%);
+      margin: auto;
+      padding: 25px 18px 70px;
+    }
+
+    .back-button {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      min-height: 46px;
+      margin-bottom: 20px;
+      padding: 10px 15px;
+      border: 1px solid var(--line);
+      border-radius: 13px;
+      background: white;
+      color: var(--dark-green);
+      text-decoration: none;
+      font-weight: 900;
+    }
+
+    .job-heading {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 18px;
+      margin-bottom: 23px;
+    }
+
+    .eyebrow {
+      margin-bottom: 5px;
+      color: var(--muted);
+      font-size: 16px;
+    }
+
+    h1 {
+      margin: 0;
+      color: var(--dark-green);
+      font-size: clamp(38px, 8vw, 55px);
+      line-height: 1.02;
+      overflow-wrap: anywhere;
+    }
+
+    .customer-heading {
+      margin-top: 8px;
+      font-size: 20px;
+      font-weight: 800;
+      overflow-wrap: anywhere;
+    }
+
+    .status-pill {
+      flex-shrink: 0;
+      padding: 10px 14px;
+      border-radius: 999px;
+      background: var(--light-green);
+      color: var(--green);
+      font-size: 13px;
+      font-weight: 900;
+      text-transform: capitalize;
+      white-space: nowrap;
+    }
+
+    .status-new {
+      background: var(--blue-bg);
+      color: var(--blue);
+    }
+
+    .status-waiting_payment {
+      background: var(--warning-bg);
+      color: var(--warning);
+    }
+
+    .status-delivered {
+      background: var(--light-green);
+      color: var(--green);
+    }
+
+    .status-cancelled,
+    .status-canceled {
+      background: var(--danger-bg);
+      color: var(--danger);
+    }
+
+    .page-grid {
+      display: grid;
+      grid-template-columns: minmax(0, 1.55fr) minmax(270px, .75fr);
+      gap: 18px;
+      align-items: start;
+    }
+
+    .stack {
+      display: grid;
+      gap: 18px;
+    }
+
+    .panel {
+      padding: 21px;
+      border: 1px solid var(--line);
+      border-radius: 22px;
+      background: white;
+      box-shadow: 0 8px 27px rgba(0, 0, 0, .045);
+    }
+
+    .panel h2 {
+      margin: 0 0 18px;
+      font-size: 25px;
+    }
+
+    .detail-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 15px;
+    }
+
+    .detail {
+      min-width: 0;
+      padding: 15px;
+      border-radius: 15px;
+      background: #f7faf9;
+    }
+
+    .detail.full {
+      grid-column: 1 / -1;
+    }
+
+    .detail-label {
+      display: block;
+      margin-bottom: 6px;
+      color: var(--muted);
+      font-size: 11px;
+      font-weight: 900;
+      letter-spacing: .04em;
+      text-transform: uppercase;
+    }
+
+    .detail-value {
+      font-size: 16px;
+      font-weight: 750;
+      line-height: 1.45;
+      overflow-wrap: anywhere;
+      white-space: pre-wrap;
+    }
+
+    .route-card {
+      display: grid;
+      gap: 14px;
+    }
+
+    .route-stop {
+      padding: 17px;
+      border-radius: 16px;
+      background: #f7faf9;
+    }
+
+    .route-stop-title {
+      margin-bottom: 7px;
+      color: var(--dark-green);
+      font-size: 14px;
+      font-weight: 900;
+      text-transform: uppercase;
+    }
+
+    .address {
+      font-size: 17px;
+      font-weight: 750;
+      line-height: 1.45;
+      overflow-wrap: anywhere;
+    }
+
+    .route-arrow {
+      margin-left: 18px;
+      color: var(--green);
+      font-size: 28px;
+      font-weight: 900;
+    }
+
+    .map-button {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 44px;
+      margin-top: 12px;
+      padding: 10px 14px;
+      border-radius: 12px;
+      background: var(--light-green);
+      color: var(--dark-green);
+      text-decoration: none;
+      font-size: 14px;
+      font-weight: 900;
+    }
+
+    .field {
+      margin-bottom: 16px;
+    }
+
+    .field:last-child {
+      margin-bottom: 0;
+    }
+
+    .field label {
+      display: block;
+      margin-bottom: 7px;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 900;
+      letter-spacing: .04em;
+      text-transform: uppercase;
+    }
+
+    .field input,
+    .field select,
+    .field textarea {
+      width: 100%;
+      min-height: 50px;
+      padding: 12px 14px;
+      border: 1px solid var(--line);
+      border-radius: 13px;
+      background: white;
+      color: var(--ink);
+    }
+
+    .field textarea {
+      min-height: 110px;
+      resize: vertical;
+    }
+
+    .save-button,
+    .print-button {
+      width: 100%;
+      min-height: 55px;
+      border: 0;
+      border-radius: 14px;
+      font-weight: 900;
+      cursor: pointer;
+    }
+
+    .save-button {
+      background: var(--green);
+      color: white;
+    }
+
+    .print-button {
+      margin-top: 11px;
+      border: 1px solid var(--line);
+      background: white;
+      color: var(--dark-green);
+    }
+
+    .save-message {
+      display: none;
+      margin-top: 13px;
+      padding: 13px;
+      border-radius: 12px;
+      line-height: 1.45;
+    }
+
+    .save-message.success {
+      display: block;
+      background: var(--light-green);
+      color: var(--dark-green);
+    }
+
+    .save-message.error {
+      display: block;
+      background: var(--danger-bg);
+      color: var(--danger);
+    }
+
+    .photo-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 14px;
+    }
+
+    .photo-card {
+      overflow: hidden;
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      background: #f7faf9;
+    }
+
+    .photo-card img {
+      display: block;
+      width: 100%;
+      height: 190px;
+      object-fit: cover;
+      background: #edf2f0;
+    }
+
+    .photo-content {
+      padding: 14px;
+    }
+
+    .photo-title {
+      color: var(--dark-green);
+      font-weight: 900;
+    }
+
+    .photo-date {
+      margin-top: 6px;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.4;
+    }
+
+    .photo-link {
+      display: inline-block;
+      margin-top: 10px;
+      color: var(--green);
+      font-weight: 900;
+    }
+
+    .photo-missing {
+      display: grid;
+      min-height: 190px;
+      place-items: center;
+      padding: 20px;
+      color: var(--muted);
+      text-align: center;
+    }
+
+    .timeline {
+      position: relative;
+      display: grid;
+      gap: 17px;
+      padding-left: 8px;
+    }
+
+    .timeline-item {
+      position: relative;
+      display: grid;
+      grid-template-columns: 19px minmax(0, 1fr);
+      gap: 12px;
+    }
+
+    .timeline-dot {
+      width: 16px;
+      height: 16px;
+      margin-top: 2px;
+      border: 4px solid #b8d8cb;
+      border-radius: 50%;
+      background: white;
+    }
+
+    .timeline-dot.complete {
+      border-color: var(--green);
+      background: var(--green);
+    }
+
+    .timeline-title {
+      font-weight: 900;
+    }
+
+    .timeline-date {
+      margin-top: 4px;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.4;
+    }
+
+    .loading,
+    .error-box {
+      padding: 32px 22px;
+      border-radius: 19px;
+      text-align: center;
+      line-height: 1.55;
+    }
+
+    .loading {
+      border: 1px solid var(--line);
+      background: white;
+      color: var(--muted);
+    }
+
+    .error-box {
+      background: var(--danger-bg);
+      color: var(--danger);
+    }
+
+    .hidden {
+      display: none !important;
+    }
+
+    @media (max-width: 780px) {
+      .page-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .job-heading {
+        flex-direction: column;
+      }
+
+      .detail-grid,
+      .photo-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .detail.full {
+        grid-column: auto;
+      }
+    }
+
+    @media print {
+      .topbar,
+      .back-button,
+      .controls-panel,
+      .dispatch-menu-button,
+      .dispatch-menu-overlay,
+      .dispatch-side-menu {
+        display: none !important;
+      }
+
+      body {
+        background: white;
+      }
+
+      .container {
+        width: 100%;
+        padding: 0;
+      }
+
+      .page-grid {
+        display: block;
+      }
+
+      .panel {
+        margin-bottom: 15px;
+        box-shadow: none;
+        break-inside: avoid;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <header class="topbar">
+    <div class="topbar-inner">
+      <div>
+        <div class="brand">
+          MG <span>EXPRESS</span> DISPATCH
+        </div>
+
+        <div
+          class="staff-email"
+          id="staffEmail"
+        ></div>
+      </div>
+    </div>
+  </header>
+
+  <main class="container">
+    <a class="back-button" href="/jobs.html">
+      ← Active Jobs
+    </a>
+
+    <div id="loadingBox" class="loading">
+      Loading work order...
+    </div>
+
+    <div id="errorBox" class="error-box hidden"></div>
+
+    <div id="jobPage" class="hidden">
+      <div class="job-heading">
+        <div>
+          <div class="eyebrow">MG Express Work Order</div>
+
+          <h1 id="jobNumber">Job</h1>
+
+          <div
+            class="customer-heading"
+            id="customerHeading"
+          ></div>
+        </div>
+
+        <div
+          class="status-pill"
+          id="statusPill"
+        >
+          Open
+        </div>
+      </div>
+
+      <div class="page-grid">
+        <div class="stack">
+          <section class="panel">
+            <h2>Route</h2>
+
+            <div class="route-card">
+              <div class="route-stop">
+                <div class="route-stop-title">
+                  Pickup Address
+                </div>
+
+                <div
+                  class="address"
+                  id="pickupAddress"
+                ></div>
+
+                <a
+                  class="map-button"
+                  id="pickupMap"
+                  target="_blank"
+                  rel="noopener"
+                >
+                  Open Pickup in Maps
+                </a>
+              </div>
+
+              <div class="route-arrow">↓</div>
+
+              <div class="route-stop">
+                <div class="route-stop-title">
+                  Delivery Address
+                </div>
+
+                <div
+                  class="address"
+                  id="deliveryAddress"
+                ></div>
+
+                <a
+                  class="map-button"
+                  id="deliveryMap"
+                  target="_blank"
+                  rel="noopener"
+                >
+                  Open Delivery in Maps
+                </a>
+              </div>
+            </div>
+          </section>
+
+          <section class="panel">
+            <h2>Customer & Package</h2>
+
+            <div class="detail-grid">
+              <div class="detail">
+                <span class="detail-label">
+                  Customer
+                </span>
+
+                <div
+                  class="detail-value"
+                  id="customerName"
+                ></div>
+              </div>
+
+              <div class="detail">
+                <span class="detail-label">
+                  Customer Email
+                </span>
+
+                <div
+                  class="detail-value"
+                  id="customerEmail"
+                ></div>
+              </div>
+
+              <div class="detail">
+                <span class="detail-label">
+                  Vehicle
+                </span>
+
+                <div
+                  class="detail-value"
+                  id="vehicleType"
+                ></div>
+              </div>
+
+              <div class="detail">
+                <span class="detail-label">
+                  Delivery Speed
+                </span>
+
+                <div
+                  class="detail-value"
+                  id="deliverySpeed"
+                ></div>
+              </div>
+
+              <div class="detail">
+                <span class="detail-label">
+                  Package
+                </span>
+
+                <div
+                  class="detail-value"
+                  id="packageType"
+                ></div>
+              </div>
+
+              <div class="detail">
+                <span class="detail-label">
+                  Delivery Method
+                </span>
+
+                <div
+                  class="detail-value"
+                  id="deliveryMethod"
+                ></div>
+              </div>
+
+              <div class="detail full">
+                <span class="detail-label">
+                  Special Instructions
+                </span>
+
+                <div
+                  class="detail-value"
+                  id="specialInstructions"
+                ></div>
+              </div>
+            </div>
+          </section>
+
+          <section class="panel">
+            <h2>Proof Photos</h2>
+
+            <div class="photo-grid">
+              <div
+                class="photo-card"
+                id="pickupPhotoCard"
+              ></div>
+
+              <div
+                class="photo-card"
+                id="deliveryPhotoCard"
+              ></div>
+            </div>
+          </section>
+
+          <section class="panel">
+            <h2>Job Timeline</h2>
+
+            <div class="timeline" id="timeline"></div>
+          </section>
+        </div>
+
+        <div class="stack">
+          <section class="panel controls-panel">
+            <h2>Dispatch Controls</h2>
+
+            <div class="field">
+              <label for="driverSelect">
+                Assigned Driver
+              </label>
+
+              <select id="driverSelect">
+                <option value="">
+                  Unassigned
+                </option>
+              </select>
+            </div>
+
+            <div class="field">
+              <label for="driverPay">
+                Driver Pay
+              </label>
+
+              <input
+                id="driverPay"
+                type="number"
+                min="0"
+                step="0.01"
+                placeholder="0.00"
+              >
+            </div>
+
+            <div class="field">
+              <label for="statusSelect">
+                Job Status
+              </label>
+
+              <select id="statusSelect">
+                <option value="new">New</option>
+
+                <option value="waiting_payment">
+                  Waiting Payment
+                </option>
+
+                <option value="paid">Paid</option>
+
+                <option value="ready">Ready</option>
+
+                <option value="in_transit">
+                  In Transit
+                </option>
+
+                <option value="delivered">
+                  Delivered
+                </option>
+
+                <option value="cancelled">
+                  Cancelled
+                </option>
+              </select>
+            </div>
+
+            <button
+              class="save-button"
+              id="saveButton"
+              type="button"
+            >
+              Save Changes
+            </button>
+
+            <button
+              class="print-button"
+              id="printButton"
+              type="button"
+            >
+              Print Work Order
+            </button>
+
+            <div
+              class="save-message"
+              id="saveMessage"
+            ></div>
+          </section>
+
+          <section class="panel">
+            <h2>Job Information</h2>
+
+            <div class="detail-grid">
+              <div class="detail full">
+                <span class="detail-label">
+                  Created
+                </span>
+
+                <div
+                  class="detail-value"
+                  id="createdAt"
+                ></div>
+              </div>
+
+              <div class="detail full">
+                <span class="detail-label">
+                  Completed
+                </span>
+
+                <div
+                  class="detail-value"
+                  id="completedAt"
+                ></div>
+              </div>
+
+              <div class="detail full">
+                <span class="detail-label">
+                  Database ID
+                </span>
+
+                <div
+                  class="detail-value"
+                  id="databaseId"
+                ></div>
+              </div>
+            </div>
+          </section>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <script>
+    const client = supabase.createClient(
+      "https://dczlucwfjayymlwbzzdi.supabase.co",
+      "sb_publishable_kcv_a78ZyUxMo2neKUANdw_XN7eAMpI"
+    );
+
+    window.mgDispatchClient = client;
+
+    const params =
+      new URLSearchParams(window.location.search);
+
+    const jobId = params.get("id");
+
+    let currentJob = null;
+    let drivers = [];
+
+    function escapeHtml(value) {
+      const div = document.createElement("div");
+      div.textContent = value ?? "";
+      return div.innerHTML;
+    }
+
+    function cleanStatus(value) {
+      return String(value || "new")
+        .trim()
+        .toLowerCase();
+    }
+
+    function statusLabel(value) {
+      const labels = {
+        new: "New",
+        waiting_payment: "Waiting Payment",
+        paid: "Paid",
+        ready: "Ready",
+        in_transit: "In Transit",
+        delivered: "Delivered",
+        cancelled: "Cancelled",
+        canceled: "Cancelled"
+      };
+
+      return labels[cleanStatus(value)] ||
+        String(value || "Open")
+          .replaceAll("_", " ");
+    }
+
+    function formatDate(value) {
+      if (!value) {
+        return "Not recorded";
+      }
+
+      const date = new Date(value);
+
+      if (Number.isNaN(date.getTime())) {
+        return String(value);
+      }
+
+      return new Intl.DateTimeFormat(
+        "en-US",
+        {
+          weekday: "short",
+          month: "short",
+          day: "numeric",
+          year: "numeric",
+          hour: "numeric",
+          minute: "2-digit"
+        }
+      ).format(date);
+    }
+
+    function displayValue(value) {
+      if (
+        value === null ||
+        value === undefined ||
+        value === ""
+      ) {
+        return "Not provided";
+      }
+
+      return String(value);
+    }
+
+    function mapUrl(address) {
+      return (
+        "https://www.google.com/maps/search/?api=1&query=" +
+        encodeURIComponent(address || "")
+      );
+    }
+
+    function setText(id, value) {
+      document
+        .getElementById(id)
+        .textContent = displayValue(value);
+    }
+
+    function showError(message) {
+      document
+        .getElementById("loadingBox")
+        .classList.add("hidden");
+
+      const errorBox =
+        document.getElementById("errorBox");
+
+      errorBox.textContent =
+        message || "Unable to load this job.";
+
+      errorBox.classList.remove("hidden");
+    }
+
+    function setSaveMessage(message, type) {
+      const box =
+        document.getElementById("saveMessage");
+
+      box.textContent = message;
+      box.className =
+        `save-message ${type || ""}`;
+    }
+
+    async function requireDispatchAccess() {
+      const sessionResult =
+        await client.auth.getSession();
+
+      const session =
+        sessionResult.data.session;
+
+      if (!session) {
+        location.replace("/index.html");
+        return null;
+      }
+
+      document
+        .getElementById("staffEmail")
+        .textContent =
+          session.user.email || "";
+
+      const profileResult = await client
+        .from("profiles")
+        .select("role")
+        .eq("id", session.user.id)
+        .maybeSingle();
+
+      if (
+        profileResult.error ||
+        !profileResult.data
+      ) {
+        throw new Error(
+          profileResult.error?.message ||
+          "No MG Express profile was found."
+        );
+      }
+
+      const role = String(
+        profileResult.data.role || ""
+      ).toLowerCase();
+
+      if (
+        ![
+          "admin",
+          "staff",
+          "dispatcher"
+        ].includes(role)
+      ) {
+        if (role === "driver") {
+          location.replace("/driver.html");
+          return null;
+        }
+
+        if (role === "customer") {
+          location.replace("/customer.html");
+          return null;
+        }
+
+        throw new Error(
+          "This account does not have dispatch access."
+        );
+      }
+
+      window.dispatchEvent(
+        new CustomEvent("mg-dispatch-ready", {
+          detail: {
+            email: session.user.email
+          }
+        })
+      );
+
+      return session;
+    }
+
+    async function loadDrivers() {
+      const result = await client
+        .from("drivers")
+        .select("id,full_name,email,active")
+        .order("full_name", {
+          ascending: true
+        });
+
+      if (result.error) {
+        throw result.error;
+      }
+
+      drivers = result.data || [];
+
+      const driverSelect =
+        document.getElementById("driverSelect");
+
+      driverSelect.innerHTML = `
+        <option value="">Unassigned</option>
+        ${drivers.map(driver => `
+          <option value="${escapeHtml(driver.id)}">
+            ${escapeHtml(
+              driver.full_name ||
+              driver.email ||
+              "Driver"
+            )}
+            ${driver.active === false ? " — Inactive" : ""}
+          </option>
+        `).join("")}
+      `;
+    }
+
+    async function loadJob() {
+      if (!jobId) {
+        throw new Error(
+          "No job ID was included in this link."
+        );
+      }
+
+      const result = await client
+        .from("quotes")
+        .select("*")
+        .eq("id", jobId)
+        .maybeSingle();
+
+      if (result.error) {
+        throw result.error;
+      }
+
+      if (!result.data) {
+        throw new Error(
+          "This work order could not be found."
+        );
+      }
+
+      currentJob = result.data;
+      renderJob();
+    }
+
+    function photoCard(
+      title,
+      url,
+      uploadedAt
+    ) {
+      if (!url) {
+        return `
+          <div class="photo-missing">
+            No ${escapeHtml(
+              title.toLowerCase()
+            )} has been uploaded.
+          </div>
+
+          <div class="photo-content">
+            <div class="photo-title">
+              ${escapeHtml(title)}
+            </div>
+
+            <div class="photo-date">
+              Not uploaded
+            </div>
+          </div>
+        `;
+      }
+
+      return `
+        <a
+          href="${escapeHtml(url)}"
+          target="_blank"
+          rel="noopener"
+        >
+          <img
+            src="${escapeHtml(url)}"
+            alt="${escapeHtml(title)}"
+          >
+        </a>
+
+        <div class="photo-content">
+          <div class="photo-title">
+            ${escapeHtml(title)}
+          </div>
+
+          <div class="photo-date">
+            ${escapeHtml(formatDate(uploadedAt))}
+          </div>
+
+          <a
+            class="photo-link"
+            href="${escapeHtml(url)}"
+            target="_blank"
+            rel="noopener"
+          >
+            View Full Photo
+          </a>
+        </div>
+      `;
+    }
+
+    function renderTimeline() {
+      const status =
+        cleanStatus(currentJob.status);
+
+      const stages = [
+        {
+          title: "Job Created",
+          date: currentJob.created_at,
+          complete: Boolean(
+            currentJob.created_at
+          )
+        },
+        {
+          title: "Driver Assigned",
+          date: null,
+          complete: Boolean(
+            currentJob.assigned_driver_id
+          )
+        },
+        {
+          title: "Pickup Photo Uploaded",
+          date:
+            currentJob.pickup_photo_uploaded_at,
+          complete: Boolean(
+            currentJob.pickup_photo_url
+          )
+        },
+        {
+          title: "In Transit",
+          date: null,
+          complete: [
+            "in_transit",
+            "delivered"
+          ].includes(status)
+        },
+        {
+          title: "Delivery Photo Uploaded",
+          date:
+            currentJob.delivery_photo_uploaded_at,
+          complete: Boolean(
+            currentJob.delivery_photo_url
+          )
+        },
+        {
+          title: "Job Delivered",
+          date: currentJob.completed_at,
+          complete:
+            status === "delivered"
+        }
+      ];
+
+      document
+        .getElementById("timeline")
+        .innerHTML =
+          stages.map(stage => `
+            <div class="timeline-item">
+              <div
+                class="timeline-dot ${
+                  stage.complete
+                    ? "complete"
+                    : ""
+                }"
+              ></div>
+
+              <div>
+                <div class="timeline-title">
+                  ${escapeHtml(stage.title)}
+                </div>
+
+                <div class="timeline-date">
+                  ${
+                    stage.date
+                      ? escapeHtml(
+                          formatDate(stage.date)
+                        )
+                      : (
+                          stage.complete
+                            ? "Completed"
+                            : "Pending"
+                        )
+                  }
+                </div>
+              </div>
+            </div>
+          `).join("");
+    }
+
+    function renderJob() {
+      document
+        .getElementById("loadingBox")
+        .classList.add("hidden");
+
+      document
+        .getElementById("errorBox")
+        .classList.add("hidden");
+
+      document
+        .getElementById("jobPage")
+        .classList.remove("hidden");
+
+      const status =
+        cleanStatus(currentJob.status);
+
+      setText(
+        "jobNumber",
+        currentJob.job_number || "Job"
+      );
+
+      setText(
+        "customerHeading",
+        currentJob.customer_name || "Customer"
+      );
+
+      setText(
+        "customerName",
+        currentJob.customer_name
+      );
+
+      setText(
+        "customerEmail",
+        currentJob.customer_email
+      );
+
+      setText(
+        "pickupAddress",
+        currentJob.pickup_address
+      );
+
+      setText(
+        "deliveryAddress",
+        currentJob.delivery_address
+      );
+
+      setText(
+        "vehicleType",
+        currentJob.vehicle_type
+      );
+
+      setText(
+        "deliverySpeed",
+        currentJob.delivery_speed
+      );
+
+      setText(
+        "packageType",
+        currentJob.package_type
+      );
+
+      setText(
+        "deliveryMethod",
+        currentJob.delivery_method
+      );
+
+      setText(
+        "specialInstructions",
+        currentJob.special_instructions
+      );
+
+      setText(
+        "createdAt",
+        formatDate(currentJob.created_at)
+      );
+
+      setText(
+        "completedAt",
+        formatDate(currentJob.completed_at)
+      );
+
+      setText(
+        "databaseId",
+        currentJob.id
+      );
+
+      const statusPill =
+        document.getElementById("statusPill");
+
+      statusPill.textContent =
+        statusLabel(status);
+
+      statusPill.className =
+        `status-pill status-${status}`;
+
+      document
+        .getElementById("pickupMap")
+        .href =
+          mapUrl(currentJob.pickup_address);
+
+      document
+        .getElementById("deliveryMap")
+        .href =
+          mapUrl(currentJob.delivery_address);
+
+      document
+        .getElementById("driverSelect")
+        .value =
+          currentJob.assigned_driver_id || "";
+
+      document
+        .getElementById("driverPay")
+        .value =
+          Number(currentJob.driver_pay || 0)
+            .toFixed(2);
+
+      document
+        .getElementById("statusSelect")
+        .value = status;
+
+      document
+        .getElementById("pickupPhotoCard")
+        .innerHTML =
+          photoCard(
+            "Pickup Photo",
+            currentJob.pickup_photo_url,
+            currentJob.pickup_photo_uploaded_at
+          );
+
+      document
+        .getElementById("deliveryPhotoCard")
+        .innerHTML =
+          photoCard(
+            "Delivery Photo",
+            currentJob.delivery_photo_url,
+            currentJob.delivery_photo_uploaded_at
+          );
+
+      renderTimeline();
+
+      document.title =
+        `${currentJob.job_number || "Job"} | MG Express`;
+    }
+
+    async function saveJob() {
+      const saveButton =
+        document.getElementById("saveButton");
+
+      saveButton.disabled = true;
+      saveButton.textContent =
+        "Saving Changes...";
+
+      setSaveMessage("", "");
+
+      try {
+        const newStatus =
+          cleanStatus(
+            document
+              .getElementById("statusSelect")
+              .value
+          );
+
+        const driverId =
+          document
+            .getElementById("driverSelect")
+            .value || null;
+
+        const driverPay =
+          Number(
+            document
+              .getElementById("driverPay")
+              .value || 0
+          );
+
+        const payload = {
+          assigned_driver_id: driverId,
+          driver_pay: driverPay,
+          status: newStatus
+        };
+
+        if (
+          newStatus === "delivered" &&
+          !currentJob.completed_at
+        ) {
+          payload.completed_at =
+            new Date().toISOString();
+        }
+
+        const result = await client
+          .from("quotes")
+          .update(payload)
+          .eq("id", currentJob.id)
+          .select("*")
+          .maybeSingle();
+
+        if (result.error) {
+          /*
+            Some older databases may not have
+            completed_at. Retry without it.
+          */
+          if (
+            payload.completed_at &&
+            result.error.message
+              .toLowerCase()
+              .includes("completed_at")
+          ) {
+            delete payload.completed_at;
+
+            const retryResult = await client
+              .from("quotes")
+              .update(payload)
+              .eq("id", currentJob.id)
+              .select("*")
+              .maybeSingle();
+
+            if (retryResult.error) {
+              throw retryResult.error;
+            }
+
+            currentJob =
+              retryResult.data || {
+                ...currentJob,
+                ...payload
+              };
+          } else {
+            throw result.error;
+          }
+        } else {
+          currentJob =
+            result.data || {
+              ...currentJob,
+              ...payload
+            };
+        }
+
+        renderJob();
+
+        setSaveMessage(
+          "Job changes saved successfully.",
+          "success"
+        );
+
+        if (
+          [
+            "delivered",
+            "cancelled",
+            "canceled"
+          ].includes(newStatus)
+        ) {
+          setSaveMessage(
+            "Job closed successfully. Returning to Job History...",
+            "success"
+          );
+
+          setTimeout(() => {
+            location.href = "/history.html";
+          }, 1200);
+        }
+      } catch (error) {
+        setSaveMessage(
+          error.message ||
+          "Unable to save this job.",
+          "error"
+        );
+      } finally {
+        saveButton.disabled = false;
+        saveButton.textContent =
+          "Save Changes";
+      }
+    }
+
+    document
+      .getElementById("saveButton")
+      .addEventListener(
+        "click",
+        saveJob
+      );
+
+    document
+      .getElementById("printButton")
+      .addEventListener(
+        "click",
+        function () {
+          window.print();
+        }
+      );
+
+    (async function startPage() {
+      try {
+        const session =
+          await requireDispatchAccess();
+
+        if (!session) {
+          return;
+        }
+
+        await loadDrivers();
+        await loadJob();
+      } catch (error) {
+        showError(
+          error.message ||
+          "Unable to load this work order."
+        );
+      }
+    })();
+  </script>
+
+  <script src="/dispatch-menu.js"></script>
+</body>
+</html>
