@@ -8,7 +8,7 @@
     content="width=device-width, initial-scale=1"
   >
 
-  <title>MG Express Dispatch Dashboard</title>
+  <title>MG Express Drivers</title>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
@@ -29,14 +29,10 @@
       --line: #dfe8e4;
       --danger: #9b2929;
       --danger-bg: #fff0f0;
-      --warning: #946000;
+      --warning: #986200;
       --warning-bg: #fff5d8;
       --blue: #245d9c;
       --blue-bg: #eaf3ff;
-    }
-
-    html {
-      scroll-behavior: smooth;
     }
 
     body {
@@ -46,44 +42,28 @@
       color: var(--ink);
     }
 
-    body.menu-open {
-      overflow: hidden;
-    }
-
     button,
     input,
-    select,
-    textarea {
+    select {
       font: inherit;
-    }
-
-    button {
-      cursor: pointer;
-    }
-
-    .hidden {
-      display: none !important;
     }
 
     .topbar {
       position: sticky;
       top: 0;
-      z-index: 100;
+      z-index: 50;
       padding: 18px 20px;
       background: var(--dark-green);
       color: white;
     }
 
     .topbar-inner {
-      position: relative;
-      width: min(1000px, 100%);
-      min-height: 75px;
+      width: min(1050px, 100%);
       margin: auto;
-      padding-right: 82px;
     }
 
     .brand {
-      font-size: clamp(21px, 5.8vw, 30px);
+      font-size: 23px;
       font-weight: 900;
       line-height: 1.08;
     }
@@ -93,303 +73,112 @@
     }
 
     .staff-email {
-      margin-top: 9px;
-      font-size: 14px;
-      opacity: .84;
-      overflow-wrap: anywhere;
-    }
-
-    .hamburger {
-      position: absolute;
-      top: 50%;
-      right: 0;
-      display: grid;
-      place-items: center;
-      width: 64px;
-      height: 64px;
-      padding: 0;
-      border: 0;
-      border-radius: 18px;
-      background: white;
-      color: var(--dark-green);
-      font-size: 38px;
-      font-weight: 900;
-      line-height: 1;
-      transform: translateY(-50%);
-    }
-
-    .hamburger:active {
-      transform: translateY(-50%) scale(.97);
-    }
-
-    .menu-overlay {
-      position: fixed;
-      inset: 0;
-      z-index: 500;
-      background: rgba(8, 25, 20, .58);
-      opacity: 0;
-      visibility: hidden;
-      transition: opacity .2s ease;
-    }
-
-    .menu-overlay.open {
-      opacity: 1;
-      visibility: visible;
-    }
-
-    .side-menu {
-      position: fixed;
-      top: 0;
-      right: 0;
-      z-index: 501;
-      width: min(365px, 88vw);
-      height: 100%;
-      padding: 22px 18px;
-      background: white;
-      box-shadow: -12px 0 30px rgba(0, 0, 0, .17);
-      transform: translateX(105%);
-      transition: transform .24s ease;
-      overflow-y: auto;
-    }
-
-    .side-menu.open {
-      transform: translateX(0);
-    }
-
-    .menu-top {
-      display: flex;
-      align-items: flex-start;
-      justify-content: space-between;
-      gap: 12px;
-      padding: 5px 3px 20px;
-      border-bottom: 1px solid var(--line);
-    }
-
-    .menu-brand {
-      color: var(--dark-green);
-      font-size: 22px;
-      font-weight: 900;
-      line-height: 1.15;
-    }
-
-    .menu-brand span {
-      color: var(--coral);
-    }
-
-    .menu-user {
       margin-top: 7px;
-      color: var(--muted);
-      font-size: 12px;
+      font-size: 13px;
+      opacity: .82;
       overflow-wrap: anywhere;
-    }
-
-    .menu-close {
-      display: grid;
-      place-items: center;
-      width: 45px;
-      height: 45px;
-      flex: 0 0 45px;
-      border: 0;
-      border-radius: 13px;
-      background: var(--background);
-      color: var(--dark-green);
-      font-size: 27px;
-    }
-
-    .menu-links {
-      display: grid;
-      gap: 9px;
-      margin-top: 19px;
-    }
-
-    .menu-link {
-      display: flex;
-      align-items: center;
-      gap: 13px;
-      min-height: 56px;
-      padding: 13px 15px;
-      border-radius: 14px;
-      color: var(--dark-green);
-      text-decoration: none;
-      font-weight: 900;
-    }
-
-    .menu-link:hover,
-    .menu-link.active {
-      background: var(--light-green);
-    }
-
-    .menu-icon {
-      width: 25px;
-      text-align: center;
-      font-size: 19px;
-    }
-
-    .signout-button {
-      width: 100%;
-      min-height: 54px;
-      margin-top: 22px;
-      border: 1px solid #f0caca;
-      border-radius: 14px;
-      background: var(--danger-bg);
-      color: var(--danger);
-      font-weight: 900;
     }
 
     .container {
-      width: min(1000px, 100%);
+      width: min(1050px, 100%);
       margin: auto;
-      padding: 28px 18px 80px;
+      padding: 28px 18px 75px;
+    }
+
+    .heading-row {
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      gap: 16px;
+      margin-bottom: 24px;
     }
 
     .eyebrow {
-      margin-bottom: 7px;
+      margin-bottom: 6px;
       color: var(--muted);
       font-size: 17px;
     }
 
     h1 {
       margin: 0;
-      font-size: clamp(40px, 8vw, 56px);
+      font-size: clamp(39px, 8vw, 55px);
       line-height: 1.03;
     }
 
-    .new-job-button {
-      width: 100%;
-      min-height: 59px;
-      margin-top: 24px;
-      border: 0;
-      border-radius: 17px;
-      background: var(--green);
-      color: white;
-      font-size: 17px;
+    .dashboard-button {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 52px;
+      padding: 13px 18px;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      background: white;
+      color: var(--dark-green);
+      text-decoration: none;
       font-weight: 900;
+      white-space: nowrap;
     }
 
     .stats {
       display: grid;
-      grid-template-columns: repeat(3, minmax(0, 1fr));
-      gap: 14px;
-      margin-top: 26px;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 12px;
+      margin-bottom: 21px;
     }
 
     .stat-card {
       min-width: 0;
-      min-height: 150px;
-      padding: 20px;
+      padding: 18px;
+      border: 1px solid var(--line);
+      border-radius: 19px;
+      background: white;
+      box-shadow: 0 7px 22px rgba(0, 0, 0, .04);
+    }
+
+    .stat-number {
+      color: var(--green);
+      font-size: 31px;
+      font-weight: 900;
+      overflow-wrap: anywhere;
+    }
+
+    .stat-label {
+      margin-top: 7px;
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.35;
+    }
+
+    .filters {
+      padding: 18px;
       border: 1px solid var(--line);
       border-radius: 21px;
       background: white;
       box-shadow: 0 8px 25px rgba(0, 0, 0, .04);
     }
 
-    .stat-icon {
-      margin-bottom: 13px;
-      font-size: 25px;
-    }
-
-    .stat-number {
-      color: var(--green);
-      font-size: 36px;
-      font-weight: 900;
-    }
-
-    .stat-label {
-      margin-top: 8px;
-      color: var(--muted);
-      font-size: 14px;
-      font-weight: 700;
-      line-height: 1.35;
-    }
-
-    .stat-card.warning .stat-number {
-      color: var(--warning);
-    }
-
-    .stat-card.blue .stat-number {
-      color: var(--blue);
-    }
-
-    .dashboard-message {
-      margin-top: 22px;
-      padding: 15px;
-      border: 1px solid var(--line);
-      border-radius: 15px;
-      background: white;
-      color: var(--muted);
-      text-align: center;
-    }
-
-    .panel {
-      margin-top: 25px;
-      padding: 20px;
-      border: 1px solid var(--line);
-      border-radius: 22px;
-      background: white;
-      box-shadow: 0 8px 27px rgba(0, 0, 0, .04);
-    }
-
-    .panel-heading {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 15px;
-      margin-bottom: 18px;
-    }
-
-    .panel-heading h2 {
-      margin: 0;
-      font-size: 28px;
-    }
-
-    .close-button {
-      min-height: 46px;
-      padding: 10px 16px;
-      border: 1px solid var(--line);
-      border-radius: 13px;
-      background: white;
-      color: var(--dark-green);
-      font-weight: 900;
-    }
-
-    .form-grid {
+    .filter-grid {
       display: grid;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: 15px;
-    }
-
-    .form-section-title {
-      grid-column: 1 / -1;
-      margin-top: 7px;
-      padding: 13px 15px;
-      border-radius: 14px;
-      background: #f0f7f4;
-      color: var(--dark-green);
-      font-size: 16px;
-      font-weight: 900;
-    }
-
-    .field {
-      min-width: 0;
-    }
-
-    .field.full {
-      grid-column: 1 / -1;
+      grid-template-columns:
+        minmax(0, 2fr)
+        minmax(170px, 1fr)
+        auto;
+      gap: 12px;
     }
 
     .field label {
       display: block;
       margin-bottom: 7px;
       color: var(--muted);
-      font-size: 11px;
+      font-size: 12px;
       font-weight: 900;
       letter-spacing: .04em;
       text-transform: uppercase;
     }
 
     .field input,
-    .field select,
-    .field textarea {
+    .field select {
       width: 100%;
       min-height: 51px;
       padding: 12px 14px;
@@ -399,140 +188,320 @@
       color: var(--ink);
     }
 
-    .field textarea {
-      min-height: 105px;
-      resize: vertical;
+    .refresh-button {
+      align-self: end;
+      min-height: 51px;
+      padding: 12px 18px;
+      border: 1px solid var(--line);
+      border-radius: 13px;
+      background: white;
+      color: var(--dark-green);
+      font-weight: 900;
+      cursor: pointer;
     }
 
-    .money-note {
-      margin-top: 7px;
+    .list-heading {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 14px;
+      margin: 27px 2px 13px;
+    }
+
+    .list-heading h2 {
+      margin: 0;
+      font-size: 28px;
+    }
+
+    .visible-count {
       color: var(--muted);
-      font-size: 12px;
-      line-height: 1.4;
+      font-size: 14px;
+      font-weight: 800;
     }
 
-    .billing-summary {
-      grid-column: 1 / -1;
+    .driver-list {
+      overflow: hidden;
+      border: 1px solid var(--line);
+      border-radius: 20px;
+      background: white;
+      box-shadow: 0 8px 25px rgba(0, 0, 0, .04);
+    }
+
+    .driver-row {
       display: grid;
-      grid-template-columns: repeat(3, minmax(0, 1fr));
-      gap: 12px;
-      padding: 16px;
-      border-radius: 17px;
+      grid-template-columns:
+        minmax(0, 1.35fr)
+        minmax(110px, .55fr)
+        minmax(110px, .55fr)
+        minmax(125px, .65fr)
+        minmax(125px, .65fr)
+        auto;
+      gap: 15px;
+      align-items: center;
+      min-height: 94px;
+      padding: 16px 18px;
+      border-bottom: 1px solid var(--line);
+      background: white;
+      color: inherit;
+      text-decoration: none;
+    }
+
+    .driver-row:last-child {
+      border-bottom: 0;
+    }
+
+    .driver-row:active {
       background: #f7faf9;
     }
 
-    .summary-box {
+    .driver-main {
       min-width: 0;
-      padding: 14px;
-      border: 1px solid var(--line);
-      border-radius: 14px;
-      background: white;
     }
 
-    .summary-label {
+    .driver-name {
+      color: var(--dark-green);
+      font-size: 18px;
+      font-weight: 900;
+      overflow-wrap: anywhere;
+    }
+
+    .driver-email {
+      margin-top: 5px;
       color: var(--muted);
-      font-size: 10px;
+      font-size: 13px;
+      overflow-wrap: anywhere;
+    }
+
+    .status-pill {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: fit-content;
+      padding: 8px 11px;
+      border-radius: 999px;
+      font-size: 12px;
       font-weight: 900;
-      text-transform: uppercase;
+      white-space: nowrap;
     }
 
-    .summary-value {
-      margin-top: 7px;
-      color: var(--green);
-      font-size: 22px;
-      font-weight: 900;
-    }
-
-    .summary-value.profit {
-      color: var(--dark-green);
-    }
-
-    .form-actions {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 12px;
-      margin-top: 19px;
-    }
-
-    .create-button,
-    .invoice-button {
-      min-height: 56px;
-      border: 0;
-      border-radius: 14px;
-      color: white;
-      font-weight: 900;
-    }
-
-    .create-button {
-      background: var(--green);
-    }
-
-    .invoice-button {
-      background: var(--dark-green);
-    }
-
-    .message {
-      margin-top: 14px;
-      padding: 14px;
-      border-radius: 13px;
-      line-height: 1.5;
-    }
-
-    .message.success {
+    .status-available {
       background: var(--light-green);
-      color: var(--dark-green);
+      color: var(--green);
     }
 
-    .message.error {
+    .status-busy {
+      background: var(--warning-bg);
+      color: var(--warning);
+    }
+
+    .status-inactive {
       background: var(--danger-bg);
       color: var(--danger);
     }
 
-    @media (max-width: 760px) {
-      .stats {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
+    .meta-label {
+      display: block;
+      margin-bottom: 5px;
+      color: var(--muted);
+      font-size: 10px;
+      font-weight: 900;
+      letter-spacing: .04em;
+      text-transform: uppercase;
+    }
+
+    .meta-value {
+      font-size: 14px;
+      font-weight: 800;
+      line-height: 1.35;
+      overflow-wrap: anywhere;
+    }
+
+    .pay-value {
+      color: var(--green);
+    }
+
+    .arrow {
+      color: var(--green);
+      font-size: 27px;
+      font-weight: 900;
+    }
+
+    .workflow-panel {
+      margin-bottom: 20px;
+      padding: 18px;
+      border: 1px solid var(--line);
+      border-radius: 20px;
+      background: white;
+      box-shadow: 0 8px 25px rgba(0, 0, 0, .04);
+    }
+
+    .workflow-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 14px;
+    }
+
+    .workflow-header h2 {
+      margin: 0;
+      font-size: 24px;
+    }
+
+    .workflow-caption {
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.4;
+    }
+
+    .workflow-card {
+      display: grid;
+      gap: 10px;
+      padding: 14px;
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      background: #f7faf9;
+      margin-bottom: 10px;
+    }
+
+    .workflow-card:last-child {
+      margin-bottom: 0;
+    }
+
+    .workflow-card-title {
+      color: var(--dark-green);
+      font-weight: 900;
+    }
+
+    .workflow-card-meta {
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.4;
+    }
+
+    .workflow-button-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .workflow-button {
+      min-height: 42px;
+      padding: 9px 12px;
+      border: 1px solid var(--line);
+      border-radius: 11px;
+      background: white;
+      color: var(--dark-green);
+      font-weight: 800;
+      cursor: pointer;
+    }
+
+    .workflow-button:disabled {
+      opacity: .55;
+      cursor: not-allowed;
+    }
+
+    .empty,
+    .error {
+      padding: 31px 22px;
+      border-radius: 19px;
+      text-align: center;
+      line-height: 1.55;
+    }
+
+    .empty {
+      border: 1px solid var(--line);
+      background: white;
+      color: var(--muted);
+    }
+
+    .error {
+      background: var(--danger-bg);
+      color: var(--danger);
+    }
+
+    @media (max-width: 900px) {
+      .driver-row {
+        grid-template-columns:
+          minmax(0, 1.3fr)
+          minmax(105px, .55fr)
+          minmax(105px, .55fr)
+          minmax(115px, .6fr)
+          auto;
       }
 
-      .form-grid,
-      .billing-summary,
-      .form-actions {
+      .week-pay-block {
+        display: none;
+      }
+    }
+
+    @media (max-width: 720px) {
+      .heading-row {
+        align-items: flex-start;
+        flex-direction: column;
+      }
+
+      .dashboard-button {
+        width: 100%;
+      }
+
+      .stats {
+        grid-template-columns:
+          repeat(2, minmax(0, 1fr));
+      }
+
+      .filter-grid {
         grid-template-columns: 1fr;
       }
 
-      .field.full,
-      .form-section-title,
-      .billing-summary {
-        grid-column: auto;
+      .refresh-button {
+        width: 100%;
+      }
+
+      .driver-row {
+        grid-template-columns:
+          minmax(0, 1fr)
+          auto;
+        gap: 8px 12px;
+        min-height: 150px;
+      }
+
+      .driver-main {
+        grid-column: 1 / 2;
+      }
+
+      .status-pill {
+        grid-column: 2 / 3;
+        grid-row: 1 / 2;
+      }
+
+      .active-jobs-block {
+        grid-column: 1 / 2;
+      }
+
+      .completed-block {
+        grid-column: 1 / 2;
+      }
+
+      .today-pay-block {
+        grid-column: 1 / 2;
+      }
+
+      .week-pay-block {
+        display: block;
+        grid-column: 1 / 2;
+      }
+
+      .arrow {
+        grid-column: 2 / 3;
+        grid-row: 2 / 6;
+        align-self: center;
       }
     }
 
     @media (max-width: 430px) {
       .stats {
         grid-template-columns: 1fr;
-      }
-
-      .stat-card {
-        min-height: 135px;
-      }
-
-      .topbar {
-        padding-left: 16px;
-        padding-right: 16px;
-      }
-
-      .topbar-inner {
-        padding-right: 73px;
-      }
-
-      .brand {
-        font-size: 20px;
-      }
-
-      .hamburger {
-        width: 58px;
-        height: 58px;
-        border-radius: 16px;
-        font-size: 34px;
       }
     }
   </style>
@@ -549,531 +518,157 @@
         class="staff-email"
         id="staffEmail"
       ></div>
-
-      <button
-        class="hamburger"
-        id="hamburgerButton"
-        type="button"
-        aria-label="Open dispatch menu"
-      >
-        ☰
-      </button>
     </div>
   </header>
 
-  <div
-    class="menu-overlay"
-    id="menuOverlay"
-  ></div>
-
-  <aside
-    class="side-menu"
-    id="sideMenu"
-  >
-    <div class="menu-top">
+  <main class="container">
+    <div class="heading-row">
       <div>
-        <div class="menu-brand">
-          MG <span>EXPRESS</span><br>
-          COMMAND CENTER
+        <div class="eyebrow">
+          Driver activity, assignments and pay
         </div>
 
-        <div
-          class="menu-user"
-          id="menuUser"
-        ></div>
+        <h1>Drivers</h1>
       </div>
 
-      <button
-        class="menu-close"
-        id="menuCloseButton"
-        type="button"
-        aria-label="Close menu"
+      <a
+        class="dashboard-button"
+        href="https://portal.migenteexpress.com/dashboard.html"
       >
-        ×
-      </button>
+        ← Dashboard
+      </a>
     </div>
-
-    <nav class="menu-links">
-      <a class="menu-link active" href="/dashboard.html">
-        <span class="menu-icon">🏠</span>
-        Dashboard
-      </a>
-
-      <a class="menu-link" href="/jobs.html">
-        <span class="menu-icon">📦</span>
-        Active Jobs
-      </a>
-
-      <a class="menu-link" href="/history.html">
-        <span class="menu-icon">📚</span>
-        Job History
-      </a>
-
-      <a class="menu-link" href="/customer.html">
-        <span class="menu-icon">👥</span>
-        Customers
-      </a>
-
-      <a class="menu-link" href="/driver.html">
-        <span class="menu-icon">🚚</span>
-        Drivers
-      </a>
-
-      <a class="menu-link" href="/payroll.html">
-        <span class="menu-icon">💵</span>
-        Payroll
-      </a>
-
-      <a class="menu-link" href="/invoices.html">
-        <span class="menu-icon">📄</span>
-        Invoices
-      </a>
-
-      <a class="menu-link" href="/reports.html">
-        <span class="menu-icon">📊</span>
-        Reports
-      </a>
-    </nav>
-
-    <button
-      class="signout-button"
-      id="signOutButton"
-      type="button"
-    >
-      Sign Out
-    </button>
-  </aside>
-
-  <main class="container">
-    <div class="eyebrow">
-      Dispatch operations overview
-    </div>
-
-    <h1>Dashboard</h1>
-
-    <button
-      class="new-job-button"
-      id="openJobFormButton"
-      type="button"
-    >
-      + Create Quote or Job
-    </button>
 
     <section class="stats">
-      <article class="stat-card blue">
-        <div class="stat-icon">📋</div>
-        <div class="stat-number" id="quotedPendingCount">0</div>
-        <div class="stat-label">Quoted Jobs Pending</div>
-      </article>
-
-      <article class="stat-card">
-        <div class="stat-icon">✅</div>
-        <div class="stat-number" id="approvedCount">0</div>
-        <div class="stat-label">Jobs Approved</div>
-      </article>
-
-      <article class="stat-card warning">
-        <div class="stat-icon">💳</div>
-        <div class="stat-number" id="waitingPaymentCount">0</div>
-        <div class="stat-label">Waiting for Payment</div>
-      </article>
-
-      <article class="stat-card">
-        <div class="stat-icon">📦</div>
-        <div class="stat-number" id="todayJobsCount">0</div>
-        <div class="stat-label">Jobs for Today</div>
-      </article>
-
-      <article class="stat-card">
-        <div class="stat-icon">📅</div>
-        <div class="stat-number" id="tomorrowJobsCount">0</div>
-        <div class="stat-label">Jobs for Tomorrow</div>
-      </article>
-
-      <article class="stat-card">
-        <div class="stat-icon">🚚</div>
-        <div class="stat-number" id="availableDriversCount">0</div>
-        <div class="stat-label">Available Drivers</div>
-      </article>
-    </section>
-
-    <div class="dashboard-message" id="dashboardMessage">
-      Loading dispatch totals...
-    </div>
-
-    <section class="panel hidden" id="jobFormPanel">
-      <div class="panel-heading">
-        <h2>Create Quote or Job</h2>
-
-        <button
-          class="close-button"
-          id="closeJobFormButton"
-          type="button"
+      <div class="stat-card">
+        <div
+          class="stat-number"
+          id="totalDrivers"
         >
-          Close
-        </button>
+          0
+        </div>
+
+        <div class="stat-label">
+          Total Drivers
+        </div>
       </div>
 
-      <form id="jobForm">
-        <div class="form-grid">
-          <div class="form-section-title">
-            Customer Information
-          </div>
-
-          <div class="field">
-            <label for="customerName">
-              Customer Name
-            </label>
-
-            <input
-              id="customerName"
-              name="customer_name"
-              required
-            >
-          </div>
-
-          <div class="field">
-            <label for="customerPhone">
-              Customer Phone
-            </label>
-
-            <input
-              id="customerPhone"
-              name="customer_phone"
-              type="tel"
-              placeholder="303-555-1234"
-            >
-          </div>
-
-          <div class="field full">
-            <label for="customerEmail">
-              Customer Email
-            </label>
-
-            <input
-              id="customerEmail"
-              name="customer_email"
-              type="email"
-            >
-          </div>
-
-          <div class="form-section-title">
-            Route and Schedule
-          </div>
-
-          <div class="field full">
-            <label for="pickupAddressLine1">
-              Pickup Address Line 1
-            </label>
-
-            <input
-              id="pickupAddressLine1"
-              name="pickup_address_line1"
-              required
-            >
-          </div>
-
-          <div class="field">
-            <label for="pickupAddressCity">
-              Pickup City
-            </label>
-
-            <input
-              id="pickupAddressCity"
-              name="pickup_address_city"
-            >
-          </div>
-
-          <div class="field">
-            <label for="pickupAddressState">
-              Pickup State
-            </label>
-
-            <input
-              id="pickupAddressState"
-              name="pickup_address_state"
-            >
-          </div>
-
-          <div class="field">
-            <label for="pickupAddressZip">
-              Pickup ZIP
-            </label>
-
-            <input
-              id="pickupAddressZip"
-              name="pickup_address_zip"
-            >
-          </div>
-
-          <div class="field full">
-            <label for="deliveryAddressLine1">
-              Delivery Address Line 1
-            </label>
-
-            <input
-              id="deliveryAddressLine1"
-              name="delivery_address_line1"
-              required
-            >
-          </div>
-
-          <div class="field">
-            <label for="deliveryAddressCity">
-              Delivery City
-            </label>
-
-            <input
-              id="deliveryAddressCity"
-              name="delivery_address_city"
-            >
-          </div>
-
-          <div class="field">
-            <label for="deliveryAddressState">
-              Delivery State
-            </label>
-
-            <input
-              id="deliveryAddressState"
-              name="delivery_address_state"
-            >
-          </div>
-
-          <div class="field">
-            <label for="deliveryAddressZip">
-              Delivery ZIP
-            </label>
-
-            <input
-              id="deliveryAddressZip"
-              name="delivery_address_zip"
-            >
-          </div>
-
-          <div class="field full">
-            <label for="deliveryRecipientName">
-              Delivery Recipient
-            </label>
-
-            <input
-              id="deliveryRecipientName"
-              name="delivery_recipient_name"
-              placeholder="Name of person receiving the shipment"
-            >
-          </div>
-
-          <div class="field">
-            <label for="scheduledDate">
-              Scheduled Date
-            </label>
-
-            <input
-              id="scheduledDate"
-              name="scheduled_date"
-              type="date"
-              required
-            >
-          </div>
-
-          <div class="field">
-            <label for="vehicleType">
-              Vehicle Type
-            </label>
-
-            <select
-              id="vehicleType"
-              name="vehicle_type"
-            >
-              <option value="Sedan">Sedan</option>
-              <option value="Small Cargo Van">Small Cargo Van</option>
-              <option value="Sprinter Van">Sprinter Van</option>
-            </select>
-          </div>
-
-          <div class="field">
-            <label for="deliverySpeed">
-              Delivery Speed
-            </label>
-
-            <select
-              id="deliverySpeed"
-              name="delivery_speed"
-            >
-              <option value="2 Hour">2 Hour</option>
-              <option value="3 Hour">3 Hour</option>
-              <option value="4 Hour">4 Hour</option>
-              <option value="5 Hour">5 Hour</option>
-              <option value="6 Hour">6 Hour</option>
-              <option value="Next Day">Next Day</option>
-            </select>
-          </div>
-
-          <div class="field">
-            <label for="packageType">
-              Package Description
-            </label>
-
-            <input
-              id="packageType"
-              name="package_type"
-              placeholder="Example: Three medical boxes"
-            >
-          </div>
-
-          <div class="field">
-            <label for="driverSelect">
-              Assigned Driver
-            </label>
-
-            <select
-              id="driverSelect"
-              name="assigned_driver_id"
-            >
-              <option value="">Unassigned</option>
-            </select>
-          </div>
-
-          <div class="field full">
-            <label for="specialInstructions">
-              Delivery Instructions
-            </label>
-
-            <textarea
-              id="specialInstructions"
-              name="special_instructions"
-            ></textarea>
-          </div>
-
-          <div class="form-section-title">
-            Customer Billing and Driver Pay
-          </div>
-
-          <div class="field">
-            <label for="customerCharge">
-              Customer Charge
-            </label>
-
-            <input
-              id="customerCharge"
-              name="customer_charge"
-              type="number"
-              min="0"
-              step="0.01"
-              value="0.00"
-            >
-
-            <div class="money-note">
-              This amount appears on the customer invoice.
-            </div>
-          </div>
-
-          <div class="field">
-            <label for="driverPay">
-              Driver Pay
-            </label>
-
-            <input
-              id="driverPay"
-              name="driver_pay"
-              type="number"
-              min="0"
-              step="0.01"
-              value="0.00"
-            >
-
-            <div class="money-note">
-              This amount appears only in Payroll.
-            </div>
-          </div>
-
-          <div class="billing-summary">
-            <div class="summary-box">
-              <div class="summary-label">
-                Customer Charge
-              </div>
-
-              <div class="summary-value" id="chargePreview">
-                $0.00
-              </div>
-            </div>
-
-            <div class="summary-box">
-              <div class="summary-label">
-                Driver Pay
-              </div>
-
-              <div class="summary-value" id="payPreview">
-                $0.00
-              </div>
-            </div>
-
-            <div class="summary-box">
-              <div class="summary-label">
-                Estimated Gross Profit
-              </div>
-
-              <div class="summary-value profit" id="profitPreview">
-                $0.00
-              </div>
-            </div>
-          </div>
-
-          <div class="form-section-title">
-            Invoice Options
-          </div>
-
-          <div class="field">
-            <label for="invoiceDeliveryMethod">
-              Invoice Delivery
-            </label>
-
-            <select
-              id="invoiceDeliveryMethod"
-              name="invoice_delivery_method"
-            >
-              <option value="none">Do Not Send Yet</option>
-              <option value="email">Email</option>
-              <option value="text">Text Message</option>
-              <option value="both">Email and Text</option>
-            </select>
-          </div>
-
-          <div class="field full">
-            <label for="billingNotes">
-              Billing Notes
-            </label>
-
-            <textarea
-              id="billingNotes"
-              name="billing_notes"
-              placeholder="Example: Payment due within 30 days."
-            ></textarea>
-          </div>
+      <div class="stat-card">
+        <div
+          class="stat-number"
+          id="availableDrivers"
+        >
+          0
         </div>
 
-        <div class="form-actions">
-          <button
-            class="create-button"
-            id="createQuoteButton"
-            type="submit"
-            value="quote"
-          >
-            Save as Pending Quote
-          </button>
+        <div class="stat-label">
+          Available
+        </div>
+      </div>
 
-          <button
-            class="invoice-button"
-            id="createInvoiceButton"
-            type="submit"
-            value="approved-invoice"
-          >
-            Approve Job & Prepare Invoice
-          </button>
+      <div class="stat-card">
+        <div
+          class="stat-number"
+          id="busyDrivers"
+        >
+          0
         </div>
 
-        <div class="message hidden" id="formMessage"></div>
-      </form>
+        <div class="stat-label">
+          Busy / Assigned
+        </div>
+      </div>
+
+      <div class="stat-card">
+        <div
+          class="stat-number"
+          id="inactiveDrivers"
+        >
+          0
+        </div>
+
+        <div class="stat-label">
+          Inactive
+        </div>
+      </div>
+    </section>
+
+    <section class="workflow-panel">
+      <div class="workflow-header">
+        <h2>Driver Workflow Queue</h2>
+        <div class="workflow-caption">
+          Accept, reject, and advance your assigned jobs.
+        </div>
+      </div>
+
+      <div id="driverWorkflowBox">
+        Loading workflow tasks...
+      </div>
+    </section>
+
+    <section class="filters">
+      <div class="filter-grid">
+        <div class="field">
+          <label for="searchInput">
+            Search
+          </label>
+
+          <input
+            id="searchInput"
+            type="search"
+            placeholder="Search driver name or email"
+          >
+        </div>
+
+        <div class="field">
+          <label for="statusFilter">
+            Driver Status
+          </label>
+
+          <select id="statusFilter">
+            <option value="">
+              All Drivers
+            </option>
+
+            <option value="available">
+              Available
+            </option>
+
+            <option value="busy">
+              Busy / Assigned
+            </option>
+
+            <option value="inactive">
+              Inactive
+            </option>
+          </select>
+        </div>
+
+        <button
+          class="refresh-button"
+          id="refreshButton"
+          type="button"
+        >
+          Refresh
+        </button>
+      </div>
+    </section>
+
+    <div class="list-heading">
+      <h2>Driver List</h2>
+
+      <div
+        class="visible-count"
+        id="visibleCount"
+      >
+        0 drivers
+      </div>
+    </div>
+
+    <section id="driversBox">
+      <div class="empty">
+        Loading drivers...
+      </div>
     </section>
   </main>
 
@@ -1085,23 +680,19 @@
 
     window.mgDispatchClient = client;
 
-    const jobForm =
-      document.getElementById("jobForm");
+    const driversBox =
+      document.getElementById("driversBox");
 
-    const jobFormPanel =
-      document.getElementById("jobFormPanel");
+    const searchInput =
+      document.getElementById("searchInput");
 
-    const formMessage =
-      document.getElementById("formMessage");
+    const statusFilter =
+      document.getElementById("statusFilter");
 
-    const customerChargeInput =
-      document.getElementById("customerCharge");
-
-    const driverPayInput =
-      document.getElementById("driverPay");
-
-    let jobs = [];
     let drivers = [];
+    let jobs = [];
+    let driverSummaries = [];
+    let currentDriver = null;
 
     function escapeHtml(value) {
       const div = document.createElement("div");
@@ -1112,9 +703,7 @@
     function cleanStatus(value) {
       return String(value || "")
         .trim()
-        .toLowerCase()
-        .replaceAll(" ", "_")
-        .replaceAll("-", "_");
+        .toLowerCase();
     }
 
     function money(value) {
@@ -1127,228 +716,340 @@
       );
     }
 
-    function localDateString(date) {
-      const year = date.getFullYear();
+    function startOfToday() {
+      const date = new Date();
 
-      const month =
-        String(date.getMonth() + 1)
-          .padStart(2, "0");
+      date.setHours(0, 0, 0, 0);
 
-      const day =
-        String(date.getDate())
-          .padStart(2, "0");
-
-      return `${year}-${month}-${day}`;
+      return date;
     }
 
-    function setMessage(message, type) {
-      formMessage.textContent = message || "";
+    function startOfTomorrow() {
+      const date = startOfToday();
 
-      formMessage.className =
-        message
-          ? `message ${type || ""}`
-          : "message hidden";
-    }
-
-    function openMenu() {
-      document
-        .getElementById("sideMenu")
-        .classList.add("open");
-
-      document
-        .getElementById("menuOverlay")
-        .classList.add("open");
-
-      document.body.classList.add("menu-open");
-    }
-
-    function closeMenu() {
-      document
-        .getElementById("sideMenu")
-        .classList.remove("open");
-
-      document
-        .getElementById("menuOverlay")
-        .classList.remove("open");
-
-      document.body.classList.remove("menu-open");
-    }
-
-    function updateMoneyPreview() {
-      const customerCharge =
-        Number(customerChargeInput.value || 0);
-
-      const driverPay =
-        Number(driverPayInput.value || 0);
-
-      document.getElementById("chargePreview").textContent =
-        money(customerCharge);
-
-      document.getElementById("payPreview").textContent =
-        money(driverPay);
-
-      document.getElementById("profitPreview").textContent =
-        money(customerCharge - driverPay);
-    }
-
-    function setDefaultDates() {
-      const today = new Date();
-
-      const dueDate = new Date(today);
-
-      dueDate.setDate(
-        dueDate.getDate() + 30
+      date.setDate(
+        date.getDate() + 1
       );
 
-      document.getElementById("scheduledDate").value =
-        localDateString(today);
+      return date;
     }
 
-    function openJobForm() {
-      jobFormPanel.classList.remove("hidden");
+    function startOfCurrentWeek() {
+      const date = startOfToday();
 
-      setMessage("", "");
-      setDefaultDates();
+      const day = date.getDay();
 
-      jobFormPanel.scrollIntoView({
-        behavior: "smooth",
-        block: "start"
-      });
+      const daysSinceMonday =
+        day === 0
+          ? 6
+          : day - 1;
+
+      date.setDate(
+        date.getDate() -
+        daysSinceMonday
+      );
+
+      return date;
     }
 
-    function closeJobForm() {
-      jobFormPanel.classList.add("hidden");
-      setMessage("", "");
+    function endOfCurrentWeek() {
+      const date =
+        startOfCurrentWeek();
+
+      date.setDate(
+        date.getDate() + 7
+      );
+
+      return date;
     }
 
-    function getJobDate(job) {
-      return String(
-        job.scheduled_date ||
-        job.pickup_date ||
-        job.delivery_date ||
-        job.service_date ||
-        job.created_at ||
-        ""
-      ).slice(0, 10);
-    }
+    function jobCompletedDate(job) {
+      const value =
+        job.completed_at ||
+        job.delivery_photo_uploaded_at ||
+        job.created_at;
 
-    function isClosed(job) {
-      return [
-        "delivered",
-        "completed",
-        "cancelled",
-        "canceled"
-      ].includes(cleanStatus(job.status));
-    }
-
-    function isPendingQuote(job) {
-      return [
-        "quote",
-        "quoted",
-        "pending_quote",
-        "quote_pending",
-        "pending",
-        "new_quote"
-      ].includes(cleanStatus(job.status));
-    }
-
-    function isApproved(job) {
-      return [
-        "approved",
-        "accepted",
-        "ready",
-        "paid",
-        "assigned"
-      ].includes(cleanStatus(job.status));
-    }
-
-    function isWaitingPayment(job) {
-      return [
-        "waiting_payment",
-        "payment_pending",
-        "pending_payment",
-        "unpaid"
-      ].includes(cleanStatus(job.status));
-    }
-
-    function isAvailableDriver(driver) {
-      if (driver.active === false) {
-        return false;
+      if (!value) {
+        return null;
       }
+
+      const date =
+        new Date(value);
 
       if (
-        driver.available === true ||
-        driver.is_available === true
+        Number.isNaN(
+          date.getTime()
+        )
       ) {
-        return true;
+        return null;
       }
 
-      const status =
-        cleanStatus(
-          driver.availability_status ||
-          driver.driver_status ||
-          driver.status ||
-          ""
-        );
-
-      if (status) {
-        return [
-          "available",
-          "ready",
-          "active",
-          "on_duty",
-          "waiting"
-        ].includes(status);
-      }
-
-      return driver.active !== false;
+      return date;
     }
 
-    function renderCounts() {
-      const today = new Date();
+    function normalizeWorkflowState(job) {
+      const acceptanceStatus = (
+        job?.driver_acceptance_status || "pending"
+      )
+        .toString()
+        .trim()
+        .toLowerCase();
 
-      const tomorrow = new Date(today);
+      const workflowStatus = (
+        job?.driver_workflow_status || "assigned"
+      )
+        .toString()
+        .trim()
+        .toLowerCase();
 
-      tomorrow.setDate(
-        tomorrow.getDate() + 1
+      return {
+        acceptanceStatus,
+        workflowStatus
+      };
+    }
+
+    function isClosedJob(job) {
+      const status = cleanStatus(job.status);
+      const {
+        acceptanceStatus,
+        workflowStatus
+      } = normalizeWorkflowState(job);
+
+      return [
+        "delivered",
+        "cancelled",
+        "canceled",
+        "rejected"
+      ].includes(status) || acceptanceStatus === "rejected" || workflowStatus === "rejected";
+    }
+
+    function isDeliveredJob(job) {
+      const { workflowStatus } = normalizeWorkflowState(job);
+
+      return (
+        cleanStatus(job.status) ===
+        "delivered" || workflowStatus === "delivered"
       );
-
-      const todayValue =
-        localDateString(today);
-
-      const tomorrowValue =
-        localDateString(tomorrow);
-
-      const openJobs =
-        jobs.filter(job => !isClosed(job));
-
-      document.getElementById("quotedPendingCount").textContent =
-        openJobs.filter(isPendingQuote).length;
-
-      document.getElementById("approvedCount").textContent =
-        openJobs.filter(isApproved).length;
-
-      document.getElementById("waitingPaymentCount").textContent =
-        openJobs.filter(isWaitingPayment).length;
-
-      document.getElementById("todayJobsCount").textContent =
-        openJobs.filter(job =>
-          getJobDate(job) === todayValue
-        ).length;
-
-      document.getElementById("tomorrowJobsCount").textContent =
-        openJobs.filter(job =>
-          getJobDate(job) === tomorrowValue
-        ).length;
-
-      document.getElementById("availableDriversCount").textContent =
-        drivers.filter(isAvailableDriver).length;
-
-      document.getElementById("dashboardMessage").textContent =
-        "Dashboard totals are current.";
     }
 
-    async function verifyUser() {
+    function buildAddressDisplay(job, prefix) {
+      const parts = [
+        job?.[`${prefix}_address_line1`] || job?.[`${prefix}_address_line_1`] || job?.[`${prefix}_street`] || job?.[`${prefix}_line1`],
+        job?.[`${prefix}_address_line2`] || job?.[`${prefix}_address_line_2`] || job?.[`${prefix}_line2`],
+        job?.[`${prefix}_city`] || job?.[`${prefix}_town`],
+        job?.[`${prefix}_state`] || job?.[`${prefix}_province`],
+        job?.[`${prefix}_zip`] || job?.[`${prefix}_postal_code`] || job?.[`${prefix}_postal`]
+      ].filter(Boolean);
+
+      const joined = parts.join(", ").trim();
+
+      if (joined) {
+        return joined;
+      }
+
+      return job?.[`${prefix}_address`] || "Not provided";
+    }
+
+    function workflowStatusLabel(job) {
+      const {
+        acceptanceStatus,
+        workflowStatus
+      } = normalizeWorkflowState(job);
+
+      if (acceptanceStatus === "rejected" || workflowStatus === "rejected") {
+        return "Rejected";
+      }
+
+      if (acceptanceStatus === "accepted") {
+        if (workflowStatus === "en_route_pickup") {
+          return "Accepted • En Route to Pickup";
+        }
+
+        if (workflowStatus === "picked_up") {
+          return "Accepted • Pickup Complete";
+        }
+
+        if (workflowStatus === "en_route_delivery") {
+          return "Accepted • En Route to Delivery";
+        }
+
+        if (workflowStatus === "delivered") {
+          return "Delivered";
+        }
+
+        return "Accepted";
+      }
+
+      return "Pending";
+    }
+
+    function buildDriverSummaries() {
+      const todayStart =
+        startOfToday();
+
+      const tomorrowStart =
+        startOfTomorrow();
+
+      const weekStart =
+        startOfCurrentWeek();
+
+      const weekEnd =
+        endOfCurrentWeek();
+
+      driverSummaries =
+        drivers.map(driver => {
+          const driverJobs =
+            jobs.filter(job =>
+              String(
+                job.assigned_driver_id || ""
+              ) ===
+              String(driver.id)
+            );
+
+          const activeJobs =
+            driverJobs.filter(job =>
+              !isClosedJob(job)
+            );
+
+          const completedToday =
+            driverJobs.filter(job => {
+              if (!isDeliveredJob(job)) {
+                return false;
+              }
+
+              const completed =
+                jobCompletedDate(job);
+
+              return (
+                completed &&
+                completed >= todayStart &&
+                completed < tomorrowStart
+              );
+            });
+
+          const completedThisWeek =
+            driverJobs.filter(job => {
+              if (!isDeliveredJob(job)) {
+                return false;
+              }
+
+              const completed =
+                jobCompletedDate(job);
+
+              return (
+                completed &&
+                completed >= weekStart &&
+                completed < weekEnd
+              );
+            });
+
+          const todayPay =
+            completedToday.reduce(
+              (total, job) =>
+                total +
+                Number(
+                  job.driver_pay || 0
+                ),
+              0
+            );
+
+          const weekPay =
+            completedThisWeek.reduce(
+              (total, job) =>
+                total +
+                Number(
+                  job.driver_pay || 0
+                ),
+              0
+            );
+
+          let displayStatus =
+            "available";
+
+          if (
+            driver.active === false
+          ) {
+            displayStatus =
+              "inactive";
+          } else if (
+            activeJobs.length > 0
+          ) {
+            displayStatus =
+              "busy";
+          }
+
+          return {
+            id: driver.id,
+
+            name:
+              driver.full_name ||
+              driver.email ||
+              "Driver",
+
+            email:
+              driver.email || "",
+
+            active:
+              driver.active !== false,
+
+            displayStatus:
+              displayStatus,
+
+            activeJobs:
+              activeJobs.length,
+
+            completedToday:
+              completedToday.length,
+
+            todayPay:
+              todayPay,
+
+            weekPay:
+              weekPay
+          };
+        });
+
+      driverSummaries.sort(
+        (first, second) => {
+          const statusOrder = {
+            busy: 0,
+            available: 1,
+            inactive: 2
+          };
+
+          const statusDifference =
+            statusOrder[
+              first.displayStatus
+            ] -
+            statusOrder[
+              second.displayStatus
+            ];
+
+          if (
+            statusDifference !== 0
+          ) {
+            return statusDifference;
+          }
+
+          return first.name.localeCompare(
+            second.name
+          );
+        }
+      );
+    }
+
+    function statusLabel(status) {
+      const labels = {
+        available: "Available",
+        busy: "Busy",
+        inactive: "Inactive"
+      };
+
+      return labels[status] ||
+        "Driver";
+    }
+
+    async function verifyDispatchUser() {
       const sessionResult =
         await client.auth.getSession();
 
@@ -1356,24 +1057,28 @@
         sessionResult.data.session;
 
       if (!session) {
-        location.replace("/index.html");
+        location.replace(
+          "/index.html"
+        );
+
         return null;
       }
 
-      const email =
-        session.user.email || "";
-
-      document.getElementById("staffEmail").textContent =
-        email;
-
-      document.getElementById("menuUser").textContent =
-        email;
+      document
+        .getElementById(
+          "staffEmail"
+        )
+        .textContent =
+          session.user.email || "";
 
       const profileResult =
         await client
           .from("profiles")
           .select("role")
-          .eq("id", session.user.id)
+          .eq(
+            "id",
+            session.user.id
+          )
           .maybeSingle();
 
       if (
@@ -1387,568 +1092,588 @@
       }
 
       const role =
-        cleanStatus(profileResult.data.role);
+        String(
+          profileResult.data.role || ""
+        ).toLowerCase();
 
       if (
         ![
           "admin",
           "staff",
-          "dispatcher"
+          "dispatcher",
+          "driver"
         ].includes(role)
       ) {
+        if (role === "customer") {
+          location.replace(
+            "/customer.html"
+          );
+
+          return null;
+        }
+
         throw new Error(
           "This account does not have dispatch access."
         );
       }
 
+      window.dispatchEvent(
+        new CustomEvent(
+          "mg-dispatch-ready",
+          {
+            detail: {
+              email:
+                session.user.email
+            }
+          }
+        )
+      );
+
       return session;
     }
 
-    async function loadDrivers() {
-      const result =
+    async function loadDriverData() {
+      driversBox.className = "";
+
+      driversBox.innerHTML = `
+        <div class="empty">
+          Loading drivers...
+        </div>
+      `;
+
+      const driverResult =
         await client
           .from("drivers")
           .select("*")
-          .order("full_name", {
-            ascending: true
-          });
+          .order(
+            "full_name",
+            {
+              ascending: true
+            }
+          );
 
-      if (result.error) {
-        throw result.error;
+      if (driverResult.error) {
+        throw driverResult.error;
+      }
+
+      const jobResult =
+        await client
+          .from("quotes")
+          .select("id,job_number,assigned_driver_id,status,customer_name,pickup_address,pickup_address_line1,pickup_address_city,pickup_address_state,pickup_address_zip,delivery_address,delivery_address_line1,delivery_address_city,delivery_address_state,delivery_address_zip,driver_pay,driver_acceptance_status,driver_workflow_status,driver_accepted_at,driver_rejected_at,en_route_pickup_at,picked_up_at,en_route_delivery_at,pod_recipient_name,created_at,completed_at,delivery_photo_uploaded_at")
+          .order(
+            "created_at",
+            {
+              ascending: false
+            }
+          );
+
+      if (jobResult.error) {
+        throw jobResult.error;
       }
 
       drivers =
-        result.data || [];
-
-      document.getElementById("driverSelect").innerHTML = `
-        <option value="">
-          Unassigned
-        </option>
-
-        ${drivers
-          .filter(driver =>
-            driver.active !== false
-          )
-          .map(driver => `
-            <option value="${escapeHtml(driver.id)}">
-              ${escapeHtml(
-                driver.full_name ||
-                driver.email ||
-                "Driver"
-              )}
-            </option>
-          `)
-          .join("")}
-      `;
-    }
-
-    async function loadJobs() {
-      const result =
-        await client
-          .from("quotes")
-          .select("*")
-          .order("created_at", {
-            ascending: false
-          });
-
-      if (result.error) {
-        throw result.error;
-      }
+        driverResult.data || [];
 
       jobs =
-        result.data || [];
+        jobResult.data || [];
+
+      console.log("Assigned jobs returned:", jobs);
+
+      buildDriverSummaries();
+      updateStatistics();
+      renderDrivers();
+      renderDriverWorkflow();
     }
 
-    function datePrefix() {
-      const now = new Date();
-
-      const year =
-        String(now.getFullYear())
-          .slice(-2);
-
-      const month =
-        String(now.getMonth() + 1)
-          .padStart(2, "0");
-
-      const day =
-        String(now.getDate())
-          .padStart(2, "0");
-
-      return `MG-${year}${month}${day}-`;
-    }
-
-    async function createJobNumber() {
-      const prefix =
-        datePrefix();
-
-      const result =
-        await client
-          .from("quotes")
-          .select("job_number")
-          .like("job_number", `${prefix}%`);
-
-      if (result.error) {
-        throw result.error;
-      }
-
-      let highest = 0;
-
-      (result.data || []).forEach(job => {
-        const number =
-          Number(
-            String(job.job_number || "")
-              .slice(prefix.length)
-          );
-
-        if (
-          Number.isInteger(number) &&
-          number > highest
-        ) {
-          highest = number;
-        }
-      });
-
-      return (
-        prefix +
-        String(highest + 1)
-          .padStart(3, "0")
-      );
-    }
-
-    function invoiceNumber(jobNumber) {
-      return (
-        "INV-" +
-        String(jobNumber || "")
-          .replace(/[^a-z0-9]/gi, "")
-          .toUpperCase()
-      );
-    }
-
-    function isMissingColumnError(error) {
-      const message =
-        (error?.message || "")
+    function filteredDrivers() {
+      const search =
+        searchInput.value
+          .trim()
           .toLowerCase();
 
-      return (
-        message.includes("does not exist") ||
-        message.includes("column") &&
-        message.includes("not found")
+      const selectedStatus =
+        statusFilter.value;
+
+      return driverSummaries.filter(
+        driver => {
+          if (
+            selectedStatus &&
+            driver.displayStatus !==
+              selectedStatus
+          ) {
+            return false;
+          }
+
+          if (!search) {
+            return true;
+          }
+
+          const searchable = [
+            driver.name,
+            driver.email
+          ]
+            .filter(Boolean)
+            .join(" ")
+            .toLowerCase();
+
+          return searchable.includes(
+            search
+          );
+        }
       );
     }
 
-    async function persistQuoteFields(jobId, values) {
-      const updates = Object.entries(values).filter(([, value]) => value !== null && value !== undefined && value !== "");
+    async function resolveCurrentDriver() {
+      const sessionResult = await client.auth.getSession();
+      const session = sessionResult.data.session;
 
-      if (!jobId || !updates.length) {
+      if (!session) {
+        currentDriver = null;
+        return null;
+      }
+
+      let driverResult = await client
+        .from("drivers")
+        .select("id,full_name,email,active,auth_user_id")
+        .eq("auth_user_id", session.user.id)
+        .maybeSingle();
+
+      if (driverResult.error) {
+        throw driverResult.error;
+      }
+
+      if (!driverResult.data) {
+        driverResult = await client
+          .from("drivers")
+          .select("id,full_name,email,active,auth_user_id")
+          .eq("email", session.user.email)
+          .maybeSingle();
+
+        if (driverResult.error) {
+          throw driverResult.error;
+        }
+      }
+
+      const driver = driverResult.data || null;
+      console.log("Logged-in driver record:", driver);
+      currentDriver = driver;
+      return currentDriver;
+    }
+
+    function updateStatistics() {
+      document
+        .getElementById(
+          "totalDrivers"
+        )
+        .textContent =
+          driverSummaries.length;
+
+      document
+        .getElementById(
+          "availableDrivers"
+        )
+        .textContent =
+          driverSummaries.filter(
+            driver =>
+              driver.displayStatus ===
+              "available"
+          ).length;
+
+      document
+        .getElementById(
+          "busyDrivers"
+        )
+        .textContent =
+          driverSummaries.filter(
+            driver =>
+              driver.displayStatus ===
+              "busy"
+          ).length;
+
+      document
+        .getElementById(
+          "inactiveDrivers"
+        )
+        .textContent =
+          driverSummaries.filter(
+            driver =>
+              driver.displayStatus ===
+              "inactive"
+          ).length;
+    }
+
+    function renderDriverWorkflow() {
+      const workflowBox = document.getElementById("driverWorkflowBox");
+
+      if (!currentDriver) {
+        workflowBox.innerHTML = `
+          <div class="empty">
+            No driver profile is linked to this account yet.
+          </div>
+        `;
         return;
       }
 
-      try {
-        const result = await client
-          .from("quotes")
-          .update(Object.fromEntries(updates))
-          .eq("id", jobId)
-          .select("id")
-          .maybeSingle();
+      const workflowJobs = jobs.filter(job =>
+        String(job.assigned_driver_id || "") === String(currentDriver.id)
+      );
 
-        if (result.error && !isMissingColumnError(result.error)) {
-          throw result.error;
-        }
-      } catch (error) {
-        if (!isMissingColumnError(error)) {
-          console.warn("Unable to persist quote fields", error);
-        }
+      const activeWorkflowJobs = workflowJobs.filter(job => !isClosedJob(job));
+
+      if (!activeWorkflowJobs.length) {
+        workflowBox.innerHTML = `
+          <div class="empty">
+            No active workflow tasks are assigned to ${escapeHtml(currentDriver.full_name || currentDriver.email || "this driver")}. 
+          </div>
+        `;
+        return;
       }
+
+      workflowBox.innerHTML = activeWorkflowJobs.map(job => {
+        const workflowButtons = [];
+        const {
+          acceptanceStatus,
+          workflowStatus
+        } = normalizeWorkflowState(job);
+
+        console.log("Rendering job:", job.job_number, acceptanceStatus, workflowStatus);
+
+        if (acceptanceStatus !== "accepted" && acceptanceStatus !== "rejected") {
+          workflowButtons.push(`<button class="workflow-button" data-workflow-action="accept" type="button">Accept Job</button>`);
+          workflowButtons.push(`<button class="workflow-button" data-workflow-action="reject" type="button">Reject Job</button>`);
+        }
+
+        if (
+          acceptanceStatus === "accepted" &&
+          workflowStatus !== "rejected" &&
+          workflowStatus !== "en_route_pickup" &&
+          workflowStatus !== "picked_up" &&
+          workflowStatus !== "en_route_delivery" &&
+          workflowStatus !== "delivered"
+        ) {
+          workflowButtons.push(`<button class="workflow-button" data-workflow-action="route_pickup" type="button">En Route to Pickup</button>`);
+        }
+
+        if (workflowStatus === "en_route_pickup") {
+          workflowButtons.push(`<button class="workflow-button" data-workflow-action="pickup_complete" type="button">Pickup Complete</button>`);
+        }
+
+        if (workflowStatus === "picked_up") {
+          workflowButtons.push(`<button class="workflow-button" data-workflow-action="route_delivery" type="button">En Route to Delivery</button>`);
+        }
+
+        if (workflowStatus === "en_route_delivery") {
+          workflowButtons.push(`<button class="workflow-button" data-workflow-action="complete_delivery" type="button">Complete Delivery</button>`);
+        }
+
+        return `
+          <div class="workflow-card" data-job-id="${escapeHtml(String(job.id))}">
+            <div class="workflow-card-title">
+              ${escapeHtml(job.job_number || "Job")}
+            </div>
+            <div class="workflow-card-meta">
+              ${escapeHtml(job.customer_name || "Customer")}
+            </div>
+            <div class="workflow-card-meta">
+              Pickup: ${escapeHtml(buildAddressDisplay(job, "pickup"))}
+            </div>
+            <div class="workflow-card-meta">
+              Delivery: ${escapeHtml(buildAddressDisplay(job, "delivery"))}
+            </div>
+            <div class="workflow-card-meta">
+              Status: ${escapeHtml(workflowStatusLabel(job))}
+            </div>
+            <div class="workflow-button-row">
+              ${workflowButtons.join("")}
+            </div>
+          </div>
+        `;
+      }).join("");
     }
 
-    async function createInvoice(job, payload) {
-      const result =
-        await client
-          .from("invoices")
-          .upsert(
-            {
-              job_id:
-                job.id,
+    async function updateDriverWorkflow(job, action) {
+      const now = new Date().toISOString();
+      const payload = {};
 
-              invoice_number:
-                invoiceNumber(
-                  job.job_number
-                ),
+      if (action === "accept") {
+        payload.driver_acceptance_status = "accepted";
+        payload.driver_accepted_at = now;
+        payload.driver_workflow_status = "assigned";
+      } else if (action === "reject") {
+        payload.driver_acceptance_status = "rejected";
+        payload.driver_rejected_at = now;
+        payload.driver_workflow_status = "rejected";
+      } else if (action === "route_pickup") {
+        payload.driver_workflow_status = "en_route_pickup";
+        payload.en_route_pickup_at = now;
+      } else if (action === "pickup_complete") {
+        payload.driver_workflow_status = "picked_up";
+        payload.picked_up_at = now;
+      } else if (action === "route_delivery") {
+        payload.driver_workflow_status = "en_route_delivery";
+        payload.en_route_delivery_at = now;
+      } else if (action === "complete_delivery") {
+        const podRecipient = window.prompt("Enter the POD recipient name", job.pod_recipient_name || "");
 
-              customer_name:
-                payload.customer_name,
+        if (podRecipient === null) {
+          return;
+        }
 
-              customer_email:
-                payload.customer_email,
+        payload.driver_workflow_status = "delivered";
+        payload.pod_recipient_name = podRecipient.trim() || null;
+        payload.status = "delivered";
+        payload.completed_at = now;
+      }
 
-              amount:
-                payload.customer_charge,
-
-              payment_status:
-                "unpaid",
-
-              due_date:
-                null
-            },
-            {
-              onConflict:
-                "job_id"
-            }
-          )
-          .select("*")
-          .maybeSingle();
+      const result = await client
+        .from("quotes")
+        .update(payload)
+        .eq("id", job.id)
+        .select("*")
+        .maybeSingle();
 
       if (result.error) {
         throw result.error;
       }
 
-      return result.data;
+      await loadDriverData();
     }
 
-    async function submitJob(event) {
-      event.preventDefault();
+    function renderDrivers() {
+      const shownDrivers =
+        filteredDrivers();
 
-      const action =
-        event.submitter?.value ||
-        "quote";
-
-      const quoteButton =
-        document.getElementById(
-          "createQuoteButton"
-        );
-
-      const invoiceButton =
-        document.getElementById(
-          "createInvoiceButton"
-        );
-
-      quoteButton.disabled = true;
-      invoiceButton.disabled = true;
-
-      setMessage(
-        "Creating record...",
-        "success"
-      );
-
-      try {
-        const formData =
-          new FormData(jobForm);
-
-        const jobNumber =
-          await createJobNumber();
-
-        const assignedDriver =
-          String(
-            formData.get(
-              "assigned_driver_id"
-            ) || ""
-          ).trim();
-
-        const pickupAddressLine1 = String(formData.get("pickup_address_line1") || "").trim();
-        const pickupAddressCity = String(formData.get("pickup_address_city") || "").trim();
-        const pickupAddressState = String(formData.get("pickup_address_state") || "").trim();
-        const pickupAddressZip = String(formData.get("pickup_address_zip") || "").trim();
-        const deliveryAddressLine1 = String(formData.get("delivery_address_line1") || "").trim();
-        const deliveryAddressCity = String(formData.get("delivery_address_city") || "").trim();
-        const deliveryAddressState = String(formData.get("delivery_address_state") || "").trim();
-        const deliveryAddressZip = String(formData.get("delivery_address_zip") || "").trim();
-        const deliveryRecipientName = String(formData.get("delivery_recipient_name") || "").trim();
-
-        const pickupAddressParts = [pickupAddressLine1, pickupAddressCity, pickupAddressState, pickupAddressZip].filter(Boolean);
-        const deliveryAddressParts = [deliveryAddressLine1, deliveryAddressCity, deliveryAddressState, deliveryAddressZip].filter(Boolean);
-
-        const payload = {
-          job_number:
-            jobNumber,
-
-          customer_name:
-            String(
-              formData.get(
-                "customer_name"
-              ) || ""
-            ).trim(),
-
-          customer_phone:
-            String(
-              formData.get(
-                "customer_phone"
-              ) || ""
-            ).trim(),
-
-          customer_email:
-            String(
-              formData.get(
-                "customer_email"
-              ) || ""
-            ).trim(),
-
-          pickup_address:
-            pickupAddressParts.join(", ") || null,
-
-          delivery_address:
-            deliveryAddressParts.join(", ") || null,
-
-          scheduled_date:
-            formData.get(
-              "scheduled_date"
-            ) || null,
-
-          vehicle_type:
-            String(
-              formData.get(
-                "vehicle_type"
-              ) || ""
-            ).trim(),
-
-          delivery_speed:
-            String(
-              formData.get(
-                "delivery_speed"
-              ) || ""
-            ).trim(),
-
-          package_type:
-            String(
-              formData.get(
-                "package_type"
-              ) || ""
-            ).trim(),
-
-          special_instructions:
-            String(
-              formData.get(
-                "special_instructions"
-              ) || ""
-            ).trim(),
-
-          customer_charge:
-            Number(
-              formData.get(
-                "customer_charge"
-              ) || 0
-            ),
-
-          driver_pay:
-            Number(
-              formData.get(
-                "driver_pay"
-              ) || 0
-            ),
-
-          assigned_driver_id:
-            assignedDriver || null,
-
-          invoice_delivery_method:
-            String(
-              formData.get(
-                "invoice_delivery_method"
-              ) || "none"
-            ),
-
-          billing_notes:
-            String(
-              formData.get(
-                "billing_notes"
-              ) || ""
-            ).trim(),
-
-          status:
-            action === "approved-invoice"
-              ? "waiting_payment"
-              : "quoted"
-        };
-
-        const insertResult =
-          await client
-            .from("quotes")
-            .insert(payload)
-            .select("*")
-            .maybeSingle();
-
-        if (insertResult.error) {
-          throw insertResult.error;
-        }
-
-        await persistQuoteFields(insertResult.data.id, {
-          pickup_address_line1: pickupAddressLine1 || null,
-          pickup_address_city: pickupAddressCity || null,
-          pickup_address_state: pickupAddressState || null,
-          pickup_address_zip: pickupAddressZip || null,
-          delivery_address_line1: deliveryAddressLine1 || null,
-          delivery_address_city: deliveryAddressCity || null,
-          delivery_address_state: deliveryAddressState || null,
-          delivery_address_zip: deliveryAddressZip || null,
-          delivery_recipient_name: deliveryRecipientName || null,
-          driver_acceptance_status: "pending",
-          driver_workflow_status: "pending"
-        });
-
-        if (
-          action === "approved-invoice"
-        ) {
-          await createInvoice(
-            insertResult.data,
-            payload
+      document
+        .getElementById(
+          "visibleCount"
+        )
+        .textContent =
+          shownDrivers.length +
+          (
+            shownDrivers.length === 1
+              ? " driver"
+              : " drivers"
           );
 
-          setMessage(
-            `${jobNumber} was approved and its invoice was prepared.`,
-            "success"
-          );
-        } else {
-          setMessage(
-            `${jobNumber} was saved as a pending quote.`,
-            "success"
-          );
-        }
+      if (!shownDrivers.length) {
+        driversBox.className = "";
 
-        jobForm.reset();
+        driversBox.innerHTML = `
+          <div class="empty">
+            No drivers match the selected filters.
+          </div>
+        `;
 
-        setDefaultDates();
-        updateMoneyPreview();
-
-        await Promise.all([
-          loadDrivers(),
-          loadJobs()
-        ]);
-
-        renderCounts();
-
-        setTimeout(() => {
-          closeJobForm();
-
-          if (
-            action === "approved-invoice"
-          ) {
-            location.href =
-              "/invoices.html";
-          }
-        }, 1300);
-      } catch (error) {
-        setMessage(
-          error.message ||
-          "Unable to create this quote or job.",
-          "error"
-        );
-      } finally {
-        quoteButton.disabled = false;
-        invoiceButton.disabled = false;
+        return;
       }
+
+      driversBox.className =
+        "driver-list";
+
+      driversBox.innerHTML =
+        shownDrivers
+          .map(driver => {
+            const driverUrl =
+              "https://portal.migenteexpress.com/" +
+              "driver-details.html?id=" +
+              encodeURIComponent(
+                String(driver.id)
+              );
+
+            return `
+              <a
+                class="driver-row"
+                href="${escapeHtml(
+                  driverUrl
+                )}"
+              >
+                <div class="driver-main">
+                  <div class="driver-name">
+                    ${escapeHtml(
+                      driver.name
+                    )}
+                  </div>
+
+                  <div class="driver-email">
+                    ${escapeHtml(
+                      driver.email ||
+                      "No email recorded"
+                    )}
+                  </div>
+                </div>
+
+                <div
+                  class="status-pill status-${escapeHtml(
+                    driver.displayStatus
+                  )}"
+                >
+                  ${escapeHtml(
+                    statusLabel(
+                      driver.displayStatus
+                    )
+                  )}
+                </div>
+
+                <div class="active-jobs-block">
+                  <span class="meta-label">
+                    Active Jobs
+                  </span>
+
+                  <div class="meta-value">
+                    ${driver.activeJobs}
+                  </div>
+                </div>
+
+                <div class="completed-block">
+                  <span class="meta-label">
+                    Completed Today
+                  </span>
+
+                  <div class="meta-value">
+                    ${driver.completedToday}
+                  </div>
+                </div>
+
+                <div class="today-pay-block">
+                  <span class="meta-label">
+                    Today’s Pay
+                  </span>
+
+                  <div class="meta-value pay-value">
+                    ${escapeHtml(
+                      money(
+                        driver.todayPay
+                      )
+                    )}
+                  </div>
+                </div>
+
+                <div class="week-pay-block">
+                  <span class="meta-label">
+                    Week Pay
+                  </span>
+
+                  <div class="meta-value pay-value">
+                    ${escapeHtml(
+                      money(
+                        driver.weekPay
+                      )
+                    )}
+                  </div>
+                </div>
+
+                <div class="arrow">
+                  ›
+                </div>
+              </a>
+            `;
+          })
+          .join("");
     }
 
     document
-      .getElementById("hamburgerButton")
-      .addEventListener(
-        "click",
-        openMenu
-      );
+      .getElementById("driverWorkflowBox")
+      .addEventListener("click", async function (event) {
+        const button = event.target.closest("[data-workflow-action]");
+
+        if (!button) {
+          return;
+        }
+
+        const action = button.getAttribute("data-workflow-action");
+        const workflowCard = button.closest(".workflow-card");
+        const jobId = workflowCard?.dataset?.jobId;
+
+        if (!jobId) {
+          return;
+        }
+
+        const job = jobs.find(item => String(item.id) === String(jobId));
+
+        if (!job) {
+          return;
+        }
+
+        try {
+          await updateDriverWorkflow(job, action);
+        } catch (error) {
+          const workflowBox = document.getElementById("driverWorkflowBox");
+          workflowBox.innerHTML = `
+            <div class="error">
+              ${escapeHtml(error.message || "Unable to update the workflow.")}
+            </div>
+          `;
+        }
+      });
+
+    searchInput.addEventListener(
+      "input",
+      renderDrivers
+    );
+
+    statusFilter.addEventListener(
+      "change",
+      renderDrivers
+    );
 
     document
-      .getElementById("menuCloseButton")
-      .addEventListener(
-        "click",
-        closeMenu
-      );
-
-    document
-      .getElementById("menuOverlay")
-      .addEventListener(
-        "click",
-        closeMenu
-      );
-
-    document
-      .getElementById("signOutButton")
+      .getElementById(
+        "refreshButton"
+      )
       .addEventListener(
         "click",
         async function () {
           this.disabled = true;
           this.textContent =
-            "Signing Out...";
+            "Refreshing...";
 
           try {
-            await client.auth.signOut();
-          } finally {
-            localStorage.clear();
-            sessionStorage.clear();
+            await loadDriverData();
+          } catch (error) {
+            driversBox.className = "";
 
-            location.replace(
-              "/index.html?loggedout=1"
-            );
+            driversBox.innerHTML = `
+              <div class="error">
+                ${escapeHtml(
+                  error.message ||
+                  "Unable to refresh drivers."
+                )}
+              </div>
+            `;
+          } finally {
+            this.disabled = false;
+            this.textContent =
+              "Refresh";
           }
         }
       );
 
-    document
-      .getElementById("openJobFormButton")
-      .addEventListener(
-        "click",
-        openJobForm
-      );
-
-    document
-      .getElementById("closeJobFormButton")
-      .addEventListener(
-        "click",
-        closeJobForm
-      );
-
-    customerChargeInput.addEventListener(
-      "input",
-      updateMoneyPreview
-    );
-
-    driverPayInput.addEventListener(
-      "input",
-      updateMoneyPreview
-    );
-
-    jobForm.addEventListener(
-      "submit",
-      submitJob
-    );
-
-    document.addEventListener(
-      "keydown",
-      function (event) {
-        if (event.key === "Escape") {
-          closeMenu();
-        }
-      }
-    );
-
     (async function startPage() {
       try {
         const session =
-          await verifyUser();
+          await verifyDispatchUser();
 
         if (!session) {
           return;
         }
 
-        await Promise.all([
-          loadDrivers(),
-          loadJobs()
-        ]);
-
-        setDefaultDates();
-        updateMoneyPreview();
-        renderCounts();
+        await resolveCurrentDriver();
+        await loadDriverData();
       } catch (error) {
-        document
-          .getElementById(
-            "dashboardMessage"
-          )
-          .innerHTML = `
-            <span style="color:#9b2929;">
-              ${escapeHtml(
-                error.message ||
-                "Unable to load dashboard."
-              )}
-            </span>
-          `;
+        driversBox.className = "";
+
+        driversBox.innerHTML = `
+          <div class="error">
+            ${escapeHtml(
+              error.message ||
+              "Unable to load drivers."
+            )}
+          </div>
+        `;
       }
     })();
   </script>
+
+  <script src="/dispatch-menu-v3.js"></script>
 </body>
 </html>
