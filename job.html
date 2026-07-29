@@ -1925,31 +1925,47 @@
         return;
       }
 
+      const packetJob = getCurrentPacketJob();
+      const packetHtml = buildPacketHtml(packetJob);
+      const packetBlob = new Blob(
+        [packetHtml],
+        { type: "text/html;charset=utf-8" }
+      );
+      const packetUrl = URL.createObjectURL(packetBlob);
       const packetWindow = window.open(
-        "",
+        packetUrl,
         "_blank",
         "width=1000,height=900,noopener,noreferrer"
       );
 
       if (!packetWindow) {
+        URL.revokeObjectURL(packetUrl);
         setSaveMessage("Please allow popups to generate the job packet.", "error");
         return;
       }
 
-      const packetJob = getCurrentPacketJob();
-      const packetHtml = buildPacketHtml(packetJob);
-
-      packetWindow.document.write(packetHtml);
-      packetWindow.document.close();
-      packetWindow.focus();
-
-      setTimeout(() => {
+      const printPacket = () => {
         try {
+          packetWindow.focus();
           packetWindow.print();
         } catch (error) {
           console.warn("Unable to launch print dialog", error);
         }
-      }, 400);
+      };
+
+      packetWindow.addEventListener("load", printPacket, { once: true });
+
+      packetWindow.addEventListener(
+        "beforeunload",
+        () => {
+          try {
+            URL.revokeObjectURL(packetUrl);
+          } catch (error) {
+            console.warn("Unable to revoke packet URL", error);
+          }
+        },
+        { once: true }
+      );
 
       setSaveMessage("Job packet opened for printing.", "success");
     }
