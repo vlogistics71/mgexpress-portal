@@ -762,26 +762,104 @@
           </div>
 
           <div class="field full">
-            <label for="pickupAddress">
-              Pickup Address
+            <label for="pickupAddressLine1">
+              Pickup Address Line 1
             </label>
 
             <input
-              id="pickupAddress"
-              name="pickup_address"
+              id="pickupAddressLine1"
+              name="pickup_address_line1"
               required
             >
           </div>
 
-          <div class="field full">
-            <label for="deliveryAddress">
-              Delivery Address
+          <div class="field">
+            <label for="pickupAddressCity">
+              Pickup City
             </label>
 
             <input
-              id="deliveryAddress"
-              name="delivery_address"
+              id="pickupAddressCity"
+              name="pickup_address_city"
+            >
+          </div>
+
+          <div class="field">
+            <label for="pickupAddressState">
+              Pickup State
+            </label>
+
+            <input
+              id="pickupAddressState"
+              name="pickup_address_state"
+            >
+          </div>
+
+          <div class="field">
+            <label for="pickupAddressZip">
+              Pickup ZIP
+            </label>
+
+            <input
+              id="pickupAddressZip"
+              name="pickup_address_zip"
+            >
+          </div>
+
+          <div class="field full">
+            <label for="deliveryAddressLine1">
+              Delivery Address Line 1
+            </label>
+
+            <input
+              id="deliveryAddressLine1"
+              name="delivery_address_line1"
               required
+            >
+          </div>
+
+          <div class="field">
+            <label for="deliveryAddressCity">
+              Delivery City
+            </label>
+
+            <input
+              id="deliveryAddressCity"
+              name="delivery_address_city"
+            >
+          </div>
+
+          <div class="field">
+            <label for="deliveryAddressState">
+              Delivery State
+            </label>
+
+            <input
+              id="deliveryAddressState"
+              name="delivery_address_state"
+            >
+          </div>
+
+          <div class="field">
+            <label for="deliveryAddressZip">
+              Delivery ZIP
+            </label>
+
+            <input
+              id="deliveryAddressZip"
+              name="delivery_address_zip"
+            >
+          </div>
+
+          <div class="field full">
+            <label for="deliveryRecipientName">
+              Delivery Recipient
+            </label>
+
+            <input
+              id="deliveryRecipientName"
+              name="delivery_recipient_name"
+              placeholder="Name of person receiving the shipment"
             >
           </div>
 
@@ -795,18 +873,6 @@
               name="scheduled_date"
               type="date"
               required
-            >
-          </div>
-
-          <div class="field">
-            <label for="estimatedDeliveryTime">
-              Estimated Drop-Off Time
-            </label>
-
-            <input
-              id="estimatedDeliveryTime"
-              name="estimated_delivery_time"
-              type="time"
             >
           </div>
 
@@ -973,18 +1039,6 @@
             </select>
           </div>
 
-          <div class="field">
-            <label for="invoiceDueDate">
-              Invoice Due Date
-            </label>
-
-            <input
-              id="invoiceDueDate"
-              name="invoice_due_date"
-              type="date"
-            >
-          </div>
-
           <div class="field full">
             <label for="billingNotes">
               Billing Notes
@@ -1148,9 +1202,6 @@
 
       document.getElementById("scheduledDate").value =
         localDateString(today);
-
-      document.getElementById("invoiceDueDate").value =
-        localDateString(dueDate);
     }
 
     function openJobForm() {
@@ -1473,6 +1524,43 @@
       );
     }
 
+    function isMissingColumnError(error) {
+      const message =
+        (error?.message || "")
+          .toLowerCase();
+
+      return (
+        message.includes("does not exist") ||
+        message.includes("column") &&
+        message.includes("not found")
+      );
+    }
+
+    async function persistQuoteFields(jobId, values) {
+      const updates = Object.entries(values).filter(([, value]) => value !== null && value !== undefined && value !== "");
+
+      if (!jobId || !updates.length) {
+        return;
+      }
+
+      try {
+        const result = await client
+          .from("quotes")
+          .update(Object.fromEntries(updates))
+          .eq("id", jobId)
+          .select("id")
+          .maybeSingle();
+
+        if (result.error && !isMissingColumnError(result.error)) {
+          throw result.error;
+        }
+      } catch (error) {
+        if (!isMissingColumnError(error)) {
+          console.warn("Unable to persist quote fields", error);
+        }
+      }
+    }
+
     async function createInvoice(job, payload) {
       const result =
         await client
@@ -1500,7 +1588,6 @@
                 "unpaid",
 
               due_date:
-                payload.invoice_due_date ||
                 null
             },
             {
@@ -1557,6 +1644,19 @@
             ) || ""
           ).trim();
 
+        const pickupAddressLine1 = String(formData.get("pickup_address_line1") || "").trim();
+        const pickupAddressCity = String(formData.get("pickup_address_city") || "").trim();
+        const pickupAddressState = String(formData.get("pickup_address_state") || "").trim();
+        const pickupAddressZip = String(formData.get("pickup_address_zip") || "").trim();
+        const deliveryAddressLine1 = String(formData.get("delivery_address_line1") || "").trim();
+        const deliveryAddressCity = String(formData.get("delivery_address_city") || "").trim();
+        const deliveryAddressState = String(formData.get("delivery_address_state") || "").trim();
+        const deliveryAddressZip = String(formData.get("delivery_address_zip") || "").trim();
+        const deliveryRecipientName = String(formData.get("delivery_recipient_name") || "").trim();
+
+        const pickupAddressParts = [pickupAddressLine1, pickupAddressCity, pickupAddressState, pickupAddressZip].filter(Boolean);
+        const deliveryAddressParts = [deliveryAddressLine1, deliveryAddressCity, deliveryAddressState, deliveryAddressZip].filter(Boolean);
+
         const payload = {
           job_number:
             jobNumber,
@@ -1583,27 +1683,14 @@
             ).trim(),
 
           pickup_address:
-            String(
-              formData.get(
-                "pickup_address"
-              ) || ""
-            ).trim(),
+            pickupAddressParts.join(", ") || null,
 
           delivery_address:
-            String(
-              formData.get(
-                "delivery_address"
-              ) || ""
-            ).trim(),
+            deliveryAddressParts.join(", ") || null,
 
           scheduled_date:
             formData.get(
               "scheduled_date"
-            ) || null,
-
-          estimated_delivery_time:
-            formData.get(
-              "estimated_delivery_time"
             ) || null,
 
           vehicle_type:
@@ -1658,11 +1745,6 @@
               ) || "none"
             ),
 
-          invoice_due_date:
-            formData.get(
-              "invoice_due_date"
-            ) || null,
-
           billing_notes:
             String(
               formData.get(
@@ -1686,6 +1768,20 @@
         if (insertResult.error) {
           throw insertResult.error;
         }
+
+        await persistQuoteFields(insertResult.data.id, {
+          pickup_address_line1: pickupAddressLine1 || null,
+          pickup_address_city: pickupAddressCity || null,
+          pickup_address_state: pickupAddressState || null,
+          pickup_address_zip: pickupAddressZip || null,
+          delivery_address_line1: deliveryAddressLine1 || null,
+          delivery_address_city: deliveryAddressCity || null,
+          delivery_address_state: deliveryAddressState || null,
+          delivery_address_zip: deliveryAddressZip || null,
+          delivery_recipient_name: deliveryRecipientName || null,
+          driver_acceptance_status: "pending",
+          driver_workflow_status: "pending"
+        });
 
         if (
           action === "approved-invoice"
