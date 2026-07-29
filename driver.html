@@ -326,6 +326,81 @@
       font-weight: 900;
     }
 
+    .workflow-panel {
+      margin-bottom: 20px;
+      padding: 18px;
+      border: 1px solid var(--line);
+      border-radius: 20px;
+      background: white;
+      box-shadow: 0 8px 25px rgba(0, 0, 0, .04);
+    }
+
+    .workflow-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 14px;
+    }
+
+    .workflow-header h2 {
+      margin: 0;
+      font-size: 24px;
+    }
+
+    .workflow-caption {
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.4;
+    }
+
+    .workflow-card {
+      display: grid;
+      gap: 10px;
+      padding: 14px;
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      background: #f7faf9;
+      margin-bottom: 10px;
+    }
+
+    .workflow-card:last-child {
+      margin-bottom: 0;
+    }
+
+    .workflow-card-title {
+      color: var(--dark-green);
+      font-weight: 900;
+    }
+
+    .workflow-card-meta {
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.4;
+    }
+
+    .workflow-button-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .workflow-button {
+      min-height: 42px;
+      padding: 9px 12px;
+      border: 1px solid var(--line);
+      border-radius: 11px;
+      background: white;
+      color: var(--dark-green);
+      font-weight: 800;
+      cursor: pointer;
+    }
+
+    .workflow-button:disabled {
+      opacity: .55;
+      cursor: not-allowed;
+    }
+
     .empty,
     .error {
       padding: 31px 22px;
@@ -518,6 +593,19 @@
       </div>
     </section>
 
+    <section class="workflow-panel">
+      <div class="workflow-header">
+        <h2>Driver Workflow Queue</h2>
+        <div class="workflow-caption">
+          Accept, reject, and advance your assigned jobs.
+        </div>
+      </div>
+
+      <div id="driverWorkflowBox">
+        Loading workflow tasks...
+      </div>
+    </section>
+
     <section class="filters">
       <div class="filter-grid">
         <div class="field">
@@ -604,6 +692,7 @@
     let drivers = [];
     let jobs = [];
     let driverSummaries = [];
+    let currentDriver = null;
 
     function escapeHtml(value) {
       const div = document.createElement("div");
@@ -699,20 +788,72 @@
     }
 
     function isClosedJob(job) {
+      const status = cleanStatus(job.status);
+      const acceptanceStatus = cleanStatus(job.driver_acceptance_status);
+      const workflowStatus = cleanStatus(job.driver_workflow_status);
+
       return [
         "delivered",
         "cancelled",
-        "canceled"
-      ].includes(
-        cleanStatus(job.status)
-      );
+        "canceled",
+        "rejected"
+      ].includes(status) || ["rejected"].includes(acceptanceStatus) || ["rejected"].includes(workflowStatus);
     }
 
     function isDeliveredJob(job) {
       return (
         cleanStatus(job.status) ===
-        "delivered"
+        "delivered" || cleanStatus(job.driver_workflow_status) === "delivered"
       );
+    }
+
+    function buildAddressDisplay(job, prefix) {
+      const parts = [
+        job?.[`${prefix}_address_line1`] || job?.[`${prefix}_address_line_1`] || job?.[`${prefix}_street`] || job?.[`${prefix}_line1`],
+        job?.[`${prefix}_address_line2`] || job?.[`${prefix}_address_line_2`] || job?.[`${prefix}_line2`],
+        job?.[`${prefix}_city`] || job?.[`${prefix}_town`],
+        job?.[`${prefix}_state`] || job?.[`${prefix}_province`],
+        job?.[`${prefix}_zip`] || job?.[`${prefix}_postal_code`] || job?.[`${prefix}_postal`]
+      ].filter(Boolean);
+
+      const joined = parts.join(", ").trim();
+
+      if (joined) {
+        return joined;
+      }
+
+      return job?.[`${prefix}_address`] || "Not provided";
+    }
+
+    function workflowStatusLabel(job) {
+      const acceptanceStatus = cleanStatus(job.driver_acceptance_status);
+      const workflowStatus = cleanStatus(job.driver_workflow_status);
+
+      if (acceptanceStatus === "rejected" || workflowStatus === "rejected") {
+        return "Rejected";
+      }
+
+      if (acceptanceStatus === "accepted") {
+        if (workflowStatus === "en_route_pickup") {
+          return "Accepted • En Route to Pickup";
+        }
+
+        if (workflowStatus === "picked_up") {
+          return "Accepted • Pickup Complete";
+        }
+
+        if (workflowStatus === "en_route_delivery") {
+          return "Accepted • En Route to Delivery";
+        }
+
+        if (workflowStatus === "delivered") {
+          return "Delivered";
+        }
+
+        return "Accepted";
+      }
+
+      return "Pending";
     }
 
     function buildDriverSummaries() {
@@ -932,17 +1073,10 @@
         ![
           "admin",
           "staff",
-          "dispatcher"
+          "dispatcher",
+          "driver"
         ].includes(role)
       ) {
-        if (role === "driver") {
-          location.replace(
-            "https://drivers.migenteexpress.com"
-          );
-
-          return null;
-        }
-
         if (role === "customer") {
           location.replace(
             "/customer.html"
@@ -1019,6 +1153,7 @@
       buildDriverSummaries();
       updateStatistics();
       renderDrivers();
+      renderDriverWorkflow();
     }
 
     function filteredDrivers() {
@@ -1057,6 +1192,29 @@
           );
         }
       );
+    }
+
+    async function resolveCurrentDriver() {
+      const sessionResult = await client.auth.getSession();
+      const session = sessionResult.data.session;
+
+      if (!session) {
+        currentDriver = null;
+        return null;
+      }
+
+      const driverResult = await client
+        .from("drivers")
+        .select("id,full_name,email,active")
+        .eq("email", session.user.email)
+        .maybeSingle();
+
+      if (driverResult.error) {
+        throw driverResult.error;
+      }
+
+      currentDriver = driverResult.data || null;
+      return currentDriver;
     }
 
     function updateStatistics() {
@@ -1099,6 +1257,132 @@
               driver.displayStatus ===
               "inactive"
           ).length;
+    }
+
+    function renderDriverWorkflow() {
+      const workflowBox = document.getElementById("driverWorkflowBox");
+
+      if (!currentDriver) {
+        workflowBox.innerHTML = `
+          <div class="empty">
+            No driver profile is linked to this account yet.
+          </div>
+        `;
+        return;
+      }
+
+      const workflowJobs = jobs.filter(job =>
+        String(job.assigned_driver_id || "") === String(currentDriver.id)
+      );
+
+      const activeWorkflowJobs = workflowJobs.filter(job => !isClosedJob(job));
+
+      if (!activeWorkflowJobs.length) {
+        workflowBox.innerHTML = `
+          <div class="empty">
+            No active workflow tasks are assigned to ${escapeHtml(currentDriver.full_name || currentDriver.email || "this driver")}. 
+          </div>
+        `;
+        return;
+      }
+
+      workflowBox.innerHTML = activeWorkflowJobs.map(job => {
+        const workflowButtons = [];
+        const acceptanceStatus = cleanStatus(job.driver_acceptance_status);
+        const workflowStatus = cleanStatus(job.driver_workflow_status);
+
+        if (acceptanceStatus !== "accepted" && acceptanceStatus !== "rejected") {
+          workflowButtons.push(`<button class="workflow-button" data-workflow-action="accept" type="button">Accept Job</button>`);
+          workflowButtons.push(`<button class="workflow-button" data-workflow-action="reject" type="button">Reject Job</button>`);
+        }
+
+        if (acceptanceStatus === "accepted" && workflowStatus !== "rejected" && workflowStatus !== "en_route_pickup" && workflowStatus !== "picked_up" && workflowStatus !== "en_route_delivery" && workflowStatus !== "delivered") {
+          workflowButtons.push(`<button class="workflow-button" data-workflow-action="route_pickup" type="button">En Route to Pickup</button>`);
+        }
+
+        if (workflowStatus === "en_route_pickup") {
+          workflowButtons.push(`<button class="workflow-button" data-workflow-action="pickup_complete" type="button">Pickup Complete</button>`);
+        }
+
+        if (workflowStatus === "picked_up") {
+          workflowButtons.push(`<button class="workflow-button" data-workflow-action="route_delivery" type="button">En Route to Delivery</button>`);
+        }
+
+        if (workflowStatus === "en_route_delivery") {
+          workflowButtons.push(`<button class="workflow-button" data-workflow-action="complete_delivery" type="button">Complete Delivery</button>`);
+        }
+
+        return `
+          <div class="workflow-card" data-job-id="${escapeHtml(String(job.id))}">
+            <div class="workflow-card-title">
+              ${escapeHtml(job.job_number || "Job")}
+            </div>
+            <div class="workflow-card-meta">
+              ${escapeHtml(job.customer_name || "Customer")}
+            </div>
+            <div class="workflow-card-meta">
+              Pickup: ${escapeHtml(buildAddressDisplay(job, "pickup"))}
+            </div>
+            <div class="workflow-card-meta">
+              Delivery: ${escapeHtml(buildAddressDisplay(job, "delivery"))}
+            </div>
+            <div class="workflow-card-meta">
+              Status: ${escapeHtml(workflowStatusLabel(job))}
+            </div>
+            <div class="workflow-button-row">
+              ${workflowButtons.join("")}
+            </div>
+          </div>
+        `;
+      }).join("");
+    }
+
+    async function updateDriverWorkflow(job, action) {
+      const now = new Date().toISOString();
+      const payload = {};
+
+      if (action === "accept") {
+        payload.driver_acceptance_status = "accepted";
+        payload.driver_accepted_at = now;
+        payload.driver_workflow_status = "accepted";
+      } else if (action === "reject") {
+        payload.driver_acceptance_status = "rejected";
+        payload.driver_rejected_at = now;
+        payload.driver_workflow_status = "rejected";
+      } else if (action === "route_pickup") {
+        payload.driver_workflow_status = "en_route_pickup";
+        payload.en_route_pickup_at = now;
+      } else if (action === "pickup_complete") {
+        payload.driver_workflow_status = "picked_up";
+        payload.picked_up_at = now;
+      } else if (action === "route_delivery") {
+        payload.driver_workflow_status = "en_route_delivery";
+        payload.en_route_delivery_at = now;
+      } else if (action === "complete_delivery") {
+        const podRecipient = window.prompt("Enter the POD recipient name", job.pod_recipient_name || "");
+
+        if (podRecipient === null) {
+          return;
+        }
+
+        payload.driver_workflow_status = "delivered";
+        payload.pod_recipient_name = podRecipient.trim() || null;
+        payload.status = "delivered";
+        payload.completed_at = now;
+      }
+
+      const result = await client
+        .from("quotes")
+        .update(payload)
+        .eq("id", job.id)
+        .select("*")
+        .maybeSingle();
+
+      if (result.error) {
+        throw result.error;
+      }
+
+      await loadDriverData();
     }
 
     function renderDrivers() {
@@ -1233,6 +1517,41 @@
           .join("");
     }
 
+    document
+      .getElementById("driverWorkflowBox")
+      .addEventListener("click", async function (event) {
+        const button = event.target.closest("[data-workflow-action]");
+
+        if (!button) {
+          return;
+        }
+
+        const action = button.getAttribute("data-workflow-action");
+        const workflowCard = button.closest(".workflow-card");
+        const jobId = workflowCard?.dataset?.jobId;
+
+        if (!jobId) {
+          return;
+        }
+
+        const job = jobs.find(item => String(item.id) === String(jobId));
+
+        if (!job) {
+          return;
+        }
+
+        try {
+          await updateDriverWorkflow(job, action);
+        } catch (error) {
+          const workflowBox = document.getElementById("driverWorkflowBox");
+          workflowBox.innerHTML = `
+            <div class="error">
+              ${escapeHtml(error.message || "Unable to update the workflow.")}
+            </div>
+          `;
+        }
+      });
+
     searchInput.addEventListener(
       "input",
       renderDrivers
@@ -1284,6 +1603,7 @@
           return;
         }
 
+        await resolveCurrentDriver();
         await loadDriverData();
       } catch (error) {
         driversBox.className = "";
