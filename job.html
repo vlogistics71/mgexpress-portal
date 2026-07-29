@@ -272,6 +272,114 @@
       cursor: not-allowed;
     }
 
+    .packet-shell {
+      max-width: 920px;
+      margin: 0 auto;
+      padding: 28px;
+      background: white;
+      color: var(--ink);
+      font-family: Arial, Helvetica, sans-serif;
+    }
+
+    .packet-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 16px;
+      padding-bottom: 16px;
+      border-bottom: 2px solid var(--line);
+      margin-bottom: 18px;
+    }
+
+    .packet-title {
+      margin: 0;
+      color: var(--dark-green);
+      font-size: 30px;
+      line-height: 1.08;
+    }
+
+    .packet-subtitle {
+      margin-top: 6px;
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .packet-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 14px;
+      margin-top: 14px;
+    }
+
+    .packet-card {
+      padding: 14px;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      background: #f7faf9;
+    }
+
+    .packet-label {
+      display: block;
+      margin-bottom: 6px;
+      color: var(--muted);
+      font-size: 11px;
+      font-weight: 900;
+      letter-spacing: .04em;
+      text-transform: uppercase;
+    }
+
+    .packet-value {
+      font-size: 15px;
+      font-weight: 700;
+      line-height: 1.4;
+      overflow-wrap: anywhere;
+      white-space: pre-wrap;
+    }
+
+    .packet-full {
+      grid-column: 1 / -1;
+    }
+
+    .packet-photo {
+      width: 100%;
+      max-height: 260px;
+      object-fit: cover;
+      border-radius: 12px;
+      border: 1px solid var(--line);
+      background: #edf2f0;
+    }
+
+    .packet-photo-empty {
+      display: grid;
+      place-items: center;
+      min-height: 180px;
+      border: 1px dashed var(--line);
+      border-radius: 12px;
+      color: var(--muted);
+      text-align: center;
+      padding: 16px;
+    }
+
+    .packet-list {
+      padding-left: 18px;
+      margin: 0;
+    }
+
+    .packet-list li {
+      margin-bottom: 8px;
+      line-height: 1.4;
+    }
+
+    @media print {
+      body {
+        background: white;
+      }
+
+      .packet-shell {
+        padding: 0;
+      }
+    }
+
     .page-grid {
       display: grid;
       grid-template-columns: minmax(0, 1.55fr) minmax(270px, .75fr);
@@ -1011,6 +1119,14 @@
             </button>
 
             <button
+              class="secondary-button"
+              id="generatePacketButton"
+              type="button"
+            >
+              Generate Job Packet
+            </button>
+
+            <button
               class="print-button"
               id="printButton"
               type="button"
@@ -1518,32 +1634,25 @@
       `;
     }
 
-    function renderTimeline() {
+    function getTimelineStages(job) {
       const status =
-        cleanStatus(currentJob.status);
+        cleanStatus(job?.status);
 
-      const stages = [
+      return [
         {
           title: "Job Created",
-          date: currentJob.created_at,
-          complete: Boolean(
-            currentJob.created_at
-          )
+          date: job?.created_at,
+          complete: Boolean(job?.created_at)
         },
         {
           title: "Driver Assigned",
           date: null,
-          complete: Boolean(
-            currentJob.assigned_driver_id
-          )
+          complete: Boolean(job?.assigned_driver_id)
         },
         {
           title: "Pickup Photo Uploaded",
-          date:
-            currentJob.pickup_photo_uploaded_at,
-          complete: Boolean(
-            currentJob.pickup_photo_url
-          )
+          date: job?.pickup_photo_uploaded_at,
+          complete: Boolean(job?.pickup_photo_url)
         },
         {
           title: "In Transit",
@@ -1555,19 +1664,19 @@
         },
         {
           title: "Delivery Photo Uploaded",
-          date:
-            currentJob.delivery_photo_uploaded_at,
-          complete: Boolean(
-            currentJob.delivery_photo_url
-          )
+          date: job?.delivery_photo_uploaded_at,
+          complete: Boolean(job?.delivery_photo_url)
         },
         {
           title: "Job Delivered",
-          date: currentJob.completed_at,
-          complete:
-            status === "delivered"
+          date: job?.completed_at,
+          complete: status === "delivered"
         }
       ];
+    }
+
+    function renderTimeline() {
+      const stages = getTimelineStages(currentJob);
 
       document
         .getElementById("timeline")
@@ -1603,6 +1712,246 @@
               </div>
             </div>
           `).join("");
+    }
+
+    function getCurrentPacketJob() {
+      const selectedDriverId =
+        document
+          .getElementById("driverSelect")
+          .value || currentJob?.assigned_driver_id || "";
+
+      const selectedDriver = drivers.find(
+        driver => driver.id === selectedDriverId
+      );
+
+      const billingInput =
+        document.getElementById("billingAmountInput");
+      const billingValue =
+        billingInput && billingInput.value !== ""
+          ? billingInput.value
+          : currentJob?.customer_billing_amount;
+
+      const notesValue =
+        document.getElementById("dispatchNotes").value ||
+        currentJob?.dispatch_notes ||
+        currentJob?.notes;
+
+      const billValue =
+        document.getElementById("billOfLadingUrl").value ||
+        currentJob?.bill_of_lading_url ||
+        currentJob?.bill_of_lading;
+
+      return {
+        ...currentJob,
+        status: document.getElementById("statusSelect").value || currentJob?.status,
+        assigned_driver_id: selectedDriverId,
+        assigned_driver_label: selectedDriver
+          ? (selectedDriver.full_name || selectedDriver.email || "Driver")
+          : "Unassigned",
+        driver_pay: document.getElementById("driverPay").value || currentJob?.driver_pay,
+        customer_billing_amount: billingValue,
+        dispatch_notes: notesValue,
+        bill_of_lading_url: billValue,
+        priority: document.getElementById("prioritySelect").value || currentJob?.priority
+      };
+    }
+
+    function buildPacketHtml(job) {
+      const status = statusLabel(cleanStatus(job?.status));
+      const billingAmount =
+        job?.customer_billing_amount === null ||
+        job?.customer_billing_amount === undefined ||
+        job?.customer_billing_amount === ""
+          ? "Not provided"
+          : formatCurrency(job.customer_billing_amount);
+
+      const driverPay =
+        job?.driver_pay === null ||
+        job?.driver_pay === undefined ||
+        job?.driver_pay === ""
+          ? "Not provided"
+          : formatCurrency(job.driver_pay);
+
+      const notesValue =
+        job?.dispatch_notes || job?.notes || "Not provided";
+      const billUrlValue =
+        job?.bill_of_lading_url || job?.bill_of_lading || "Not provided";
+      const createdAt = formatDate(job?.created_at);
+      const completedAt = formatDate(job?.completed_at);
+      const specialInstructions = displayValue(job?.special_instructions);
+      const timeline = getTimelineStages(job)
+        .map(stage => `
+          <li>
+            <strong>${escapeHtml(stage.title)}:</strong>
+            ${escapeHtml(
+              stage.date
+                ? formatDate(stage.date)
+                : (stage.complete ? "Completed" : "Pending")
+            )}
+          </li>
+        `)
+        .join("");
+
+      const pickupPhoto = job?.pickup_photo_url
+        ? `<img class="packet-photo" src="${escapeHtml(job.pickup_photo_url)}" alt="Pickup photo">`
+        : `<div class="packet-photo-empty">No pickup photo uploaded.</div>`;
+
+      const deliveryPhoto = job?.delivery_photo_url
+        ? `<img class="packet-photo" src="${escapeHtml(job.delivery_photo_url)}" alt="Delivery photo">`
+        : `<div class="packet-photo-empty">No delivery photo uploaded.</div>`;
+
+      return `<!doctype html>
+        <html lang="en">
+        <head>
+          <meta charset="utf-8">
+          <title>MG Express Job Packet</title>
+          <style>
+            body { margin: 0; padding: 24px; font-family: Arial, Helvetica, sans-serif; background: #fff; color: #17221e; }
+            .packet-shell { max-width: 920px; margin: 0 auto; }
+            .packet-header { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; padding-bottom: 14px; border-bottom: 2px solid #dfe8e4; margin-bottom: 18px; }
+            .packet-title { margin: 0; color: #064f3b; font-size: 28px; }
+            .packet-subtitle { margin-top: 6px; color: #68756f; font-size: 14px; }
+            .packet-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; margin-top: 14px; }
+            .packet-card { padding: 14px; border: 1px solid #dfe8e4; border-radius: 14px; background: #f7faf9; }
+            .packet-label { display: block; margin-bottom: 6px; color: #68756f; font-size: 11px; font-weight: 900; letter-spacing: .04em; text-transform: uppercase; }
+            .packet-value { font-size: 15px; font-weight: 700; line-height: 1.4; overflow-wrap: anywhere; white-space: pre-wrap; }
+            .packet-full { grid-column: 1 / -1; }
+            .packet-photo { width: 100%; max-height: 260px; object-fit: cover; border-radius: 12px; border: 1px solid #dfe8e4; background: #edf2f0; }
+            .packet-photo-empty { display: grid; place-items: center; min-height: 180px; border: 1px dashed #dfe8e4; border-radius: 12px; color: #68756f; text-align: center; padding: 16px; }
+            .packet-list { padding-left: 18px; margin: 0; }
+            .packet-list li { margin-bottom: 8px; line-height: 1.4; }
+            @media print { body { background: #fff; } }
+          </style>
+        </head>
+        <body>
+          <div class="packet-shell">
+            <div class="packet-header">
+              <div>
+                <h1 class="packet-title">MG Express Job Packet</h1>
+                <div class="packet-subtitle">Dispatch/Admin Only</div>
+              </div>
+              <div class="packet-card">
+                <div class="packet-label">Status</div>
+                <div class="packet-value">${escapeHtml(status)}</div>
+              </div>
+            </div>
+
+            <div class="packet-grid">
+              <div class="packet-card">
+                <div class="packet-label">Job Number</div>
+                <div class="packet-value">${escapeHtml(job?.job_number || "Job")}</div>
+              </div>
+              <div class="packet-card">
+                <div class="packet-label">Customer</div>
+                <div class="packet-value">${escapeHtml(job?.customer_name || "Customer")}</div>
+              </div>
+              <div class="packet-card">
+                <div class="packet-label">Customer Email</div>
+                <div class="packet-value">${escapeHtml(job?.customer_email || "Not provided")}</div>
+              </div>
+              <div class="packet-card">
+                <div class="packet-label">Assigned Driver</div>
+                <div class="packet-value">${escapeHtml(job?.assigned_driver_label || "Unassigned")}</div>
+              </div>
+              <div class="packet-card packet-full">
+                <div class="packet-label">Pickup Address</div>
+                <div class="packet-value">${escapeHtml(job?.pickup_address || "Not provided")}</div>
+              </div>
+              <div class="packet-card packet-full">
+                <div class="packet-label">Delivery Address</div>
+                <div class="packet-value">${escapeHtml(job?.delivery_address || "Not provided")}</div>
+              </div>
+              <div class="packet-card">
+                <div class="packet-label">Vehicle Type</div>
+                <div class="packet-value">${escapeHtml(job?.vehicle_type || "Not provided")}</div>
+              </div>
+              <div class="packet-card">
+                <div class="packet-label">Delivery Speed</div>
+                <div class="packet-value">${escapeHtml(job?.delivery_speed || "Not provided")}</div>
+              </div>
+              <div class="packet-card">
+                <div class="packet-label">Package Type</div>
+                <div class="packet-value">${escapeHtml(job?.package_type || "Not provided")}</div>
+              </div>
+              <div class="packet-card">
+                <div class="packet-label">Delivery Method</div>
+                <div class="packet-value">${escapeHtml(job?.delivery_method || "Not provided")}</div>
+              </div>
+              <div class="packet-card packet-full">
+                <div class="packet-label">Special Instructions</div>
+                <div class="packet-value">${escapeHtml(specialInstructions)}</div>
+              </div>
+              <div class="packet-card">
+                <div class="packet-label">Customer Billing Amount</div>
+                <div class="packet-value">${escapeHtml(billingAmount)}</div>
+              </div>
+              <div class="packet-card">
+                <div class="packet-label">Driver Pay</div>
+                <div class="packet-value">${escapeHtml(driverPay)}</div>
+              </div>
+              <div class="packet-card packet-full">
+                <div class="packet-label">Dispatch Notes</div>
+                <div class="packet-value">${escapeHtml(notesValue)}</div>
+              </div>
+              <div class="packet-card packet-full">
+                <div class="packet-label">Bill of Lading</div>
+                <div class="packet-value">${escapeHtml(billUrlValue)}</div>
+              </div>
+              <div class="packet-card packet-full">
+                <div class="packet-label">Job Timeline</div>
+                <ul class="packet-list">${timeline}</ul>
+              </div>
+              <div class="packet-card">
+                <div class="packet-label">Pickup Photo</div>
+                ${pickupPhoto}
+              </div>
+              <div class="packet-card">
+                <div class="packet-label">Delivery Photo</div>
+                ${deliveryPhoto}
+              </div>
+              <div class="packet-card packet-full">
+                <div class="packet-label">Timestamps</div>
+                <div class="packet-value">Created: ${escapeHtml(createdAt)}<br>Completed: ${escapeHtml(completedAt)}</div>
+              </div>
+            </div>
+          </div>
+        </body>
+        </html>`;
+    }
+
+    function openJobPacket() {
+      if (!currentJob) {
+        setSaveMessage("No job is currently loaded.", "error");
+        return;
+      }
+
+      const packetWindow = window.open(
+        "",
+        "_blank",
+        "width=1000,height=900,noopener,noreferrer"
+      );
+
+      if (!packetWindow) {
+        setSaveMessage("Please allow popups to generate the job packet.", "error");
+        return;
+      }
+
+      const packetJob = getCurrentPacketJob();
+      const packetHtml = buildPacketHtml(packetJob);
+
+      packetWindow.document.write(packetHtml);
+      packetWindow.document.close();
+      packetWindow.focus();
+
+      setTimeout(() => {
+        try {
+          packetWindow.print();
+        } catch (error) {
+          console.warn("Unable to launch print dialog", error);
+        }
+      }, 400);
+
+      setSaveMessage("Job packet opened for printing.", "success");
     }
 
     function renderJob() {
@@ -2037,6 +2386,13 @@
         function () {
           window.print();
         }
+      );
+
+    document
+      .getElementById("generatePacketButton")
+      .addEventListener(
+        "click",
+        openJobPacket
       );
 
     document
