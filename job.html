@@ -167,6 +167,111 @@
       color: var(--danger);
     }
 
+    .job-head-meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      align-items: center;
+      margin-top: 10px;
+    }
+
+    .priority-badge {
+      display: inline-flex;
+      align-items: center;
+      padding: 8px 12px;
+      border-radius: 999px;
+      background: var(--light-green);
+      color: var(--green);
+      font-size: 13px;
+      font-weight: 900;
+      white-space: nowrap;
+    }
+
+    .priority-badge.priority-high {
+      background: var(--warning-bg);
+      color: var(--warning);
+    }
+
+    .priority-badge.priority-urgent {
+      background: var(--danger-bg);
+      color: var(--danger);
+    }
+
+    .progress-card {
+      min-width: min(280px, 100%);
+      padding: 12px 14px;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      background: #f7faf9;
+    }
+
+    .progress-meta {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 8px;
+      color: var(--muted);
+      font-size: 11px;
+      font-weight: 900;
+      letter-spacing: .04em;
+      text-transform: uppercase;
+    }
+
+    .progress-track {
+      height: 10px;
+      overflow: hidden;
+      border-radius: 999px;
+      background: #dde7e1;
+    }
+
+    .progress-fill {
+      width: 0;
+      height: 100%;
+      border-radius: inherit;
+      background: linear-gradient(90deg, var(--green), var(--coral));
+      transition: width .2s ease;
+    }
+
+    .summary-box {
+      margin-top: 10px;
+      padding: 14px;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      background: #f7faf9;
+    }
+
+    .summary-title {
+      color: var(--muted);
+      font-size: 11px;
+      font-weight: 900;
+      letter-spacing: .04em;
+      text-transform: uppercase;
+    }
+
+    .summary-value {
+      margin-top: 6px;
+      font-size: 16px;
+      font-weight: 800;
+      line-height: 1.4;
+    }
+
+    .secondary-button {
+      width: 100%;
+      min-height: 48px;
+      margin-top: 10px;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      background: white;
+      color: var(--dark-green);
+      font-weight: 900;
+      cursor: pointer;
+    }
+
+    .secondary-button:disabled {
+      opacity: .65;
+      cursor: not-allowed;
+    }
+
     .page-grid {
       display: grid;
       grid-template-columns: minmax(0, 1.55fr) minmax(270px, .75fr);
@@ -566,6 +671,29 @@
         </div>
       </div>
 
+      <div class="job-head-meta">
+        <div
+          class="priority-badge"
+          id="priorityBadge"
+        >
+          Priority: Standard
+        </div>
+
+        <div class="progress-card">
+          <div class="progress-meta">
+            <span>Job progress</span>
+            <span id="progressText">0%</span>
+          </div>
+
+          <div class="progress-track">
+            <div
+              class="progress-fill"
+              id="progressFill"
+            ></div>
+          </div>
+        </div>
+      </div>
+
       <div class="page-grid">
         <div class="stack">
           <section class="panel">
@@ -686,6 +814,17 @@
                 ></div>
               </div>
 
+              <div class="detail">
+                <span class="detail-label">
+                  Customer Billing Amount
+                </span>
+
+                <div
+                  class="detail-value"
+                  id="customerBillingAmount"
+                ></div>
+              </div>
+
               <div class="detail full">
                 <span class="detail-label">
                   Special Instructions
@@ -727,6 +866,27 @@
             <h2>Dispatch Controls</h2>
 
             <div class="field">
+              <label for="prioritySelect">
+                Priority
+              </label>
+
+              <select id="prioritySelect">
+                <option value="standard">
+                  Standard
+                </option>
+                <option value="low">
+                  Low
+                </option>
+                <option value="high">
+                  High
+                </option>
+                <option value="urgent">
+                  Urgent
+                </option>
+              </select>
+            </div>
+
+            <div class="field">
               <label for="driverSelect">
                 Assigned Driver
               </label>
@@ -751,6 +911,66 @@
                 placeholder="0.00"
               >
             </div>
+
+            <div class="field">
+              <label for="billingAmountInput">
+                Customer Billing Amount
+              </label>
+
+              <input
+                id="billingAmountInput"
+                type="number"
+                min="0"
+                step="0.01"
+                placeholder="0.00"
+              >
+            </div>
+
+            <div class="summary-box" id="driverPaySummary">
+              <div class="summary-title">
+                Driver Pay Summary
+              </div>
+
+              <div
+                class="summary-value"
+                id="driverPaySummaryValue"
+              >
+                Unassigned • $0.00
+              </div>
+            </div>
+
+            <div class="field">
+              <label for="dispatchNotes">
+                Dispatch Notes
+              </label>
+
+              <textarea
+                id="dispatchNotes"
+                class="notes-box"
+                placeholder="Add dispatch notes for this job..."
+              ></textarea>
+            </div>
+
+            <div class="field">
+              <label for="billOfLadingUrl">
+                Bill of Lading URL
+              </label>
+
+              <input
+                id="billOfLadingUrl"
+                type="url"
+                placeholder="https://..."
+              >
+            </div>
+
+            <button
+              class="secondary-button"
+              id="billOfLadingButton"
+              type="button"
+              disabled
+            >
+              Open Bill of Lading
+            </button>
 
             <div class="field">
               <label for="statusSelect">
@@ -926,6 +1146,153 @@
       }
 
       return String(value);
+    }
+
+    function formatCurrency(value) {
+      const amount = Number(value);
+
+      if (!Number.isFinite(amount)) {
+        return "Not provided";
+      }
+
+      return new Intl.NumberFormat(
+        "en-US",
+        {
+          style: "currency",
+          currency: "USD"
+        }
+      ).format(amount);
+    }
+
+    function updateProgressBar() {
+      const status = cleanStatus(currentJob?.status);
+      let percent = 15;
+
+      if (status === "delivered") {
+        percent = 100;
+      } else if (["cancelled", "canceled"].includes(status)) {
+        percent = 100;
+      } else {
+        if (currentJob?.assigned_driver_id) {
+          percent = 45;
+        }
+
+        if (currentJob?.pickup_photo_url) {
+          percent = 65;
+        }
+
+        if (["in_transit", "delivered"].includes(status)) {
+          percent = 80;
+        }
+
+        if (currentJob?.delivery_photo_url || status === "delivered") {
+          percent = 95;
+        }
+      }
+
+      const progressFill = document.getElementById("progressFill");
+      const progressText = document.getElementById("progressText");
+
+      if (progressFill) {
+        progressFill.style.width = `${percent}%`;
+      }
+
+      if (progressText) {
+        progressText.textContent = `${percent}%`;
+      }
+    }
+
+    function resolveOptionalValue(job, keys) {
+      for (const key of keys) {
+        const value = job?.[key];
+
+        if (
+          value !== null &&
+          value !== undefined &&
+          value !== ""
+        ) {
+          return value;
+        }
+      }
+
+      return null;
+    }
+
+    function isMissingColumnError(error) {
+      const message =
+        (error?.message || "")
+          .toLowerCase();
+
+      return (
+        message.includes("does not exist") ||
+        message.includes("column") &&
+        message.includes("not found")
+      );
+    }
+
+    function updateDriverPaySummary() {
+      const selectedDriver = drivers.find(
+        driver =>
+          driver.id ===
+          document
+            .getElementById("driverSelect")
+            .value
+      );
+
+      const driverLabel =
+        selectedDriver
+          ? (
+              selectedDriver.full_name ||
+              selectedDriver.email ||
+              "Driver"
+            )
+          : "Unassigned";
+
+      const payValue = Number(
+        document
+          .getElementById("driverPay")
+          .value || 0
+      );
+
+      document
+        .getElementById("driverPaySummaryValue")
+        .textContent =
+          `${driverLabel} • ${formatCurrency(payValue)}`;
+    }
+
+    async function saveOptionalField(column, value) {
+      if (!column) {
+        return;
+      }
+
+      try {
+        const result = await client
+          .from("quotes")
+          .update({ [column]: value })
+          .eq("id", currentJob.id)
+          .select("id")
+          .maybeSingle();
+
+        if (result.error) {
+          if (isMissingColumnError(result.error)) {
+            return;
+          }
+
+          throw result.error;
+        }
+
+        currentJob = {
+          ...currentJob,
+          [column]: value
+        };
+      } catch (error) {
+        if (!isMissingColumnError(error)) {
+          console.warn(
+            `Unable to save ${column}`,
+            error
+          );
+        }
+      }
     }
 
     function mapUrl(address) {
@@ -1309,6 +1676,100 @@
         currentJob.special_instructions
       );
 
+      const billingAmount = resolveOptionalValue(
+        currentJob,
+        [
+          "customer_billing_amount",
+          "billing_amount",
+          "customer_billing"
+        ]
+      );
+
+      const billingAmountInput =
+        document.getElementById("billingAmountInput");
+
+      if (billingAmountInput) {
+        billingAmountInput.value =
+          billingAmount === null
+            ? ""
+            : String(billingAmount);
+      }
+
+      document
+        .getElementById("customerBillingAmount")
+        .textContent =
+          billingAmount === null
+            ? "Not provided"
+            : formatCurrency(billingAmount);
+
+      const priorityValue = resolveOptionalValue(
+        currentJob,
+        ["priority"]
+      );
+
+      const normalizedPriority =
+        ["low", "medium", "high", "urgent", "standard"].includes(
+          String(priorityValue || "standard").toLowerCase()
+        )
+          ? String(priorityValue || "standard").toLowerCase()
+          : "standard";
+
+      const priorityLabel = {
+        low: "Low",
+        medium: "Medium",
+        high: "High",
+        urgent: "Urgent",
+        standard: "Standard"
+      }[normalizedPriority] || "Standard";
+
+      const priorityBadge =
+        document.getElementById("priorityBadge");
+
+      priorityBadge.textContent =
+        `Priority: ${priorityLabel}`;
+
+      priorityBadge.className =
+        `priority-badge${
+          normalizedPriority === "high"
+            ? " priority-high"
+            : normalizedPriority === "urgent"
+              ? " priority-urgent"
+              : ""
+        }`;
+
+      document
+        .getElementById("prioritySelect")
+        .value = normalizedPriority;
+
+      const dispatchNotesValue = resolveOptionalValue(
+        currentJob,
+        ["dispatch_notes", "notes"]
+      );
+
+      document
+        .getElementById("dispatchNotes")
+        .value =
+          dispatchNotesValue === null
+            ? ""
+            : String(dispatchNotesValue);
+
+      const billOfLadingUrlValue = resolveOptionalValue(
+        currentJob,
+        ["bill_of_lading_url", "bill_of_lading"]
+      );
+
+      const billOfLadingUrlInput =
+        document.getElementById("billOfLadingUrl");
+
+      billOfLadingUrlInput.value =
+        billOfLadingUrlValue === null
+          ? ""
+          : String(billOfLadingUrlValue);
+
+      document
+        .getElementById("billOfLadingButton")
+        .disabled = !billOfLadingUrlInput.value;
+
       setText(
         "createdAt",
         formatDate(currentJob.created_at)
@@ -1354,9 +1815,13 @@
           Number(currentJob.driver_pay || 0)
             .toFixed(2);
 
+      updateDriverPaySummary();
+
       document
         .getElementById("statusSelect")
         .value = status;
+
+      updateProgressBar();
 
       document
         .getElementById("pickupPhotoCard")
@@ -1411,6 +1876,39 @@
               .getElementById("driverPay")
               .value || 0
           );
+
+        const priorityValue =
+          document
+            .getElementById("prioritySelect")
+            .value || "standard";
+
+        const billingAmountInput =
+          document.getElementById("billingAmountInput");
+
+        const billingAmountValue =
+          billingAmountInput &&
+          billingAmountInput.value !== ""
+            ? (() => {
+                const amount = Number(
+                  billingAmountInput.value
+                );
+
+                return Number.isFinite(amount)
+                  ? amount
+                  : null;
+              })()
+            : null;
+
+        const dispatchNotesValue =
+          document
+            .getElementById("dispatchNotes")
+            .value || null;
+
+        const billOfLadingUrlValue =
+          document
+            .getElementById("billOfLadingUrl")
+            .value
+            .trim() || null;
 
         const payload = {
           assigned_driver_id: driverId,
@@ -1473,6 +1971,22 @@
             };
         }
 
+        await Promise.all([
+          saveOptionalField("priority", priorityValue),
+          saveOptionalField(
+            "customer_billing_amount",
+            billingAmountValue
+          ),
+          saveOptionalField(
+            "dispatch_notes",
+            dispatchNotesValue
+          ),
+          saveOptionalField(
+            "bill_of_lading_url",
+            billOfLadingUrlValue
+          )
+        ]);
+
         renderJob();
 
         setSaveMessage(
@@ -1522,6 +2036,47 @@
         "click",
         function () {
           window.print();
+        }
+      );
+
+    document
+      .getElementById("driverSelect")
+      .addEventListener(
+        "change",
+        updateDriverPaySummary
+      );
+
+    document
+      .getElementById("driverPay")
+      .addEventListener(
+        "input",
+        updateDriverPaySummary
+      );
+
+    document
+      .getElementById("billOfLadingButton")
+      .addEventListener(
+        "click",
+        function () {
+          const url =
+            document
+              .getElementById("billOfLadingUrl")
+              .value
+              .trim();
+
+          if (!url) {
+            setSaveMessage(
+              "No bill of lading URL is available yet.",
+              "error"
+            );
+            return;
+          }
+
+          window.open(
+            url,
+            "_blank",
+            "noopener,noreferrer"
+          );
         }
       );
 
