@@ -565,6 +565,41 @@
       color: var(--danger);
     }
 
+    .workflow-box {
+      margin-top: 10px;
+      padding: 14px;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      background: #f7faf9;
+    }
+
+    .workflow-title {
+      color: var(--dark-green);
+      font-size: 13px;
+      font-weight: 900;
+      letter-spacing: .04em;
+      text-transform: uppercase;
+    }
+
+    .workflow-actions {
+      display: grid;
+      gap: 8px;
+      margin-top: 10px;
+    }
+
+    .workflow-button {
+      min-height: 44px;
+      margin-top: 0;
+    }
+
+    .workflow-status {
+      margin-top: 10px;
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 800;
+      line-height: 1.4;
+    }
+
     .photo-grid {
       display: grid;
       grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -880,6 +915,28 @@
 
               <div class="detail">
                 <span class="detail-label">
+                  Delivery Recipient
+                </span>
+
+                <div
+                  class="detail-value"
+                  id="deliveryRecipient"
+                ></div>
+              </div>
+
+              <div class="detail">
+                <span class="detail-label">
+                  POD Recipient
+                </span>
+
+                <div
+                  class="detail-value"
+                  id="podRecipient"
+                ></div>
+              </div>
+
+              <div class="detail">
+                <span class="detail-label">
                   Vehicle
                 </span>
 
@@ -1044,6 +1101,81 @@
                 id="driverPaySummaryValue"
               >
                 Unassigned • $0.00
+              </div>
+            </div>
+
+            <div class="field">
+              <label for="podRecipientName">
+                POD Recipient Name
+              </label>
+
+              <input
+                id="podRecipientName"
+                type="text"
+                placeholder="Recipient name for delivery confirmation"
+              >
+            </div>
+
+            <div class="workflow-box">
+              <div class="workflow-title">
+                Driver Workflow
+              </div>
+
+              <div class="workflow-actions">
+                <button
+                  class="secondary-button workflow-button"
+                  id="acceptJobButton"
+                  type="button"
+                >
+                  Accept Job
+                </button>
+
+                <button
+                  class="secondary-button workflow-button"
+                  id="rejectJobButton"
+                  type="button"
+                >
+                  Reject Job
+                </button>
+
+                <button
+                  class="secondary-button workflow-button"
+                  id="routePickupButton"
+                  type="button"
+                >
+                  En Route to Pickup
+                </button>
+
+                <button
+                  class="secondary-button workflow-button"
+                  id="pickupCompleteButton"
+                  type="button"
+                >
+                  Pickup Complete
+                </button>
+
+                <button
+                  class="secondary-button workflow-button"
+                  id="routeDeliveryButton"
+                  type="button"
+                >
+                  En Route to Delivery
+                </button>
+
+                <button
+                  class="secondary-button workflow-button"
+                  id="completeDeliveryButton"
+                  type="button"
+                >
+                  Complete Delivery
+                </button>
+              </div>
+
+              <div
+                class="workflow-status"
+                id="workflowStatusText"
+              >
+                Pending
               </div>
             </div>
 
@@ -1280,28 +1412,47 @@
       ).format(amount);
     }
 
+    function buildAddressDisplay(job, prefix) {
+      const parts = [
+        resolveOptionalValue(job, [`${prefix}_address_line1`, `${prefix}_address_line_1`, `${prefix}_address1`, `${prefix}_street`, `${prefix}_line1`]),
+        resolveOptionalValue(job, [`${prefix}_address_line2`, `${prefix}_address_line_2`, `${prefix}_address2`, `${prefix}_line2`]),
+        resolveOptionalValue(job, [`${prefix}_city`, `${prefix}_town`]),
+        resolveOptionalValue(job, [`${prefix}_state`, `${prefix}_province`]),
+        resolveOptionalValue(job, [`${prefix}_zip`, `${prefix}_postal_code`, `${prefix}_postal`])
+      ].filter(Boolean);
+
+      const joined = parts.join(", ").trim();
+
+      if (joined) {
+        return joined;
+      }
+
+      return resolveOptionalValue(job, [`${prefix}_address`, `${prefix}_full_address`]) || "Not provided";
+    }
+
     function updateProgressBar() {
       const status = cleanStatus(currentJob?.status);
+      const workflowStatus = cleanStatus(currentJob?.driver_workflow_status);
       let percent = 15;
 
-      if (status === "delivered") {
+      if (status === "delivered" || workflowStatus === "delivered") {
         percent = 100;
-      } else if (["cancelled", "canceled"].includes(status)) {
+      } else if (["cancelled", "canceled", "rejected"].includes(status)) {
         percent = 100;
       } else {
         if (currentJob?.assigned_driver_id) {
           percent = 45;
         }
 
-        if (currentJob?.pickup_photo_url) {
+        if (currentJob?.pickup_photo_url || ["en_route_pickup", "picked_up", "en_route_delivery", "delivered"].includes(workflowStatus)) {
           percent = 65;
         }
 
-        if (["in_transit", "delivered"].includes(status)) {
+        if (["in_transit", "delivered", "picked_up", "en_route_delivery"].includes(status) || ["picked_up", "en_route_delivery", "delivered"].includes(workflowStatus)) {
           percent = 80;
         }
 
-        if (currentJob?.delivery_photo_url || status === "delivered") {
+        if (currentJob?.delivery_photo_url || status === "delivered" || workflowStatus === "delivered") {
           percent = 95;
         }
       }
@@ -1637,6 +1788,10 @@
     function getTimelineStages(job) {
       const status =
         cleanStatus(job?.status);
+      const acceptanceStatus =
+        cleanStatus(job?.driver_acceptance_status);
+      const workflowStatus =
+        cleanStatus(job?.driver_workflow_status);
 
       return [
         {
@@ -1650,17 +1805,34 @@
           complete: Boolean(job?.assigned_driver_id)
         },
         {
+          title: "Driver Accepted",
+          date: job?.driver_accepted_at,
+          complete: acceptanceStatus === "accepted"
+        },
+        {
+          title: "Driver Rejected",
+          date: job?.driver_rejected_at,
+          complete: acceptanceStatus === "rejected"
+        },
+        {
+          title: "En Route to Pickup",
+          date: job?.en_route_pickup_at,
+          complete: ["en_route_pickup", "picked_up", "en_route_delivery", "delivered"].includes(workflowStatus)
+        },
+        {
+          title: "Pickup Complete",
+          date: job?.picked_up_at,
+          complete: ["picked_up", "en_route_delivery", "delivered"].includes(workflowStatus)
+        },
+        {
+          title: "En Route to Delivery",
+          date: job?.en_route_delivery_at,
+          complete: ["en_route_delivery", "delivered"].includes(workflowStatus)
+        },
+        {
           title: "Pickup Photo Uploaded",
           date: job?.pickup_photo_uploaded_at,
           complete: Boolean(job?.pickup_photo_url)
-        },
-        {
-          title: "In Transit",
-          date: null,
-          complete: [
-            "in_transit",
-            "delivered"
-          ].includes(status)
         },
         {
           title: "Delivery Photo Uploaded",
@@ -1668,9 +1840,14 @@
           complete: Boolean(job?.delivery_photo_url)
         },
         {
+          title: "POD Confirmed",
+          date: job?.updated_at,
+          complete: Boolean(job?.pod_recipient_name) || Boolean(job?.delivery_photo_url)
+        },
+        {
           title: "Job Delivered",
           date: job?.completed_at,
-          complete: status === "delivered"
+          complete: status === "delivered" || workflowStatus === "delivered"
         }
       ];
     }
@@ -1736,6 +1913,11 @@
         currentJob?.dispatch_notes ||
         currentJob?.notes;
 
+      const podRecipientValue =
+        document.getElementById("podRecipientName").value ||
+        currentJob?.pod_recipient_name ||
+        "";
+
       const billValue =
         document.getElementById("billOfLadingUrl").value ||
         currentJob?.bill_of_lading_url ||
@@ -1751,6 +1933,7 @@
         driver_pay: document.getElementById("driverPay").value || currentJob?.driver_pay,
         customer_billing_amount: billingValue,
         dispatch_notes: notesValue,
+        pod_recipient_name: podRecipientValue,
         bill_of_lading_url: billValue,
         priority: document.getElementById("prioritySelect").value || currentJob?.priority
       };
@@ -1855,11 +2038,19 @@
               </div>
               <div class="packet-card packet-full">
                 <div class="packet-label">Pickup Address</div>
-                <div class="packet-value">${escapeHtml(job?.pickup_address || "Not provided")}</div>
+                <div class="packet-value">${escapeHtml(buildAddressDisplay(job, "pickup"))}</div>
               </div>
               <div class="packet-card packet-full">
                 <div class="packet-label">Delivery Address</div>
-                <div class="packet-value">${escapeHtml(job?.delivery_address || "Not provided")}</div>
+                <div class="packet-value">${escapeHtml(buildAddressDisplay(job, "delivery"))}</div>
+              </div>
+              <div class="packet-card">
+                <div class="packet-label">Delivery Recipient</div>
+                <div class="packet-value">${escapeHtml(displayValue(resolveOptionalValue(job, ["delivery_recipient_name", "recipient_name"])))} </div>
+              </div>
+              <div class="packet-card">
+                <div class="packet-label">POD Recipient</div>
+                <div class="packet-value">${escapeHtml(displayValue(resolveOptionalValue(job, ["pod_recipient_name"])))}</div>
               </div>
               <div class="packet-card">
                 <div class="packet-label">Vehicle Type</div>
@@ -2008,12 +2199,22 @@
 
       setText(
         "pickupAddress",
-        currentJob.pickup_address
+        buildAddressDisplay(currentJob, "pickup")
       );
 
       setText(
         "deliveryAddress",
-        currentJob.delivery_address
+        buildAddressDisplay(currentJob, "delivery")
+      );
+
+      setText(
+        "deliveryRecipient",
+        resolveOptionalValue(currentJob, ["delivery_recipient_name", "recipient_name"])
+      );
+
+      setText(
+        "podRecipient",
+        resolveOptionalValue(currentJob, ["pod_recipient_name"])
       );
 
       setText(
@@ -2162,12 +2363,12 @@
       document
         .getElementById("pickupMap")
         .href =
-          mapUrl(currentJob.pickup_address);
+          mapUrl(buildAddressDisplay(currentJob, "pickup"));
 
       document
         .getElementById("deliveryMap")
         .href =
-          mapUrl(currentJob.delivery_address);
+          mapUrl(buildAddressDisplay(currentJob, "delivery"));
 
       document
         .getElementById("driverSelect")
@@ -2180,7 +2381,14 @@
           Number(currentJob.driver_pay || 0)
             .toFixed(2);
 
+      const podRecipientInput = document.getElementById("podRecipientName");
+
+      if (podRecipientInput) {
+        podRecipientInput.value = resolveOptionalValue(currentJob, ["pod_recipient_name"]) || "";
+      }
+
       updateDriverPaySummary();
+      updateWorkflowButtons();
 
       document
         .getElementById("statusSelect")
@@ -2210,6 +2418,124 @@
 
       document.title =
         `${currentJob.job_number || "Job"} | MG Express`;
+    }
+
+    function updateWorkflowButtons() {
+      const workflowStatus = cleanStatus(currentJob?.driver_workflow_status);
+      const acceptanceStatus = cleanStatus(currentJob?.driver_acceptance_status);
+
+      const buttons = {
+        accept: document.getElementById("acceptJobButton"),
+        reject: document.getElementById("rejectJobButton"),
+        routePickup: document.getElementById("routePickupButton"),
+        pickupComplete: document.getElementById("pickupCompleteButton"),
+        routeDelivery: document.getElementById("routeDeliveryButton"),
+        completeDelivery: document.getElementById("completeDeliveryButton")
+      };
+
+      const workflowText = document.getElementById("workflowStatusText");
+      const statusLabelText =
+        acceptanceStatus === "rejected" || workflowStatus === "rejected"
+          ? "Rejected"
+          : acceptanceStatus === "accepted"
+            ? workflowStatus === "en_route_pickup"
+              ? "Accepted • En Route to Pickup"
+              : workflowStatus === "picked_up"
+                ? "Accepted • Pickup Complete"
+                : workflowStatus === "en_route_delivery"
+                  ? "Accepted • En Route to Delivery"
+                  : workflowStatus === "delivered"
+                    ? "Delivered"
+                    : "Accepted"
+            : "Pending";
+
+      if (workflowText) {
+        workflowText.textContent = statusLabelText;
+      }
+
+      if (buttons.accept) {
+        buttons.accept.disabled = ["accepted", "rejected"].includes(acceptanceStatus);
+      }
+
+      if (buttons.reject) {
+        buttons.reject.disabled = ["accepted", "rejected"].includes(acceptanceStatus);
+      }
+
+      if (buttons.routePickup) {
+        buttons.routePickup.disabled = acceptanceStatus !== "accepted" || ["en_route_pickup", "picked_up", "en_route_delivery", "delivered", "rejected"].includes(workflowStatus);
+      }
+
+      if (buttons.pickupComplete) {
+        buttons.pickupComplete.disabled = workflowStatus !== "en_route_pickup";
+      }
+
+      if (buttons.routeDelivery) {
+        buttons.routeDelivery.disabled = workflowStatus !== "picked_up";
+      }
+
+      if (buttons.completeDelivery) {
+        buttons.completeDelivery.disabled = workflowStatus !== "en_route_delivery";
+      }
+    }
+
+    async function handleWorkflowAction(action) {
+      if (!currentJob) {
+        setSaveMessage("No job is currently loaded.", "error");
+        return;
+      }
+
+      const now = new Date().toISOString();
+      const payload = {};
+
+      if (action === "accept") {
+        payload.driver_acceptance_status = "accepted";
+        payload.driver_accepted_at = now;
+        payload.driver_workflow_status = "accepted";
+      } else if (action === "reject") {
+        payload.driver_acceptance_status = "rejected";
+        payload.driver_rejected_at = now;
+        payload.driver_workflow_status = "rejected";
+      } else if (action === "route_pickup") {
+        payload.driver_workflow_status = "en_route_pickup";
+        payload.en_route_pickup_at = now;
+      } else if (action === "pickup_complete") {
+        payload.driver_workflow_status = "picked_up";
+        payload.picked_up_at = now;
+      } else if (action === "route_delivery") {
+        payload.driver_workflow_status = "en_route_delivery";
+        payload.en_route_delivery_at = now;
+      } else if (action === "complete_delivery") {
+        const podRecipient = document.getElementById("podRecipientName").value.trim();
+
+        if (!podRecipient && !currentJob.delivery_photo_url) {
+          setSaveMessage("Add a POD recipient name or delivery photo before completing the delivery.", "error");
+          return;
+        }
+
+        payload.driver_workflow_status = "delivered";
+        payload.pod_recipient_name = podRecipient || currentJob.pod_recipient_name || null;
+        payload.status = "delivered";
+        payload.completed_at = now;
+      }
+
+      try {
+        const result = await client
+          .from("quotes")
+          .update(payload)
+          .eq("id", currentJob.id)
+          .select("*")
+          .maybeSingle();
+
+        if (result.error) {
+          throw result.error;
+        }
+
+        currentJob = result.data || { ...currentJob, ...payload };
+        renderJob();
+        setSaveMessage("Driver workflow updated.", "success");
+      } catch (error) {
+        setSaveMessage(error.message || "Unable to update the driver workflow.", "error");
+      }
     }
 
     async function saveJob() {
@@ -2268,6 +2594,12 @@
           document
             .getElementById("dispatchNotes")
             .value || null;
+
+        const podRecipientValue =
+          document
+            .getElementById("podRecipientName")
+            .value
+            .trim() || null;
 
         const billOfLadingUrlValue =
           document
@@ -2347,6 +2679,10 @@
             dispatchNotesValue
           ),
           saveOptionalField(
+            "pod_recipient_name",
+            podRecipientValue
+          ),
+          saveOptionalField(
             "bill_of_lading_url",
             billOfLadingUrlValue
           )
@@ -2423,6 +2759,48 @@
       .addEventListener(
         "input",
         updateDriverPaySummary
+      );
+
+    document
+      .getElementById("acceptJobButton")
+      .addEventListener(
+        "click",
+        () => handleWorkflowAction("accept")
+      );
+
+    document
+      .getElementById("rejectJobButton")
+      .addEventListener(
+        "click",
+        () => handleWorkflowAction("reject")
+      );
+
+    document
+      .getElementById("routePickupButton")
+      .addEventListener(
+        "click",
+        () => handleWorkflowAction("route_pickup")
+      );
+
+    document
+      .getElementById("pickupCompleteButton")
+      .addEventListener(
+        "click",
+        () => handleWorkflowAction("pickup_complete")
+      );
+
+    document
+      .getElementById("routeDeliveryButton")
+      .addEventListener(
+        "click",
+        () => handleWorkflowAction("route_delivery")
+      );
+
+    document
+      .getElementById("completeDeliveryButton")
+      .addEventListener(
+        "click",
+        () => handleWorkflowAction("complete_delivery")
       );
 
     document
