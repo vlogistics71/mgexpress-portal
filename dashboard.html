@@ -2,20 +2,11 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
-
-  <meta
-    name="viewport"
-    content="width=device-width, initial-scale=1"
-  >
-
+  <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>MG Express Dispatch</title>
-
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-
   <style>
-    * {
-      box-sizing: border-box;
-    }
+    * { box-sizing: border-box; }
 
     :root {
       --dark-green: #064f3b;
@@ -27,7 +18,15 @@
       --ink: #17221e;
       --muted: #68756f;
       --line: #dfe8e4;
-      --danger: #a32d2d;
+      --danger: #9b2929;
+      --warning: #986200;
+      --warning-bg: #fff5d8;
+      --blue: #245d9c;
+      --blue-bg: #eaf3ff;
+      --danger-bg: #fff0f0;
+      --success-bg: #e9f7ef;
+      --success: #0b633f;
+      --sheet-radius: 20px;
     }
 
     body {
@@ -40,809 +39,955 @@
     button,
     input,
     select,
-    textarea {
-      font: inherit;
-    }
-
-    button,
-    a {
-      -webkit-tap-highlight-color: transparent;
-    }
+    textarea { font: inherit; }
 
     .topbar {
       position: sticky;
       top: 0;
-      z-index: 50;
+      z-index: 30;
+      padding: 16px 18px;
       background: var(--dark-green);
-      color: white;
-      padding: 18px 20px;
+      color: #fff;
     }
 
     .topbar-inner {
-      width: min(1050px, 100%);
+      width: min(1080px, 100%);
       margin: auto;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 15px;
     }
 
     .brand {
       font-size: 24px;
       font-weight: 900;
-      line-height: 1.08;
+      line-height: 1.05;
     }
 
-    .brand span {
-      color: var(--coral);
-    }
+    .brand span { color: var(--coral); }
 
     .staff-email {
-      margin-top: 7px;
+      margin-top: 6px;
       font-size: 13px;
-      opacity: .82;
+      opacity: .85;
       overflow-wrap: anywhere;
     }
 
     .container {
-      width: min(1050px, 100%);
+      width: min(1080px, 100%);
       margin: auto;
-      padding: 30px 18px 60px;
+      padding: 20px 14px 84px;
     }
 
-    .page-heading {
-      display: flex;
-      justify-content: space-between;
-      align-items: flex-end;
-      gap: 18px;
-      margin-bottom: 24px;
+    .heading {
+      display: grid;
+      gap: 10px;
+      margin-bottom: 14px;
     }
 
     .eyebrow {
       color: var(--muted);
-      font-size: 18px;
-      margin-bottom: 5px;
+      font-size: 15px;
+      margin-bottom: 2px;
     }
 
     h1 {
       margin: 0;
-      font-size: 44px;
+      font-size: clamp(34px, 7vw, 46px);
       line-height: 1.05;
     }
 
-    h2 {
-      margin: 0;
-      font-size: 29px;
+    .top-actions {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-top: 8px;
     }
 
-    .primary-button {
-      border: 0;
-      border-radius: 14px;
-      padding: 15px 20px;
-      background: var(--green);
-      color: white;
-      font-weight: 900;
-      cursor: pointer;
-    }
-
-    .secondary-button {
+    .action-btn,
+    .refresh-btn,
+    .btn {
+      min-height: 48px;
+      padding: 10px 14px;
+      border-radius: 12px;
       border: 1px solid var(--line);
-      border-radius: 13px;
-      padding: 13px 16px;
-      background: white;
+      background: #fff;
       color: var(--dark-green);
       font-weight: 900;
       cursor: pointer;
     }
 
-    .navigation {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 10px;
-      margin-bottom: 24px;
+    .action-btn.primary,
+    .btn.primary {
+      border: 0;
+      background: var(--green);
+      color: #fff;
     }
 
-    .navigation a {
+    .nav-links {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin: 12px 0 16px;
+    }
+
+    .nav-links a {
       text-decoration: none;
-      display: inline-block;
+      min-height: 42px;
+      display: inline-flex;
+      align-items: center;
+      border: 1px solid var(--line);
+      background: #fff;
+      border-radius: 11px;
+      color: var(--dark-green);
+      padding: 8px 12px;
+      font-weight: 800;
     }
 
     .stats {
       display: grid;
-      grid-template-columns: repeat(5, minmax(0, 1fr));
-      gap: 13px;
-      margin-bottom: 30px;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 8px;
+      margin-bottom: 14px;
     }
 
-    .stat-card {
-      background: white;
+    .stat {
+      background: #fff;
       border: 1px solid var(--line);
-      border-radius: 20px;
-      padding: 20px;
-      min-height: 145px;
-      box-shadow: 0 8px 25px rgba(0, 0, 0, .04);
+      border-radius: 14px;
+      padding: 12px;
     }
 
     .stat-number {
       color: var(--green);
-      font-size: 38px;
+      font-size: 30px;
       font-weight: 900;
+      line-height: 1;
     }
 
     .stat-label {
       color: var(--muted);
-      margin-top: 9px;
-      line-height: 1.3;
+      font-size: 12px;
+      margin-top: 6px;
+      text-transform: uppercase;
+      letter-spacing: .03em;
+      font-weight: 800;
     }
 
-    .panel {
-      background: white;
+    .section {
+      margin-bottom: 14px;
       border: 1px solid var(--line);
-      border-radius: 22px;
-      padding: 23px;
-      margin-bottom: 26px;
-      box-shadow: 0 9px 28px rgba(0, 0, 0, .05);
+      border-radius: 16px;
+      background: #fff;
+      overflow: hidden;
     }
 
-    .hidden {
-      display: none;
-    }
-
-    .panel-heading,
-    .jobs-heading {
+    .section-head {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      gap: 14px;
-      margin-bottom: 20px;
+      gap: 10px;
+      padding: 12px;
+      border-bottom: 1px solid var(--line);
     }
 
-    .quote-form {
-      display: grid;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: 15px;
+    .section-title {
+      margin: 0;
+      font-size: 18px;
+      color: var(--dark-green);
     }
 
-    label {
-      display: block;
+    .section-sub {
       color: var(--muted);
       font-size: 12px;
-      font-weight: 900;
-      text-transform: uppercase;
+      font-weight: 800;
     }
 
-    label.full {
-      grid-column: 1 / -1;
-    }
+    .rows { display: grid; }
 
-    input,
-    select,
-    textarea {
+    .row {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 8px;
+      align-items: center;
       width: 100%;
-      margin-top: 7px;
-      padding: 14px;
-      border: 1px solid #ccd8d3;
+      border: 0;
+      border-bottom: 1px solid var(--line);
+      background: #fff;
+      text-align: left;
+      padding: 12px;
+      cursor: pointer;
+      color: inherit;
+    }
+
+    .row:last-child { border-bottom: 0; }
+
+    .row-main {
+      display: grid;
+      gap: 4px;
+      min-width: 0;
+    }
+
+    .row-topline {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .row-id {
+      font-size: 14px;
+      color: var(--dark-green);
+      font-weight: 900;
+      overflow-wrap: anywhere;
+    }
+
+    .row-customer {
+      font-size: 14px;
+      font-weight: 800;
+      overflow-wrap: anywhere;
+    }
+
+    .row-meta {
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.35;
+      overflow-wrap: anywhere;
+    }
+
+    .row-right {
+      display: grid;
+      justify-items: end;
+      gap: 6px;
+    }
+
+    .row-chevron {
+      color: var(--green);
+      font-size: 20px;
+      font-weight: 900;
+      line-height: 1;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 6px 8px;
+      border-radius: 999px;
+      font-size: 10px;
+      font-weight: 900;
+      letter-spacing: .03em;
+      text-transform: uppercase;
+      white-space: nowrap;
+    }
+
+    .badge-new { background: var(--warning-bg); color: var(--warning); }
+    .badge-ready { background: var(--light-green); color: var(--green); }
+    .badge-assigned { background: var(--blue-bg); color: var(--blue); }
+    .badge-cancel { background: var(--danger-bg); color: var(--danger); }
+
+    .row-menu {
+      position: relative;
+      display: inline-block;
+    }
+
+    .menu-trigger {
+      border: 1px solid var(--line);
+      background: #fff;
+      border-radius: 10px;
+      min-height: 34px;
+      min-width: 34px;
+      cursor: pointer;
+      color: var(--dark-green);
+      font-weight: 900;
+    }
+
+    .menu-list {
+      position: absolute;
+      right: 0;
+      top: 38px;
+      min-width: 180px;
+      z-index: 15;
+      border: 1px solid var(--line);
       border-radius: 12px;
-      background: white;
+      background: #fff;
+      box-shadow: 0 10px 28px rgba(0,0,0,.12);
+      padding: 6px;
+      display: none;
+    }
+
+    .row-menu.open .menu-list { display: grid; }
+
+    .menu-item {
+      border: 0;
+      background: #fff;
+      text-align: left;
+      border-radius: 8px;
+      min-height: 36px;
+      padding: 6px 10px;
+      font-weight: 700;
       color: var(--ink);
-      outline: none;
+      cursor: pointer;
     }
 
-    input:focus,
-    select:focus,
-    textarea:focus {
-      border-color: var(--green);
-      box-shadow: 0 0 0 3px rgba(8, 116, 85, .12);
+    .menu-item:hover { background: #f4faf7; }
+
+    .empty {
+      padding: 20px 14px;
+      color: var(--muted);
+      text-align: center;
+      font-size: 14px;
     }
 
-    textarea {
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, .52);
+      z-index: 120;
+      display: none;
+      align-items: flex-end;
+      justify-content: center;
+      padding: 0;
+    }
+
+    .modal-backdrop.open { display: flex; }
+
+    .modal-panel {
+      width: 100%;
+      max-height: 92vh;
+      overflow: auto;
+      background: #fff;
+      border-radius: var(--sheet-radius) var(--sheet-radius) 0 0;
+      box-shadow: 0 -10px 28px rgba(0,0,0,.2);
+      transform: translateY(102%);
+      transition: transform .24s ease;
+    }
+
+    .modal-backdrop.open .modal-panel {
+      transform: translateY(0);
+    }
+
+    .modal-head {
+      position: sticky;
+      top: 0;
+      z-index: 3;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      padding: 12px;
+      border-bottom: 1px solid var(--line);
+      background: #fff;
+    }
+
+    .modal-title {
+      margin: 0;
+      color: var(--dark-green);
+      font-size: 20px;
+    }
+
+    .icon-btn {
+      border: 1px solid var(--line);
+      background: #fff;
+      border-radius: 10px;
+      min-width: 38px;
+      min-height: 38px;
+      color: var(--dark-green);
+      font-size: 18px;
+      font-weight: 900;
+      cursor: pointer;
+    }
+
+    .modal-body {
+      padding: 12px;
+      display: grid;
+      gap: 12px;
+    }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 10px;
+    }
+
+    .field { min-width: 0; }
+
+    .field.full { grid-column: 1 / -1; }
+
+    .field label {
+      display: block;
+      margin-bottom: 5px;
+      color: var(--muted);
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: .04em;
+      font-weight: 900;
+    }
+
+    .field input,
+    .field select,
+    .field textarea {
+      width: 100%;
+      min-height: 44px;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 10px 12px;
+      background: #fff;
+      color: var(--ink);
+    }
+
+    .field textarea {
       min-height: 90px;
       resize: vertical;
     }
 
     .form-actions {
-      grid-column: 1 / -1;
+      position: sticky;
+      bottom: 0;
+      z-index: 4;
+      background: #fff;
+      border-top: 1px solid var(--line);
+      padding: 10px;
       display: flex;
-      gap: 10px;
       flex-wrap: wrap;
+      gap: 8px;
     }
 
-    .message {
-      margin-top: 15px;
-      padding: 13px;
-      border-radius: 11px;
+    .hint {
+      color: var(--muted);
+      font-size: 12px;
       line-height: 1.4;
     }
 
-    .message.info {
-      background: #edf7f3;
-      color: #06543e;
-    }
-
-    .message.error {
-      background: #fff0f0;
-      color: var(--danger);
-    }
-
-    .jobs-list {
+    .details-grid {
       display: grid;
-      gap: 18px;
+      gap: 8px;
+      grid-template-columns: 1fr;
     }
 
-    .job-card {
-      background: white;
+    .kv {
+      display: grid;
+      grid-template-columns: 120px minmax(0, 1fr);
+      gap: 8px;
+      font-size: 13px;
+      line-height: 1.4;
+      align-items: baseline;
+    }
+
+    .kv strong { color: var(--dark-green); }
+
+    details.card {
       border: 1px solid var(--line);
-      border-radius: 20px;
-      padding: 20px;
-      box-shadow: 0 8px 24px rgba(0, 0, 0, .04);
+      border-radius: 11px;
+      background: #fff;
+      overflow: hidden;
     }
 
-    .job-top {
-      display: flex;
-      justify-content: space-between;
-      align-items: flex-start;
-      gap: 12px;
-      margin-bottom: 17px;
-    }
-
-    .job-number {
+    details.card > summary {
+      list-style: none;
+      cursor: pointer;
+      padding: 10px 12px;
+      font-weight: 900;
       color: var(--dark-green);
-      font-size: 24px;
-      font-weight: 900;
+      border-bottom: 1px solid transparent;
     }
 
-    .customer {
-      margin-top: 5px;
-      font-size: 18px;
-      font-weight: 800;
-    }
-
-    .customer-email {
-      margin-top: 4px;
-      color: var(--muted);
-      overflow-wrap: anywhere;
-    }
-
-    .status-pill {
-      border-radius: 999px;
-      padding: 8px 11px;
-      background: var(--light-green);
-      color: var(--green);
-      font-size: 12px;
-      font-weight: 900;
-      text-transform: capitalize;
-      white-space: nowrap;
-    }
-
-    .route {
-      border-radius: 15px;
-      padding: 16px;
+    details.card[open] > summary {
+      border-bottom-color: var(--line);
       background: #f7faf9;
-      line-height: 1.45;
-      margin-bottom: 17px;
     }
 
-    .route-arrow {
-      margin: 8px 0;
-      color: var(--green);
-      font-size: 23px;
-      font-weight: 900;
-    }
+    details.card > summary::-webkit-details-marker { display: none; }
 
-    .job-details {
+    .card-body {
+      padding: 10px 12px 12px;
       display: grid;
-      grid-template-columns: repeat(3, minmax(0, 1fr));
-      gap: 12px;
-      margin-bottom: 17px;
+      gap: 8px;
     }
 
-    .detail-box {
-      background: #f7faf9;
-      border-radius: 13px;
-      padding: 13px;
-    }
-
-    .detail-label {
-      color: var(--muted);
-      font-size: 11px;
-      font-weight: 900;
-      text-transform: uppercase;
-    }
-
-    .detail-value {
-      margin-top: 5px;
-      line-height: 1.35;
-      overflow-wrap: anywhere;
-    }
-
-    .instructions {
-      margin-bottom: 17px;
-      padding: 15px;
-      border-radius: 14px;
-      background: #fff8ed;
-      line-height: 1.45;
-      white-space: pre-wrap;
-    }
-
-    .job-controls {
+    .status-row {
       display: grid;
-      grid-template-columns: repeat(3, minmax(0, 1fr));
-      gap: 12px;
+      gap: 8px;
+      grid-template-columns: 1fr;
       align-items: end;
     }
 
-    .save-job,
-    .photo-link {
-      min-height: 49px;
-      border: 0;
-      border-radius: 12px;
-      padding: 13px;
-      background: var(--green);
-      color: white;
-      text-align: center;
-      text-decoration: none;
-      font-weight: 900;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
+    .status-select {
+      width: 100%;
+      min-height: 44px;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 10px 12px;
     }
 
-    .photo-link {
-      background: #eaf3ef;
-      color: var(--dark-green);
-    }
-
-    .photo-link.disabled {
-      opacity: .5;
+    .toast-wrap {
+      position: fixed;
+      left: 12px;
+      right: 12px;
+      bottom: 12px;
+      z-index: 160;
+      display: grid;
+      gap: 8px;
       pointer-events: none;
     }
 
-    .empty {
-      padding: 28px;
-      text-align: center;
+    .toast {
+      border-radius: 11px;
+      padding: 10px 12px;
+      font-size: 13px;
+      font-weight: 800;
+      color: #fff;
+      background: #1f2b28;
+      box-shadow: 0 8px 20px rgba(0,0,0,.2);
+    }
+
+    .toast.success { background: var(--success); }
+    .toast.error { background: var(--danger); }
+    .toast.info { background: #1f2b28; }
+
+    .loading-inline {
       color: var(--muted);
-      background: #fafdfb;
-      border-radius: 17px;
+      font-size: 12px;
+      font-weight: 800;
     }
 
-    @media (max-width: 900px) {
-      .stats {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
+    @media (min-width: 860px) {
+      .container {
+        padding: 28px 18px 90px;
       }
 
-      .job-controls {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-      }
-    }
-
-    @media (max-width: 650px) {
-      .page-heading {
-        align-items: stretch;
-        flex-direction: column;
+      .heading {
+        grid-template-columns: minmax(0, 1fr) auto;
+        align-items: end;
       }
 
-      .page-heading .primary-button {
-        width: 100%;
+      .top-actions {
+        width: 360px;
       }
 
-      .quote-form,
-      .job-controls,
-      .job-details {
-        grid-template-columns: 1fr;
+      .stats { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+
+      .row {
+        grid-template-columns: minmax(0, 1fr) auto auto;
+        gap: 12px;
       }
 
-      .stats {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
+      .row-main {
+        display: grid;
+        grid-template-columns: 1.2fr 1fr;
+        column-gap: 12px;
+        row-gap: 4px;
       }
 
-      h1 {
-        font-size: 40px;
-      }
+      .row-meta { text-align: right; }
 
-      .panel {
+      .modal-backdrop {
+        align-items: center;
         padding: 18px;
+      }
+
+      .modal-panel {
+        width: min(750px, 100%);
+        border-radius: 16px;
+        max-height: 90vh;
+        transform: translateY(20px);
+      }
+
+      .modal-backdrop.open .modal-panel {
+        transform: translateY(0);
+      }
+
+      .form-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .status-row {
+        grid-template-columns: minmax(0, 1fr) auto;
+      }
+
+      .details-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
       }
     }
   </style>
 </head>
-
 <body>
   <header class="topbar">
     <div class="topbar-inner">
-      <div>
-        <div class="brand">
-          MG <span>EXPRESS</span> DISPATCH
-        </div>
-
-        <div class="staff-email" id="staffEmail"></div>
-      </div>
+      <div class="brand">MG <span>EXPRESS</span> DISPATCH</div>
+      <div class="staff-email" id="staffEmail"></div>
     </div>
   </header>
 
   <main class="container">
-    <div class="page-heading">
+    <section class="heading">
       <div>
         <div class="eyebrow">Dispatch control center</div>
         <h1>Dashboard</h1>
       </div>
 
-      <button
-        class="primary-button"
-        id="newQuoteButton"
-        type="button"
-      >
-        + New Job
-      </button>
-    </div>
+      <div class="top-actions">
+        <button class="action-btn" id="openCreateQuoteBtn" type="button">Create Quote</button>
+        <button class="action-btn primary" id="openCreateJobBtn" type="button">Create Job</button>
+      </div>
+    </section>
 
-    <nav class="navigation">
-      <a
-        class="secondary-button"
-        href="/history.html"
-      >
-        Job History
-      </a>
-
-      <a
-        class="secondary-button"
-        href="/customer.html"
-      >
-        Customers
-      </a>
-
-      <a
-        class="secondary-button"
-        href="https://drivers.migenteexpress.com"
-        target="_blank"
-        rel="noopener"
-      >
-        Driver Portal
-      </a>
+    <nav class="nav-links">
+      <a href="/history.html">Job History</a>
+      <a href="/customer.html">Customers</a>
+      <a href="/invoices.html">Invoices</a>
+      <a href="/payroll.html">Payroll</a>
     </nav>
 
     <section class="stats">
-      <div class="stat-card">
-        <div class="stat-number" id="countNew">0</div>
-        <div class="stat-label">New</div>
-      </div>
-
-      <div class="stat-card">
-        <div class="stat-number" id="countWaiting">0</div>
-        <div class="stat-label">Waiting Payment</div>
-      </div>
-
-      <div class="stat-card">
-        <div class="stat-number" id="countReady">0</div>
-        <div class="stat-label">Paid / Ready</div>
-      </div>
-
-      <div class="stat-card">
-        <div class="stat-number" id="countTransit">0</div>
-        <div class="stat-label">In Transit</div>
-      </div>
-
-      <div class="stat-card">
-        <div class="stat-number" id="countDelivered">0</div>
-        <div class="stat-label">Delivered</div>
-      </div>
+      <div class="stat"><div class="stat-number" id="countQuotes">0</div><div class="stat-label">Open Quotes</div></div>
+      <div class="stat"><div class="stat-number" id="countReady">0</div><div class="stat-label">Paid / Ready</div></div>
+      <div class="stat"><div class="stat-number" id="countAssigned">0</div><div class="stat-label">Assigned</div></div>
+      <div class="stat"><div class="stat-number" id="countActive">0</div><div class="stat-label">Active Jobs</div></div>
+      <div class="stat"><div class="stat-number" id="countClosed">0</div><div class="stat-label">Closed Jobs</div></div>
     </section>
 
-    <section
-      id="quotePanel"
-      class="panel hidden"
-    >
-      <div class="panel-heading">
-        <h2>Create New Job</h2>
-
-        <button
-          class="secondary-button"
-          id="closeQuoteButton"
-          type="button"
-        >
-          Close
-        </button>
-      </div>
-
-      <form id="quoteForm" class="quote-form">
-        <label>
-          Customer Name
-
-          <input
-            name="customer_name"
-            type="text"
-            required
-          >
-        </label>
-
-        <label>
-          Customer Email
-
-          <input
-            name="customer_email"
-            type="email"
-          >
-        </label>
-
-        <label>
-          Assigned Driver
-
-          <select name="assigned_driver_id" id="newJobDriver">
-            <option value="">Unassigned</option>
-          </select>
-        </label>
-
-        <label class="full">
-          Pickup Address
-
-          <input
-            name="pickup_address"
-            type="text"
-            required
-          >
-        </label>
-
-        <label>
-          Pickup Suite / Floor
-
-          <input
-            name="pickup_suite_floor"
-            type="text"
-            placeholder="Suite 200"
-          >
-        </label>
-
-        <label>
-          Pickup ZIP Code
-
-          <input
-            name="pickup_zip"
-            type="text"
-            placeholder="80205"
-          >
-        </label>
-
-        <label class="full">
-          Delivery Address
-
-          <input
-            name="delivery_address"
-            type="text"
-            required
-          >
-        </label>
-
-        <label>
-          Delivery Suite / Floor
-
-          <input
-            name="delivery_suite_floor"
-            type="text"
-            placeholder="Floor 3"
-          >
-        </label>
-
-        <label>
-          Delivery ZIP Code
-
-          <input
-            name="delivery_zip"
-            type="text"
-            placeholder="80216"
-          >
-        </label>
-
-        <label class="full">
-          Delivery Recipient Name
-
-          <input
-            name="delivery_recipient_name"
-            type="text"
-            placeholder="Receiving Contact"
-          >
-        </label>
-
-        <label>
-          Vehicle Type
-
-          <select name="vehicle_type">
-            <option value="">Choose vehicle</option>
-            <option value="Car">Car</option>
-            <option value="SUV">SUV</option>
-            <option value="Cargo Van">Cargo Van</option>
-            <option value="Sprinter Van">Sprinter Van</option>
-            <option value="Box Truck">Box Truck</option>
-          </select>
-        </label>
-
-        <label>
-          Delivery Speed
-
-          <select name="delivery_speed">
-            <option value="">Choose speed</option>
-            <option value="2_hr">2 Hour</option>
-            <option value="3_hr">3 Hour</option>
-            <option value="4_hr">4 Hour</option>
-            <option value="5_hr">5 Hour</option>
-            <option value="6_hr">6 Hour</option>
-            <option value="next_day">Next Day</option>
-          </select>
-        </label>
-
-        <label>
-          Package Type
-
-          <input
-            name="package_type"
-            type="text"
-            placeholder="Documents, medical supplies, box..."
-          >
-        </label>
-
-        <label>
-          Customer Price
-
-          <input
-            name="approved_price"
-            type="number"
-            min="0"
-            step="0.01"
-            placeholder="0.00"
-          >
-        </label>
-
-        <label>
-          Driver Pay
-
-          <input
-            name="driver_pay"
-            type="number"
-            min="0"
-            step="0.01"
-            placeholder="0.00"
-          >
-        </label>
-
-        <label>
-          Status
-
-          <select name="status">
-            <option value="quote">Quote</option>
-            <option value="quoted">Quoted</option>
-            <option value="pending">Pending</option>
-            <option value="new">New</option>
-            <option value="waiting_payment">Waiting Payment</option>
-            <option value="paid">Paid / Ready</option>
-            <option value="in_transit">In Transit</option>
-            <option value="delivered">Delivered</option>
-            <option value="cancelled">Cancelled</option>
-          </select>
-        </label>
-
-        <label class="full">
-          Special Instructions
-
-          <textarea
-            name="special_instructions"
-            placeholder="Pickup details, gate code, contact information..."
-          ></textarea>
-        </label>
-
-        <div class="form-actions">
-          <button
-            class="secondary-button"
-            id="saveQuoteButton"
-            type="submit"
-            name="submit_action"
-            value="save_quote"
-          >
-            Save Quote / Pending
-          </button>
-
-          <button
-            class="primary-button"
-            id="approveSendButton"
-            type="submit"
-            name="submit_action"
-            value="approve_send"
-          >
-            Approve &amp; Send to Driver
-          </button>
-
-          <button
-            class="secondary-button"
-            id="cancelQuoteButton"
-            type="button"
-          >
-            Cancel
-          </button>
+    <section class="section">
+      <div class="section-head">
+        <div>
+          <h2 class="section-title">Quotes</h2>
+          <div class="section-sub">Compact quote rows</div>
         </div>
-      </form>
-
-      <div id="quoteMessage"></div>
+        <button class="refresh-btn" id="refreshQuotesBtn" type="button">Refresh</button>
+      </div>
+      <div class="rows" id="quotesRows"><div class="empty">Loading quotes...</div></div>
     </section>
 
-    <section class="panel">
-      <div class="jobs-heading">
-        <h2>Quotes &amp; Jobs</h2>
-
-        <button
-          class="secondary-button"
-          id="refreshButton"
-          type="button"
-        >
-          Refresh
-        </button>
+    <section class="section">
+      <div class="section-head">
+        <div>
+          <h2 class="section-title">Active Jobs</h2>
+          <div class="section-sub">Dispatch-active jobs only</div>
+        </div>
+        <button class="refresh-btn" id="refreshJobsBtn" type="button">Refresh</button>
       </div>
+      <div class="rows" id="jobsRows"><div class="empty">Loading jobs...</div></div>
+    </section>
 
-      <div id="jobsBox" class="jobs-list">
-        <div class="empty">Loading quotes and jobs…</div>
+    <section class="section">
+      <div class="section-head">
+        <div>
+          <h2 class="section-title">Closed Jobs</h2>
+          <div class="section-sub">Delivered, canceled, closed</div>
+        </div>
       </div>
+      <div class="rows" id="closedRows"><div class="empty">Loading closed jobs...</div></div>
     </section>
   </main>
+
+  <div class="modal-backdrop" id="quoteModal">
+    <section class="modal-panel" role="dialog" aria-modal="true" aria-labelledby="quoteModalTitle">
+      <div class="modal-head">
+        <h3 class="modal-title" id="quoteModalTitle">Create Quote</h3>
+        <button class="icon-btn" type="button" data-close-modal="quoteModal">×</button>
+      </div>
+      <div class="modal-body">
+        <form id="quoteForm" class="form-grid">
+          <input type="hidden" name="record_id" id="quoteRecordId">
+
+          <div class="field"><label>Customer Name</label><input name="customer_name" required></div>
+          <div class="field"><label>Customer Email</label><input name="customer_email" type="email"></div>
+          <div class="field"><label>Customer Phone</label><input name="customer_phone" type="tel"></div>
+          <div class="field"><label>Vehicle Type</label>
+            <select name="vehicle_type">
+              <option value="">Choose vehicle</option>
+              <option value="Car">Car</option>
+              <option value="SUV">SUV</option>
+              <option value="Cargo Van">Cargo Van</option>
+              <option value="Sprinter Van">Sprinter Van</option>
+              <option value="Box Truck">Box Truck</option>
+            </select>
+          </div>
+
+          <div class="field full"><label>Pickup Address</label><input name="pickup_address" required></div>
+          <div class="field"><label>Pickup Suite / Floor</label><input name="pickup_suite_floor"></div>
+          <div class="field"><label>Pickup ZIP Code</label><input name="pickup_zip"></div>
+
+          <div class="field full"><label>Delivery Address</label><input name="delivery_address" required></div>
+          <div class="field"><label>Delivery Suite / Floor</label><input name="delivery_suite_floor"></div>
+          <div class="field"><label>Delivery ZIP Code</label><input name="delivery_zip"></div>
+          <div class="field full"><label>Delivery Recipient Name</label><input name="delivery_recipient_name"></div>
+
+          <div class="field"><label>Package Information</label><input name="package_type"></div>
+          <div class="field"><label>Delivery Speed</label>
+            <select name="delivery_speed">
+              <option value="">Choose speed</option>
+              <option value="2_hr">2 Hour</option>
+              <option value="3_hr">3 Hour</option>
+              <option value="4_hr">4 Hour</option>
+              <option value="5_hr">5 Hour</option>
+              <option value="6_hr">6 Hour</option>
+              <option value="next_day">Next Day</option>
+            </select>
+          </div>
+
+          <div class="field"><label>Total Amount Billed</label><input name="approved_price" type="number" min="0" step="0.01" placeholder="0.00"></div>
+          <div class="field"><label>Status</label>
+            <select name="status">
+              <option value="quote">Quote</option>
+              <option value="quoted">Quoted</option>
+              <option value="pending">Pending</option>
+              <option value="new">New</option>
+            </select>
+          </div>
+
+          <div class="field full"><label>Internal Notes</label><textarea name="special_instructions"></textarea></div>
+
+          <div class="form-actions full">
+            <button class="btn" type="button" data-close-modal="quoteModal">Cancel</button>
+            <button class="btn primary" id="saveQuoteBtn" type="submit">Save Quote</button>
+          </div>
+        </form>
+      </div>
+    </section>
+  </div>
+
+  <div class="modal-backdrop" id="jobModal">
+    <section class="modal-panel" role="dialog" aria-modal="true" aria-labelledby="jobModalTitle">
+      <div class="modal-head">
+        <h3 class="modal-title" id="jobModalTitle">Create Job</h3>
+        <button class="icon-btn" type="button" data-close-modal="jobModal">×</button>
+      </div>
+      <div class="modal-body">
+        <form id="jobForm" class="form-grid">
+          <input type="hidden" name="record_id" id="jobRecordId">
+
+          <div class="field"><label>Customer Name</label><input name="customer_name" required></div>
+          <div class="field"><label>Customer Email</label><input name="customer_email" type="email"></div>
+          <div class="field"><label>Customer Phone</label><input name="customer_phone" type="tel"></div>
+          <div class="field"><label>Assigned Driver</label><select name="assigned_driver_id" id="jobDriverSelect"><option value="">Unassigned</option></select></div>
+
+          <div class="field full"><label>Pickup Address</label><input name="pickup_address" required></div>
+          <div class="field"><label>Pickup Suite / Floor</label><input name="pickup_suite_floor"></div>
+          <div class="field"><label>Pickup ZIP Code</label><input name="pickup_zip"></div>
+
+          <div class="field full"><label>Delivery Address</label><input name="delivery_address" required></div>
+          <div class="field"><label>Delivery Suite / Floor</label><input name="delivery_suite_floor"></div>
+          <div class="field"><label>Delivery ZIP Code</label><input name="delivery_zip"></div>
+          <div class="field full"><label>Delivery Recipient Name</label><input name="delivery_recipient_name"></div>
+
+          <div class="field"><label>Vehicle Type</label>
+            <select name="vehicle_type">
+              <option value="">Choose vehicle</option>
+              <option value="Car">Car</option>
+              <option value="SUV">SUV</option>
+              <option value="Cargo Van">Cargo Van</option>
+              <option value="Sprinter Van">Sprinter Van</option>
+              <option value="Box Truck">Box Truck</option>
+            </select>
+          </div>
+
+          <div class="field"><label>Delivery Speed</label>
+            <select name="delivery_speed">
+              <option value="">Choose speed</option>
+              <option value="2_hr">2 Hour</option>
+              <option value="3_hr">3 Hour</option>
+              <option value="4_hr">4 Hour</option>
+              <option value="5_hr">5 Hour</option>
+              <option value="6_hr">6 Hour</option>
+              <option value="next_day">Next Day</option>
+            </select>
+          </div>
+
+          <div class="field"><label>Package Information</label><input name="package_type"></div>
+          <div class="field"><label>Delivery Method</label>
+            <select name="delivery_method">
+              <option value="">Select</option>
+              <option value="Hand Delivery">Hand Delivery</option>
+              <option value="Leave at Door">Leave at Door</option>
+              <option value="Receiving Department">Receiving Department</option>
+            </select>
+          </div>
+
+          <div class="field"><label>Total Amount Billed</label><input name="approved_price" type="number" min="0" step="0.01" placeholder="0.00"></div>
+          <div class="field"><label>Driver Pay</label><input name="driver_pay" type="number" min="0" step="0.01" placeholder="0.00"></div>
+
+          <div class="field"><label>Dispatch Status</label>
+            <select name="status" id="jobCreateStatus">
+              <option value="waiting_payment">NEW JOB / WAITING PAYMENT</option>
+              <option value="ready">PAID / READY</option>
+              <option value="assigned">ASSIGNED TO DRIVER</option>
+              <option value="cancelled">CANCELED / REASSIGNED</option>
+            </select>
+          </div>
+
+          <div class="field"><label>Invoice Delivery Preference</label>
+            <select name="invoice_delivery_method">
+              <option value="none">Do Not Send Yet</option>
+              <option value="email">Email</option>
+              <option value="text">Text Message</option>
+              <option value="both">Email and Text</option>
+            </select>
+          </div>
+
+          <div class="field"><label>Invoice Due Date</label><input name="invoice_due_date" type="date"></div>
+          <div class="field full"><label>Billing Notes</label><textarea name="billing_notes"></textarea></div>
+          <div class="field full"><label>Internal Notes</label><textarea name="special_instructions"></textarea></div>
+
+          <div class="hint">Job number is generated automatically when a new job is created.</div>
+
+          <div class="form-actions full">
+            <button class="btn" type="button" data-close-modal="jobModal">Cancel</button>
+            <button class="btn" id="savePendingBtn" type="submit" name="submit_action" value="save_pending">Save Pending</button>
+            <button class="btn primary" id="approveSendBtn" type="submit" name="submit_action" value="approve_send">Approve &amp; Send to Driver</button>
+          </div>
+        </form>
+      </div>
+    </section>
+  </div>
+
+  <div class="modal-backdrop" id="quoteDetailsModal">
+    <section class="modal-panel" role="dialog" aria-modal="true" aria-labelledby="quoteDetailsTitle">
+      <div class="modal-head">
+        <h3 class="modal-title" id="quoteDetailsTitle">Quote Details</h3>
+        <button class="icon-btn" type="button" data-close-modal="quoteDetailsModal">×</button>
+      </div>
+      <div class="modal-body" id="quoteDetailsBody"></div>
+    </section>
+  </div>
+
+  <div class="modal-backdrop" id="jobDetailsModal">
+    <section class="modal-panel" role="dialog" aria-modal="true" aria-labelledby="jobDetailsTitle">
+      <div class="modal-head">
+        <h3 class="modal-title" id="jobDetailsTitle">Job Details</h3>
+        <button class="icon-btn" type="button" data-close-modal="jobDetailsModal">×</button>
+      </div>
+      <div class="modal-body" id="jobDetailsBody"></div>
+    </section>
+  </div>
+
+  <div class="modal-backdrop" id="assignModal">
+    <section class="modal-panel" role="dialog" aria-modal="true" aria-labelledby="assignTitle">
+      <div class="modal-head">
+        <h3 class="modal-title" id="assignTitle">Assign / Reassign Driver</h3>
+        <button class="icon-btn" type="button" data-close-modal="assignModal">×</button>
+      </div>
+      <div class="modal-body">
+        <form id="assignForm" class="form-grid">
+          <input type="hidden" id="assignJobId">
+          <div class="field"><label>Driver</label><select id="assignDriverSelect" required><option value="">Select driver</option></select></div>
+          <div class="field"><label>Driver Pay</label><input id="assignDriverPay" type="number" min="0" step="0.01" placeholder="0.00"></div>
+          <div class="field full"><label>Assignment Note (optional)</label><textarea id="assignNote" placeholder="Internal note only"></textarea></div>
+          <div class="hint" id="assignNoteHint">Assignment notes are not persisted because no assignment-note column was found in current dashboard logic.</div>
+          <div class="form-actions full">
+            <button class="btn" type="button" data-close-modal="assignModal">Cancel</button>
+            <button class="btn primary" id="assignSubmitBtn" type="submit">Send to Driver</button>
+          </div>
+        </form>
+      </div>
+    </section>
+  </div>
+
+  <div class="toast-wrap" id="toastWrap"></div>
 
   <script>
     const client = supabase.createClient(
       "https://dczlucwfjayymlwbzzdi.supabase.co",
       "sb_publishable_kcv_a78ZyUxMo2neKUANdw_XN7eAMpI"
     );
-    
+
     window.mgDispatchClient = client;
 
-    const jobsBox =
-      document.getElementById("jobsBox");
+    const state = {
+      drivers: [],
+      rows: [],
+      selectedQuote: null,
+      selectedJob: null
+    };
 
-    const quotePanel =
-      document.getElementById("quotePanel");
-
-    const quoteForm =
-      document.getElementById("quoteForm");
-
-    const quoteMessage =
-      document.getElementById("quoteMessage");
-
-    const saveQuoteButton =
-      document.getElementById("saveQuoteButton");
-
-    let drivers = [];
-    let quotes = [];
+    const elements = {
+      staffEmail: document.getElementById("staffEmail"),
+      quotesRows: document.getElementById("quotesRows"),
+      jobsRows: document.getElementById("jobsRows"),
+      closedRows: document.getElementById("closedRows"),
+      countQuotes: document.getElementById("countQuotes"),
+      countReady: document.getElementById("countReady"),
+      countAssigned: document.getElementById("countAssigned"),
+      countActive: document.getElementById("countActive"),
+      countClosed: document.getElementById("countClosed"),
+      quoteModal: document.getElementById("quoteModal"),
+      jobModal: document.getElementById("jobModal"),
+      quoteForm: document.getElementById("quoteForm"),
+      jobForm: document.getElementById("jobForm"),
+      quoteDetailsModal: document.getElementById("quoteDetailsModal"),
+      quoteDetailsBody: document.getElementById("quoteDetailsBody"),
+      jobDetailsModal: document.getElementById("jobDetailsModal"),
+      jobDetailsBody: document.getElementById("jobDetailsBody"),
+      assignModal: document.getElementById("assignModal"),
+      assignForm: document.getElementById("assignForm"),
+      assignJobId: document.getElementById("assignJobId"),
+      assignDriverSelect: document.getElementById("assignDriverSelect"),
+      assignDriverPay: document.getElementById("assignDriverPay"),
+      assignSubmitBtn: document.getElementById("assignSubmitBtn"),
+      toastWrap: document.getElementById("toastWrap")
+    };
 
     function escapeHtml(value) {
-      const element = document.createElement("div");
-      element.textContent = value ?? "";
-      return element.innerHTML;
+      const div = document.createElement("div");
+      div.textContent = value ?? "";
+      return div.innerHTML;
+    }
+
+    function clean(value) {
+      return String(value || "").trim().toLowerCase();
     }
 
     function money(value) {
-      return Number(value || 0).toLocaleString(
-        "en-US",
-        {
-          style: "currency",
-          currency: "USD"
-        }
-      );
+      if (value === null || value === undefined || value === "") {
+        return "-";
+      }
+
+      const number = Number(value);
+
+      if (!Number.isFinite(number)) {
+        return "-";
+      }
+
+      return number.toLocaleString("en-US", { style: "currency", currency: "USD" });
     }
 
-    function statusLabel(status) {
-      const labels = {
-        new: "New",
-        pending: "Pending",
-        quote: "Quote",
-        quoted: "Quoted",
-        waiting_payment: "Waiting Payment",
-        paid: "Paid / Ready",
-        ready: "Paid / Ready",
-        in_transit: "In Transit",
-        delivered: "Delivered",
-        cancelled: "Cancelled"
-      };
+    function formatDate(value) {
+      if (!value) {
+        return "-";
+      }
 
-      return labels[status] ||
-        String(status || "").replaceAll("_", " ");
+      const date = new Date(value);
+
+      if (Number.isNaN(date.getTime())) {
+        return "-";
+      }
+
+      return new Intl.DateTimeFormat("en-US", {
+        month: "short",
+        day: "numeric",
+        year: "numeric"
+      }).format(date);
+    }
+
+    function parseCity(address) {
+      const text = String(address || "").trim();
+
+      if (!text) {
+        return "Unknown";
+      }
+
+      const parts = text.split(",").map(part => part.trim()).filter(Boolean);
+
+      if (parts.length >= 2) {
+        return parts[parts.length - 2];
+      }
+
+      return parts[0] || "Unknown";
+    }
+
+    function routeCity(job) {
+      return parseCity(job.pickup_address) + " -> " + parseCity(job.delivery_address);
     }
 
     function deliverySpeedLabel(value) {
-      const labels = {
+      const map = {
         "2_hr": "2 Hour",
         "3_hr": "3 Hour",
         "4_hr": "4 Hour",
@@ -851,52 +996,177 @@
         next_day: "Next Day"
       };
 
-      return labels[value] ||
-        String(value || "Not set");
+      return map[value] || String(value || "Not set");
     }
 
-    function cleanStatus(value) {
-      return String(value || "")
-        .trim()
-        .toLowerCase();
+    function statusLabel(status) {
+      const value = clean(status);
+
+      if (["new", "pending", "waiting_payment", "quote", "quoted"].includes(value)) {
+        return "NEW JOB / WAITING PAYMENT";
+      }
+
+      if (["paid", "ready"].includes(value)) {
+        return "PAID / READY";
+      }
+
+      if (value === "assigned") {
+        return "ASSIGNED TO DRIVER";
+      }
+
+      if (["cancelled", "canceled", "reassigned"].includes(value)) {
+        return "CANCELED / REASSIGNED";
+      }
+
+      return String(status || "UNKNOWN").replaceAll("_", " ").toUpperCase();
     }
 
-    function canDeleteQuote(quote) {
-      return [
-        "quote",
-        "quoted",
-        "pending",
-        "new"
-      ].includes(cleanStatus(quote?.status));
+    function badgeClass(status) {
+      const value = clean(status);
+
+      if (["new", "pending", "waiting_payment", "quote", "quoted"].includes(value)) {
+        return "badge badge-new";
+      }
+
+      if (["paid", "ready"].includes(value)) {
+        return "badge badge-ready";
+      }
+
+      if (value === "assigned") {
+        return "badge badge-assigned";
+      }
+
+      return "badge badge-cancel";
     }
 
-    function openQuotePanel() {
-      quotePanel.classList.remove("hidden");
-      quotePanel.scrollIntoView({
-        behavior: "smooth",
-        block: "start"
+    function isQuote(job) {
+      return ["quote", "quoted", "pending"].includes(clean(job.status));
+    }
+
+    function isClosed(job) {
+      return ["delivered", "cancelled", "canceled", "closed"].includes(clean(job.status));
+    }
+
+    function isActiveJob(job) {
+      return !isQuote(job) && !isClosed(job);
+    }
+
+    function driverNameById(driverId) {
+      const id = String(driverId || "");
+      const driver = state.drivers.find(item => String(item.id) === id);
+      if (!driver) {
+        return "Unassigned";
+      }
+
+      return driver.full_name || driver.email || "Driver";
+    }
+
+    function showToast(message, type = "info") {
+      const toast = document.createElement("div");
+      toast.className = "toast " + type;
+      toast.textContent = message;
+      elements.toastWrap.appendChild(toast);
+      setTimeout(() => {
+        toast.remove();
+      }, 2800);
+    }
+
+    function setButtonLoading(button, isLoading, loadingText, idleText) {
+      if (!button) {
+        return;
+      }
+
+      button.disabled = Boolean(isLoading);
+      button.textContent = isLoading ? loadingText : idleText;
+    }
+
+    function openModal(id) {
+      const modal = document.getElementById(id);
+      if (!modal) {
+        return;
+      }
+      modal.classList.add("open");
+      document.body.style.overflow = "hidden";
+    }
+
+    function closeModal(id) {
+      const modal = document.getElementById(id);
+      if (!modal) {
+        return;
+      }
+      modal.classList.remove("open");
+      if (![...document.querySelectorAll(".modal-backdrop.open")].length) {
+        document.body.style.overflow = "";
+      }
+    }
+
+    function closeAllMenus() {
+      document.querySelectorAll(".row-menu.open").forEach(menu => {
+        menu.classList.remove("open");
       });
     }
 
-    function closeQuotePanel() {
-      quotePanel.classList.add("hidden");
-      quoteForm.reset();
-      quoteMessage.className = "";
-      quoteMessage.textContent = "";
+    function toggleMenu(button) {
+      const menu = button.closest(".row-menu");
+      if (!menu) {
+        return;
+      }
+
+      const willOpen = !menu.classList.contains("open");
+      closeAllMenus();
+      if (willOpen) {
+        menu.classList.add("open");
+      }
     }
 
-    function setQuoteMessage(text, type) {
-      quoteMessage.className = "message " + type;
-      quoteMessage.textContent = text;
+    async function requireDispatchAccess() {
+      const sessionResult = await client.auth.getSession();
+      const session = sessionResult.data.session;
+
+      if (!session) {
+        location.replace("/index.html");
+        return null;
+      }
+
+      elements.staffEmail.textContent = session.user.email || "";
+
+      const profileResult = await client
+        .from("profiles")
+        .select("role")
+        .eq("id", session.user.id)
+        .maybeSingle();
+
+      if (profileResult.error || !profileResult.data) {
+        throw new Error(profileResult.error?.message || "No MG Express profile was found.");
+      }
+
+      const role = clean(profileResult.data.role);
+      if (!["admin", "staff", "dispatcher"].includes(role)) {
+        if (role === "driver") {
+          location.replace("/driver.html");
+          return null;
+        }
+
+        if (role === "customer") {
+          location.replace("/customer.html");
+          return null;
+        }
+
+        throw new Error("This account does not have dispatch access.");
+      }
+
+      window.dispatchEvent(new CustomEvent("mg-dispatch-ready", {
+        detail: { email: session.user.email }
+      }));
+
+      return session;
     }
 
     async function generateJobNumber() {
       const result = await client
         .from("quotes")
         .select("job_number")
-        .order("created_at", {
-          ascending: false
-        })
+        .order("created_at", { ascending: false })
         .limit(250);
 
       if (result.error) {
@@ -906,379 +1176,19 @@
       let maxNumber = 0;
 
       (result.data || []).forEach(row => {
-        const value = String(row.job_number || "").trim();
-        const match = value.match(/(\d+)$/);
-
+        const text = String(row.job_number || "").trim();
+        const match = text.match(/(\d+)$/);
         if (!match) {
           return;
         }
 
         const numeric = Number(match[1]);
-
         if (Number.isFinite(numeric) && numeric > maxNumber) {
           maxNumber = numeric;
         }
       });
 
-      const nextNumber = maxNumber + 1;
-      return "MGE-" + String(nextNumber).padStart(5, "0");
-    }
-
-    function populateNewJobDrivers() {
-      const select =
-        document.getElementById("newJobDriver");
-
-      select.innerHTML =
-        '<option value="">Unassigned</option>' +
-        drivers.map(driver => `
-          <option value="${escapeHtml(driver.id)}">
-            ${escapeHtml(
-              driver.full_name ||
-              driver.email ||
-              "Driver"
-            )}
-          </option>
-        `).join("");
-    }
-
-    function updateCounts() {
-      const count = status =>
-        quotes.filter(
-          quote => quote.status === status
-        ).length;
-
-      document.getElementById("countNew").textContent =
-        count("new");
-
-      document.getElementById("countWaiting").textContent =
-        count("waiting_payment");
-
-      document.getElementById("countReady").textContent =
-        count("paid") + count("ready");
-
-      document.getElementById("countTransit").textContent =
-        count("in_transit");
-
-      document.getElementById("countDelivered").textContent =
-        count("delivered");
-    }
-
-    function driverOptions(quote) {
-      const unassignedSelected =
-        quote.assigned_driver_id ? "" : "selected";
-
-      return `
-        <option value="" ${unassignedSelected}>
-          Unassigned
-        </option>
-
-        ${drivers.map(driver => {
-          const selected =
-            driver.id === quote.assigned_driver_id
-              ? "selected"
-              : "";
-
-          return `
-            <option
-              value="${escapeHtml(driver.id)}"
-              ${selected}
-            >
-              ${escapeHtml(
-                driver.full_name ||
-                driver.email ||
-                "Driver"
-              )}
-            </option>
-          `;
-        }).join("")}
-      `;
-    }
-
-    function statusOptions(quote) {
-      const statuses = [
-        "new",
-        "waiting_payment",
-        "paid",
-        "in_transit",
-        "delivered",
-        "cancelled"
-      ];
-
-      return statuses.map(status => `
-        <option
-          value="${status}"
-          ${status === quote.status ? "selected" : ""}
-        >
-          ${escapeHtml(statusLabel(status))}
-        </option>
-      `).join("");
-    }
-
-    function photoLink(url, label) {
-      if (!url) {
-        return `
-          <div class="photo-link disabled">
-            ${escapeHtml(label)} Not Available
-          </div>
-        `;
-      }
-
-      return `
-        <a
-          class="photo-link"
-          href="${escapeHtml(url)}"
-          target="_blank"
-          rel="noopener"
-        >
-          ${escapeHtml(label)}
-        </a>
-      `;
-    }
-
-    function renderJobs() {
-      updateCounts();
-
-      if (!quotes.length) {
-        jobsBox.innerHTML =
-          '<div class="empty">No quotes or jobs found.</div>';
-
-        return;
-      }
-
-      jobsBox.innerHTML = quotes.map(quote => `
-        <article class="job-card">
-          <div class="job-top">
-            <div>
-              <div class="job-number">
-                ${escapeHtml(quote.job_number)}
-              </div>
-
-              <div class="customer">
-                ${escapeHtml(
-                  quote.customer_name || "Customer"
-                )}
-              </div>
-
-              <div class="customer-email">
-                ${escapeHtml(quote.customer_email || "")}
-              </div>
-            </div>
-
-            <div class="status-pill">
-              ${escapeHtml(statusLabel(quote.status))}
-            </div>
-          </div>
-
-          <div class="route">
-            <strong>Pickup:</strong><br>
-            ${escapeHtml(quote.pickup_address || "")}
-
-            <div class="route-arrow">↓</div>
-
-            <strong>Delivery:</strong><br>
-            ${escapeHtml(quote.delivery_address || "")}
-          </div>
-
-          <div class="job-details">
-            <div class="detail-box">
-              <div class="detail-label">Vehicle</div>
-              <div class="detail-value">
-                ${escapeHtml(quote.vehicle_type || "Not set")}
-              </div>
-            </div>
-
-            <div class="detail-box">
-              <div class="detail-label">Delivery Speed</div>
-              <div class="detail-value">
-                ${escapeHtml(deliverySpeedLabel(quote.delivery_speed))}
-              </div>
-            </div>
-
-            <div class="detail-box">
-              <div class="detail-label">Package</div>
-              <div class="detail-value">
-                ${escapeHtml(quote.package_type || "Not set")}
-              </div>
-            </div>
-          </div>
-
-          ${
-            quote.special_instructions
-              ? `
-                <div class="instructions">
-                  <strong>Instructions:</strong><br>
-                  ${escapeHtml(quote.special_instructions)}
-                </div>
-              `
-              : ""
-          }
-
-          <div class="job-controls">
-            <label>
-              Assigned Driver
-
-              <select id="driver-${quote.id}">
-                ${driverOptions(quote)}
-              </select>
-            </label>
-
-            <label>
-              Customer Price
-
-              <input
-                id="customerCharge-${quote.id}"
-                type="number"
-                min="0"
-                step="0.01"
-                placeholder="0.00"
-                value="${
-                  quote.approved_price === null ||
-                  quote.approved_price === undefined ||
-                  quote.approved_price === ""
-                    ? ""
-                    : escapeHtml(Number(quote.approved_price).toFixed(2))
-                }"
-              >
-            </label>
-
-            <label>
-              Driver Pay
-
-              <input
-                id="driverPay-${quote.id}"
-                type="number"
-                min="0"
-                step="0.01"
-                placeholder="0.00"
-                value="${
-                  quote.driver_pay === null ||
-                  quote.driver_pay === undefined ||
-                  quote.driver_pay === ""
-                    ? ""
-                    : escapeHtml(Number(quote.driver_pay).toFixed(2))
-                }"
-              >
-            </label>
-
-            <label>
-              Status
-
-              <select id="status-${quote.id}">
-                ${statusOptions(quote)}
-              </select>
-            </label>
-
-            <button
-              class="save-job"
-              type="button"
-              onclick="saveJob('${quote.id}')"
-            >
-              Save Changes
-            </button>
-
-            ${
-              canDeleteQuote(quote)
-                ? `
-                  <button
-                    class="secondary-button"
-                    type="button"
-                    onclick="deleteQuote('${quote.id}')"
-                  >
-                    Delete
-                  </button>
-                `
-                : ""
-            }
-
-            ${photoLink(
-              quote.pickup_photo_url,
-              "View Pickup Photo"
-            )}
-
-            ${photoLink(
-              quote.delivery_photo_url,
-              "View Delivery Photo"
-            )}
-          </div>
-
-          <div id="jobMessage-${quote.id}"></div>
-        </article>
-      `).join("");
-    }
-
-    function showJobMessage(quoteId, text, type) {
-      const box =
-        document.getElementById(
-          "jobMessage-" + quoteId
-        );
-
-      if (!box) return;
-
-      box.className = "message " + type;
-      box.textContent = text;
-    }
-
-    async function requireDispatchAccess() {
-      const sessionResult =
-        await client.auth.getSession();
-
-      const session =
-        sessionResult.data.session;
-
-      if (!session) {
-        location.replace("/index.html");
-        return null;
-      }
-
-      document.getElementById("staffEmail").textContent =
-        session.user.email || "";
-
-      const profileResult = await client
-        .from("profiles")
-        .select("role")
-        .eq("id", session.user.id)
-        .maybeSingle();
-
-      if (
-        profileResult.error ||
-        !profileResult.data
-      ) {
-        alert(
-          profileResult.error?.message ||
-          "No MG Express profile was found."
-        );
-
-        await client.auth.signOut();
-        location.replace("/index.html");
-        return null;
-      }
-
-      const role = String(
-        profileResult.data.role || ""
-      ).toLowerCase();
-
-      if (
-        !["admin", "staff", "dispatcher"].includes(role)
-      ) {
-        if (role === "driver") {
-          location.replace(
-            "https://drivers.migenteexpress.com"
-          );
-
-          return null;
-        }
-
-        if (role === "customer") {
-          location.replace("/customer.html");
-          return null;
-        }
-
-        await client.auth.signOut();
-        location.replace("/index.html");
-        return null;
-      }
-
-      return session;
+      return "MGE-" + String(maxNumber + 1).padStart(5, "0");
     }
 
     async function loadDrivers() {
@@ -1286,519 +1196,994 @@
         .from("drivers")
         .select("id,full_name,email,active")
         .eq("active", true)
-        .order("full_name", {
-          ascending: true
-        });
+        .order("full_name", { ascending: true });
 
       if (result.error) {
         throw result.error;
       }
 
-      drivers = result.data || [];
-      populateNewJobDrivers();
+      state.drivers = result.data || [];
+      populateDriverSelects();
     }
 
-    async function loadQuotes() {
+    function populateDriverSelects() {
+      const options = ['<option value="">Unassigned</option>']
+        .concat(state.drivers.map(driver => {
+          const label = escapeHtml(driver.full_name || driver.email || "Driver");
+          return `<option value="${escapeHtml(String(driver.id))}">${label}</option>`;
+        })).join("");
+
+      document.getElementById("jobDriverSelect").innerHTML = options;
+      document.getElementById("assignDriverSelect").innerHTML = '<option value="">Select driver</option>' + options.replace('<option value="">Unassigned</option>', '');
+    }
+
+    async function loadRows() {
       const result = await client
         .from("quotes")
-        .select(`
-          id,
-          job_number,
-          customer_name,
-          customer_email,
-          pickup_address,
-          pickup_suite_floor,
-          pickup_zip,
-          delivery_address,
-          delivery_suite_floor,
-          delivery_zip,
-          delivery_recipient_name,
-          vehicle_type,
-          delivery_speed,
-          package_type,
-          status,
-          special_instructions,
-          assigned_driver_id,
-            approved_price,
-          driver_pay,
-          pickup_photo_url,
-          delivery_photo_url,
-          created_at
-        `)
-        .order("created_at", {
-          ascending: false
-        });
+        .select("*")
+        .order("created_at", { ascending: false });
 
       if (result.error) {
         throw result.error;
       }
 
-      quotes = result.data || [];
-      renderJobs();
+      state.rows = result.data || [];
+      renderDashboard();
     }
 
     async function loadDashboard() {
-      jobsBox.innerHTML =
-        '<div class="empty">Loading quotes and jobs…</div>';
+      elements.quotesRows.innerHTML = '<div class="empty">Loading quotes...</div>';
+      elements.jobsRows.innerHTML = '<div class="empty">Loading jobs...</div>';
+      elements.closedRows.innerHTML = '<div class="empty">Loading closed jobs...</div>';
 
       try {
         await loadDrivers();
-        await loadQuotes();
+        await loadRows();
       } catch (error) {
-        jobsBox.innerHTML = `
-          <div class="message error">
-            ${escapeHtml(error.message)}
-          </div>
-        `;
+        const message = escapeHtml(error.message || "Unable to load dashboard.");
+        elements.quotesRows.innerHTML = `<div class="empty">${message}</div>`;
+        elements.jobsRows.innerHTML = `<div class="empty">${message}</div>`;
+        elements.closedRows.innerHTML = `<div class="empty">${message}</div>`;
+        showToast(error.message || "Unable to load dashboard", "error");
       }
     }
 
-    async function saveJob(quoteId) {
-      const driverId =
-        document.getElementById(
-          "driver-" + quoteId
-        ).value || null;
+    function updateStats() {
+      const quoteRows = state.rows.filter(isQuote);
+      const activeRows = state.rows.filter(isActiveJob);
+      const closedRows = state.rows.filter(isClosed);
 
-      const status =
-        document.getElementById(
-          "status-" + quoteId
-        ).value;
-
-      const driverPayValue =
-        document.getElementById(
-          "driverPay-" + quoteId
-        ).value;
-
-      const customerChargeValue =
-        document.getElementById(
-          "customerCharge-" + quoteId
-        ).value;
-
-      const driverPay =
-        driverPayValue === ""
-          ? null
-          : Number(driverPayValue);
-
-      const customerCharge =
-        customerChargeValue === ""
-          ? null
-          : Number(customerChargeValue);
-
-      if (
-        driverPay !== null &&
-        (
-          !Number.isFinite(driverPay) ||
-          driverPay < 0
-        )
-      ) {
-        showJobMessage(
-          quoteId,
-          "Enter a valid driver pay amount.",
-          "error"
-        );
-
-        return;
-      }
-
-      if (
-        customerCharge !== null &&
-        (
-          !Number.isFinite(customerCharge) ||
-          customerCharge < 0
-        )
-      ) {
-        showJobMessage(
-          quoteId,
-          "Enter a valid customer price amount.",
-          "error"
-        );
-
-        return;
-      }
-
-      showJobMessage(
-        quoteId,
-        "Saving changes…",
-        "info"
-      );
-
-      const result = await client
-        .from("quotes")
-        .update({
-          assigned_driver_id: driverId,
-          approved_price: customerCharge,
-          driver_pay: driverPay,
-          status: status
-        })
-        .eq("id", quoteId);
-
-      if (result.error) {
-        showJobMessage(
-          quoteId,
-          result.error.message,
-          "error"
-        );
-
-        return;
-      }
-
-      await loadQuotes();
+      elements.countQuotes.textContent = String(quoteRows.length);
+      elements.countReady.textContent = String(state.rows.filter(item => ["paid", "ready"].includes(clean(item.status))).length);
+      elements.countAssigned.textContent = String(state.rows.filter(item => clean(item.status) === "assigned").length);
+      elements.countActive.textContent = String(activeRows.length);
+      elements.countClosed.textContent = String(closedRows.length);
     }
 
-    window.saveJob = saveJob;
+    function renderQuoteRows() {
+      const rows = state.rows.filter(isQuote);
+      if (!rows.length) {
+        elements.quotesRows.innerHTML = '<div class="empty">No quote rows found.</div>';
+        return;
+      }
 
-    async function deleteQuote(quoteId) {
-      const quote = quotes.find(item =>
-        String(item.id) === String(quoteId)
-      );
+      elements.quotesRows.innerHTML = rows.map(row => `
+        <div class="row" data-open-quote="${escapeHtml(String(row.id))}" tabindex="0" role="button">
+          <span class="row-main">
+            <span class="row-topline">
+              <span class="row-id">${escapeHtml(row.job_number || "Quote")}</span>
+              <span class="badge ${escapeHtml(badgeClass(row.status))}">${escapeHtml(statusLabel(row.status))}</span>
+            </span>
+            <span class="row-customer">${escapeHtml(row.customer_name || "Customer")}</span>
+            <span class="row-meta">${escapeHtml(routeCity(row))}</span>
+            <span class="row-meta">${escapeHtml(money(row.approved_price ?? row.customer_charge))} • ${escapeHtml(formatDate(row.created_at))}</span>
+          </span>
+          <span class="row-chevron">›</span>
+        </div>
+      `).join("");
+    }
 
+    function renderJobRows() {
+      const rows = state.rows.filter(isActiveJob);
+      if (!rows.length) {
+        elements.jobsRows.innerHTML = '<div class="empty">No active jobs found.</div>';
+        return;
+      }
+
+      elements.jobsRows.innerHTML = rows.map(row => `
+        <div class="row" data-open-job="${escapeHtml(String(row.id))}" tabindex="0" role="button">
+          <span class="row-main">
+            <span class="row-topline">
+              <span class="row-id">${escapeHtml(row.job_number || "Job")}</span>
+              <span class="badge ${escapeHtml(badgeClass(row.status))}">${escapeHtml(statusLabel(row.status))}</span>
+            </span>
+            <span class="row-customer">${escapeHtml(row.customer_name || "Customer")}</span>
+            <span class="row-meta">${escapeHtml(routeCity(row))}</span>
+            <span class="row-meta">${escapeHtml(driverNameById(row.assigned_driver_id))} • ${escapeHtml(deliverySpeedLabel(row.delivery_speed))} • ${escapeHtml(money(row.approved_price ?? row.customer_charge))}</span>
+          </span>
+          <span class="row-menu">
+            <button class="menu-trigger" type="button" data-menu-toggle>⋯</button>
+            <span class="menu-list">
+              <button class="menu-item" type="button" data-open-job="${escapeHtml(String(row.id))}">View Details</button>
+              <button class="menu-item" type="button" data-open-edit-job="${escapeHtml(String(row.id))}">Edit Job</button>
+              <button class="menu-item" type="button" data-view-bol="${escapeHtml(String(row.id))}">View / Create BOL</button>
+            </span>
+          </span>
+          <span class="row-chevron">›</span>
+        </div>
+      `).join("");
+    }
+
+    function renderClosedRows() {
+      const rows = state.rows.filter(isClosed);
+      if (!rows.length) {
+        elements.closedRows.innerHTML = '<div class="empty">No closed jobs found.</div>';
+        return;
+      }
+
+      elements.closedRows.innerHTML = rows.map(row => `
+        <div class="row" data-open-job="${escapeHtml(String(row.id))}" data-readonly="true" tabindex="0" role="button">
+          <span class="row-main">
+            <span class="row-topline">
+              <span class="row-id">${escapeHtml(row.job_number || "Job")}</span>
+              <span class="badge ${escapeHtml(badgeClass(row.status))}">${escapeHtml(statusLabel(row.status))}</span>
+            </span>
+            <span class="row-customer">${escapeHtml(row.customer_name || "Customer")}</span>
+            <span class="row-meta">${escapeHtml(routeCity(row))}</span>
+            <span class="row-meta">${escapeHtml(driverNameById(row.assigned_driver_id))} • Completed ${escapeHtml(formatDate(row.completed_at || row.updated_at || row.created_at))} • BOL ${escapeHtml(String(row.bol_status || "Unknown"))}</span>
+          </span>
+          <span class="row-chevron">›</span>
+        </div>
+      `).join("");
+    }
+
+    function renderDashboard() {
+      updateStats();
+      renderQuoteRows();
+      renderJobRows();
+      renderClosedRows();
+    }
+
+    function getRowById(id) {
+      return state.rows.find(item => String(item.id) === String(id)) || null;
+    }
+
+    function formToPayload(form, options = {}) {
+      const data = new FormData(form);
+
+      const priceRaw = String(data.get("approved_price") || "").trim();
+      const payRaw = String(data.get("driver_pay") || "").trim();
+
+      const payload = {
+        customer_name: String(data.get("customer_name") || "").trim(),
+        customer_email: String(data.get("customer_email") || "").trim(),
+        customer_phone: String(data.get("customer_phone") || "").trim(),
+        pickup_address: String(data.get("pickup_address") || "").trim(),
+        pickup_suite_floor: String(data.get("pickup_suite_floor") || "").trim() || null,
+        pickup_zip: String(data.get("pickup_zip") || "").trim() || null,
+        delivery_address: String(data.get("delivery_address") || "").trim(),
+        delivery_suite_floor: String(data.get("delivery_suite_floor") || "").trim() || null,
+        delivery_zip: String(data.get("delivery_zip") || "").trim() || null,
+        delivery_recipient_name: String(data.get("delivery_recipient_name") || "").trim() || null,
+        vehicle_type: String(data.get("vehicle_type") || "").trim(),
+        delivery_speed: String(data.get("delivery_speed") || "").trim(),
+        package_type: String(data.get("package_type") || "").trim(),
+        delivery_method: String(data.get("delivery_method") || "").trim(),
+        special_instructions: String(data.get("special_instructions") || "").trim(),
+        approved_price: priceRaw === "" ? null : Number(priceRaw),
+        driver_pay: payRaw === "" ? null : Number(payRaw),
+        assigned_driver_id: String(data.get("assigned_driver_id") || "").trim() || null,
+        invoice_delivery_method: String(data.get("invoice_delivery_method") || "none").trim(),
+        invoice_due_date: data.get("invoice_due_date") || null,
+        billing_notes: String(data.get("billing_notes") || "").trim()
+      };
+
+      if (options.includeStatus) {
+        payload.status = String(data.get("status") || "new").trim();
+      }
+
+      return payload;
+    }
+
+    function validatePayload(payload) {
+      if (!payload.customer_name) {
+        return "Customer name is required.";
+      }
+
+      if (!payload.pickup_address || !payload.delivery_address) {
+        return "Pickup and delivery addresses are required.";
+      }
+
+      if (payload.approved_price !== null && (!Number.isFinite(payload.approved_price) || payload.approved_price < 0)) {
+        return "Total amount billed must be a valid number.";
+      }
+
+      if (payload.driver_pay !== null && (!Number.isFinite(payload.driver_pay) || payload.driver_pay < 0)) {
+        return "Driver pay must be a valid number.";
+      }
+
+      return "";
+    }
+
+    function openCreateQuoteModal() {
+      elements.quoteForm.reset();
+      document.getElementById("quoteRecordId").value = "";
+      document.getElementById("quoteModalTitle").textContent = "Create Quote";
+      openModal("quoteModal");
+    }
+
+    function openCreateJobModal() {
+      elements.jobForm.reset();
+      document.getElementById("jobRecordId").value = "";
+      document.getElementById("jobModalTitle").textContent = "Create Job";
+      openModal("jobModal");
+    }
+
+    function openQuoteDetails(quoteId) {
+      const quote = getRowById(quoteId);
       if (!quote) {
         return;
       }
 
-      if (!canDeleteQuote(quote)) {
-        showJobMessage(
-          quoteId,
-          "Only quote, quoted, pending, or new jobs can be deleted.",
-          "error"
-        );
+      state.selectedQuote = quote;
 
+      elements.quoteDetailsBody.innerHTML = `
+        <div class="details-grid">
+          <div class="kv"><strong>Quote #</strong><span>${escapeHtml(quote.job_number || "-")}</span></div>
+          <div class="kv"><strong>Status</strong><span class="${escapeHtml(badgeClass(quote.status))}">${escapeHtml(statusLabel(quote.status))}</span></div>
+          <div class="kv"><strong>Customer</strong><span>${escapeHtml(quote.customer_name || "-")}</span></div>
+          <div class="kv"><strong>Email</strong><span>${escapeHtml(quote.customer_email || "-")}</span></div>
+          <div class="kv"><strong>Pickup</strong><span>${escapeHtml(quote.pickup_address || "-")}</span></div>
+          <div class="kv"><strong>Delivery</strong><span>${escapeHtml(quote.delivery_address || "-")}</span></div>
+          <div class="kv"><strong>Amount</strong><span>${escapeHtml(money(quote.approved_price ?? quote.customer_charge))}</span></div>
+          <div class="kv"><strong>Created</strong><span>${escapeHtml(formatDate(quote.created_at))}</span></div>
+          <div class="kv"><strong>Notes</strong><span>${escapeHtml(quote.special_instructions || "-")}</span></div>
+        </div>
+
+        <div class="form-actions">
+          <button class="btn" type="button" data-edit-quote="${escapeHtml(String(quote.id))}">Edit Quote</button>
+          <button class="btn primary" type="button" data-convert-job="${escapeHtml(String(quote.id))}">Convert to Job</button>
+          <span class="row-menu">
+            <button class="menu-trigger" type="button" data-menu-toggle>⋯</button>
+            <span class="menu-list">
+              <button class="menu-item" type="button" data-send-quote="${escapeHtml(String(quote.id))}">Send Quote</button>
+              <button class="menu-item" type="button" data-resend-quote="${escapeHtml(String(quote.id))}">Resend Quote</button>
+              <button class="menu-item" type="button" data-cancel-quote="${escapeHtml(String(quote.id))}">Cancel Quote</button>
+            </span>
+          </span>
+        </div>
+      `;
+
+      openModal("quoteDetailsModal");
+    }
+
+    function openEditQuoteModal(quoteId) {
+      const quote = getRowById(quoteId);
+      if (!quote) {
         return;
       }
 
-      const label =
-        quote.job_number || "this job";
+      document.getElementById("quoteModalTitle").textContent = "Edit Quote";
+      document.getElementById("quoteRecordId").value = String(quote.id);
 
-      const confirmed = window.confirm(
-        `Delete ${label}? This cannot be undone.`
-      );
+      const form = elements.quoteForm;
+      form.customer_name.value = quote.customer_name || "";
+      form.customer_email.value = quote.customer_email || "";
+      form.customer_phone.value = quote.customer_phone || "";
+      form.pickup_address.value = quote.pickup_address || "";
+      form.pickup_suite_floor.value = quote.pickup_suite_floor || "";
+      form.pickup_zip.value = quote.pickup_zip || "";
+      form.delivery_address.value = quote.delivery_address || "";
+      form.delivery_suite_floor.value = quote.delivery_suite_floor || "";
+      form.delivery_zip.value = quote.delivery_zip || "";
+      form.delivery_recipient_name.value = quote.delivery_recipient_name || "";
+      form.vehicle_type.value = quote.vehicle_type || "";
+      form.delivery_speed.value = quote.delivery_speed || "";
+      form.package_type.value = quote.package_type || "";
+      form.approved_price.value = quote.approved_price ?? quote.customer_charge ?? "";
+      form.status.value = ["quote", "quoted", "pending", "new"].includes(clean(quote.status)) ? clean(quote.status) : "quote";
+      form.special_instructions.value = quote.special_instructions || "";
 
+      closeModal("quoteDetailsModal");
+      openModal("quoteModal");
+    }
+
+    function openCreateJobFromQuote(quoteId) {
+      const quote = getRowById(quoteId);
+      if (!quote) {
+        return;
+      }
+
+      openCreateJobModal();
+      const form = elements.jobForm;
+      form.customer_name.value = quote.customer_name || "";
+      form.customer_email.value = quote.customer_email || "";
+      form.customer_phone.value = quote.customer_phone || "";
+      form.pickup_address.value = quote.pickup_address || "";
+      form.pickup_suite_floor.value = quote.pickup_suite_floor || "";
+      form.pickup_zip.value = quote.pickup_zip || "";
+      form.delivery_address.value = quote.delivery_address || "";
+      form.delivery_suite_floor.value = quote.delivery_suite_floor || "";
+      form.delivery_zip.value = quote.delivery_zip || "";
+      form.delivery_recipient_name.value = quote.delivery_recipient_name || "";
+      form.vehicle_type.value = quote.vehicle_type || "";
+      form.delivery_speed.value = quote.delivery_speed || "";
+      form.package_type.value = quote.package_type || "";
+      form.approved_price.value = quote.approved_price ?? quote.customer_charge ?? "";
+      form.driver_pay.value = quote.driver_pay ?? "";
+      form.special_instructions.value = quote.special_instructions || "";
+      form.status.value = "assigned";
+      closeModal("quoteDetailsModal");
+    }
+
+    function openJobDetails(jobId, readOnly = false) {
+      const job = getRowById(jobId);
+      if (!job) {
+        return;
+      }
+
+      state.selectedJob = job;
+
+      const readOnlyText = readOnly ? '<div class="hint">Read-only mode for closed jobs.</div>' : "";
+
+      elements.jobDetailsBody.innerHTML = `
+        ${readOnlyText}
+
+        <details class="card" open>
+          <summary>1. Job Summary</summary>
+          <div class="card-body">
+            <div class="kv"><strong>Job #</strong><span>${escapeHtml(job.job_number || "-")}</span></div>
+            <div class="kv"><strong>Customer</strong><span>${escapeHtml(job.customer_name || "-")}</span></div>
+            <div class="kv"><strong>Route</strong><span>${escapeHtml(routeCity(job))}</span></div>
+            <div class="kv"><strong>Dispatch Status</strong><span class="${escapeHtml(badgeClass(job.status))}">${escapeHtml(statusLabel(job.status))}</span></div>
+            <div class="status-row">
+              <select class="status-select" id="dispatchStatusSelect" ${readOnly ? "disabled" : ""}>
+                <option value="waiting_payment" ${["new", "pending", "waiting_payment", "quote", "quoted"].includes(clean(job.status)) ? "selected" : ""}>NEW JOB / WAITING PAYMENT</option>
+                <option value="ready" ${["ready", "paid"].includes(clean(job.status)) ? "selected" : ""}>PAID / READY</option>
+                <option value="assigned" ${clean(job.status) === "assigned" ? "selected" : ""}>ASSIGNED TO DRIVER</option>
+                <option value="cancelled" ${["cancelled", "canceled", "reassigned"].includes(clean(job.status)) ? "selected" : ""}>CANCELED / REASSIGNED</option>
+              </select>
+              <button class="btn" type="button" id="updateDispatchStatusBtn" ${readOnly ? "disabled" : ""}>Update Status</button>
+            </div>
+          </div>
+        </details>
+
+        <details class="card"><summary>2. Customer and Billing</summary>
+          <div class="card-body">
+            <div class="kv"><strong>Email</strong><span>${escapeHtml(job.customer_email || "-")}</span></div>
+            <div class="kv"><strong>Phone</strong><span>${escapeHtml(job.customer_phone || "-")}</span></div>
+            <div class="kv"><strong>Customer Total</strong><span>${escapeHtml(money(job.approved_price ?? job.customer_charge))}</span></div>
+            <div class="kv"><strong>Payment Status</strong><span>${escapeHtml(String(job.payment_status || "-").toUpperCase())}</span></div>
+            <div class="kv"><strong>Invoice Status</strong><span>${escapeHtml(String(job.invoice_status || "-").toUpperCase())}</span></div>
+            <div class="kv"><strong>Billing Notes</strong><span>${escapeHtml(job.billing_notes || "-")}</span></div>
+          </div>
+        </details>
+
+        <details class="card"><summary>3. Pickup</summary>
+          <div class="card-body">
+            <div class="kv"><strong>Address</strong><span>${escapeHtml(job.pickup_address || "-")}</span></div>
+            <div class="kv"><strong>Suite / Floor</strong><span>${escapeHtml(job.pickup_suite_floor || "-")}</span></div>
+            <div class="kv"><strong>ZIP</strong><span>${escapeHtml(job.pickup_zip || "-")}</span></div>
+            <div class="kv"><strong>Pickup Photo</strong><span>${job.pickup_photo_url ? `<a href="${escapeHtml(job.pickup_photo_url)}" target="_blank" rel="noopener">View photo</a>` : "Not uploaded"}</span></div>
+          </div>
+        </details>
+
+        <details class="card"><summary>4. Delivery</summary>
+          <div class="card-body">
+            <div class="kv"><strong>Address</strong><span>${escapeHtml(job.delivery_address || "-")}</span></div>
+            <div class="kv"><strong>Suite / Floor</strong><span>${escapeHtml(job.delivery_suite_floor || "-")}</span></div>
+            <div class="kv"><strong>ZIP</strong><span>${escapeHtml(job.delivery_zip || "-")}</span></div>
+            <div class="kv"><strong>Recipient</strong><span>${escapeHtml(job.delivery_recipient_name || job.pod_recipient_name || "-")}</span></div>
+            <div class="kv"><strong>Delivery Photo</strong><span>${job.delivery_photo_url ? `<a href="${escapeHtml(job.delivery_photo_url)}" target="_blank" rel="noopener">View photo</a>` : "Not uploaded"}</span></div>
+          </div>
+        </details>
+
+        <details class="card"><summary>5. Driver Assignment</summary>
+          <div class="card-body">
+            <div class="kv"><strong>Current Driver</strong><span>${escapeHtml(driverNameById(job.assigned_driver_id))}</span></div>
+            <div class="kv"><strong>Driver Pay</strong><span>${escapeHtml(money(job.driver_pay))}</span></div>
+            <div class="kv"><strong>Assignment Status</strong><span>${escapeHtml(statusLabel(job.status))}</span></div>
+            <div class="kv"><strong>Driver Response</strong><span>${escapeHtml(String(job.driver_acceptance_status || "pending"))}</span></div>
+            <div class="form-actions">
+              <button class="btn" type="button" id="openAssignBtn" ${readOnly ? "disabled" : ""}>Assign / Reassign Driver</button>
+              ${job.assigned_driver_id ? `<button class="btn" type="button" id="resendDriverBtn" ${readOnly ? "disabled" : ""}>Resend to Driver</button>` : ""}
+            </div>
+          </div>
+        </details>
+
+        <details class="card"><summary>6. Photos and Proof</summary>
+          <div class="card-body">
+            <div class="kv"><strong>Pickup Photo</strong><span>${job.pickup_photo_url ? "Uploaded" : "Not uploaded"}</span></div>
+            <div class="kv"><strong>Delivery Photo</strong><span>${job.delivery_photo_url ? "Uploaded" : "Not uploaded"}</span></div>
+            <div class="kv"><strong>POD Recipient</strong><span>${escapeHtml(job.pod_recipient_name || "-")}</span></div>
+          </div>
+        </details>
+
+        <details class="card"><summary>7. BOL</summary>
+          <div class="card-body">
+            <div class="kv"><strong>BOL Status</strong><span>${escapeHtml(String(job.bol_status || "Unknown"))}</span></div>
+            <div class="kv"><strong>BOL Created</strong><span>${escapeHtml(formatDate(job.bol_created_at))}</span></div>
+            <div class="kv"><strong>BOL Sent</strong><span>${escapeHtml(formatDate(job.bol_sent_at))}</span></div>
+            <div class="kv"><strong>Proof Requested</strong><span>${escapeHtml(String(job.proof_requested || "-").toUpperCase())}</span></div>
+            <div class="form-actions">
+              <button class="btn primary" type="button" data-view-bol="${escapeHtml(String(job.id))}">View / Create BOL</button>
+            </div>
+          </div>
+        </details>
+
+        <details class="card"><summary>8. Timeline</summary>
+          <div class="card-body">
+            <div class="kv"><strong>Created</strong><span>${escapeHtml(formatDate(job.created_at))}</span></div>
+            <div class="kv"><strong>Updated</strong><span>${escapeHtml(formatDate(job.updated_at))}</span></div>
+            <div class="kv"><strong>Completed</strong><span>${escapeHtml(formatDate(job.completed_at))}</span></div>
+          </div>
+        </details>
+
+        <details class="card"><summary>9. Internal Notes</summary>
+          <div class="card-body">
+            <div>${escapeHtml(job.special_instructions || "No notes")}</div>
+          </div>
+        </details>
+
+        <div class="form-actions">
+          <button class="btn" type="button" id="editJobBtn" ${readOnly ? "disabled" : ""}>Edit Job</button>
+          <span class="row-menu">
+            <button class="menu-trigger" type="button" data-menu-toggle>⋯</button>
+            <span class="menu-list">
+              <button class="menu-item" type="button" id="menuAssignJobBtn" ${readOnly ? "disabled" : ""}>Assign / Reassign Driver</button>
+              <button class="menu-item" type="button" id="menuResendBtn" ${readOnly || !job.assigned_driver_id ? "disabled" : ""}>Resend to Driver</button>
+              <button class="menu-item" type="button" data-view-bol="${escapeHtml(String(job.id))}">View / Create BOL</button>
+              <button class="menu-item" type="button" id="menuCancelBtn" ${readOnly ? "disabled" : ""}>Cancel Job</button>
+            </span>
+          </span>
+        </div>
+      `;
+
+      openModal("jobDetailsModal");
+
+      const updateBtn = document.getElementById("updateDispatchStatusBtn");
+      if (updateBtn) {
+        updateBtn.addEventListener("click", () => {
+          const select = document.getElementById("dispatchStatusSelect");
+          changeDispatchStatus(job.id, select.value, updateBtn);
+        });
+      }
+
+      const openAssignBtn = document.getElementById("openAssignBtn");
+      const menuAssignJobBtn = document.getElementById("menuAssignJobBtn");
+      if (openAssignBtn) {
+        openAssignBtn.addEventListener("click", () => openAssignModal(job.id));
+      }
+      if (menuAssignJobBtn) {
+        menuAssignJobBtn.addEventListener("click", () => openAssignModal(job.id));
+      }
+
+      const resendBtn = document.getElementById("resendDriverBtn");
+      const menuResendBtn = document.getElementById("menuResendBtn");
+      if (resendBtn) {
+        resendBtn.addEventListener("click", () => resendToDriver(job.id));
+      }
+      if (menuResendBtn) {
+        menuResendBtn.addEventListener("click", () => resendToDriver(job.id));
+      }
+
+      const editBtn = document.getElementById("editJobBtn");
+      if (editBtn) {
+        editBtn.addEventListener("click", () => openEditJobModal(job.id));
+      }
+
+      const cancelBtn = document.getElementById("menuCancelBtn");
+      if (cancelBtn) {
+        cancelBtn.addEventListener("click", () => changeDispatchStatus(job.id, "cancelled", cancelBtn));
+      }
+    }
+
+    function openEditJobModal(jobId) {
+      const job = getRowById(jobId);
+      if (!job) {
+        return;
+      }
+
+      closeModal("jobDetailsModal");
+      openModal("jobModal");
+
+      document.getElementById("jobModalTitle").textContent = "Edit Job";
+      document.getElementById("jobRecordId").value = String(job.id);
+
+      const form = elements.jobForm;
+      form.customer_name.value = job.customer_name || "";
+      form.customer_email.value = job.customer_email || "";
+      form.customer_phone.value = job.customer_phone || "";
+      form.assigned_driver_id.value = job.assigned_driver_id || "";
+      form.pickup_address.value = job.pickup_address || "";
+      form.pickup_suite_floor.value = job.pickup_suite_floor || "";
+      form.pickup_zip.value = job.pickup_zip || "";
+      form.delivery_address.value = job.delivery_address || "";
+      form.delivery_suite_floor.value = job.delivery_suite_floor || "";
+      form.delivery_zip.value = job.delivery_zip || "";
+      form.delivery_recipient_name.value = job.delivery_recipient_name || "";
+      form.vehicle_type.value = job.vehicle_type || "";
+      form.delivery_speed.value = job.delivery_speed || "";
+      form.package_type.value = job.package_type || "";
+      form.delivery_method.value = job.delivery_method || "";
+      form.approved_price.value = job.approved_price ?? job.customer_charge ?? "";
+      form.driver_pay.value = job.driver_pay ?? "";
+      form.status.value = ["waiting_payment", "ready", "assigned", "cancelled"].includes(clean(job.status)) ? clean(job.status) : "waiting_payment";
+      form.invoice_delivery_method.value = job.invoice_delivery_method || "none";
+      form.invoice_due_date.value = job.invoice_due_date || "";
+      form.billing_notes.value = job.billing_notes || "";
+      form.special_instructions.value = job.special_instructions || "";
+    }
+
+    async function changeDispatchStatus(jobId, nextStatus, buttonRef) {
+      const job = getRowById(jobId);
+      if (!job) {
+        return;
+      }
+
+      if (nextStatus === "cancelled") {
+        const confirmed = window.confirm("Change status to CANCELED / REASSIGNED for " + (job.job_number || "this job") + "?");
+        if (!confirmed) {
+          return;
+        }
+      }
+
+      const button = buttonRef || null;
+      setButtonLoading(button, true, "Saving...", "Update Status");
+
+      try {
+        const result = await client
+          .from("quotes")
+          .update({ status: nextStatus })
+          .eq("id", jobId)
+          .select("*")
+          .maybeSingle();
+
+        if (result.error) {
+          throw result.error;
+        }
+
+        await loadRows();
+
+        const refreshed = getRowById(jobId);
+        if (refreshed) {
+          openJobDetails(jobId, isClosed(refreshed));
+        }
+
+        showToast("Job status updated", "success");
+      } catch (error) {
+        showToast(error.message || "Unable to update status", "error");
+      } finally {
+        setButtonLoading(button, false, "Saving...", "Update Status");
+      }
+    }
+
+    function openAssignModal(jobId) {
+      const job = getRowById(jobId);
+      if (!job) {
+        return;
+      }
+
+      elements.assignJobId.value = String(job.id);
+      elements.assignDriverSelect.value = job.assigned_driver_id || "";
+      elements.assignDriverPay.value = job.driver_pay ?? "";
+      document.getElementById("assignNote").value = "";
+      openModal("assignModal");
+    }
+
+    async function assignOrReassignDriver(event) {
+      event.preventDefault();
+
+      const jobId = elements.assignJobId.value;
+      const job = getRowById(jobId);
+      if (!job) {
+        return;
+      }
+
+      const driverId = String(elements.assignDriverSelect.value || "").trim();
+      const driverPayRaw = String(elements.assignDriverPay.value || "").trim();
+
+      if (!driverId) {
+        showToast("Select a driver first", "error");
+        return;
+      }
+
+      const driverPay = driverPayRaw === "" ? null : Number(driverPayRaw);
+      if (driverPay !== null && (!Number.isFinite(driverPay) || driverPay < 0)) {
+        showToast("Driver pay must be a valid number", "error");
+        return;
+      }
+
+      const shouldResetWorkflow =
+        String(job.assigned_driver_id || "") !== driverId ||
+        clean(job.status) !== "assigned" ||
+        clean(job.driver_acceptance_status) === "rejected";
+
+      const payload = {
+        assigned_driver_id: driverId,
+        driver_pay: driverPay,
+        status: "assigned"
+      };
+
+      if (shouldResetWorkflow) {
+        payload.driver_acceptance_status = "pending";
+        payload.driver_workflow_status = "assigned";
+        payload.driver_accepted_at = null;
+        payload.driver_rejected_at = null;
+      }
+
+      setButtonLoading(elements.assignSubmitBtn, true, "Sending...", "Send to Driver");
+
+      try {
+        const result = await client
+          .from("quotes")
+          .update(payload)
+          .eq("id", jobId)
+          .select("*")
+          .maybeSingle();
+
+        if (result.error) {
+          throw result.error;
+        }
+
+        closeModal("assignModal");
+        await loadRows();
+        openJobDetails(jobId, false);
+        showToast("Driver assigned", "success");
+      } catch (error) {
+        showToast(error.message || "Unable to assign driver", "error");
+      } finally {
+        setButtonLoading(elements.assignSubmitBtn, false, "Sending...", "Send to Driver");
+      }
+    }
+
+    async function findNotificationField(jobId) {
+      const candidates = [
+        "assignment_notified_at",
+        "driver_notified_at",
+        "driver_notification_sent_at",
+        "resent_to_driver_at"
+      ];
+
+      for (const field of candidates) {
+        const probe = await client
+          .from("quotes")
+          .select(field)
+          .eq("id", jobId)
+          .maybeSingle();
+
+        if (!probe.error) {
+          return field;
+        }
+
+        const message = String(probe.error.message || "").toLowerCase();
+        if (!message.includes("column") && !message.includes("exist") && !message.includes("schema")) {
+          throw probe.error;
+        }
+      }
+
+      return "";
+    }
+
+    async function resendToDriver(jobId) {
+      const job = getRowById(jobId);
+      if (!job || !job.assigned_driver_id) {
+        showToast("No assigned driver to resend", "error");
+        return;
+      }
+
+      const driverName = driverNameById(job.assigned_driver_id);
+      const confirmed = window.confirm("Resend this job to " + driverName + "?");
       if (!confirmed) {
         return;
       }
 
-      showJobMessage(
-        quoteId,
-        "Deleting…",
-        "info"
-      );
+      try {
+        const timestampField = await findNotificationField(jobId);
 
-      const result = await client
-        .from("quotes")
-        .delete()
-        .eq("id", quoteId);
+        if (timestampField) {
+          const now = new Date().toISOString();
+          const update = {};
+          update[timestampField] = now;
 
-      if (result.error) {
-        showJobMessage(
-          quoteId,
-          result.error.message,
-          "error"
-        );
+          const result = await client
+            .from("quotes")
+            .update(update)
+            .eq("id", jobId);
 
-        return;
+          if (result.error) {
+            throw result.error;
+          }
+
+          await loadRows();
+          openJobDetails(jobId, false);
+          showToast("Job resent to driver", "success");
+          return;
+        }
+
+        showToast("Resend action is visible, but notification transport is not connected yet.", "info");
+      } catch (error) {
+        showToast(error.message || "Unable to resend job", "error");
       }
-
-      await loadQuotes();
     }
 
-    window.deleteQuote = deleteQuote;
+    function openBolForJob(jobId) {
+      const url = "/job.html?id=" + encodeURIComponent(String(jobId));
+      window.open(url, "_blank", "noopener");
+    }
 
-    quoteForm.addEventListener(
-      "submit",
-      async function (event) {
-        event.preventDefault();
+    async function submitQuoteForm(event) {
+      event.preventDefault();
+      const saveBtn = document.getElementById("saveQuoteBtn");
+      setButtonLoading(saveBtn, true, "Saving...", "Save Quote");
 
-        saveQuoteButton.disabled = true;
-        saveQuoteButton.textContent = "Saving…";
+      try {
+        const recordId = document.getElementById("quoteRecordId").value;
+        const payload = formToPayload(elements.quoteForm, { includeStatus: true });
 
-        setQuoteMessage(
-          "Saving new job…",
-          "info"
-        );
-
-        const formData =
-          new FormData(quoteForm);
-
-        const submitAction =
-          event.submitter?.value ||
-          "save_quote";
-
-        const customerChargeValue =
-          String(
-            formData.get("approved_price") || ""
-          ).trim();
-
-        const driverPayValue =
-          String(
-            formData.get("driver_pay") || ""
-          ).trim();
-
-        const customerCharge =
-          customerChargeValue === ""
-            ? null
-            : Number(customerChargeValue);
-
-        const driverPay =
-          driverPayValue === ""
-            ? null
-            : Number(driverPayValue);
-
-        if (
-          customerCharge !== null &&
-          (
-            !Number.isFinite(customerCharge) ||
-            customerCharge < 0
-          )
-        ) {
-          setQuoteMessage(
-            "Enter a valid customer price amount.",
-            "error"
-          );
-
-          saveQuoteButton.disabled = false;
-          saveQuoteButton.textContent = "Save Quote / Pending";
+        const validationError = validatePayload(payload);
+        if (validationError) {
+          showToast(validationError, "error");
           return;
         }
 
-        if (
-          driverPay !== null &&
-          (
-            !Number.isFinite(driverPay) ||
-            driverPay < 0
-          )
-        ) {
-          setQuoteMessage(
-            "Enter a valid driver pay amount.",
-            "error"
-          );
+        if (!recordId) {
+          payload.job_number = await generateJobNumber();
 
-          saveQuoteButton.disabled = false;
-          saveQuoteButton.textContent = "Save Quote / Pending";
-          return;
-        }
+          const insertResult = await client
+            .from("quotes")
+            .insert(payload)
+            .select("*")
+            .maybeSingle();
 
-        const assignedDriver =
-          String(
-            formData.get("assigned_driver_id") || ""
-          );
-
-        if (
-          submitAction === "approve_send" &&
-          !assignedDriver
-        ) {
-          setQuoteMessage(
-            "Assign a driver before using Approve & Send to Driver.",
-            "error"
-          );
-
-          saveQuoteButton.disabled = false;
-          saveQuoteButton.textContent = "Save Quote / Pending";
-          return;
-        }
-
-        const generatedJobNumber =
-          await generateJobNumber();
-
-        const payload = {
-          job_number:
-            generatedJobNumber,
-
-          customer_name:
-            String(
-              formData.get("customer_name") || ""
-            ).trim(),
-
-          customer_email:
-            String(
-              formData.get("customer_email") || ""
-            ).trim(),
-
-          pickup_address:
-            String(
-              formData.get("pickup_address") || ""
-            ).trim(),
-
-          pickup_suite_floor:
-            String(
-              formData.get("pickup_suite_floor") || ""
-            ).trim() || null,
-
-          pickup_zip:
-            String(
-              formData.get("pickup_zip") || ""
-            ).trim() || null,
-
-          delivery_address:
-            String(
-              formData.get("delivery_address") || ""
-            ).trim(),
-
-          delivery_suite_floor:
-            String(
-              formData.get("delivery_suite_floor") || ""
-            ).trim() || null,
-
-          delivery_zip:
-            String(
-              formData.get("delivery_zip") || ""
-            ).trim() || null,
-
-          delivery_recipient_name:
-            String(
-              formData.get("delivery_recipient_name") || ""
-            ).trim() || null,
-
-          vehicle_type:
-            String(
-              formData.get("vehicle_type") || ""
-            ),
-
-          delivery_speed:
-            String(
-              formData.get("delivery_speed") || ""
-            ),
-
-          package_type:
-            String(
-              formData.get("package_type") || ""
-            ).trim(),
-
-          approved_price: customerCharge,
-
-          driver_pay: driverPay,
-
-          status:
-            submitAction === "approve_send"
-              ? "assigned"
-              : String(
-                  formData.get("status") || "new"
-                ),
-
-          driver_acceptance_status:
-            submitAction === "approve_send"
-              ? "pending"
-              : undefined,
-
-          driver_workflow_status:
-            submitAction === "approve_send"
-              ? "assigned"
-              : undefined,
-
-          driver_accepted_at:
-            submitAction === "approve_send"
-              ? null
-              : undefined,
-
-          driver_rejected_at:
-            submitAction === "approve_send"
-              ? null
-              : undefined,
-
-          special_instructions:
-            String(
-              formData.get(
-                "special_instructions"
-              ) || ""
-            ).trim(),
-
-          assigned_driver_id:
-            assignedDriver || null
-        };
-
-        Object.keys(payload).forEach(key => {
-          if (payload[key] === undefined) {
-            delete payload[key];
+          if (insertResult.error) {
+            throw insertResult.error;
           }
-        });
 
-        const result = await client
+          closeModal("quoteModal");
+          await loadRows();
+          showToast("Quote created successfully", "success");
+          return;
+        }
+
+        const updateResult = await client
           .from("quotes")
-          .insert(payload);
+          .update(payload)
+          .eq("id", recordId)
+          .select("*")
+          .maybeSingle();
 
-        if (result.error) {
-          setQuoteMessage(
-            result.error.message,
-            "error"
-          );
+        if (updateResult.error) {
+          throw updateResult.error;
+        }
 
-          saveQuoteButton.disabled = false;
-          saveQuoteButton.textContent = "Save Quote / Pending";
+        closeModal("quoteModal");
+        await loadRows();
+        showToast("Quote updated successfully", "success");
+      } catch (error) {
+        showToast(error.message || "Unable to save quote", "error");
+      } finally {
+        setButtonLoading(saveBtn, false, "Saving...", "Save Quote");
+      }
+    }
+
+    async function submitJobForm(event) {
+      event.preventDefault();
+
+      const submitAction = event.submitter?.value || "save_pending";
+      const approveBtn = document.getElementById("approveSendBtn");
+      const saveBtn = document.getElementById("savePendingBtn");
+      setButtonLoading(approveBtn, true, "Saving...", "Approve & Send to Driver");
+      setButtonLoading(saveBtn, true, "Saving...", "Save Pending");
+
+      try {
+        const recordId = document.getElementById("jobRecordId").value;
+        const payload = formToPayload(elements.jobForm, { includeStatus: true });
+
+        const validationError = validatePayload(payload);
+        if (validationError) {
+          showToast(validationError, "error");
           return;
         }
 
         if (submitAction === "approve_send") {
-          setQuoteMessage(
-            "Job approved and sent to driver.",
-            "info"
-          );
+          if (!payload.assigned_driver_id) {
+            showToast("Assign a driver before approving.", "error");
+            return;
+          }
 
-          closeQuotePanel();
-          await loadDashboard();
-        } else {
-          setQuoteMessage(
-            "Job saved successfully.",
-            "info"
-          );
-
-          await loadQuotes();
-
-          setTimeout(
-            closeQuotePanel,
-            700
-          );
+          payload.status = "assigned";
+          payload.driver_acceptance_status = "pending";
+          payload.driver_workflow_status = "assigned";
+          payload.driver_accepted_at = null;
+          payload.driver_rejected_at = null;
         }
 
-        saveQuoteButton.disabled = false;
-        saveQuoteButton.textContent = "Save Quote / Pending";
+        if (!recordId) {
+          payload.job_number = await generateJobNumber();
+
+          const insertResult = await client
+            .from("quotes")
+            .insert(payload)
+            .select("*")
+            .maybeSingle();
+
+          if (insertResult.error) {
+            throw insertResult.error;
+          }
+
+          closeModal("jobModal");
+          await loadRows();
+          showToast("Job created successfully", "success");
+          return;
+        }
+
+        const updateResult = await client
+          .from("quotes")
+          .update(payload)
+          .eq("id", recordId)
+          .select("*")
+          .maybeSingle();
+
+        if (updateResult.error) {
+          throw updateResult.error;
+        }
+
+        closeModal("jobModal");
+        await loadRows();
+        showToast("Job updated successfully", "success");
+      } catch (error) {
+        showToast(error.message || "Unable to save job", "error");
+      } finally {
+        setButtonLoading(approveBtn, false, "Saving...", "Approve & Send to Driver");
+        setButtonLoading(saveBtn, false, "Saving...", "Save Pending");
       }
-    );
+    }
 
-    document
-      .getElementById("newQuoteButton")
-      .addEventListener(
-        "click",
-        openQuotePanel
-      );
+    async function cancelQuote(quoteId) {
+      const quote = getRowById(quoteId);
+      if (!quote) {
+        return;
+      }
 
-    document
-      .getElementById("closeQuoteButton")
-      .addEventListener(
-        "click",
-        closeQuotePanel
-      );
+      const confirmed = window.confirm("Cancel quote " + (quote.job_number || "this quote") + "?");
+      if (!confirmed) {
+        return;
+      }
 
-    document
-      .getElementById("cancelQuoteButton")
-      .addEventListener(
-        "click",
-        closeQuotePanel
-      );
+      try {
+        const result = await client
+          .from("quotes")
+          .update({ status: "cancelled" })
+          .eq("id", quoteId);
 
-    document
-      .getElementById("refreshButton")
-      .addEventListener(
-        "click",
-        loadDashboard
-      );
+        if (result.error) {
+          throw result.error;
+        }
 
-    (async function start() {
-      const session =
-        await requireDispatchAccess();
+        closeModal("quoteDetailsModal");
+        await loadRows();
+        showToast("Quote canceled", "success");
+      } catch (error) {
+        showToast(error.message || "Unable to cancel quote", "error");
+      }
+    }
 
-      if (session) {
+    function handleDocumentClick(event) {
+      const target = event.target;
 
-    window.dispatchEvent(
-        new CustomEvent("mg-dispatch-ready", {
-            detail: {
-                email: session.user.email
-            }
-        })
-    );
+      if (target.matches("[data-close-modal]")) {
+        closeModal(target.getAttribute("data-close-modal"));
+        return;
+      }
 
-    await loadDashboard();
+      if (target.matches(".modal-backdrop")) {
+        closeModal(target.id);
+        return;
+      }
+
+      if (target.matches("[data-menu-toggle]")) {
+        event.stopPropagation();
+        toggleMenu(target);
+        return;
+      }
+
+      const quoteRow = target.closest("[data-open-quote]");
+      if (quoteRow) {
+        openQuoteDetails(quoteRow.getAttribute("data-open-quote"));
+        return;
+      }
+
+      const jobRow = target.closest("[data-open-job]");
+      if (jobRow) {
+        const id = jobRow.getAttribute("data-open-job");
+        const readOnly = jobRow.getAttribute("data-readonly") === "true";
+        openJobDetails(id, readOnly);
+        return;
+      }
+
+      const editJob = target.closest("[data-open-edit-job]");
+      if (editJob) {
+        openEditJobModal(editJob.getAttribute("data-open-edit-job"));
+        return;
+      }
+
+      const viewBol = target.closest("[data-view-bol]");
+      if (viewBol) {
+        openBolForJob(viewBol.getAttribute("data-view-bol"));
+        return;
+      }
+
+      const editQuote = target.closest("[data-edit-quote]");
+      if (editQuote) {
+        openEditQuoteModal(editQuote.getAttribute("data-edit-quote"));
+        return;
+      }
+
+      const convertJob = target.closest("[data-convert-job]");
+      if (convertJob) {
+        openCreateJobFromQuote(convertJob.getAttribute("data-convert-job"));
+        return;
+      }
+
+      const sendQuote = target.closest("[data-send-quote]");
+      if (sendQuote) {
+        showToast("Send Quote action is visible but email/send transport is not connected yet.", "info");
+        return;
+      }
+
+      const resendQuote = target.closest("[data-resend-quote]");
+      if (resendQuote) {
+        showToast("Resend Quote action is visible but email/send transport is not connected yet.", "info");
+        return;
+      }
+
+      const cancelQuoteBtn = target.closest("[data-cancel-quote]");
+      if (cancelQuoteBtn) {
+        cancelQuote(cancelQuoteBtn.getAttribute("data-cancel-quote"));
+        return;
+      }
+
+      closeAllMenus();
+    }
+
+    function bindEvents() {
+      document.getElementById("openCreateQuoteBtn").addEventListener("click", openCreateQuoteModal);
+      document.getElementById("openCreateJobBtn").addEventListener("click", openCreateJobModal);
+      document.getElementById("refreshQuotesBtn").addEventListener("click", loadDashboard);
+      document.getElementById("refreshJobsBtn").addEventListener("click", loadDashboard);
+
+      elements.quoteForm.addEventListener("submit", submitQuoteForm);
+      elements.jobForm.addEventListener("submit", submitJobForm);
+      elements.assignForm.addEventListener("submit", assignOrReassignDriver);
+
+      document.addEventListener("click", handleDocumentClick);
+
+      document.addEventListener("keydown", event => {
+        if (event.key === "Escape") {
+          document.querySelectorAll(".modal-backdrop.open").forEach(modal => closeModal(modal.id));
+        }
+      });
+    }
+
+    (async function startPage() {
+      try {
+        const session = await requireDispatchAccess();
+        if (!session) {
+          return;
+        }
+
+        bindEvents();
+        await loadDashboard();
+      } catch (error) {
+        elements.quotesRows.innerHTML = '<div class="empty">' + escapeHtml(error.message || "Unable to load dashboard") + '</div>';
+        elements.jobsRows.innerHTML = '<div class="empty">' + escapeHtml(error.message || "Unable to load dashboard") + '</div>';
+        elements.closedRows.innerHTML = '<div class="empty">' + escapeHtml(error.message || "Unable to load dashboard") + '</div>';
+        showToast(error.message || "Unable to load dashboard", "error");
       }
     })();
   </script>
+
   <script src="/dispatch-menu.js"></script>
 </body>
 </html>
