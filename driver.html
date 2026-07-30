@@ -326,6 +326,43 @@
       font-weight: 900;
     }
 
+    .diagnostics-panel {
+      margin-bottom: 20px;
+      padding: 18px;
+      border: 1px solid var(--line);
+      border-radius: 20px;
+      background: white;
+      box-shadow: 0 8px 25px rgba(0, 0, 0, .04);
+    }
+
+    .diagnostics-title {
+      margin-bottom: 10px;
+      color: var(--dark-green);
+      font-size: 18px;
+      font-weight: 900;
+    }
+
+    .diagnostics-grid {
+      display: grid;
+      gap: 8px;
+      color: var(--ink);
+      font-size: 13px;
+      line-height: 1.45;
+    }
+
+    .diagnostics-grid strong {
+      color: var(--dark-green);
+    }
+
+    .diagnostics-error {
+      margin-top: 8px;
+      padding: 10px 12px;
+      border-radius: 12px;
+      background: var(--danger-bg);
+      color: var(--danger);
+      font-weight: 800;
+    }
+
     .workflow-panel {
       margin-bottom: 20px;
       padding: 18px;
@@ -593,6 +630,16 @@
       </div>
     </section>
 
+    <section class="diagnostics-panel" id="diagnosticsPanel">
+      <div class="diagnostics-title">
+        Temporary Driver Diagnostics
+      </div>
+
+      <div class="diagnostics-grid" id="diagnosticsDetails">
+        Loading diagnostics...
+      </div>
+    </section>
+
     <section class="workflow-panel">
       <div class="workflow-header">
         <h2>Driver Workflow Queue</h2>
@@ -693,6 +740,14 @@
     let jobs = [];
     let driverSummaries = [];
     let currentDriver = null;
+    let diagnostics = {
+      authUserId: "",
+      authEmail: "",
+      resolvedDriverId: null,
+      jobsReturned: 0,
+      jobMatches: [],
+      error: ""
+    };
 
     function escapeHtml(value) {
       const div = document.createElement("div");
@@ -714,6 +769,50 @@
           currency: "USD"
         }
       );
+    }
+
+    function formatDiagnosticValue(value) {
+      if (value === null || value === undefined || value === "") {
+        return "—";
+      }
+
+      return String(value);
+    }
+
+    function renderDiagnostics() {
+      const details = document.getElementById("diagnosticsDetails");
+
+      if (!details) {
+        return;
+      }
+
+      const jobRows = diagnostics.jobMatches.length
+        ? diagnostics.jobMatches.map(jobMatch => `
+            <div>
+              <strong>Job:</strong> ${escapeHtml(jobMatch.jobNumber || "Job")} •
+              <strong>assigned_driver_id:</strong> ${escapeHtml(formatDiagnosticValue(jobMatch.assignedDriverId))} •
+              <strong>matches:</strong> ${escapeHtml(jobMatch.matches ? "yes" : "no")} •
+              <strong>acceptance:</strong> ${escapeHtml(formatDiagnosticValue(jobMatch.acceptanceStatus))} •
+              <strong>workflow:</strong> ${escapeHtml(formatDiagnosticValue(jobMatch.workflowStatus))}
+            </div>
+          `).join("")
+        : "<div>No assigned jobs have been returned yet.</div>";
+
+      details.innerHTML = `
+        <div><strong>Auth user ID:</strong> ${escapeHtml(formatDiagnosticValue(diagnostics.authUserId))}</div>
+        <div><strong>Logged-in email:</strong> ${escapeHtml(formatDiagnosticValue(diagnostics.authEmail))}</div>
+        <div><strong>Resolved driver record ID:</strong> ${escapeHtml(formatDiagnosticValue(diagnostics.resolvedDriverId))}</div>
+        <div><strong>Jobs returned:</strong> ${escapeHtml(String(diagnostics.jobsReturned))}</div>
+        <div><strong>Assigned job details:</strong></div>
+        ${jobRows}
+      `;
+
+      if (diagnostics.error) {
+        details.insertAdjacentHTML(
+          "beforeend",
+          `<div class="diagnostics-error">${escapeHtml(diagnostics.error)}</div>`
+        );
+      }
     }
 
     function startOfToday() {
@@ -1141,48 +1240,69 @@
         </div>
       `;
 
-      const driverResult =
-        await client
-          .from("drivers")
-          .select("*")
-          .order(
-            "full_name",
-            {
-              ascending: true
-            }
-          );
+      try {
+        const driverResult =
+          await client
+            .from("drivers")
+            .select("*")
+            .order(
+              "full_name",
+              {
+                ascending: true
+              }
+            );
 
-      if (driverResult.error) {
-        throw driverResult.error;
+        if (driverResult.error) {
+          throw driverResult.error;
+        }
+
+        if (!currentDriver?.id) {
+          throw new Error("No resolved driver record was found.");
+        }
+
+        const jobResult =
+          await client
+            .from("quotes")
+            .select("id,job_number,assigned_driver_id,status,customer_name,pickup_address,pickup_address_line1,pickup_address_city,pickup_address_state,pickup_address_zip,delivery_address,delivery_address_line1,delivery_address_city,delivery_address_state,delivery_address_zip,driver_pay,driver_acceptance_status,driver_workflow_status,driver_accepted_at,driver_rejected_at,en_route_pickup_at,picked_up_at,en_route_delivery_at,pod_recipient_name,created_at,completed_at,delivery_photo_uploaded_at")
+            .eq("assigned_driver_id", currentDriver.id)
+            .order(
+              "created_at",
+              {
+                ascending: false
+              }
+            );
+
+        if (jobResult.error) {
+          throw jobResult.error;
+        }
+
+        drivers =
+          driverResult.data || [];
+
+        jobs =
+          jobResult.data || [];
+
+        diagnostics.jobsReturned = jobs.length;
+        diagnostics.jobMatches = jobs.map(job => ({
+          jobNumber: job.job_number || "Job",
+          assignedDriverId: job.assigned_driver_id || null,
+          matches: String(job.assigned_driver_id || "") === String(currentDriver.id || ""),
+          acceptanceStatus: job.driver_acceptance_status || null,
+          workflowStatus: job.driver_workflow_status || null
+        }));
+        diagnostics.error = "";
+        renderDiagnostics();
+        console.log("Assigned jobs returned:", jobs);
+
+        buildDriverSummaries();
+        updateStatistics();
+        renderDrivers();
+        renderDriverWorkflow();
+      } catch (error) {
+        diagnostics.error = error.message || "Unable to load assigned jobs.";
+        renderDiagnostics();
+        throw error;
       }
-
-      const jobResult =
-        await client
-          .from("quotes")
-          .select("id,job_number,assigned_driver_id,status,customer_name,pickup_address,pickup_address_line1,pickup_address_city,pickup_address_state,pickup_address_zip,delivery_address,delivery_address_line1,delivery_address_city,delivery_address_state,delivery_address_zip,driver_pay,driver_acceptance_status,driver_workflow_status,driver_accepted_at,driver_rejected_at,en_route_pickup_at,picked_up_at,en_route_delivery_at,pod_recipient_name,created_at,completed_at,delivery_photo_uploaded_at")
-          .order(
-            "created_at",
-            {
-              ascending: false
-            }
-          );
-
-      if (jobResult.error) {
-        throw jobResult.error;
-      }
-
-      drivers =
-        driverResult.data || [];
-
-      jobs =
-        jobResult.data || [];
-
-      console.log("Assigned jobs returned:", jobs);
-
-      buildDriverSummaries();
-      updateStatistics();
-      renderDrivers();
-      renderDriverWorkflow();
     }
 
     function filteredDrivers() {
@@ -1223,40 +1343,79 @@
       );
     }
 
-    async function resolveCurrentDriver() {
-      const sessionResult = await client.auth.getSession();
-      const session = sessionResult.data.session;
-
+    async function resolveCurrentDriver(session) {
       if (!session) {
         currentDriver = null;
+        diagnostics.authUserId = "";
+        diagnostics.authEmail = "";
+        diagnostics.resolvedDriverId = null;
+        diagnostics.error = "No active session.";
+        renderDiagnostics();
         return null;
       }
 
-      let driverResult = await client
-        .from("drivers")
-        .select("id,full_name,email,active,auth_user_id")
-        .eq("auth_user_id", session.user.id)
-        .maybeSingle();
+      diagnostics.authUserId = session.user?.id || "";
+      diagnostics.authEmail = session.user?.email || "";
+      diagnostics.error = "";
+      renderDiagnostics();
 
-      if (driverResult.error) {
-        throw driverResult.error;
-      }
+      const candidateColumns = ["auth_user_id", "user_id"];
+      let driver = null;
+      let lastError = null;
 
-      if (!driverResult.data) {
-        driverResult = await client
-          .from("drivers")
-          .select("id,full_name,email,active,auth_user_id")
-          .eq("email", session.user.email)
-          .maybeSingle();
+      for (const column of candidateColumns) {
+        try {
+          const driverResult = await client
+            .from("drivers")
+            .select("id,full_name,email,active,auth_user_id,user_id")
+            .eq(column, session.user.id)
+            .maybeSingle();
 
-        if (driverResult.error) {
-          throw driverResult.error;
+          if (driverResult.error) {
+            const message = (driverResult.error.message || "").toLowerCase();
+
+            if (message.includes("does not exist") || message.includes("column") && message.includes("not found")) {
+              lastError = driverResult.error;
+              continue;
+            }
+
+            throw driverResult.error;
+          }
+
+          if (driverResult.data) {
+            driver = driverResult.data;
+            break;
+          }
+        } catch (error) {
+          const message = (error.message || "").toLowerCase();
+
+          if (message.includes("does not exist") || message.includes("column") && message.includes("not found")) {
+            lastError = error;
+            continue;
+          }
+
+          throw error;
         }
       }
 
-      const driver = driverResult.data || null;
-      console.log("Logged-in driver record:", driver);
+      if (!driver) {
+        const fallbackResult = await client
+          .from("drivers")
+          .select("id,full_name,email,active")
+          .eq("email", session.user.email)
+          .maybeSingle();
+
+        if (fallbackResult.error) {
+          throw fallbackResult.error;
+        }
+
+        driver = fallbackResult.data || null;
+      }
+
       currentDriver = driver;
+      diagnostics.resolvedDriverId = driver?.id || null;
+      console.log("Logged-in driver record:", driver);
+      renderDiagnostics();
       return currentDriver;
     }
 
@@ -1318,18 +1477,16 @@
         String(job.assigned_driver_id || "") === String(currentDriver.id)
       );
 
-      const activeWorkflowJobs = workflowJobs.filter(job => !isClosedJob(job));
-
-      if (!activeWorkflowJobs.length) {
+      if (!workflowJobs.length) {
         workflowBox.innerHTML = `
           <div class="empty">
-            No active workflow tasks are assigned to ${escapeHtml(currentDriver.full_name || currentDriver.email || "this driver")}. 
+            No assigned jobs were returned for ${escapeHtml(currentDriver.full_name || currentDriver.email || "this driver")}. 
           </div>
         `;
         return;
       }
 
-      workflowBox.innerHTML = activeWorkflowJobs.map(job => {
+      workflowBox.innerHTML = workflowJobs.map(job => {
         const workflowButtons = [];
         const {
           acceptanceStatus,
@@ -1338,18 +1495,14 @@
 
         console.log("Rendering job:", job.job_number, acceptanceStatus, workflowStatus);
 
-        if (acceptanceStatus !== "accepted" && acceptanceStatus !== "rejected") {
+        if (acceptanceStatus === "pending" || acceptanceStatus === "" || acceptanceStatus === null) {
           workflowButtons.push(`<button class="workflow-button" data-workflow-action="accept" type="button">Accept Job</button>`);
           workflowButtons.push(`<button class="workflow-button" data-workflow-action="reject" type="button">Reject Job</button>`);
         }
 
         if (
           acceptanceStatus === "accepted" &&
-          workflowStatus !== "rejected" &&
-          workflowStatus !== "en_route_pickup" &&
-          workflowStatus !== "picked_up" &&
-          workflowStatus !== "en_route_delivery" &&
-          workflowStatus !== "delivered"
+          (workflowStatus === "" || workflowStatus === null || workflowStatus === "assigned")
         ) {
           workflowButtons.push(`<button class="workflow-button" data-workflow-action="route_pickup" type="button">En Route to Pickup</button>`);
         }
@@ -1381,9 +1534,19 @@
               Delivery: ${escapeHtml(buildAddressDisplay(job, "delivery"))}
             </div>
             <div class="workflow-card-meta">
-              Status: ${escapeHtml(workflowStatusLabel(job))}
+              General Status: ${escapeHtml(cleanStatus(job.status) || "new")}
+            </div>
+            <div class="workflow-card-meta">
+              Driver Acceptance: ${escapeHtml(acceptanceStatus || "pending")}
+            </div>
+            <div class="workflow-card-meta">
+              Driver Workflow: ${escapeHtml(workflowStatus || "assigned")}
+            </div>
+            <div class="workflow-card-meta">
+              Workflow Label: ${escapeHtml(workflowStatusLabel(job))}
             </div>
             <div class="workflow-button-row">
+              <div class="workflow-card-meta">Actions:</div>
               ${workflowButtons.join("")}
             </div>
           </div>
@@ -1657,7 +1820,7 @@
           return;
         }
 
-        await resolveCurrentDriver();
+        await resolveCurrentDriver(session);
         await loadDriverData();
       } catch (error) {
         driversBox.className = "";
