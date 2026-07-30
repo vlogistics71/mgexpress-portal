@@ -744,6 +744,9 @@
       authUserId: "",
       authEmail: "",
       resolvedDriverId: null,
+      resolvedDriverEmail: "",
+      quotesFilterDriverId: null,
+      driverLookupMethod: "",
       jobsReturned: 0,
       jobMatches: [],
       error: ""
@@ -791,6 +794,7 @@
             <div>
               <strong>Job:</strong> ${escapeHtml(jobMatch.jobNumber || "Job")} •
               <strong>assigned_driver_id:</strong> ${escapeHtml(formatDiagnosticValue(jobMatch.assignedDriverId))} •
+              <strong>status:</strong> ${escapeHtml(formatDiagnosticValue(jobMatch.status))} •
               <strong>matches:</strong> ${escapeHtml(jobMatch.matches ? "yes" : "no")} •
               <strong>acceptance:</strong> ${escapeHtml(formatDiagnosticValue(jobMatch.acceptanceStatus))} •
               <strong>workflow:</strong> ${escapeHtml(formatDiagnosticValue(jobMatch.workflowStatus))}
@@ -802,6 +806,9 @@
         <div><strong>Auth user ID:</strong> ${escapeHtml(formatDiagnosticValue(diagnostics.authUserId))}</div>
         <div><strong>Logged-in email:</strong> ${escapeHtml(formatDiagnosticValue(diagnostics.authEmail))}</div>
         <div><strong>Resolved driver record ID:</strong> ${escapeHtml(formatDiagnosticValue(diagnostics.resolvedDriverId))}</div>
+        <div><strong>Resolved driver email:</strong> ${escapeHtml(formatDiagnosticValue(diagnostics.resolvedDriverEmail))}</div>
+        <div><strong>Driver lookup method:</strong> ${escapeHtml(formatDiagnosticValue(diagnostics.driverLookupMethod))}</div>
+        <div><strong>UUID used in .eq("assigned_driver_id", value):</strong> ${escapeHtml(formatDiagnosticValue(diagnostics.quotesFilterDriverId))}</div>
         <div><strong>Jobs returned:</strong> ${escapeHtml(String(diagnostics.jobsReturned))}</div>
         <div><strong>Assigned job details:</strong></div>
         ${jobRows}
@@ -1260,12 +1267,14 @@
           throw new Error("No resolved driver record was found.");
         }
 
+        diagnostics.quotesFilterDriverId = currentDriver.id;
+        renderDiagnostics();
+
         const jobResult =
           await client
             .from("quotes")
             .select("id,job_number,assigned_driver_id,status,customer_name,pickup_address,delivery_address,driver_pay,driver_acceptance_status,driver_workflow_status,driver_accepted_at,driver_rejected_at,en_route_pickup_at,picked_up_at,en_route_delivery_at,pod_recipient_name,created_at,completed_at,delivery_photo_uploaded_at,delivery_photo_url")
             .eq("assigned_driver_id", currentDriver.id)
-            .eq("status", "assigned")
             .order(
               "created_at",
               {
@@ -1287,6 +1296,7 @@
         diagnostics.jobMatches = jobs.map(job => ({
           jobNumber: job.job_number || "Job",
           assignedDriverId: job.assigned_driver_id || null,
+          status: job.status || null,
           matches: String(job.assigned_driver_id || "") === String(currentDriver.id || ""),
           acceptanceStatus: job.driver_acceptance_status || null,
           workflowStatus: job.driver_workflow_status || null
@@ -1350,6 +1360,9 @@
         diagnostics.authUserId = "";
         diagnostics.authEmail = "";
         diagnostics.resolvedDriverId = null;
+        diagnostics.resolvedDriverEmail = "";
+        diagnostics.quotesFilterDriverId = null;
+        diagnostics.driverLookupMethod = "";
         diagnostics.error = "No active session.";
         renderDiagnostics();
         return null;
@@ -1385,6 +1398,7 @@
 
           if (driverResult.data) {
             driver = driverResult.data;
+            diagnostics.driverLookupMethod = column;
             break;
           }
         } catch (error) {
@@ -1411,10 +1425,15 @@
         }
 
         driver = fallbackResult.data || null;
+
+        if (driver) {
+          diagnostics.driverLookupMethod = "email_fallback";
+        }
       }
 
       currentDriver = driver;
       diagnostics.resolvedDriverId = driver?.id || null;
+      diagnostics.resolvedDriverEmail = driver?.email || "";
       console.log("Logged-in driver record:", driver);
       renderDiagnostics();
       return currentDriver;
@@ -1475,8 +1494,7 @@
       }
 
       const workflowJobs = jobs.filter(job =>
-        String(job.assigned_driver_id || "") === String(currentDriver.id) &&
-        cleanStatus(job.status) === "assigned"
+        String(job.assigned_driver_id || "") === String(currentDriver.id)
       );
 
       const activeWorkflowJobs = workflowJobs.filter(job => !isClosedJob(job));
