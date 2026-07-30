@@ -18,7 +18,7 @@
         PORTAL_BASE +
         "/jobs.html",
 
-      label: "Active Jobs",
+      label: "Jobs",
       icon: "📦"
     },
     {
@@ -26,8 +26,8 @@
         PORTAL_BASE +
         "/dashboard.html",
 
-      label: "Create Job",
-      icon: "➕"
+      label: "Quotes",
+      icon: "🗂️"
     },
     {
       href:
@@ -76,6 +76,14 @@
 
       label: "Reports",
       icon: "📊"
+    },
+    {
+      href:
+        PORTAL_BASE +
+        "/index.html",
+
+      label: "Settings",
+      icon: "⚙️"
     }
   ];
 

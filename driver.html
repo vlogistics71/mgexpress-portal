@@ -965,7 +965,7 @@
         }
 
         if (workflowStatus === "picked_up") {
-          return "Accepted • Pickup Complete";
+          return "Accepted • Picked Up";
         }
 
         if (workflowStatus === "en_route_delivery") {
@@ -1263,7 +1263,7 @@
         const jobResult =
           await client
             .from("quotes")
-            .select("id,job_number,assigned_driver_id,status,customer_name,pickup_address,pickup_address_line1,pickup_address_city,pickup_address_state,pickup_address_zip,delivery_address,delivery_address_line1,delivery_address_city,delivery_address_state,delivery_address_zip,driver_pay,driver_acceptance_status,driver_workflow_status,driver_accepted_at,driver_rejected_at,en_route_pickup_at,picked_up_at,en_route_delivery_at,pod_recipient_name,created_at,completed_at,delivery_photo_uploaded_at")
+            .select("id,job_number,assigned_driver_id,status,customer_name,pickup_address,delivery_address,driver_pay,driver_acceptance_status,driver_workflow_status,driver_accepted_at,driver_rejected_at,en_route_pickup_at,picked_up_at,en_route_delivery_at,pod_recipient_name,created_at,completed_at,delivery_photo_uploaded_at,delivery_photo_url")
             .eq("assigned_driver_id", currentDriver.id)
             .order(
               "created_at",
@@ -1477,16 +1477,18 @@
         String(job.assigned_driver_id || "") === String(currentDriver.id)
       );
 
-      if (!workflowJobs.length) {
+      const activeWorkflowJobs = workflowJobs.filter(job => !isClosedJob(job));
+
+      if (!activeWorkflowJobs.length) {
         workflowBox.innerHTML = `
           <div class="empty">
-            No assigned jobs were returned for ${escapeHtml(currentDriver.full_name || currentDriver.email || "this driver")}. 
+            No active workflow tasks are assigned to ${escapeHtml(currentDriver.full_name || currentDriver.email || "this driver")}. 
           </div>
         `;
         return;
       }
 
-      workflowBox.innerHTML = workflowJobs.map(job => {
+      workflowBox.innerHTML = activeWorkflowJobs.map(job => {
         const workflowButtons = [];
         const {
           acceptanceStatus,
@@ -1508,7 +1510,7 @@
         }
 
         if (workflowStatus === "en_route_pickup") {
-          workflowButtons.push(`<button class="workflow-button" data-workflow-action="pickup_complete" type="button">Pickup Complete</button>`);
+          workflowButtons.push(`<button class="workflow-button" data-workflow-action="pickup_complete" type="button">Picked Up</button>`);
         }
 
         if (workflowStatus === "picked_up") {
@@ -1516,7 +1518,7 @@
         }
 
         if (workflowStatus === "en_route_delivery") {
-          workflowButtons.push(`<button class="workflow-button" data-workflow-action="complete_delivery" type="button">Complete Delivery</button>`);
+          workflowButtons.push(`<button class="workflow-button" data-workflow-action="complete_delivery" type="button">Delivered</button>`);
         }
 
         return `
@@ -1582,8 +1584,18 @@
           return;
         }
 
+        const recipientName = podRecipient.trim();
+        const hasDeliveryPhotoProof = Boolean(
+          job.delivery_photo_uploaded_at ||
+          job.delivery_photo_url
+        );
+
+        if (!recipientName && !hasDeliveryPhotoProof) {
+          throw new Error("Delivery requires either a delivery photo or POD recipient name.");
+        }
+
         payload.driver_workflow_status = "delivered";
-        payload.pod_recipient_name = podRecipient.trim() || null;
+        payload.pod_recipient_name = recipientName || null;
         payload.status = "delivered";
         payload.completed_at = now;
       }
@@ -1837,6 +1849,6 @@
     })();
   </script>
 
-  <script src="/dispatch-menu-v3.js"></script>
+  <script src="/dispatch-menu.js"></script>
 </body>
 </html>

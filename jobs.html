@@ -641,6 +641,15 @@
       return address.slice(0, 57) + "...";
     }
 
+    function canDeleteJob(job) {
+      return [
+        "quote",
+        "quoted",
+        "pending",
+        "new"
+      ].includes(cleanStatus(job?.status));
+    }
+
     async function verifyDispatchUser() {
       const sessionResult =
         await client.auth.getSession();
@@ -893,6 +902,19 @@
             "/job.html?id=" +
             encodeURIComponent(realJobId);
 
+          const deleteButton = canDeleteJob(job)
+            ? `
+                <button
+                  class="refresh-button"
+                  type="button"
+                  data-delete-job-id="${escapeHtml(realJobId)}"
+                  data-delete-job-number="${escapeHtml(job.job_number || "Job")}" 
+                >
+                  Delete
+                </button>
+              `
+            : "";
+
           return `
             <a
               class="job-card"
@@ -1011,11 +1033,76 @@
                 <div class="open-job">
                   Open Job →
                 </div>
+
+                ${deleteButton}
               </div>
             </a>
           `;
         }).join("");
     }
+
+    jobsList.addEventListener(
+      "click",
+      async function (event) {
+        const button = event.target.closest("[data-delete-job-id]");
+
+        if (!button) {
+          return;
+        }
+
+        event.preventDefault();
+        event.stopPropagation();
+
+        const quoteId =
+          button.getAttribute("data-delete-job-id");
+
+        const jobNumber =
+          button.getAttribute("data-delete-job-number") || "Job";
+
+        const targetJob = jobs.find(job =>
+          String(job.id) === String(quoteId)
+        );
+
+        if (!targetJob || !canDeleteJob(targetJob)) {
+          jobsList.innerHTML = `
+            <div class="error">
+              Only quote, quoted, pending, or new jobs can be deleted.
+            </div>
+          `;
+          return;
+        }
+
+        const confirmed = window.confirm(
+          `Delete ${jobNumber}? This cannot be undone.`
+        );
+
+        if (!confirmed) {
+          return;
+        }
+
+        button.disabled = true;
+        button.textContent = "Deleting...";
+
+        const deleteResult = await client
+          .from("quotes")
+          .delete()
+          .eq("id", quoteId);
+
+        if (deleteResult.error) {
+          button.disabled = false;
+          button.textContent = "Delete";
+
+          jobsList.innerHTML = `
+            <div class="error">
+              ${escapeHtml(deleteResult.error.message || "Unable to delete job.")}
+            </div>
+          `;
+          return;
+        }
+
+        await loadJobs();
+      }
+    );
 
     searchInput.addEventListener(
       "input",
