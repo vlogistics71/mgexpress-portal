@@ -1265,6 +1265,7 @@
             .from("quotes")
             .select("id,job_number,assigned_driver_id,status,customer_name,pickup_address,delivery_address,driver_pay,driver_acceptance_status,driver_workflow_status,driver_accepted_at,driver_rejected_at,en_route_pickup_at,picked_up_at,en_route_delivery_at,pod_recipient_name,created_at,completed_at,delivery_photo_uploaded_at,delivery_photo_url")
             .eq("assigned_driver_id", currentDriver.id)
+            .eq("status", "assigned")
             .order(
               "created_at",
               {
@@ -1474,7 +1475,8 @@
       }
 
       const workflowJobs = jobs.filter(job =>
-        String(job.assigned_driver_id || "") === String(currentDriver.id)
+        String(job.assigned_driver_id || "") === String(currentDriver.id) &&
+        cleanStatus(job.status) === "assigned"
       );
 
       const activeWorkflowJobs = workflowJobs.filter(job => !isClosedJob(job));
