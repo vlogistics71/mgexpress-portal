@@ -84,17 +84,6 @@
       overflow-wrap: anywhere;
     }
 
-    .signout {
-      border: 0;
-      border-radius: 16px;
-      padding: 15px 18px;
-      background: white;
-      color: var(--dark-green);
-      font-weight: 900;
-      cursor: pointer;
-      min-width: 112px;
-    }
-
     .container {
       width: min(1050px, 100%);
       margin: auto;
@@ -468,14 +457,6 @@
 
         <div class="staff-email" id="staffEmail"></div>
       </div>
-
-      <button
-        class="signout"
-        id="signOutButton"
-        type="button"
-      >
-        Sign Out
-      </button>
     </div>
   </header>
 
@@ -565,17 +546,6 @@
 
       <form id="quoteForm" class="quote-form">
         <label>
-          Job Number
-
-          <input
-            name="job_number"
-            type="text"
-            placeholder="MGE-00002"
-            required
-          >
-        </label>
-
-        <label>
           Customer Name
 
           <input
@@ -605,19 +575,71 @@
         <label class="full">
           Pickup Address
 
-          <textarea
+          <input
             name="pickup_address"
+            type="text"
             required
-          ></textarea>
+          >
+        </label>
+
+        <label>
+          Pickup Suite / Floor
+
+          <input
+            name="pickup_suite_floor"
+            type="text"
+            placeholder="Suite 200"
+          >
+        </label>
+
+        <label>
+          Pickup ZIP Code
+
+          <input
+            name="pickup_zip"
+            type="text"
+            placeholder="80205"
+          >
         </label>
 
         <label class="full">
           Delivery Address
 
-          <textarea
+          <input
             name="delivery_address"
+            type="text"
             required
-          ></textarea>
+          >
+        </label>
+
+        <label>
+          Delivery Suite / Floor
+
+          <input
+            name="delivery_suite_floor"
+            type="text"
+            placeholder="Floor 3"
+          >
+        </label>
+
+        <label>
+          Delivery ZIP Code
+
+          <input
+            name="delivery_zip"
+            type="text"
+            placeholder="80216"
+          >
+        </label>
+
+        <label class="full">
+          Delivery Recipient Name
+
+          <input
+            name="delivery_recipient_name"
+            type="text"
+            placeholder="Receiving Contact"
+          >
         </label>
 
         <label>
@@ -638,22 +660,13 @@
 
           <select name="delivery_speed">
             <option value="">Choose speed</option>
-            <option value="Standard">Standard</option>
-            <option value="Same Day">Same Day</option>
-            <option value="Rush">Rush</option>
-            <option value="Scheduled Route">Scheduled Route</option>
+            <option value="2_hr">2 Hour</option>
+            <option value="3_hr">3 Hour</option>
+            <option value="4_hr">4 Hour</option>
+            <option value="5_hr">5 Hour</option>
+            <option value="6_hr">6 Hour</option>
+            <option value="next_day">Next Day</option>
           </select>
-        </label>
-
-        <label>
-          Delivery State
-
-          <input
-            name="delivery_state"
-            type="text"
-            maxlength="2"
-            placeholder="CO"
-          >
         </label>
 
         <label>
@@ -686,7 +699,7 @@
             type="number"
             min="0"
             step="0.01"
-            value="0.00"
+            placeholder="0.00"
           >
         </label>
 
@@ -694,6 +707,9 @@
           Status
 
           <select name="status">
+            <option value="quote">Quote</option>
+            <option value="quoted">Quoted</option>
+            <option value="pending">Pending</option>
             <option value="new">New</option>
             <option value="waiting_payment">Waiting Payment</option>
             <option value="paid">Paid / Ready</option>
@@ -714,11 +730,23 @@
 
         <div class="form-actions">
           <button
-            class="primary-button"
+            class="secondary-button"
             id="saveQuoteButton"
             type="submit"
+            name="submit_action"
+            value="save_quote"
           >
-            Save Job
+            Save Quote / Pending
+          </button>
+
+          <button
+            class="primary-button"
+            id="approveSendButton"
+            type="submit"
+            name="submit_action"
+            value="approve_send"
+          >
+            Approve &amp; Send to Driver
           </button>
 
           <button
@@ -813,6 +841,20 @@
         String(status || "").replaceAll("_", " ");
     }
 
+    function deliverySpeedLabel(value) {
+      const labels = {
+        "2_hr": "2 Hour",
+        "3_hr": "3 Hour",
+        "4_hr": "4 Hour",
+        "5_hr": "5 Hour",
+        "6_hr": "6 Hour",
+        next_day: "Next Day"
+      };
+
+      return labels[value] ||
+        String(value || "Not set");
+    }
+
     function cleanStatus(value) {
       return String(value || "")
         .trim()
@@ -846,6 +888,40 @@
     function setQuoteMessage(text, type) {
       quoteMessage.className = "message " + type;
       quoteMessage.textContent = text;
+    }
+
+    async function generateJobNumber() {
+      const result = await client
+        .from("quotes")
+        .select("job_number")
+        .order("created_at", {
+          ascending: false
+        })
+        .limit(250);
+
+      if (result.error) {
+        throw result.error;
+      }
+
+      let maxNumber = 0;
+
+      (result.data || []).forEach(row => {
+        const value = String(row.job_number || "").trim();
+        const match = value.match(/(\d+)$/);
+
+        if (!match) {
+          return;
+        }
+
+        const numeric = Number(match[1]);
+
+        if (Number.isFinite(numeric) && numeric > maxNumber) {
+          maxNumber = numeric;
+        }
+      });
+
+      const nextNumber = maxNumber + 1;
+      return "MGE-" + String(nextNumber).padStart(5, "0");
     }
 
     function populateNewJobDrivers() {
@@ -1014,7 +1090,7 @@
             <div class="detail-box">
               <div class="detail-label">Delivery Speed</div>
               <div class="detail-value">
-                ${escapeHtml(quote.delivery_speed || "Not set")}
+                ${escapeHtml(deliverySpeedLabel(quote.delivery_speed))}
               </div>
             </div>
 
@@ -1073,9 +1149,14 @@
                 type="number"
                 min="0"
                 step="0.01"
-                value="${Number(
-                  quote.driver_pay || 0
-                ).toFixed(2)}"
+                placeholder="0.00"
+                value="${
+                  quote.driver_pay === null ||
+                  quote.driver_pay === undefined ||
+                  quote.driver_pay === ""
+                    ? ""
+                    : escapeHtml(Number(quote.driver_pay).toFixed(2))
+                }"
               >
             </label>
 
@@ -1226,8 +1307,12 @@
           customer_name,
           customer_email,
           pickup_address,
+          pickup_suite_floor,
+          pickup_zip,
           delivery_address,
-            delivery_state,
+          delivery_suite_floor,
+          delivery_zip,
+          delivery_recipient_name,
           vehicle_type,
           delivery_speed,
           package_type,
@@ -1291,7 +1376,7 @@
 
       const driverPay =
         driverPayValue === ""
-          ? 0
+          ? null
           : Number(driverPayValue);
 
       const customerCharge =
@@ -1300,8 +1385,11 @@
           : Number(customerChargeValue);
 
       if (
-        !Number.isFinite(driverPay) ||
-        driverPay < 0
+        driverPay !== null &&
+        (
+          !Number.isFinite(driverPay) ||
+          driverPay < 0
+        )
       ) {
         showJobMessage(
           quoteId,
@@ -1431,6 +1519,10 @@
         const formData =
           new FormData(quoteForm);
 
+        const submitAction =
+          event.submitter?.value ||
+          "save_quote";
+
         const customerChargeValue =
           String(
             formData.get("approved_price") || ""
@@ -1438,8 +1530,8 @@
 
         const driverPayValue =
           String(
-            formData.get("driver_pay") || "0"
-          );
+            formData.get("driver_pay") || ""
+          ).trim();
 
         const customerCharge =
           customerChargeValue === ""
@@ -1447,7 +1539,9 @@
             : Number(customerChargeValue);
 
         const driverPay =
-          Number(driverPayValue);
+          driverPayValue === ""
+            ? null
+            : Number(driverPayValue);
 
         if (
           customerCharge !== null &&
@@ -1462,13 +1556,16 @@
           );
 
           saveQuoteButton.disabled = false;
-          saveQuoteButton.textContent = "Save Job";
+          saveQuoteButton.textContent = "Save Quote / Pending";
           return;
         }
 
         if (
-          !Number.isFinite(driverPay) ||
-          driverPay < 0
+          driverPay !== null &&
+          (
+            !Number.isFinite(driverPay) ||
+            driverPay < 0
+          )
         ) {
           setQuoteMessage(
             "Enter a valid driver pay amount.",
@@ -1476,7 +1573,7 @@
           );
 
           saveQuoteButton.disabled = false;
-          saveQuoteButton.textContent = "Save Job";
+          saveQuoteButton.textContent = "Save Quote / Pending";
           return;
         }
 
@@ -1485,11 +1582,26 @@
             formData.get("assigned_driver_id") || ""
           );
 
+        if (
+          submitAction === "approve_send" &&
+          !assignedDriver
+        ) {
+          setQuoteMessage(
+            "Assign a driver before using Approve & Send to Driver.",
+            "error"
+          );
+
+          saveQuoteButton.disabled = false;
+          saveQuoteButton.textContent = "Save Quote / Pending";
+          return;
+        }
+
+        const generatedJobNumber =
+          await generateJobNumber();
+
         const payload = {
           job_number:
-            String(
-              formData.get("job_number") || ""
-            ).trim(),
+            generatedJobNumber,
 
           customer_name:
             String(
@@ -1506,14 +1618,34 @@
               formData.get("pickup_address") || ""
             ).trim(),
 
+          pickup_suite_floor:
+            String(
+              formData.get("pickup_suite_floor") || ""
+            ).trim() || null,
+
+          pickup_zip:
+            String(
+              formData.get("pickup_zip") || ""
+            ).trim() || null,
+
           delivery_address:
             String(
               formData.get("delivery_address") || ""
             ).trim(),
 
-          delivery_state:
+          delivery_suite_floor:
             String(
-              formData.get("delivery_state") || ""
+              formData.get("delivery_suite_floor") || ""
+            ).trim() || null,
+
+          delivery_zip:
+            String(
+              formData.get("delivery_zip") || ""
+            ).trim() || null,
+
+          delivery_recipient_name:
+            String(
+              formData.get("delivery_recipient_name") || ""
             ).trim() || null,
 
           vehicle_type:
@@ -1536,9 +1668,31 @@
           driver_pay: driverPay,
 
           status:
-            String(
-              formData.get("status") || "new"
-            ),
+            submitAction === "approve_send"
+              ? "assigned"
+              : String(
+                  formData.get("status") || "new"
+                ),
+
+          driver_acceptance_status:
+            submitAction === "approve_send"
+              ? "pending"
+              : undefined,
+
+          driver_workflow_status:
+            submitAction === "approve_send"
+              ? "assigned"
+              : undefined,
+
+          driver_accepted_at:
+            submitAction === "approve_send"
+              ? null
+              : undefined,
+
+          driver_rejected_at:
+            submitAction === "approve_send"
+              ? null
+              : undefined,
 
           special_instructions:
             String(
@@ -1551,6 +1705,12 @@
             assignedDriver || null
         };
 
+        Object.keys(payload).forEach(key => {
+          if (payload[key] === undefined) {
+            delete payload[key];
+          }
+        });
+
         const result = await client
           .from("quotes")
           .insert(payload);
@@ -1562,24 +1722,34 @@
           );
 
           saveQuoteButton.disabled = false;
-          saveQuoteButton.textContent = "Save Job";
+          saveQuoteButton.textContent = "Save Quote / Pending";
           return;
         }
 
-        setQuoteMessage(
-          "Job saved successfully.",
-          "info"
-        );
+        if (submitAction === "approve_send") {
+          setQuoteMessage(
+            "Job approved and sent to driver.",
+            "info"
+          );
 
-        await loadQuotes();
+          closeQuotePanel();
+          await loadDashboard();
+        } else {
+          setQuoteMessage(
+            "Job saved successfully.",
+            "info"
+          );
 
-        setTimeout(
-          closeQuotePanel,
-          700
-        );
+          await loadQuotes();
+
+          setTimeout(
+            closeQuotePanel,
+            700
+          );
+        }
 
         saveQuoteButton.disabled = false;
-        saveQuoteButton.textContent = "Save Job";
+        saveQuoteButton.textContent = "Save Quote / Pending";
       }
     );
 
@@ -1609,27 +1779,6 @@
       .addEventListener(
         "click",
         loadDashboard
-      );
-
-    document
-      .getElementById("signOutButton")
-      .addEventListener(
-        "click",
-        async function () {
-          this.disabled = true;
-          this.textContent = "Signing Out…";
-
-          try {
-            await client.auth.signOut();
-          } finally {
-            localStorage.clear();
-            sessionStorage.clear();
-
-            location.replace(
-              "/index.html?loggedout=1"
-            );
-          }
-        }
       );
 
     (async function start() {
