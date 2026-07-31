@@ -307,50 +307,58 @@
       border-bottom: 0;
     }
 
-    .wizard-wrap {
+    .job-form {
       display: grid;
-      gap: 12px;
+      gap: 14px;
+      padding-bottom: 86px;
     }
 
-    .wizard-progress {
-      height: 8px;
-      border-radius: 999px;
-      background: #eef3f1;
-      overflow: hidden;
-    }
-
-    .wizard-progress-fill {
-      height: 100%;
-      width: 16.66%;
-      background: linear-gradient(90deg, #0b7f5f, #1a9a77);
-      transition: width .2s ease;
-    }
-
-    .wizard-step-label {
-      color: var(--muted);
-      font-size: 12px;
-      font-weight: 800;
-      text-transform: uppercase;
-      letter-spacing: .04em;
-    }
-
-    .wizard-pane {
-      display: none;
+    .job-section {
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      background: #fff;
+      padding: 12px;
+      display: grid;
       gap: 10px;
     }
 
-    .wizard-pane.active {
-      display: grid;
+    .job-section-title {
+      margin: 0;
+      color: var(--dark-green);
+      font-size: 15px;
+      font-weight: 900;
+      letter-spacing: .01em;
     }
 
-    .review-block {
-      border: 1px solid var(--line);
-      border-radius: 12px;
+    .job-subdivider {
+      height: 1px;
+      background: var(--line);
+      margin: 2px 0;
+    }
+
+    .job-submit-wrap {
+      position: sticky;
+      bottom: 0;
+      z-index: 7;
+      background: rgba(255, 255, 255, .95);
+      backdrop-filter: blur(7px);
+      border-top: 1px solid var(--line);
       padding: 10px;
-      background: #f9fcfb;
+      margin: 0 -12px -12px;
       display: grid;
-      gap: 5px;
-      font-size: 13px;
+      grid-template-columns: 1fr;
+      gap: 8px;
+    }
+
+    .job-submit-btn {
+      min-height: 52px;
+      border-radius: 14px;
+      border: 0;
+      background: var(--green);
+      color: #fff;
+      font-size: 16px;
+      font-weight: 900;
+      cursor: pointer;
     }
 
     .section-head {
@@ -774,6 +782,19 @@
         grid-template-columns: repeat(2, minmax(0, 1fr));
       }
 
+      .job-submit-wrap {
+        position: static;
+        background: transparent;
+        border-top: 0;
+        backdrop-filter: none;
+        padding: 0;
+        margin: 0;
+      }
+
+      .job-form {
+        padding-bottom: 0;
+      }
+
       .status-row {
         grid-template-columns: minmax(0, 1fr) auto;
       }
@@ -1034,90 +1055,87 @@
         <button class="icon-btn" type="button" data-close-modal="jobModal">×</button>
       </div>
       <div class="modal-body">
-        <form id="jobForm" class="wizard-wrap">
+        <form id="jobForm" class="job-form">
           <input type="hidden" name="record_id" id="jobRecordId">
 
-          <div class="wizard-step-label" id="jobWizardStepLabel">Step 1 of 6 - Customer Information</div>
-          <div class="wizard-progress"><div class="wizard-progress-fill" id="jobWizardProgress"></div></div>
-
-          <section class="wizard-pane active" data-step="1">
-            <div class="field"><label>Customer Name</label><input name="customer_name" required></div>
-            <div class="field"><label>Customer Email</label><input name="customer_email" type="email"></div>
-            <div class="field"><label>Customer Phone</label><input name="customer_phone" type="tel"></div>
-          </section>
-
-          <section class="wizard-pane" data-step="2">
-            <div class="field full"><label>Pickup Address</label><input name="pickup_address" required></div>
-            <div class="field"><label>Pickup Suite / Floor</label><input name="pickup_suite_floor"></div>
-            <div class="field"><label>Pickup ZIP Code</label><input name="pickup_zip"></div>
-          </section>
-
-          <section class="wizard-pane" data-step="3">
-            <div class="field full"><label>Delivery Address</label><input name="delivery_address" required></div>
-            <div class="field"><label>Delivery Suite / Floor</label><input name="delivery_suite_floor"></div>
-            <div class="field"><label>Delivery ZIP Code</label><input name="delivery_zip"></div>
-            <div class="field full"><label>Delivery Recipient Name</label><input name="delivery_recipient_name"></div>
-          </section>
-
-          <section class="wizard-pane" data-step="4">
-            <div class="field"><label>Vehicle Type</label>
-              <select name="vehicle_type">
-                <option value="">Choose vehicle</option>
-                <option value="Car">Car</option>
-                <option value="SUV">SUV</option>
-                <option value="Cargo Van">Cargo Van</option>
-                <option value="Sprinter Van">Sprinter Van</option>
-                <option value="Box Truck">Box Truck</option>
-              </select>
-            </div>
-
-            <div class="field"><label>Delivery Speed</label>
-              <select name="delivery_speed">
-                <option value="">Choose speed</option>
-                <option value="2_hr">2 Hour</option>
-                <option value="3_hr">3 Hour</option>
-                <option value="4_hr">4 Hour</option>
-                <option value="5_hr">5 Hour</option>
-                <option value="6_hr">6 Hour</option>
-                <option value="next_day">Next Day</option>
-              </select>
-            </div>
-
-            <div class="field"><label>Package Information</label><input name="package_type"></div>
-            <div class="field"><label>Delivery Method</label>
-              <select name="delivery_method">
-                <option value="">Select</option>
-                <option value="Hand Delivery">Hand Delivery</option>
-                <option value="Leave at Door">Leave at Door</option>
-                <option value="Receiving Department">Receiving Department</option>
-              </select>
+          <section class="job-section">
+            <h4 class="job-section-title">Customer</h4>
+            <div class="job-subdivider"></div>
+            <div class="form-grid">
+              <div class="field"><label>Customer Name</label><input name="customer_name" required></div>
+              <div class="field"><label>Phone</label><input name="customer_phone" type="tel"></div>
+              <div class="field full"><label>Email</label><input name="customer_email" type="email"></div>
             </div>
           </section>
 
-          <section class="wizard-pane" data-step="5">
-            <div class="field"><label>Total Amount Billed</label><input name="approved_price" type="number" min="0" step="0.01" placeholder="0.00"></div>
-            <div class="field"><label>Invoice Delivery Preference</label>
-              <select name="invoice_delivery_method">
-                <option value="none">Do Not Send Yet</option>
-                <option value="email">Email</option>
-                <option value="text">Text Message</option>
-                <option value="both">Email and Text</option>
-              </select>
+          <section class="job-section">
+            <h4 class="job-section-title">Pickup</h4>
+            <div class="job-subdivider"></div>
+            <div class="form-grid">
+              <div class="field full"><label>Pickup Address</label><input name="pickup_address" required></div>
+              <div class="field"><label>Contact Name</label><input name="pickup_contact_name"></div>
+              <div class="field"><label>Contact Phone</label><input name="pickup_contact_phone" type="tel"></div>
+              <div class="field full"><label>Pickup Instructions</label><textarea name="pickup_instructions"></textarea></div>
             </div>
-            <div class="field full"><label>Billing Notes</label><textarea name="billing_notes"></textarea></div>
-            <div class="field full"><label>Internal Notes</label><textarea name="special_instructions"></textarea></div>
           </section>
 
-          <section class="wizard-pane" data-step="6">
-            <div class="review-block" id="jobWizardReview"></div>
-            <div class="hint">Status will be set to Pending Approval automatically.</div>
+          <section class="job-section">
+            <h4 class="job-section-title">Delivery</h4>
+            <div class="job-subdivider"></div>
+            <div class="form-grid">
+              <div class="field full"><label>Delivery Address</label><input name="delivery_address" required></div>
+              <div class="field"><label>Contact Name</label><input name="delivery_contact_name"></div>
+              <div class="field"><label>Contact Phone</label><input name="delivery_contact_phone" type="tel"></div>
+              <div class="field full"><label>Delivery Instructions</label><textarea name="delivery_instructions"></textarea></div>
+            </div>
           </section>
 
-          <div class="form-actions full">
+          <section class="job-section">
+            <h4 class="job-section-title">Package</h4>
+            <div class="job-subdivider"></div>
+            <div class="form-grid">
+              <div class="field"><label>Vehicle Type</label>
+                <select name="vehicle_type">
+                  <option value="">Choose vehicle</option>
+                  <option value="Car">Car</option>
+                  <option value="SUV">SUV</option>
+                  <option value="Cargo Van">Cargo Van</option>
+                  <option value="Sprinter Van">Sprinter Van</option>
+                  <option value="Box Truck">Box Truck</option>
+                </select>
+              </div>
+
+              <div class="field"><label>Service Level</label>
+                <select name="delivery_speed">
+                  <option value="">Choose speed</option>
+                  <option value="2_hr">2 Hour</option>
+                  <option value="3_hr">3 Hour</option>
+                  <option value="4_hr">4 Hour</option>
+                  <option value="5_hr">5 Hour</option>
+                  <option value="6_hr">6 Hour</option>
+                  <option value="next_day">Next Day</option>
+                </select>
+              </div>
+
+              <div class="field full"><label>Package Description</label><input name="package_type"></div>
+              <div class="field"><label>Weight (optional)</label><input name="package_weight"></div>
+              <div class="field"><label>Reference Number (optional)</label><input name="reference_number"></div>
+            </div>
+          </section>
+
+          <section class="job-section">
+            <h4 class="job-section-title">Pricing</h4>
+            <div class="job-subdivider"></div>
+            <div class="form-grid">
+              <div class="field"><label>Customer Price</label><input name="approved_price" type="number" min="0" step="0.01" placeholder="0.00"></div>
+              <div class="field"><label>Discount (optional)</label><input name="discount_amount" type="number" min="0" step="0.01" placeholder="0.00"></div>
+              <div class="field full"><label>Internal Notes</label><textarea name="special_instructions"></textarea></div>
+            </div>
+          </section>
+
+          <div class="job-submit-wrap">
             <button class="btn" type="button" data-close-modal="jobModal">Cancel</button>
-            <button class="btn" type="button" id="jobWizardBackBtn">Back</button>
-            <button class="btn primary" type="button" id="jobWizardNextBtn">Next</button>
-            <button class="btn primary" id="saveJobBtn" type="submit" style="display:none;">Create Job</button>
+            <button class="job-submit-btn" id="saveJobBtn" type="submit">Create Job</button>
           </div>
         </form>
       </div>
@@ -1180,8 +1198,7 @@
       drivers: [],
       rows: [],
       selectedQuote: null,
-      selectedJob: null,
-      jobWizardStep: 1
+      selectedJob: null
     };
 
     const elements = {
@@ -1216,11 +1233,6 @@
       aiSuggestionsModal: document.getElementById("aiSuggestionsModal"),
       quoteForm: document.getElementById("quoteForm"),
       jobForm: document.getElementById("jobForm"),
-      jobWizardStepLabel: document.getElementById("jobWizardStepLabel"),
-      jobWizardProgress: document.getElementById("jobWizardProgress"),
-      jobWizardReview: document.getElementById("jobWizardReview"),
-      jobWizardBackBtn: document.getElementById("jobWizardBackBtn"),
-      jobWizardNextBtn: document.getElementById("jobWizardNextBtn"),
       saveJobBtn: document.getElementById("saveJobBtn"),
       quoteDetailsModal: document.getElementById("quoteDetailsModal"),
       quoteDetailsBody: document.getElementById("quoteDetailsBody"),
@@ -1976,6 +1988,47 @@
 
       const priceRaw = String(data.get("approved_price") || "").trim();
       const payRaw = String(data.get("driver_pay") || "").trim();
+      const discountRaw = String(data.get("discount_amount") || "").trim();
+
+      const pickupContactName = String(data.get("pickup_contact_name") || "").trim();
+      const pickupContactPhone = String(data.get("pickup_contact_phone") || "").trim();
+      const pickupInstructions = String(data.get("pickup_instructions") || "").trim();
+
+      const deliveryContactName = String(data.get("delivery_contact_name") || "").trim();
+      const deliveryContactPhone = String(data.get("delivery_contact_phone") || "").trim();
+      const deliveryInstructions = String(data.get("delivery_instructions") || "").trim();
+
+      const packageWeight = String(data.get("package_weight") || "").trim();
+      const referenceNumber = String(data.get("reference_number") || "").trim();
+
+      const internalNotes = String(data.get("special_instructions") || "").trim();
+      const billingMeta = [];
+      const instructions = [];
+
+      if (discountRaw !== "") {
+        billingMeta.push("Discount: " + discountRaw);
+      }
+      if (pickupContactName) {
+        billingMeta.push("Pickup Contact: " + pickupContactName);
+      }
+      if (pickupContactPhone) {
+        billingMeta.push("Pickup Contact Phone: " + pickupContactPhone);
+      }
+      if (deliveryContactPhone) {
+        billingMeta.push("Delivery Contact Phone: " + deliveryContactPhone);
+      }
+      if (packageWeight) {
+        billingMeta.push("Weight: " + packageWeight);
+      }
+      if (referenceNumber) {
+        billingMeta.push("Reference #: " + referenceNumber);
+      }
+      if (pickupInstructions) {
+        instructions.push("Pickup Instructions: " + pickupInstructions);
+      }
+      if (deliveryInstructions) {
+        instructions.push("Delivery Instructions: " + deliveryInstructions);
+      }
 
       const payload = {
         customer_name: String(data.get("customer_name") || "").trim(),
@@ -1987,18 +2040,17 @@
         delivery_address: String(data.get("delivery_address") || "").trim(),
         delivery_suite_floor: String(data.get("delivery_suite_floor") || "").trim() || null,
         delivery_zip: String(data.get("delivery_zip") || "").trim() || null,
-        delivery_recipient_name: String(data.get("delivery_recipient_name") || "").trim() || null,
+        delivery_recipient_name: deliveryContactName || String(data.get("delivery_recipient_name") || "").trim() || null,
         vehicle_type: String(data.get("vehicle_type") || "").trim(),
         delivery_speed: String(data.get("delivery_speed") || "").trim(),
         package_type: String(data.get("package_type") || "").trim(),
         delivery_method: String(data.get("delivery_method") || "").trim(),
-        special_instructions: String(data.get("special_instructions") || "").trim(),
+        special_instructions: [internalNotes].concat(instructions).filter(Boolean).join("\n") || null,
         approved_price: priceRaw === "" ? null : Number(priceRaw),
         driver_pay: payRaw === "" ? null : Number(payRaw),
         assigned_driver_id: String(data.get("assigned_driver_id") || "").trim() || null,
         invoice_delivery_method: String(data.get("invoice_delivery_method") || "none").trim(),
-        invoice_due_date: data.get("invoice_due_date") || null,
-        billing_notes: String(data.get("billing_notes") || "").trim()
+        billing_notes: billingMeta.join("\n") || null
       };
 
       if (options.includeStatus) {
@@ -2039,109 +2091,8 @@
       elements.jobForm.reset();
       document.getElementById("jobRecordId").value = "";
       document.getElementById("jobModalTitle").textContent = "Create Job";
-      state.jobWizardStep = 1;
-      renderJobWizard();
+      elements.saveJobBtn.textContent = "Create Job";
       openModal("jobModal");
-    }
-
-    const wizardStepNames = [
-      "Customer Information",
-      "Pickup Information",
-      "Delivery Information",
-      "Package Details",
-      "Customer Pricing",
-      "Review & Create Job"
-    ];
-
-    function renderWizardReview() {
-      const form = elements.jobForm;
-      const data = new FormData(form);
-
-      const pairs = [
-        ["Customer", data.get("customer_name") || "-"],
-        ["Email", data.get("customer_email") || "-"],
-        ["Phone", data.get("customer_phone") || "-"],
-        ["Pickup", data.get("pickup_address") || "-"],
-        ["Delivery", data.get("delivery_address") || "-"],
-        ["Recipient", data.get("delivery_recipient_name") || "-"],
-        ["Vehicle", data.get("vehicle_type") || "-"],
-        ["Delivery Speed", deliverySpeedLabel(data.get("delivery_speed"))],
-        ["Package", data.get("package_type") || "-"],
-        ["Price", money(data.get("approved_price"))],
-        ["Invoice Delivery", String(data.get("invoice_delivery_method") || "none").toUpperCase()]
-      ];
-
-      elements.jobWizardReview.innerHTML = pairs.map(pair => `
-        <div><strong>${escapeHtml(pair[0])}:</strong> ${escapeHtml(String(pair[1] || "-"))}</div>
-      `).join("");
-    }
-
-    function validateJobWizardStep(step) {
-      const form = elements.jobForm;
-
-      if (step === 1 && !String(form.customer_name.value || "").trim()) {
-        return "Customer name is required.";
-      }
-
-      if (step === 2 && !String(form.pickup_address.value || "").trim()) {
-        return "Pickup address is required.";
-      }
-
-      if (step === 3 && !String(form.delivery_address.value || "").trim()) {
-        return "Delivery address is required.";
-      }
-
-      if (step === 5) {
-        const value = String(form.approved_price.value || "").trim();
-        if (value !== "") {
-          const numeric = Number(value);
-          if (!Number.isFinite(numeric) || numeric < 0) {
-            return "Total amount billed must be a valid number.";
-          }
-        }
-      }
-
-      return "";
-    }
-
-    function renderJobWizard() {
-      const panes = elements.jobForm.querySelectorAll(".wizard-pane");
-      panes.forEach((pane, index) => {
-        pane.classList.toggle("active", index + 1 === state.jobWizardStep);
-      });
-
-      const label = "Step " + String(state.jobWizardStep) + " of 6 - " + wizardStepNames[state.jobWizardStep - 1];
-      elements.jobWizardStepLabel.textContent = label;
-      elements.jobWizardProgress.style.width = String((state.jobWizardStep / 6) * 100) + "%";
-
-      elements.jobWizardBackBtn.style.display = state.jobWizardStep === 1 ? "none" : "";
-      elements.jobWizardNextBtn.style.display = state.jobWizardStep === 6 ? "none" : "";
-      elements.saveJobBtn.style.display = state.jobWizardStep === 6 ? "" : "none";
-      elements.saveJobBtn.textContent = document.getElementById("jobRecordId").value ? "Save Job" : "Create Job";
-
-      if (state.jobWizardStep === 6) {
-        renderWizardReview();
-      }
-    }
-
-    function goToNextJobWizardStep() {
-      const error = validateJobWizardStep(state.jobWizardStep);
-      if (error) {
-        showToast(error, "error");
-        return;
-      }
-
-      if (state.jobWizardStep < 6) {
-        state.jobWizardStep += 1;
-        renderJobWizard();
-      }
-    }
-
-    function goToPrevJobWizardStep() {
-      if (state.jobWizardStep > 1) {
-        state.jobWizardStep -= 1;
-        renderJobWizard();
-      }
     }
 
     function openAssignFromQuickActions() {
@@ -2263,19 +2214,22 @@
       form.customer_email.value = quote.customer_email || "";
       form.customer_phone.value = quote.customer_phone || "";
       form.pickup_address.value = quote.pickup_address || "";
-      form.pickup_suite_floor.value = quote.pickup_suite_floor || "";
-      form.pickup_zip.value = quote.pickup_zip || "";
+      form.pickup_contact_name.value = "";
+      form.pickup_contact_phone.value = "";
+      form.pickup_instructions.value = "";
       form.delivery_address.value = quote.delivery_address || "";
-      form.delivery_suite_floor.value = quote.delivery_suite_floor || "";
-      form.delivery_zip.value = quote.delivery_zip || "";
-      form.delivery_recipient_name.value = quote.delivery_recipient_name || "";
+      form.delivery_contact_name.value = quote.delivery_recipient_name || "";
+      form.delivery_contact_phone.value = "";
+      form.delivery_instructions.value = "";
       form.vehicle_type.value = quote.vehicle_type || "";
       form.delivery_speed.value = quote.delivery_speed || "";
       form.package_type.value = quote.package_type || "";
+      form.package_weight.value = "";
+      form.reference_number.value = "";
       form.approved_price.value = quote.approved_price ?? quote.customer_charge ?? "";
+      form.discount_amount.value = "";
       form.special_instructions.value = quote.special_instructions || "";
-      state.jobWizardStep = 1;
-      renderJobWizard();
+      elements.saveJobBtn.textContent = "Create Job";
       closeModal("quoteDetailsModal");
     }
 
@@ -2375,23 +2329,22 @@
       form.customer_email.value = job.customer_email || "";
       form.customer_phone.value = job.customer_phone || "";
       form.pickup_address.value = job.pickup_address || "";
-      form.pickup_suite_floor.value = job.pickup_suite_floor || "";
-      form.pickup_zip.value = job.pickup_zip || "";
+      form.pickup_contact_name.value = "";
+      form.pickup_contact_phone.value = "";
+      form.pickup_instructions.value = "";
       form.delivery_address.value = job.delivery_address || "";
-      form.delivery_suite_floor.value = job.delivery_suite_floor || "";
-      form.delivery_zip.value = job.delivery_zip || "";
-      form.delivery_recipient_name.value = job.delivery_recipient_name || "";
+      form.delivery_contact_name.value = job.delivery_recipient_name || "";
+      form.delivery_contact_phone.value = "";
+      form.delivery_instructions.value = "";
       form.vehicle_type.value = job.vehicle_type || "";
       form.delivery_speed.value = job.delivery_speed || "";
       form.package_type.value = job.package_type || "";
-      form.delivery_method.value = job.delivery_method || "";
+      form.package_weight.value = "";
+      form.reference_number.value = "";
       form.approved_price.value = job.approved_price ?? job.customer_charge ?? "";
-      form.invoice_delivery_method.value = job.invoice_delivery_method || "none";
-      form.billing_notes.value = job.billing_notes || "";
+      form.discount_amount.value = "";
       form.special_instructions.value = job.special_instructions || "";
-
-      state.jobWizardStep = 1;
-      renderJobWizard();
+      elements.saveJobBtn.textContent = "Save Job";
     }
 
     async function changeDispatchStatus(jobId, nextStatus, buttonRef) {
@@ -2669,8 +2622,6 @@
           showToast(validationError, "error");
           return;
         }
-
-        delete payload.invoice_due_date;
 
         if (!recordId) {
           payload.status = "pending_approval";
@@ -2961,9 +2912,6 @@
       elements.cardClosedJobs.addEventListener("click", drillToNeedsAttention);
 
       elements.openAiSuggestionsBtn.addEventListener("click", openAiSuggestionsModal);
-
-      elements.jobWizardNextBtn.addEventListener("click", goToNextJobWizardStep);
-      elements.jobWizardBackBtn.addEventListener("click", goToPrevJobWizardStep);
 
       elements.quoteForm.addEventListener("submit", submitQuoteForm);
       elements.jobForm.addEventListener("submit", submitJobForm);
