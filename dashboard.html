@@ -82,6 +82,25 @@
       margin-bottom: 14px;
     }
 
+    .ops-top {
+      display: grid;
+      gap: 6px;
+    }
+
+    .ops-title {
+      margin: 0;
+      font-size: clamp(30px, 7vw, 44px);
+      line-height: 1.05;
+    }
+
+    .ops-date {
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: .04em;
+    }
+
     .eyebrow {
       color: var(--muted);
       font-size: 15px;
@@ -146,6 +165,103 @@
       grid-template-columns: repeat(2, minmax(0, 1fr));
       gap: 8px;
       margin-bottom: 14px;
+    }
+
+    .ops-cards {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 8px;
+      margin-bottom: 14px;
+    }
+
+    .ops-card {
+      width: 100%;
+      text-align: left;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      background: #fff;
+      padding: 12px;
+      cursor: pointer;
+    }
+
+    .ops-card-label {
+      color: var(--muted);
+      font-size: 11px;
+      font-weight: 900;
+      text-transform: uppercase;
+      letter-spacing: .04em;
+    }
+
+    .ops-card-value {
+      margin-top: 8px;
+      color: var(--dark-green);
+      font-size: 27px;
+      font-weight: 900;
+      line-height: 1;
+    }
+
+    .ai-card {
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      background: linear-gradient(135deg, #ffffff 0%, #f4fbf8 100%);
+      padding: 14px;
+      margin-bottom: 14px;
+      box-shadow: 0 7px 18px rgba(0,0,0,.04);
+    }
+
+    .ai-title {
+      margin: 0;
+      color: var(--dark-green);
+      font-size: 18px;
+      font-weight: 900;
+    }
+
+    .ai-text {
+      margin: 8px 0 12px;
+      color: var(--ink);
+      font-size: 14px;
+      line-height: 1.45;
+    }
+
+    .quick-actions {
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      background: #fff;
+      padding: 12px;
+      margin-bottom: 14px;
+    }
+
+    .quick-actions-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+
+    .activity-list {
+      display: grid;
+    }
+
+    .activity-item {
+      padding: 11px 12px;
+      border-bottom: 1px solid var(--line);
+      display: grid;
+      gap: 3px;
+    }
+
+    .activity-item:last-child {
+      border-bottom: 0;
+    }
+
+    .activity-type {
+      color: var(--dark-green);
+      font-size: 13px;
+      font-weight: 900;
+    }
+
+    .activity-meta {
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.35;
     }
 
     .stat {
@@ -564,6 +680,8 @@
 
       .stats { grid-template-columns: repeat(5, minmax(0, 1fr)); }
 
+      .ops-cards { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+
       .row {
         grid-template-columns: minmax(0, 1fr) auto auto;
         gap: 12px;
@@ -605,6 +723,10 @@
       .details-grid {
         grid-template-columns: repeat(2, minmax(0, 1fr));
       }
+
+      .quick-actions-grid {
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+      }
     }
   </style>
 </head>
@@ -618,64 +740,156 @@
 
   <main class="container">
     <section class="heading">
-      <div>
-        <div class="eyebrow">Dispatch control center</div>
-        <h1>Dashboard</h1>
+      <div class="ops-top">
+        <div class="eyebrow">Operations Center</div>
+        <h1 class="ops-title" id="opsGreeting">Good Morning</h1>
+        <div class="ops-date" id="opsDate">Loading date...</div>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="section-head">
+        <div>
+          <h2 class="section-title">Today's Operations</h2>
+          <div class="section-sub">Tap any card to drill in</div>
+        </div>
       </div>
 
-      <div class="top-actions">
+      <div class="ops-cards">
+        <button class="ops-card" id="cardActiveJobs" type="button">
+          <div class="ops-card-label">Active Jobs</div>
+          <div class="ops-card-value" id="countActive">0</div>
+        </button>
+
+        <button class="ops-card" id="cardWaitingPayment" type="button">
+          <div class="ops-card-label">Waiting Payment</div>
+          <div class="ops-card-value" id="countWaitingPayment">0</div>
+        </button>
+
+        <button class="ops-card" id="cardDriversWorking" type="button">
+          <div class="ops-card-label">Drivers Working</div>
+          <div class="ops-card-value" id="countDriversWorking">0</div>
+        </button>
+
+        <button class="ops-card" id="cardCompletedToday" type="button">
+          <div class="ops-card-label">Deliveries Completed Today</div>
+          <div class="ops-card-value" id="countCompletedToday">0</div>
+        </button>
+
+        <button class="ops-card" id="cardNeedsAttention" type="button">
+          <div class="ops-card-label">Needs Attention</div>
+          <div class="ops-card-value" id="countNeedsAttention">0</div>
+        </button>
+      </div>
+    </section>
+
+    <section class="ai-card">
+      <h2 class="ai-title">AI Assistant</h2>
+      <p class="ai-text" id="aiSummaryText">
+        Good morning! I found 0 suggestions that may improve today's operations.
+      </p>
+      <button class="btn primary" id="openAiSuggestionsBtn" type="button">Review Suggestions</button>
+    </section>
+
+    <section class="quick-actions">
+      <div class="section-head" style="padding:0 0 10px;border:0;">
+        <div>
+          <h2 class="section-title">Quick Actions</h2>
+          <div class="section-sub">Use core actions only</div>
+        </div>
+      </div>
+      <div class="quick-actions-grid">
         <button class="action-btn" id="openCreateQuoteBtn" type="button">Create Quote</button>
         <button class="action-btn primary" id="openCreateJobBtn" type="button">Create Job</button>
+        <button class="action-btn" id="quickAssignDriverBtn" type="button">Assign Driver</button>
+        <button class="action-btn" id="openReportsBtn" type="button">Reports</button>
       </div>
-    </section>
-
-    <nav class="nav-links">
-      <a href="/history.html">Job History</a>
-      <a href="/customer.html">Customers</a>
-      <a href="/invoices.html">Invoices</a>
-      <a href="/payroll.html">Payroll</a>
-    </nav>
-
-    <section class="stats">
-      <div class="stat"><div class="stat-number" id="countQuotes">0</div><div class="stat-label">Open Quotes</div></div>
-      <div class="stat"><div class="stat-number" id="countReady">0</div><div class="stat-label">Paid / Ready</div></div>
-      <div class="stat"><div class="stat-number" id="countAssigned">0</div><div class="stat-label">Assigned</div></div>
-      <div class="stat"><div class="stat-number" id="countActive">0</div><div class="stat-label">Active Jobs</div></div>
-      <div class="stat"><div class="stat-number" id="countClosed">0</div><div class="stat-label">Closed Jobs</div></div>
     </section>
 
     <section class="section">
       <div class="section-head">
         <div>
-          <h2 class="section-title">Quotes</h2>
-          <div class="section-sub">Compact quote rows</div>
+          <h2 class="section-title">Recent Activity</h2>
+          <div class="section-sub">Latest 10 events</div>
         </div>
-        <button class="refresh-btn" id="refreshQuotesBtn" type="button">Refresh</button>
       </div>
-      <div class="rows" id="quotesRows"><div class="empty">Loading quotes...</div></div>
+      <div class="activity-list" id="recentActivityList">
+        <div class="empty">Loading activity...</div>
+      </div>
     </section>
 
-    <section class="section">
-      <div class="section-head">
+    <details class="section" id="queuesPanel">
+      <summary class="section-head" style="cursor:pointer;list-style:none;">
         <div>
-          <h2 class="section-title">Active Jobs</h2>
-          <div class="section-sub">Dispatch-active jobs only</div>
+          <h2 class="section-title">Operational Queues</h2>
+          <div class="section-sub">Quotes, active jobs, and closed jobs</div>
         </div>
-        <button class="refresh-btn" id="refreshJobsBtn" type="button">Refresh</button>
-      </div>
-      <div class="rows" id="jobsRows"><div class="empty">Loading jobs...</div></div>
-    </section>
+      </summary>
 
-    <section class="section">
-      <div class="section-head">
-        <div>
-          <h2 class="section-title">Closed Jobs</h2>
-          <div class="section-sub">Delivered, canceled, closed</div>
+      <section class="section" style="margin: 0 10px 10px;">
+        <div class="section-head">
+          <div>
+            <h2 class="section-title">Quotes</h2>
+            <div class="section-sub">Compact quote rows</div>
+          </div>
+          <button class="refresh-btn" id="refreshQuotesBtn" type="button">Refresh</button>
         </div>
-      </div>
-      <div class="rows" id="closedRows"><div class="empty">Loading closed jobs...</div></div>
-    </section>
+        <div class="rows" id="quotesRows"><div class="empty">Loading quotes...</div></div>
+      </section>
+
+      <section class="section" style="margin: 0 10px 10px;">
+        <div class="section-head">
+          <div>
+            <h2 class="section-title">Active Jobs</h2>
+            <div class="section-sub">Dispatch-active jobs only</div>
+          </div>
+          <button class="refresh-btn" id="refreshJobsBtn" type="button">Refresh</button>
+        </div>
+        <div class="rows" id="jobsRows"><div class="empty">Loading jobs...</div></div>
+      </section>
+
+      <section class="section" style="margin: 0 10px 10px;">
+        <div class="section-head">
+          <div>
+            <h2 class="section-title">Closed Jobs</h2>
+            <div class="section-sub">Delivered, canceled, closed</div>
+          </div>
+        </div>
+        <div class="rows" id="closedRows"><div class="empty">Loading closed jobs...</div></div>
+      </section>
+    </details>
   </main>
+
+  <div class="modal-backdrop" id="aiSuggestionsModal">
+    <section class="modal-panel" role="dialog" aria-modal="true" aria-labelledby="aiSuggestionsTitle">
+      <div class="modal-head">
+        <h3 class="modal-title" id="aiSuggestionsTitle">AI Suggestions</h3>
+        <button class="icon-btn" type="button" data-close-modal="aiSuggestionsModal">×</button>
+      </div>
+
+      <div class="modal-body">
+        <details class="card" open>
+          <summary>Route Suggestions</summary>
+          <div class="card-body" id="aiRoutesSection"></div>
+        </details>
+
+        <details class="card">
+          <summary>Driver Workload</summary>
+          <div class="card-body" id="aiWorkloadSection"></div>
+        </details>
+
+        <details class="card">
+          <summary>Payment Reminders</summary>
+          <div class="card-body" id="aiPaymentsSection"></div>
+        </details>
+
+        <details class="card">
+          <summary>Needs Attention</summary>
+          <div class="card-body" id="aiAttentionSection"></div>
+        </details>
+      </div>
+    </section>
+  </div>
 
   <div class="modal-backdrop" id="quoteModal">
     <section class="modal-panel" role="dialog" aria-modal="true" aria-labelledby="quoteModalTitle">
@@ -899,16 +1113,28 @@
 
     const elements = {
       staffEmail: document.getElementById("staffEmail"),
+      opsGreeting: document.getElementById("opsGreeting"),
+      opsDate: document.getElementById("opsDate"),
       quotesRows: document.getElementById("quotesRows"),
       jobsRows: document.getElementById("jobsRows"),
       closedRows: document.getElementById("closedRows"),
-      countQuotes: document.getElementById("countQuotes"),
-      countReady: document.getElementById("countReady"),
-      countAssigned: document.getElementById("countAssigned"),
       countActive: document.getElementById("countActive"),
-      countClosed: document.getElementById("countClosed"),
+      countWaitingPayment: document.getElementById("countWaitingPayment"),
+      countDriversWorking: document.getElementById("countDriversWorking"),
+      countCompletedToday: document.getElementById("countCompletedToday"),
+      countNeedsAttention: document.getElementById("countNeedsAttention"),
+      cardActiveJobs: document.getElementById("cardActiveJobs"),
+      cardWaitingPayment: document.getElementById("cardWaitingPayment"),
+      cardDriversWorking: document.getElementById("cardDriversWorking"),
+      cardCompletedToday: document.getElementById("cardCompletedToday"),
+      cardNeedsAttention: document.getElementById("cardNeedsAttention"),
+      aiSummaryText: document.getElementById("aiSummaryText"),
+      openAiSuggestionsBtn: document.getElementById("openAiSuggestionsBtn"),
+      recentActivityList: document.getElementById("recentActivityList"),
+      queuesPanel: document.getElementById("queuesPanel"),
       quoteModal: document.getElementById("quoteModal"),
       jobModal: document.getElementById("jobModal"),
+      aiSuggestionsModal: document.getElementById("aiSuggestionsModal"),
       quoteForm: document.getElementById("quoteForm"),
       jobForm: document.getElementById("jobForm"),
       quoteDetailsModal: document.getElementById("quoteDetailsModal"),
@@ -1039,6 +1265,210 @@
       return "badge badge-cancel";
     }
 
+    function displayNameFromEmail(email) {
+      const local = String(email || "").split("@")[0] || "Dispatch";
+      return local
+        .split(/[._-]+/)
+        .filter(Boolean)
+        .map(part => part.charAt(0).toUpperCase() + part.slice(1))
+        .join(" ") || "Dispatch";
+    }
+
+    function setOperationsHeader(email) {
+      const name = displayNameFromEmail(email);
+      elements.opsGreeting.textContent = "Good Morning, " + name;
+
+      const now = new Date();
+      elements.opsDate.textContent = new Intl.DateTimeFormat("en-US", {
+        weekday: "long",
+        month: "long",
+        day: "numeric",
+        year: "numeric"
+      }).format(now);
+    }
+
+    function startOfToday() {
+      const d = new Date();
+      d.setHours(0, 0, 0, 0);
+      return d;
+    }
+
+    function parseDate(value) {
+      if (!value) {
+        return null;
+      }
+
+      const date = new Date(value);
+      return Number.isNaN(date.getTime()) ? null : date;
+    }
+
+    function buildAiSuggestions() {
+      const routes = [];
+      const workload = [];
+      const payments = [];
+      const attention = [];
+
+      const activeJobs = state.rows.filter(isActiveJob);
+
+      const routeBuckets = {};
+      activeJobs.forEach(job => {
+        const key = routeCity(job);
+        routeBuckets[key] = (routeBuckets[key] || 0) + 1;
+      });
+
+      Object.keys(routeBuckets)
+        .filter(key => routeBuckets[key] > 1)
+        .slice(0, 3)
+        .forEach(key => {
+          routes.push(`Consider bundling ${key} (${routeBuckets[key]} open jobs).`);
+        });
+
+      if (!routes.length) {
+        routes.push("No immediate route clusters detected. Review by geography before dispatching.");
+      }
+
+      const loadByDriver = {};
+      activeJobs.forEach(job => {
+        const driverId = String(job.assigned_driver_id || "");
+        if (!driverId) {
+          return;
+        }
+
+        loadByDriver[driverId] = (loadByDriver[driverId] || 0) + 1;
+      });
+
+      Object.keys(loadByDriver)
+        .sort((a, b) => loadByDriver[b] - loadByDriver[a])
+        .slice(0, 3)
+        .forEach(driverId => {
+          workload.push(`${driverNameById(driverId)} currently has ${loadByDriver[driverId]} active assignments.`);
+        });
+
+      if (!workload.length) {
+        workload.push("No driver workload imbalances detected yet.");
+      }
+
+      state.rows
+        .filter(job => ["waiting_payment", "new", "pending"].includes(clean(job.status)))
+        .slice(0, 3)
+        .forEach(job => {
+          payments.push(`${job.job_number || "Job"} for ${job.customer_name || "customer"} is still waiting payment.`);
+        });
+
+      if (!payments.length) {
+        payments.push("No pending payment reminders right now.");
+      }
+
+      state.rows
+        .filter(job => isActiveJob(job) && !job.assigned_driver_id)
+        .slice(0, 3)
+        .forEach(job => {
+          attention.push(`${job.job_number || "Job"} is active but has no assigned driver.`);
+        });
+
+      if (!attention.length) {
+        attention.push("No urgent assignment gaps detected right now.");
+      }
+
+      return { routes, workload, payments, attention };
+    }
+
+    function renderAiSection(elementId, items) {
+      const section = document.getElementById(elementId);
+      if (!section) {
+        return;
+      }
+
+      section.innerHTML = items.map((item, index) => `
+        <div>
+          <div>${escapeHtml(item)}</div>
+          <button class="btn" type="button" data-ai-approve="${escapeHtml(elementId + "-" + String(index))}">Approve Suggestion</button>
+        </div>
+      `).join("");
+    }
+
+    function openAiSuggestionsModal() {
+      const ai = buildAiSuggestions();
+      renderAiSection("aiRoutesSection", ai.routes);
+      renderAiSection("aiWorkloadSection", ai.workload);
+      renderAiSection("aiPaymentsSection", ai.payments);
+      renderAiSection("aiAttentionSection", ai.attention);
+      openModal("aiSuggestionsModal");
+    }
+
+    function ensureQueuesOpenAndScroll(targetElement) {
+      if (elements.queuesPanel) {
+        elements.queuesPanel.open = true;
+      }
+
+      if (targetElement && targetElement.scrollIntoView) {
+        targetElement.scrollIntoView({ behavior: "smooth", block: "start" });
+      }
+    }
+
+    function buildRecentActivityItems() {
+      const events = [];
+
+      state.rows.forEach(job => {
+        const jobNumber = job.job_number || "Job";
+
+        if (clean(job.driver_acceptance_status) === "accepted") {
+          const at = parseDate(job.driver_accepted_at || job.updated_at || job.created_at);
+          if (at) {
+            events.push({ type: "Driver Accepted", at, text: `${jobNumber} was accepted by ${driverNameById(job.assigned_driver_id)}.` });
+          }
+        }
+
+        if (clean(job.status) === "assigned") {
+          const at = parseDate(job.updated_at || job.created_at);
+          if (at) {
+            events.push({ type: "Assigned", at, text: `${jobNumber} assigned to ${driverNameById(job.assigned_driver_id)}.` });
+          }
+        }
+
+        if (clean(job.status) === "delivered") {
+          const at = parseDate(job.completed_at || job.updated_at || job.created_at);
+          if (at) {
+            events.push({ type: "Delivered", at, text: `${jobNumber} marked delivered.` });
+          }
+        }
+
+        if (["paid", "received", "completed"].includes(clean(job.payment_status))) {
+          const at = parseDate(job.paid_at || job.payment_received_at || job.updated_at || job.created_at);
+          if (at) {
+            events.push({ type: "Payment Received", at, text: `${jobNumber} payment is marked ${String(job.payment_status).toUpperCase()}.` });
+          }
+        }
+
+        if (["sent", "delivered"].includes(clean(job.invoice_status))) {
+          const at = parseDate(job.invoice_sent_at || job.updated_at || job.created_at);
+          if (at) {
+            events.push({ type: "Invoice Sent", at, text: `${jobNumber} invoice status is ${String(job.invoice_status).toUpperCase()}.` });
+          }
+        }
+      });
+
+      events.sort((a, b) => b.at.getTime() - a.at.getTime());
+      return events.slice(0, 10);
+    }
+
+    function renderRecentActivity() {
+      const items = buildRecentActivityItems();
+
+      if (!items.length) {
+        elements.recentActivityList.innerHTML = '<div class="empty">No recent activity yet.</div>';
+        return;
+      }
+
+      elements.recentActivityList.innerHTML = items.map(item => `
+        <div class="activity-item">
+          <div class="activity-type">${escapeHtml(item.type)}</div>
+          <div class="activity-meta">${escapeHtml(item.text)}</div>
+          <div class="activity-meta">${escapeHtml(formatDate(item.at.toISOString()))}</div>
+        </div>
+      `).join("");
+    }
+
     function isQuote(job) {
       return ["quote", "quoted", "pending"].includes(clean(job.status));
     }
@@ -1129,6 +1559,7 @@
       }
 
       elements.staffEmail.textContent = session.user.email || "";
+      setOperationsHeader(session.user.email || "");
 
       const profileResult = await client
         .from("profiles")
@@ -1235,6 +1666,7 @@
       elements.quotesRows.innerHTML = '<div class="empty">Loading quotes...</div>';
       elements.jobsRows.innerHTML = '<div class="empty">Loading jobs...</div>';
       elements.closedRows.innerHTML = '<div class="empty">Loading closed jobs...</div>';
+      elements.recentActivityList.innerHTML = '<div class="empty">Loading activity...</div>';
 
       try {
         await loadDrivers();
@@ -1244,20 +1676,66 @@
         elements.quotesRows.innerHTML = `<div class="empty">${message}</div>`;
         elements.jobsRows.innerHTML = `<div class="empty">${message}</div>`;
         elements.closedRows.innerHTML = `<div class="empty">${message}</div>`;
+        elements.recentActivityList.innerHTML = `<div class="empty">${message}</div>`;
         showToast(error.message || "Unable to load dashboard", "error");
       }
     }
 
     function updateStats() {
-      const quoteRows = state.rows.filter(isQuote);
       const activeRows = state.rows.filter(isActiveJob);
-      const closedRows = state.rows.filter(isClosed);
+      const waitingPaymentRows = state.rows.filter(item => ["waiting_payment", "new", "pending"].includes(clean(item.status)));
 
-      elements.countQuotes.textContent = String(quoteRows.length);
-      elements.countReady.textContent = String(state.rows.filter(item => ["paid", "ready"].includes(clean(item.status))).length);
-      elements.countAssigned.textContent = String(state.rows.filter(item => clean(item.status) === "assigned").length);
+      const activeDriverSet = new Set(
+        activeRows
+          .map(row => String(row.assigned_driver_id || "").trim())
+          .filter(Boolean)
+      );
+
+      const todayStart = startOfToday().getTime();
+      const tomorrowStart = todayStart + (24 * 60 * 60 * 1000);
+
+      const completedToday = state.rows.filter(row => {
+        if (clean(row.status) !== "delivered") {
+          return false;
+        }
+
+        const date = parseDate(row.completed_at || row.updated_at || row.created_at);
+        if (!date) {
+          return false;
+        }
+
+        const value = date.getTime();
+        return value >= todayStart && value < tomorrowStart;
+      });
+
+      const needsAttention = state.rows.filter(row => {
+        const status = clean(row.status);
+
+        return (
+          (["waiting_payment", "new", "pending"].includes(status) && !row.payment_status) ||
+          (status === "assigned" && clean(row.driver_acceptance_status) === "rejected") ||
+          (isActiveJob(row) && !row.assigned_driver_id)
+        );
+      });
+
       elements.countActive.textContent = String(activeRows.length);
-      elements.countClosed.textContent = String(closedRows.length);
+      elements.countWaitingPayment.textContent = String(waitingPaymentRows.length);
+      elements.countDriversWorking.textContent = String(activeDriverSet.size);
+      elements.countCompletedToday.textContent = String(completedToday.length);
+      elements.countNeedsAttention.textContent = String(needsAttention.length);
+
+      const ai = buildAiSuggestions();
+      const aiSuggestionCount = (
+        ai.routes.length +
+        ai.workload.length +
+        ai.payments.length +
+        ai.attention.length
+      );
+
+      elements.aiSummaryText.textContent =
+        "Good morning!\n\nI found " +
+        String(aiSuggestionCount) +
+        " suggestions that may improve today's operations.";
     }
 
     function renderQuoteRows() {
@@ -1342,6 +1820,7 @@
       renderQuoteRows();
       renderJobRows();
       renderClosedRows();
+      renderRecentActivity();
     }
 
     function getRowById(id) {
@@ -1417,6 +1896,47 @@
       document.getElementById("jobRecordId").value = "";
       document.getElementById("jobModalTitle").textContent = "Create Job";
       openModal("jobModal");
+    }
+
+    function openAssignFromQuickActions() {
+      const preferred = state.rows.find(row => isActiveJob(row)) || state.rows.find(row => clean(row.status) === "assigned");
+
+      if (!preferred) {
+        showToast("No active jobs are available for assignment.", "info");
+        return;
+      }
+
+      openJobDetails(preferred.id, false);
+      openAssignModal(preferred.id);
+    }
+
+    function openReportsPage() {
+      location.href = "/Reports.html";
+    }
+
+    function drillToActiveJobs() {
+      ensureQueuesOpenAndScroll(elements.jobsRows);
+    }
+
+    function drillToWaitingPayment() {
+      ensureQueuesOpenAndScroll(elements.jobsRows);
+
+      const waiting = state.rows.find(row => ["waiting_payment", "new", "pending"].includes(clean(row.status)));
+      if (waiting) {
+        openJobDetails(waiting.id, false);
+      }
+    }
+
+    function drillToDriversWorking() {
+      location.href = "/driver.html";
+    }
+
+    function drillToCompletedToday() {
+      ensureQueuesOpenAndScroll(elements.closedRows);
+    }
+
+    function drillToNeedsAttention() {
+      openAiSuggestionsModal();
     }
 
     function openQuoteDetails(quoteId) {
@@ -2144,6 +2664,12 @@
         return;
       }
 
+      const aiApprove = target.closest("[data-ai-approve]");
+      if (aiApprove) {
+        showToast("Suggestion approved. Automation remains disabled until you trigger the action manually.", "success");
+        return;
+      }
+
       closeAllMenus();
     }
 
@@ -2152,6 +2678,17 @@
       document.getElementById("openCreateJobBtn").addEventListener("click", openCreateJobModal);
       document.getElementById("refreshQuotesBtn").addEventListener("click", loadDashboard);
       document.getElementById("refreshJobsBtn").addEventListener("click", loadDashboard);
+
+      document.getElementById("quickAssignDriverBtn").addEventListener("click", openAssignFromQuickActions);
+      document.getElementById("openReportsBtn").addEventListener("click", openReportsPage);
+
+      elements.cardActiveJobs.addEventListener("click", drillToActiveJobs);
+      elements.cardWaitingPayment.addEventListener("click", drillToWaitingPayment);
+      elements.cardDriversWorking.addEventListener("click", drillToDriversWorking);
+      elements.cardCompletedToday.addEventListener("click", drillToCompletedToday);
+      elements.cardNeedsAttention.addEventListener("click", drillToNeedsAttention);
+
+      elements.openAiSuggestionsBtn.addEventListener("click", openAiSuggestionsModal);
 
       elements.quoteForm.addEventListener("submit", submitQuoteForm);
       elements.jobForm.addEventListener("submit", submitJobForm);
