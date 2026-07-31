@@ -31,8 +31,8 @@
 
     body {
       margin: 0;
-      font-family: Arial, Helvetica, sans-serif;
-      background: var(--background);
+      font-family: "SF Pro Text", "SF Pro Display", "Helvetica Neue", Helvetica, Arial, sans-serif;
+      background: #ffffff;
       color: var(--ink);
     }
 
@@ -178,7 +178,7 @@
       width: 100%;
       text-align: left;
       border: 1px solid var(--line);
-      border-radius: 14px;
+      border-radius: 18px;
       background: #fff;
       padding: 12px;
       cursor: pointer;
@@ -290,9 +290,67 @@
     .section {
       margin-bottom: 14px;
       border: 1px solid var(--line);
-      border-radius: 16px;
+      border-radius: 20px;
       background: #fff;
       overflow: hidden;
+    }
+
+    .queue-group {
+      margin-bottom: 14px;
+      border: 1px solid var(--line);
+      border-radius: 20px;
+      background: #fff;
+      overflow: hidden;
+    }
+
+    .queue-group .section-head {
+      border-bottom: 0;
+    }
+
+    .wizard-wrap {
+      display: grid;
+      gap: 12px;
+    }
+
+    .wizard-progress {
+      height: 8px;
+      border-radius: 999px;
+      background: #eef3f1;
+      overflow: hidden;
+    }
+
+    .wizard-progress-fill {
+      height: 100%;
+      width: 16.66%;
+      background: linear-gradient(90deg, #0b7f5f, #1a9a77);
+      transition: width .2s ease;
+    }
+
+    .wizard-step-label {
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: .04em;
+    }
+
+    .wizard-pane {
+      display: none;
+      gap: 10px;
+    }
+
+    .wizard-pane.active {
+      display: grid;
+    }
+
+    .review-block {
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 10px;
+      background: #f9fcfb;
+      display: grid;
+      gap: 5px;
+      font-size: 13px;
     }
 
     .section-head {
@@ -756,29 +814,29 @@
       </div>
 
       <div class="ops-cards">
-        <button class="ops-card" id="cardActiveJobs" type="button">
-          <div class="ops-card-label">Active Jobs</div>
-          <div class="ops-card-value" id="countActive">0</div>
+        <button class="ops-card" id="cardPendingApproval" type="button">
+          <div class="ops-card-label">Pending Approval</div>
+          <div class="ops-card-value" id="countPendingApproval">0</div>
         </button>
 
-        <button class="ops-card" id="cardWaitingPayment" type="button">
-          <div class="ops-card-label">Waiting Payment</div>
-          <div class="ops-card-value" id="countWaitingPayment">0</div>
+        <button class="ops-card" id="cardReadyDispatch" type="button">
+          <div class="ops-card-label">Ready to Dispatch</div>
+          <div class="ops-card-value" id="countReadyDispatch">0</div>
         </button>
 
-        <button class="ops-card" id="cardDriversWorking" type="button">
-          <div class="ops-card-label">Drivers Working</div>
-          <div class="ops-card-value" id="countDriversWorking">0</div>
+        <button class="ops-card" id="cardAssigned" type="button">
+          <div class="ops-card-label">Assigned</div>
+          <div class="ops-card-value" id="countAssigned">0</div>
         </button>
 
-        <button class="ops-card" id="cardCompletedToday" type="button">
-          <div class="ops-card-label">Deliveries Completed Today</div>
-          <div class="ops-card-value" id="countCompletedToday">0</div>
+        <button class="ops-card" id="cardActiveDeliveries" type="button">
+          <div class="ops-card-label">Active Deliveries</div>
+          <div class="ops-card-value" id="countActiveDeliveries">0</div>
         </button>
 
-        <button class="ops-card" id="cardNeedsAttention" type="button">
-          <div class="ops-card-label">Needs Attention</div>
-          <div class="ops-card-value" id="countNeedsAttention">0</div>
+        <button class="ops-card" id="cardClosedJobs" type="button">
+          <div class="ops-card-label">Closed Jobs</div>
+          <div class="ops-card-value" id="countClosedJobs">0</div>
         </button>
       </div>
     </section>
@@ -818,46 +876,57 @@
       </div>
     </section>
 
-    <details class="section" id="queuesPanel">
-      <summary class="section-head" style="cursor:pointer;list-style:none;">
+    <section class="queue-group" id="pendingGroup">
+      <div class="section-head">
         <div>
-          <h2 class="section-title">Operational Queues</h2>
-          <div class="section-sub">Quotes, active jobs, and closed jobs</div>
+          <h2 class="section-title">Pending Approval</h2>
+          <div class="section-sub">Awaiting invoice or payment link action</div>
         </div>
-      </summary>
+        <button class="refresh-btn" id="refreshPendingBtn" type="button">Refresh</button>
+      </div>
+      <div class="rows" id="pendingRows"><div class="empty">Loading jobs...</div></div>
+    </section>
 
-      <section class="section" style="margin: 0 10px 10px;">
-        <div class="section-head">
-          <div>
-            <h2 class="section-title">Quotes</h2>
-            <div class="section-sub">Compact quote rows</div>
-          </div>
-          <button class="refresh-btn" id="refreshQuotesBtn" type="button">Refresh</button>
+    <section class="queue-group" id="readyGroup">
+      <div class="section-head">
+        <div>
+          <h2 class="section-title">Ready to Dispatch</h2>
+          <div class="section-sub">Paid jobs ready for driver assignment</div>
         </div>
-        <div class="rows" id="quotesRows"><div class="empty">Loading quotes...</div></div>
-      </section>
+        <button class="refresh-btn" id="refreshReadyBtn" type="button">Refresh</button>
+      </div>
+      <div class="rows" id="readyRows"><div class="empty">Loading jobs...</div></div>
+    </section>
 
-      <section class="section" style="margin: 0 10px 10px;">
-        <div class="section-head">
-          <div>
-            <h2 class="section-title">Active Jobs</h2>
-            <div class="section-sub">Dispatch-active jobs only</div>
-          </div>
-          <button class="refresh-btn" id="refreshJobsBtn" type="button">Refresh</button>
+    <section class="queue-group" id="assignedGroup">
+      <div class="section-head">
+        <div>
+          <h2 class="section-title">Assigned</h2>
+          <div class="section-sub">Sent to drivers, waiting first movement</div>
         </div>
-        <div class="rows" id="jobsRows"><div class="empty">Loading jobs...</div></div>
-      </section>
+      </div>
+      <div class="rows" id="assignedRows"><div class="empty">Loading jobs...</div></div>
+    </section>
 
-      <section class="section" style="margin: 0 10px 10px;">
-        <div class="section-head">
-          <div>
-            <h2 class="section-title">Closed Jobs</h2>
-            <div class="section-sub">Delivered, canceled, closed</div>
-          </div>
+    <section class="queue-group" id="activeGroup">
+      <div class="section-head">
+        <div>
+          <h2 class="section-title">Active Deliveries</h2>
+          <div class="section-sub">Driver in pickup or delivery workflow</div>
         </div>
-        <div class="rows" id="closedRows"><div class="empty">Loading closed jobs...</div></div>
-      </section>
-    </details>
+      </div>
+      <div class="rows" id="activeRows"><div class="empty">Loading jobs...</div></div>
+    </section>
+
+    <section class="queue-group" id="closedGroup">
+      <div class="section-head">
+        <div>
+          <h2 class="section-title">Closed Jobs</h2>
+          <div class="section-sub">Completed, delivered, canceled, or closed</div>
+        </div>
+      </div>
+      <div class="rows" id="closedRows"><div class="empty">Loading jobs...</div></div>
+    </section>
   </main>
 
   <div class="modal-backdrop" id="aiSuggestionsModal">
@@ -965,87 +1034,90 @@
         <button class="icon-btn" type="button" data-close-modal="jobModal">×</button>
       </div>
       <div class="modal-body">
-        <form id="jobForm" class="form-grid">
+        <form id="jobForm" class="wizard-wrap">
           <input type="hidden" name="record_id" id="jobRecordId">
 
-          <div class="field"><label>Customer Name</label><input name="customer_name" required></div>
-          <div class="field"><label>Customer Email</label><input name="customer_email" type="email"></div>
-          <div class="field"><label>Customer Phone</label><input name="customer_phone" type="tel"></div>
-          <div class="field"><label>Assigned Driver</label><select name="assigned_driver_id" id="jobDriverSelect"><option value="">Unassigned</option></select></div>
+          <div class="wizard-step-label" id="jobWizardStepLabel">Step 1 of 6 - Customer Information</div>
+          <div class="wizard-progress"><div class="wizard-progress-fill" id="jobWizardProgress"></div></div>
 
-          <div class="field full"><label>Pickup Address</label><input name="pickup_address" required></div>
-          <div class="field"><label>Pickup Suite / Floor</label><input name="pickup_suite_floor"></div>
-          <div class="field"><label>Pickup ZIP Code</label><input name="pickup_zip"></div>
+          <section class="wizard-pane active" data-step="1">
+            <div class="field"><label>Customer Name</label><input name="customer_name" required></div>
+            <div class="field"><label>Customer Email</label><input name="customer_email" type="email"></div>
+            <div class="field"><label>Customer Phone</label><input name="customer_phone" type="tel"></div>
+          </section>
 
-          <div class="field full"><label>Delivery Address</label><input name="delivery_address" required></div>
-          <div class="field"><label>Delivery Suite / Floor</label><input name="delivery_suite_floor"></div>
-          <div class="field"><label>Delivery ZIP Code</label><input name="delivery_zip"></div>
-          <div class="field full"><label>Delivery Recipient Name</label><input name="delivery_recipient_name"></div>
+          <section class="wizard-pane" data-step="2">
+            <div class="field full"><label>Pickup Address</label><input name="pickup_address" required></div>
+            <div class="field"><label>Pickup Suite / Floor</label><input name="pickup_suite_floor"></div>
+            <div class="field"><label>Pickup ZIP Code</label><input name="pickup_zip"></div>
+          </section>
 
-          <div class="field"><label>Vehicle Type</label>
-            <select name="vehicle_type">
-              <option value="">Choose vehicle</option>
-              <option value="Car">Car</option>
-              <option value="SUV">SUV</option>
-              <option value="Cargo Van">Cargo Van</option>
-              <option value="Sprinter Van">Sprinter Van</option>
-              <option value="Box Truck">Box Truck</option>
-            </select>
-          </div>
+          <section class="wizard-pane" data-step="3">
+            <div class="field full"><label>Delivery Address</label><input name="delivery_address" required></div>
+            <div class="field"><label>Delivery Suite / Floor</label><input name="delivery_suite_floor"></div>
+            <div class="field"><label>Delivery ZIP Code</label><input name="delivery_zip"></div>
+            <div class="field full"><label>Delivery Recipient Name</label><input name="delivery_recipient_name"></div>
+          </section>
 
-          <div class="field"><label>Delivery Speed</label>
-            <select name="delivery_speed">
-              <option value="">Choose speed</option>
-              <option value="2_hr">2 Hour</option>
-              <option value="3_hr">3 Hour</option>
-              <option value="4_hr">4 Hour</option>
-              <option value="5_hr">5 Hour</option>
-              <option value="6_hr">6 Hour</option>
-              <option value="next_day">Next Day</option>
-            </select>
-          </div>
+          <section class="wizard-pane" data-step="4">
+            <div class="field"><label>Vehicle Type</label>
+              <select name="vehicle_type">
+                <option value="">Choose vehicle</option>
+                <option value="Car">Car</option>
+                <option value="SUV">SUV</option>
+                <option value="Cargo Van">Cargo Van</option>
+                <option value="Sprinter Van">Sprinter Van</option>
+                <option value="Box Truck">Box Truck</option>
+              </select>
+            </div>
 
-          <div class="field"><label>Package Information</label><input name="package_type"></div>
-          <div class="field"><label>Delivery Method</label>
-            <select name="delivery_method">
-              <option value="">Select</option>
-              <option value="Hand Delivery">Hand Delivery</option>
-              <option value="Leave at Door">Leave at Door</option>
-              <option value="Receiving Department">Receiving Department</option>
-            </select>
-          </div>
+            <div class="field"><label>Delivery Speed</label>
+              <select name="delivery_speed">
+                <option value="">Choose speed</option>
+                <option value="2_hr">2 Hour</option>
+                <option value="3_hr">3 Hour</option>
+                <option value="4_hr">4 Hour</option>
+                <option value="5_hr">5 Hour</option>
+                <option value="6_hr">6 Hour</option>
+                <option value="next_day">Next Day</option>
+              </select>
+            </div>
 
-          <div class="field"><label>Total Amount Billed</label><input name="approved_price" type="number" min="0" step="0.01" placeholder="0.00"></div>
-          <div class="field"><label>Driver Pay</label><input name="driver_pay" type="number" min="0" step="0.01" placeholder="0.00"></div>
+            <div class="field"><label>Package Information</label><input name="package_type"></div>
+            <div class="field"><label>Delivery Method</label>
+              <select name="delivery_method">
+                <option value="">Select</option>
+                <option value="Hand Delivery">Hand Delivery</option>
+                <option value="Leave at Door">Leave at Door</option>
+                <option value="Receiving Department">Receiving Department</option>
+              </select>
+            </div>
+          </section>
 
-          <div class="field"><label>Dispatch Status</label>
-            <select name="status" id="jobCreateStatus">
-              <option value="waiting_payment">NEW JOB / WAITING PAYMENT</option>
-              <option value="ready">PAID / READY</option>
-              <option value="assigned">ASSIGNED TO DRIVER</option>
-              <option value="cancelled">CANCELED / REASSIGNED</option>
-            </select>
-          </div>
+          <section class="wizard-pane" data-step="5">
+            <div class="field"><label>Total Amount Billed</label><input name="approved_price" type="number" min="0" step="0.01" placeholder="0.00"></div>
+            <div class="field"><label>Invoice Delivery Preference</label>
+              <select name="invoice_delivery_method">
+                <option value="none">Do Not Send Yet</option>
+                <option value="email">Email</option>
+                <option value="text">Text Message</option>
+                <option value="both">Email and Text</option>
+              </select>
+            </div>
+            <div class="field full"><label>Billing Notes</label><textarea name="billing_notes"></textarea></div>
+            <div class="field full"><label>Internal Notes</label><textarea name="special_instructions"></textarea></div>
+          </section>
 
-          <div class="field"><label>Invoice Delivery Preference</label>
-            <select name="invoice_delivery_method">
-              <option value="none">Do Not Send Yet</option>
-              <option value="email">Email</option>
-              <option value="text">Text Message</option>
-              <option value="both">Email and Text</option>
-            </select>
-          </div>
-
-          <div class="field"><label>Invoice Due Date</label><input name="invoice_due_date" type="date"></div>
-          <div class="field full"><label>Billing Notes</label><textarea name="billing_notes"></textarea></div>
-          <div class="field full"><label>Internal Notes</label><textarea name="special_instructions"></textarea></div>
-
-          <div class="hint">Job number is generated automatically when a new job is created.</div>
+          <section class="wizard-pane" data-step="6">
+            <div class="review-block" id="jobWizardReview"></div>
+            <div class="hint">Status will be set to Pending Approval automatically.</div>
+          </section>
 
           <div class="form-actions full">
             <button class="btn" type="button" data-close-modal="jobModal">Cancel</button>
-            <button class="btn" id="savePendingBtn" type="submit" name="submit_action" value="save_pending">Save Pending</button>
-            <button class="btn primary" id="approveSendBtn" type="submit" name="submit_action" value="approve_send">Approve &amp; Send to Driver</button>
+            <button class="btn" type="button" id="jobWizardBackBtn">Back</button>
+            <button class="btn primary" type="button" id="jobWizardNextBtn">Next</button>
+            <button class="btn primary" id="saveJobBtn" type="submit" style="display:none;">Create Job</button>
           </div>
         </form>
       </div>
@@ -1108,35 +1180,48 @@
       drivers: [],
       rows: [],
       selectedQuote: null,
-      selectedJob: null
+      selectedJob: null,
+      jobWizardStep: 1
     };
 
     const elements = {
       staffEmail: document.getElementById("staffEmail"),
       opsGreeting: document.getElementById("opsGreeting"),
       opsDate: document.getElementById("opsDate"),
-      quotesRows: document.getElementById("quotesRows"),
-      jobsRows: document.getElementById("jobsRows"),
+      pendingRows: document.getElementById("pendingRows"),
+      readyRows: document.getElementById("readyRows"),
+      assignedRows: document.getElementById("assignedRows"),
+      activeRows: document.getElementById("activeRows"),
       closedRows: document.getElementById("closedRows"),
-      countActive: document.getElementById("countActive"),
-      countWaitingPayment: document.getElementById("countWaitingPayment"),
-      countDriversWorking: document.getElementById("countDriversWorking"),
-      countCompletedToday: document.getElementById("countCompletedToday"),
-      countNeedsAttention: document.getElementById("countNeedsAttention"),
-      cardActiveJobs: document.getElementById("cardActiveJobs"),
-      cardWaitingPayment: document.getElementById("cardWaitingPayment"),
-      cardDriversWorking: document.getElementById("cardDriversWorking"),
-      cardCompletedToday: document.getElementById("cardCompletedToday"),
-      cardNeedsAttention: document.getElementById("cardNeedsAttention"),
+      countPendingApproval: document.getElementById("countPendingApproval"),
+      countReadyDispatch: document.getElementById("countReadyDispatch"),
+      countAssigned: document.getElementById("countAssigned"),
+      countActiveDeliveries: document.getElementById("countActiveDeliveries"),
+      countClosedJobs: document.getElementById("countClosedJobs"),
+      cardPendingApproval: document.getElementById("cardPendingApproval"),
+      cardReadyDispatch: document.getElementById("cardReadyDispatch"),
+      cardAssigned: document.getElementById("cardAssigned"),
+      cardActiveDeliveries: document.getElementById("cardActiveDeliveries"),
+      cardClosedJobs: document.getElementById("cardClosedJobs"),
       aiSummaryText: document.getElementById("aiSummaryText"),
       openAiSuggestionsBtn: document.getElementById("openAiSuggestionsBtn"),
       recentActivityList: document.getElementById("recentActivityList"),
-      queuesPanel: document.getElementById("queuesPanel"),
+      pendingGroup: document.getElementById("pendingGroup"),
+      readyGroup: document.getElementById("readyGroup"),
+      assignedGroup: document.getElementById("assignedGroup"),
+      activeGroup: document.getElementById("activeGroup"),
+      closedGroup: document.getElementById("closedGroup"),
       quoteModal: document.getElementById("quoteModal"),
       jobModal: document.getElementById("jobModal"),
       aiSuggestionsModal: document.getElementById("aiSuggestionsModal"),
       quoteForm: document.getElementById("quoteForm"),
       jobForm: document.getElementById("jobForm"),
+      jobWizardStepLabel: document.getElementById("jobWizardStepLabel"),
+      jobWizardProgress: document.getElementById("jobWizardProgress"),
+      jobWizardReview: document.getElementById("jobWizardReview"),
+      jobWizardBackBtn: document.getElementById("jobWizardBackBtn"),
+      jobWizardNextBtn: document.getElementById("jobWizardNextBtn"),
+      saveJobBtn: document.getElementById("saveJobBtn"),
       quoteDetailsModal: document.getElementById("quoteDetailsModal"),
       quoteDetailsBody: document.getElementById("quoteDetailsBody"),
       jobDetailsModal: document.getElementById("jobDetailsModal"),
@@ -1212,6 +1297,52 @@
       return parseCity(job.pickup_address) + " -> " + parseCity(job.delivery_address);
     }
 
+    function hasPaymentReceived(job) {
+      return ["paid", "received", "completed"].includes(clean(job.payment_status));
+    }
+
+    function isDriverInProgress(job) {
+      const flow = clean(job.driver_workflow_status);
+      return [
+        "en_route_pickup",
+        "arrived_pickup",
+        "picked_up",
+        "en_route_delivery",
+        "arrived_delivery",
+        "in_progress"
+      ].includes(flow);
+    }
+
+    function isDeliveryCompleted(job) {
+      const status = clean(job.status);
+      const flow = clean(job.driver_workflow_status);
+      return ["completed", "delivered"].includes(status) || flow === "complete_delivery";
+    }
+
+    function isClosedStatus(job) {
+      return ["cancelled", "canceled", "closed", "completed", "delivered"].includes(clean(job.status));
+    }
+
+    function getWorkflowStage(job) {
+      if (isClosedStatus(job) || isDeliveryCompleted(job)) {
+        return "closed";
+      }
+
+      if (isDriverInProgress(job)) {
+        return "active_deliveries";
+      }
+
+      if (clean(job.status) === "assigned") {
+        return "assigned";
+      }
+
+      if (["ready", "ready_to_dispatch", "paid"].includes(clean(job.status)) || hasPaymentReceived(job)) {
+        return "ready_to_dispatch";
+      }
+
+      return "pending_approval";
+    }
+
     function deliverySpeedLabel(value) {
       const map = {
         "2_hr": "2 Hour",
@@ -1225,40 +1356,40 @@
       return map[value] || String(value || "Not set");
     }
 
-    function statusLabel(status) {
-      const value = clean(status);
-
-      if (["new", "pending", "waiting_payment", "quote", "quoted"].includes(value)) {
-        return "NEW JOB / WAITING PAYMENT";
+    function statusLabel(jobOrStatus) {
+      if (typeof jobOrStatus === "object" && jobOrStatus) {
+        const stage = getWorkflowStage(jobOrStatus);
+        if (stage === "pending_approval") {
+          return "PENDING APPROVAL";
+        }
+        if (stage === "ready_to_dispatch") {
+          return "READY TO DISPATCH";
+        }
+        if (stage === "assigned") {
+          return "ASSIGNED";
+        }
+        if (stage === "active_deliveries") {
+          return "IN PROGRESS";
+        }
+        return "COMPLETED";
       }
 
-      if (["paid", "ready"].includes(value)) {
-        return "PAID / READY";
-      }
-
-      if (value === "assigned") {
-        return "ASSIGNED TO DRIVER";
-      }
-
-      if (["cancelled", "canceled", "reassigned"].includes(value)) {
-        return "CANCELED / REASSIGNED";
-      }
-
-      return String(status || "UNKNOWN").replaceAll("_", " ").toUpperCase();
+      return String(jobOrStatus || "UNKNOWN").replaceAll("_", " ").toUpperCase();
     }
 
-    function badgeClass(status) {
-      const value = clean(status);
-
-      if (["new", "pending", "waiting_payment", "quote", "quoted"].includes(value)) {
+    function badgeClass(jobOrStatus) {
+      if (typeof jobOrStatus !== "object" || !jobOrStatus) {
         return "badge badge-new";
       }
 
-      if (["paid", "ready"].includes(value)) {
+      const stage = getWorkflowStage(jobOrStatus);
+      if (stage === "pending_approval") {
+        return "badge badge-new";
+      }
+      if (stage === "ready_to_dispatch") {
         return "badge badge-ready";
       }
-
-      if (value === "assigned") {
+      if (stage === "assigned" || stage === "active_deliveries") {
         return "badge badge-assigned";
       }
 
@@ -1349,7 +1480,7 @@
       }
 
       state.rows
-        .filter(job => ["waiting_payment", "new", "pending"].includes(clean(job.status)))
+        .filter(job => getWorkflowStage(job) === "pending_approval")
         .slice(0, 3)
         .forEach(job => {
           payments.push(`${job.job_number || "Job"} for ${job.customer_name || "customer"} is still waiting payment.`);
@@ -1360,10 +1491,10 @@
       }
 
       state.rows
-        .filter(job => isActiveJob(job) && !job.assigned_driver_id)
+        .filter(job => getWorkflowStage(job) === "ready_to_dispatch" && !job.assigned_driver_id)
         .slice(0, 3)
         .forEach(job => {
-          attention.push(`${job.job_number || "Job"} is active but has no assigned driver.`);
+          attention.push(`${job.job_number || "Job"} is ready but still needs driver assignment.`);
         });
 
       if (!attention.length) {
@@ -1397,10 +1528,6 @@
     }
 
     function ensureQueuesOpenAndScroll(targetElement) {
-      if (elements.queuesPanel) {
-        elements.queuesPanel.open = true;
-      }
-
       if (targetElement && targetElement.scrollIntoView) {
         targetElement.scrollIntoView({ behavior: "smooth", block: "start" });
       }
@@ -1469,16 +1596,12 @@
       `).join("");
     }
 
-    function isQuote(job) {
-      return ["quote", "quoted", "pending"].includes(clean(job.status));
-    }
-
     function isClosed(job) {
-      return ["delivered", "cancelled", "canceled", "closed"].includes(clean(job.status));
+      return getWorkflowStage(job) === "closed";
     }
 
     function isActiveJob(job) {
-      return !isQuote(job) && !isClosed(job);
+      return ["assigned", "active_deliveries"].includes(getWorkflowStage(job));
     }
 
     function driverNameById(driverId) {
@@ -1644,8 +1767,64 @@
           return `<option value="${escapeHtml(String(driver.id))}">${label}</option>`;
         })).join("");
 
-      document.getElementById("jobDriverSelect").innerHTML = options;
       document.getElementById("assignDriverSelect").innerHTML = '<option value="">Select driver</option>' + options.replace('<option value="">Unassigned</option>', '');
+    }
+
+    function buildAutomatedStatusPayload(job) {
+      const current = clean(job.status);
+      const target = {};
+
+      if (["cancelled", "canceled", "closed"].includes(current)) {
+        return target;
+      }
+
+      if (isDeliveryCompleted(job) && current !== "completed" && current !== "delivered") {
+        target.status = "completed";
+        return target;
+      }
+
+      if (isDriverInProgress(job) && current !== "in_progress") {
+        target.status = "in_progress";
+        return target;
+      }
+
+      if (current === "assigned") {
+        return target;
+      }
+
+      if (hasPaymentReceived(job) && current !== "ready_to_dispatch") {
+        target.status = "ready_to_dispatch";
+        return target;
+      }
+
+      if (["new", "pending", "waiting_payment", "quote", "quoted", ""].includes(current)) {
+        target.status = "pending_approval";
+      }
+
+      return target;
+    }
+
+    async function syncAutomatedStatuses(rows) {
+      const updates = rows
+        .map(row => ({ id: row.id, payload: buildAutomatedStatusPayload(row) }))
+        .filter(item => Object.keys(item.payload).length);
+
+      if (!updates.length) {
+        return false;
+      }
+
+      for (const item of updates) {
+        const result = await client
+          .from("quotes")
+          .update(item.payload)
+          .eq("id", item.id);
+
+        if (result.error) {
+          throw result.error;
+        }
+      }
+
+      return true;
     }
 
     async function loadRows() {
@@ -1659,12 +1838,29 @@
       }
 
       state.rows = result.data || [];
+
+      const changed = await syncAutomatedStatuses(state.rows);
+      if (changed) {
+        const refresh = await client
+          .from("quotes")
+          .select("*")
+          .order("created_at", { ascending: false });
+
+        if (refresh.error) {
+          throw refresh.error;
+        }
+
+        state.rows = refresh.data || [];
+      }
+
       renderDashboard();
     }
 
     async function loadDashboard() {
-      elements.quotesRows.innerHTML = '<div class="empty">Loading quotes...</div>';
-      elements.jobsRows.innerHTML = '<div class="empty">Loading jobs...</div>';
+      elements.pendingRows.innerHTML = '<div class="empty">Loading jobs...</div>';
+      elements.readyRows.innerHTML = '<div class="empty">Loading jobs...</div>';
+      elements.assignedRows.innerHTML = '<div class="empty">Loading jobs...</div>';
+      elements.activeRows.innerHTML = '<div class="empty">Loading jobs...</div>';
       elements.closedRows.innerHTML = '<div class="empty">Loading closed jobs...</div>';
       elements.recentActivityList.innerHTML = '<div class="empty">Loading activity...</div>';
 
@@ -1673,8 +1869,10 @@
         await loadRows();
       } catch (error) {
         const message = escapeHtml(error.message || "Unable to load dashboard.");
-        elements.quotesRows.innerHTML = `<div class="empty">${message}</div>`;
-        elements.jobsRows.innerHTML = `<div class="empty">${message}</div>`;
+        elements.pendingRows.innerHTML = `<div class="empty">${message}</div>`;
+        elements.readyRows.innerHTML = `<div class="empty">${message}</div>`;
+        elements.assignedRows.innerHTML = `<div class="empty">${message}</div>`;
+        elements.activeRows.innerHTML = `<div class="empty">${message}</div>`;
         elements.closedRows.innerHTML = `<div class="empty">${message}</div>`;
         elements.recentActivityList.innerHTML = `<div class="empty">${message}</div>`;
         showToast(error.message || "Unable to load dashboard", "error");
@@ -1682,47 +1880,17 @@
     }
 
     function updateStats() {
-      const activeRows = state.rows.filter(isActiveJob);
-      const waitingPaymentRows = state.rows.filter(item => ["waiting_payment", "new", "pending"].includes(clean(item.status)));
+      const pendingRows = state.rows.filter(row => getWorkflowStage(row) === "pending_approval");
+      const readyRows = state.rows.filter(row => getWorkflowStage(row) === "ready_to_dispatch");
+      const assignedRows = state.rows.filter(row => getWorkflowStage(row) === "assigned");
+      const activeRows = state.rows.filter(row => getWorkflowStage(row) === "active_deliveries");
+      const closedRows = state.rows.filter(row => getWorkflowStage(row) === "closed");
 
-      const activeDriverSet = new Set(
-        activeRows
-          .map(row => String(row.assigned_driver_id || "").trim())
-          .filter(Boolean)
-      );
-
-      const todayStart = startOfToday().getTime();
-      const tomorrowStart = todayStart + (24 * 60 * 60 * 1000);
-
-      const completedToday = state.rows.filter(row => {
-        if (clean(row.status) !== "delivered") {
-          return false;
-        }
-
-        const date = parseDate(row.completed_at || row.updated_at || row.created_at);
-        if (!date) {
-          return false;
-        }
-
-        const value = date.getTime();
-        return value >= todayStart && value < tomorrowStart;
-      });
-
-      const needsAttention = state.rows.filter(row => {
-        const status = clean(row.status);
-
-        return (
-          (["waiting_payment", "new", "pending"].includes(status) && !row.payment_status) ||
-          (status === "assigned" && clean(row.driver_acceptance_status) === "rejected") ||
-          (isActiveJob(row) && !row.assigned_driver_id)
-        );
-      });
-
-      elements.countActive.textContent = String(activeRows.length);
-      elements.countWaitingPayment.textContent = String(waitingPaymentRows.length);
-      elements.countDriversWorking.textContent = String(activeDriverSet.size);
-      elements.countCompletedToday.textContent = String(completedToday.length);
-      elements.countNeedsAttention.textContent = String(needsAttention.length);
+      elements.countPendingApproval.textContent = String(pendingRows.length);
+      elements.countReadyDispatch.textContent = String(readyRows.length);
+      elements.countAssigned.textContent = String(assignedRows.length);
+      elements.countActiveDeliveries.textContent = String(activeRows.length);
+      elements.countClosedJobs.textContent = String(closedRows.length);
 
       const ai = buildAiSuggestions();
       const aiSuggestionCount = (
@@ -1738,88 +1906,64 @@
         " suggestions that may improve today's operations.";
     }
 
-    function renderQuoteRows() {
-      const rows = state.rows.filter(isQuote);
+    function renderQueueRows(target, rows, emptyText) {
       if (!rows.length) {
-        elements.quotesRows.innerHTML = '<div class="empty">No quote rows found.</div>';
+        target.innerHTML = `<div class="empty">${escapeHtml(emptyText)}</div>`;
         return;
       }
 
-      elements.quotesRows.innerHTML = rows.map(row => `
-        <div class="row" data-open-quote="${escapeHtml(String(row.id))}" tabindex="0" role="button">
+      target.innerHTML = rows.map(row => `
+        <div class="row" data-open-job="${escapeHtml(String(row.id))}" data-readonly="${getWorkflowStage(row) === "closed" ? "true" : "false"}" tabindex="0" role="button">
           <span class="row-main">
             <span class="row-topline">
-              <span class="row-id">${escapeHtml(row.job_number || "Quote")}</span>
-              <span class="badge ${escapeHtml(badgeClass(row.status))}">${escapeHtml(statusLabel(row.status))}</span>
+              <span class="row-id">${escapeHtml(row.job_number || "Job")}</span>
+              <span class="badge ${escapeHtml(badgeClass(row))}">${escapeHtml(statusLabel(row))}</span>
             </span>
             <span class="row-customer">${escapeHtml(row.customer_name || "Customer")}</span>
-            <span class="row-meta">${escapeHtml(routeCity(row))}</span>
-            <span class="row-meta">${escapeHtml(money(row.approved_price ?? row.customer_charge))} • ${escapeHtml(formatDate(row.created_at))}</span>
+            <span class="row-meta">Pickup: ${escapeHtml(row.pickup_address || "-")}</span>
+            <span class="row-meta">Delivery: ${escapeHtml(row.delivery_address || "-")}</span>
+            <span class="row-meta">${escapeHtml(money(row.approved_price ?? row.customer_charge))} • ${escapeHtml(formatDate(row.updated_at || row.created_at))}</span>
           </span>
           <span class="row-chevron">›</span>
         </div>
       `).join("");
     }
 
-    function renderJobRows() {
-      const rows = state.rows.filter(isActiveJob);
-      if (!rows.length) {
-        elements.jobsRows.innerHTML = '<div class="empty">No active jobs found.</div>';
-        return;
-      }
+    function renderDispatchQueues() {
+      renderQueueRows(
+        elements.pendingRows,
+        state.rows.filter(row => getWorkflowStage(row) === "pending_approval"),
+        "No jobs pending approval."
+      );
 
-      elements.jobsRows.innerHTML = rows.map(row => `
-        <div class="row" data-open-job="${escapeHtml(String(row.id))}" tabindex="0" role="button">
-          <span class="row-main">
-            <span class="row-topline">
-              <span class="row-id">${escapeHtml(row.job_number || "Job")}</span>
-              <span class="badge ${escapeHtml(badgeClass(row.status))}">${escapeHtml(statusLabel(row.status))}</span>
-            </span>
-            <span class="row-customer">${escapeHtml(row.customer_name || "Customer")}</span>
-            <span class="row-meta">${escapeHtml(routeCity(row))}</span>
-            <span class="row-meta">${escapeHtml(driverNameById(row.assigned_driver_id))} • ${escapeHtml(deliverySpeedLabel(row.delivery_speed))} • ${escapeHtml(money(row.approved_price ?? row.customer_charge))}</span>
-          </span>
-          <span class="row-menu">
-            <button class="menu-trigger" type="button" data-menu-toggle>⋯</button>
-            <span class="menu-list">
-              <button class="menu-item" type="button" data-open-job="${escapeHtml(String(row.id))}">View Details</button>
-              <button class="menu-item" type="button" data-open-edit-job="${escapeHtml(String(row.id))}">Edit Job</button>
-              <button class="menu-item" type="button" data-view-bol="${escapeHtml(String(row.id))}">View / Create BOL</button>
-            </span>
-          </span>
-          <span class="row-chevron">›</span>
-        </div>
-      `).join("");
-    }
+      renderQueueRows(
+        elements.readyRows,
+        state.rows.filter(row => getWorkflowStage(row) === "ready_to_dispatch"),
+        "No jobs ready to dispatch."
+      );
 
-    function renderClosedRows() {
-      const rows = state.rows.filter(isClosed);
-      if (!rows.length) {
-        elements.closedRows.innerHTML = '<div class="empty">No closed jobs found.</div>';
-        return;
-      }
+      renderQueueRows(
+        elements.assignedRows,
+        state.rows.filter(row => getWorkflowStage(row) === "assigned"),
+        "No assigned jobs yet."
+      );
 
-      elements.closedRows.innerHTML = rows.map(row => `
-        <div class="row" data-open-job="${escapeHtml(String(row.id))}" data-readonly="true" tabindex="0" role="button">
-          <span class="row-main">
-            <span class="row-topline">
-              <span class="row-id">${escapeHtml(row.job_number || "Job")}</span>
-              <span class="badge ${escapeHtml(badgeClass(row.status))}">${escapeHtml(statusLabel(row.status))}</span>
-            </span>
-            <span class="row-customer">${escapeHtml(row.customer_name || "Customer")}</span>
-            <span class="row-meta">${escapeHtml(routeCity(row))}</span>
-            <span class="row-meta">${escapeHtml(driverNameById(row.assigned_driver_id))} • Completed ${escapeHtml(formatDate(row.completed_at || row.updated_at || row.created_at))} • BOL ${escapeHtml(String(row.bol_status || "Unknown"))}</span>
-          </span>
-          <span class="row-chevron">›</span>
-        </div>
-      `).join("");
+      renderQueueRows(
+        elements.activeRows,
+        state.rows.filter(row => getWorkflowStage(row) === "active_deliveries"),
+        "No active deliveries."
+      );
+
+      renderQueueRows(
+        elements.closedRows,
+        state.rows.filter(row => getWorkflowStage(row) === "closed"),
+        "No closed jobs yet."
+      );
     }
 
     function renderDashboard() {
       updateStats();
-      renderQuoteRows();
-      renderJobRows();
-      renderClosedRows();
+      renderDispatchQueues();
       renderRecentActivity();
     }
 
@@ -1895,14 +2039,118 @@
       elements.jobForm.reset();
       document.getElementById("jobRecordId").value = "";
       document.getElementById("jobModalTitle").textContent = "Create Job";
+      state.jobWizardStep = 1;
+      renderJobWizard();
       openModal("jobModal");
     }
 
+    const wizardStepNames = [
+      "Customer Information",
+      "Pickup Information",
+      "Delivery Information",
+      "Package Details",
+      "Customer Pricing",
+      "Review & Create Job"
+    ];
+
+    function renderWizardReview() {
+      const form = elements.jobForm;
+      const data = new FormData(form);
+
+      const pairs = [
+        ["Customer", data.get("customer_name") || "-"],
+        ["Email", data.get("customer_email") || "-"],
+        ["Phone", data.get("customer_phone") || "-"],
+        ["Pickup", data.get("pickup_address") || "-"],
+        ["Delivery", data.get("delivery_address") || "-"],
+        ["Recipient", data.get("delivery_recipient_name") || "-"],
+        ["Vehicle", data.get("vehicle_type") || "-"],
+        ["Delivery Speed", deliverySpeedLabel(data.get("delivery_speed"))],
+        ["Package", data.get("package_type") || "-"],
+        ["Price", money(data.get("approved_price"))],
+        ["Invoice Delivery", String(data.get("invoice_delivery_method") || "none").toUpperCase()]
+      ];
+
+      elements.jobWizardReview.innerHTML = pairs.map(pair => `
+        <div><strong>${escapeHtml(pair[0])}:</strong> ${escapeHtml(String(pair[1] || "-"))}</div>
+      `).join("");
+    }
+
+    function validateJobWizardStep(step) {
+      const form = elements.jobForm;
+
+      if (step === 1 && !String(form.customer_name.value || "").trim()) {
+        return "Customer name is required.";
+      }
+
+      if (step === 2 && !String(form.pickup_address.value || "").trim()) {
+        return "Pickup address is required.";
+      }
+
+      if (step === 3 && !String(form.delivery_address.value || "").trim()) {
+        return "Delivery address is required.";
+      }
+
+      if (step === 5) {
+        const value = String(form.approved_price.value || "").trim();
+        if (value !== "") {
+          const numeric = Number(value);
+          if (!Number.isFinite(numeric) || numeric < 0) {
+            return "Total amount billed must be a valid number.";
+          }
+        }
+      }
+
+      return "";
+    }
+
+    function renderJobWizard() {
+      const panes = elements.jobForm.querySelectorAll(".wizard-pane");
+      panes.forEach((pane, index) => {
+        pane.classList.toggle("active", index + 1 === state.jobWizardStep);
+      });
+
+      const label = "Step " + String(state.jobWizardStep) + " of 6 - " + wizardStepNames[state.jobWizardStep - 1];
+      elements.jobWizardStepLabel.textContent = label;
+      elements.jobWizardProgress.style.width = String((state.jobWizardStep / 6) * 100) + "%";
+
+      elements.jobWizardBackBtn.style.display = state.jobWizardStep === 1 ? "none" : "";
+      elements.jobWizardNextBtn.style.display = state.jobWizardStep === 6 ? "none" : "";
+      elements.saveJobBtn.style.display = state.jobWizardStep === 6 ? "" : "none";
+      elements.saveJobBtn.textContent = document.getElementById("jobRecordId").value ? "Save Job" : "Create Job";
+
+      if (state.jobWizardStep === 6) {
+        renderWizardReview();
+      }
+    }
+
+    function goToNextJobWizardStep() {
+      const error = validateJobWizardStep(state.jobWizardStep);
+      if (error) {
+        showToast(error, "error");
+        return;
+      }
+
+      if (state.jobWizardStep < 6) {
+        state.jobWizardStep += 1;
+        renderJobWizard();
+      }
+    }
+
+    function goToPrevJobWizardStep() {
+      if (state.jobWizardStep > 1) {
+        state.jobWizardStep -= 1;
+        renderJobWizard();
+      }
+    }
+
     function openAssignFromQuickActions() {
-      const preferred = state.rows.find(row => isActiveJob(row)) || state.rows.find(row => clean(row.status) === "assigned");
+      const preferred =
+        state.rows.find(row => getWorkflowStage(row) === "ready_to_dispatch") ||
+        state.rows.find(row => getWorkflowStage(row) === "assigned");
 
       if (!preferred) {
-        showToast("No active jobs are available for assignment.", "info");
+        showToast("No jobs are ready for assignment.", "info");
         return;
       }
 
@@ -1915,28 +2163,23 @@
     }
 
     function drillToActiveJobs() {
-      ensureQueuesOpenAndScroll(elements.jobsRows);
+      ensureQueuesOpenAndScroll(elements.pendingGroup);
     }
 
     function drillToWaitingPayment() {
-      ensureQueuesOpenAndScroll(elements.jobsRows);
-
-      const waiting = state.rows.find(row => ["waiting_payment", "new", "pending"].includes(clean(row.status)));
-      if (waiting) {
-        openJobDetails(waiting.id, false);
-      }
+      ensureQueuesOpenAndScroll(elements.readyGroup);
     }
 
     function drillToDriversWorking() {
-      location.href = "/driver.html";
+      ensureQueuesOpenAndScroll(elements.assignedGroup);
     }
 
     function drillToCompletedToday() {
-      ensureQueuesOpenAndScroll(elements.closedRows);
+      ensureQueuesOpenAndScroll(elements.activeGroup);
     }
 
     function drillToNeedsAttention() {
-      openAiSuggestionsModal();
+      ensureQueuesOpenAndScroll(elements.closedGroup);
     }
 
     function openQuoteDetails(quoteId) {
@@ -2030,9 +2273,9 @@
       form.delivery_speed.value = quote.delivery_speed || "";
       form.package_type.value = quote.package_type || "";
       form.approved_price.value = quote.approved_price ?? quote.customer_charge ?? "";
-      form.driver_pay.value = quote.driver_pay ?? "";
       form.special_instructions.value = quote.special_instructions || "";
-      form.status.value = "assigned";
+      state.jobWizardStep = 1;
+      renderJobWizard();
       closeModal("quoteDetailsModal");
     }
 
@@ -2043,159 +2286,76 @@
       }
 
       state.selectedJob = job;
+      const stage = getWorkflowStage(job);
+      const summaryHint = readOnly ? '<div class="hint">Closed job view.</div>' : "";
 
-      const readOnlyText = readOnly ? '<div class="hint">Read-only mode for closed jobs.</div>' : "";
+      let stageActions = "";
+      if (stage === "pending_approval") {
+        stageActions = `
+          <button class="btn" type="button" data-edit-job="${escapeHtml(String(job.id))}">Edit Job</button>
+          <button class="btn" type="button" data-send-invoice="${escapeHtml(String(job.id))}">Send Invoice</button>
+          <button class="btn" type="button" data-send-payment-text="${escapeHtml(String(job.id))}">Send Payment Link (Text)</button>
+          <button class="btn" type="button" data-send-payment-email="${escapeHtml(String(job.id))}">Send Payment Link (Email)</button>
+          <button class="btn" type="button" data-cancel-job="${escapeHtml(String(job.id))}">Cancel Job</button>
+        `;
+      } else if (stage === "ready_to_dispatch") {
+        stageActions = `
+          <button class="btn primary" type="button" data-assign-job="${escapeHtml(String(job.id))}">Assign Driver</button>
+          <button class="btn" type="button" data-schedule-pickup="${escapeHtml(String(job.id))}">Schedule Pickup Time</button>
+          <button class="btn" type="button" data-view-bol="${escapeHtml(String(job.id))}">Print BOL</button>
+          <button class="btn" type="button" data-view-payment="${escapeHtml(String(job.id))}">View Payment</button>
+          <button class="btn" type="button" data-cancel-job="${escapeHtml(String(job.id))}">Cancel Job</button>
+        `;
+      } else if (stage === "assigned") {
+        stageActions = `
+          <button class="btn primary" type="button" data-assign-job="${escapeHtml(String(job.id))}">Assign / Reassign Driver</button>
+          <button class="btn" type="button" data-resend-driver="${escapeHtml(String(job.id))}">Resend to Driver</button>
+          <button class="btn" type="button" data-view-bol="${escapeHtml(String(job.id))}">Print BOL</button>
+          <button class="btn" type="button" data-cancel-job="${escapeHtml(String(job.id))}">Cancel Job</button>
+        `;
+      } else if (stage === "active_deliveries") {
+        stageActions = `
+          <button class="btn" type="button" data-view-bol="${escapeHtml(String(job.id))}">Print BOL</button>
+          <button class="btn" type="button" data-resend-driver="${escapeHtml(String(job.id))}">Resend to Driver</button>
+        `;
+      } else {
+        stageActions = `
+          <button class="btn" type="button" data-view-bol="${escapeHtml(String(job.id))}">View BOL</button>
+        `;
+      }
 
       elements.jobDetailsBody.innerHTML = `
-        ${readOnlyText}
+        ${summaryHint}
 
         <details class="card" open>
-          <summary>1. Job Summary</summary>
+          <summary>Job Summary</summary>
           <div class="card-body">
             <div class="kv"><strong>Job #</strong><span>${escapeHtml(job.job_number || "-")}</span></div>
+            <div class="kv"><strong>Status</strong><span class="${escapeHtml(badgeClass(job))}">${escapeHtml(statusLabel(job))}</span></div>
             <div class="kv"><strong>Customer</strong><span>${escapeHtml(job.customer_name || "-")}</span></div>
-            <div class="kv"><strong>Route</strong><span>${escapeHtml(routeCity(job))}</span></div>
-            <div class="kv"><strong>Dispatch Status</strong><span class="${escapeHtml(badgeClass(job.status))}">${escapeHtml(statusLabel(job.status))}</span></div>
-            <div class="status-row">
-              <select class="status-select" id="dispatchStatusSelect" ${readOnly ? "disabled" : ""}>
-                <option value="waiting_payment" ${["new", "pending", "waiting_payment", "quote", "quoted"].includes(clean(job.status)) ? "selected" : ""}>NEW JOB / WAITING PAYMENT</option>
-                <option value="ready" ${["ready", "paid"].includes(clean(job.status)) ? "selected" : ""}>PAID / READY</option>
-                <option value="assigned" ${clean(job.status) === "assigned" ? "selected" : ""}>ASSIGNED TO DRIVER</option>
-                <option value="cancelled" ${["cancelled", "canceled", "reassigned"].includes(clean(job.status)) ? "selected" : ""}>CANCELED / REASSIGNED</option>
-              </select>
-              <button class="btn" type="button" id="updateDispatchStatusBtn" ${readOnly ? "disabled" : ""}>Update Status</button>
-            </div>
-          </div>
-        </details>
-
-        <details class="card"><summary>2. Customer and Billing</summary>
-          <div class="card-body">
-            <div class="kv"><strong>Email</strong><span>${escapeHtml(job.customer_email || "-")}</span></div>
-            <div class="kv"><strong>Phone</strong><span>${escapeHtml(job.customer_phone || "-")}</span></div>
-            <div class="kv"><strong>Customer Total</strong><span>${escapeHtml(money(job.approved_price ?? job.customer_charge))}</span></div>
+            <div class="kv"><strong>Pickup</strong><span>${escapeHtml(job.pickup_address || "-")}</span></div>
+            <div class="kv"><strong>Delivery</strong><span>${escapeHtml(job.delivery_address || "-")}</span></div>
+            <div class="kv"><strong>Customer Price</strong><span>${escapeHtml(money(job.approved_price ?? job.customer_charge))}</span></div>
+            <div class="kv"><strong>Time</strong><span>${escapeHtml(formatDate(job.updated_at || job.created_at))}</span></div>
+            <div class="kv"><strong>Driver</strong><span>${escapeHtml(driverNameById(job.assigned_driver_id))}</span></div>
+            <div class="kv"><strong>Driver Workflow</strong><span>${escapeHtml(String(job.driver_workflow_status || "-").replaceAll("_", " ").toUpperCase())}</span></div>
             <div class="kv"><strong>Payment Status</strong><span>${escapeHtml(String(job.payment_status || "-").toUpperCase())}</span></div>
-            <div class="kv"><strong>Invoice Status</strong><span>${escapeHtml(String(job.invoice_status || "-").toUpperCase())}</span></div>
-            <div class="kv"><strong>Billing Notes</strong><span>${escapeHtml(job.billing_notes || "-")}</span></div>
           </div>
         </details>
 
-        <details class="card"><summary>3. Pickup</summary>
-          <div class="card-body">
-            <div class="kv"><strong>Address</strong><span>${escapeHtml(job.pickup_address || "-")}</span></div>
-            <div class="kv"><strong>Suite / Floor</strong><span>${escapeHtml(job.pickup_suite_floor || "-")}</span></div>
-            <div class="kv"><strong>ZIP</strong><span>${escapeHtml(job.pickup_zip || "-")}</span></div>
-            <div class="kv"><strong>Pickup Photo</strong><span>${job.pickup_photo_url ? `<a href="${escapeHtml(job.pickup_photo_url)}" target="_blank" rel="noopener">View photo</a>` : "Not uploaded"}</span></div>
-          </div>
-        </details>
-
-        <details class="card"><summary>4. Delivery</summary>
-          <div class="card-body">
-            <div class="kv"><strong>Address</strong><span>${escapeHtml(job.delivery_address || "-")}</span></div>
-            <div class="kv"><strong>Suite / Floor</strong><span>${escapeHtml(job.delivery_suite_floor || "-")}</span></div>
-            <div class="kv"><strong>ZIP</strong><span>${escapeHtml(job.delivery_zip || "-")}</span></div>
-            <div class="kv"><strong>Recipient</strong><span>${escapeHtml(job.delivery_recipient_name || job.pod_recipient_name || "-")}</span></div>
-            <div class="kv"><strong>Delivery Photo</strong><span>${job.delivery_photo_url ? `<a href="${escapeHtml(job.delivery_photo_url)}" target="_blank" rel="noopener">View photo</a>` : "Not uploaded"}</span></div>
-          </div>
-        </details>
-
-        <details class="card"><summary>5. Driver Assignment</summary>
-          <div class="card-body">
-            <div class="kv"><strong>Current Driver</strong><span>${escapeHtml(driverNameById(job.assigned_driver_id))}</span></div>
-            <div class="kv"><strong>Driver Pay</strong><span>${escapeHtml(money(job.driver_pay))}</span></div>
-            <div class="kv"><strong>Assignment Status</strong><span>${escapeHtml(statusLabel(job.status))}</span></div>
-            <div class="kv"><strong>Driver Response</strong><span>${escapeHtml(String(job.driver_acceptance_status || "pending"))}</span></div>
-            <div class="form-actions">
-              <button class="btn" type="button" id="openAssignBtn" ${readOnly ? "disabled" : ""}>Assign / Reassign Driver</button>
-              ${job.assigned_driver_id ? `<button class="btn" type="button" id="resendDriverBtn" ${readOnly ? "disabled" : ""}>Resend to Driver</button>` : ""}
-            </div>
-          </div>
-        </details>
-
-        <details class="card"><summary>6. Photos and Proof</summary>
-          <div class="card-body">
-            <div class="kv"><strong>Pickup Photo</strong><span>${job.pickup_photo_url ? "Uploaded" : "Not uploaded"}</span></div>
-            <div class="kv"><strong>Delivery Photo</strong><span>${job.delivery_photo_url ? "Uploaded" : "Not uploaded"}</span></div>
-            <div class="kv"><strong>POD Recipient</strong><span>${escapeHtml(job.pod_recipient_name || "-")}</span></div>
-          </div>
-        </details>
-
-        <details class="card"><summary>7. BOL</summary>
-          <div class="card-body">
-            <div class="kv"><strong>BOL Status</strong><span>${escapeHtml(String(job.bol_status || "Unknown"))}</span></div>
-            <div class="kv"><strong>BOL Created</strong><span>${escapeHtml(formatDate(job.bol_created_at))}</span></div>
-            <div class="kv"><strong>BOL Sent</strong><span>${escapeHtml(formatDate(job.bol_sent_at))}</span></div>
-            <div class="kv"><strong>Proof Requested</strong><span>${escapeHtml(String(job.proof_requested || "-").toUpperCase())}</span></div>
-            <div class="form-actions">
-              <button class="btn primary" type="button" data-view-bol="${escapeHtml(String(job.id))}">View / Create BOL</button>
-            </div>
-          </div>
-        </details>
-
-        <details class="card"><summary>8. Timeline</summary>
-          <div class="card-body">
-            <div class="kv"><strong>Created</strong><span>${escapeHtml(formatDate(job.created_at))}</span></div>
-            <div class="kv"><strong>Updated</strong><span>${escapeHtml(formatDate(job.updated_at))}</span></div>
-            <div class="kv"><strong>Completed</strong><span>${escapeHtml(formatDate(job.completed_at))}</span></div>
-          </div>
-        </details>
-
-        <details class="card"><summary>9. Internal Notes</summary>
+        <details class="card">
+          <summary>Internal Notes</summary>
           <div class="card-body">
             <div>${escapeHtml(job.special_instructions || "No notes")}</div>
           </div>
         </details>
 
         <div class="form-actions">
-          <button class="btn" type="button" id="editJobBtn" ${readOnly ? "disabled" : ""}>Edit Job</button>
-          <span class="row-menu">
-            <button class="menu-trigger" type="button" data-menu-toggle>⋯</button>
-            <span class="menu-list">
-              <button class="menu-item" type="button" id="menuAssignJobBtn" ${readOnly ? "disabled" : ""}>Assign / Reassign Driver</button>
-              <button class="menu-item" type="button" id="menuResendBtn" ${readOnly || !job.assigned_driver_id ? "disabled" : ""}>Resend to Driver</button>
-              <button class="menu-item" type="button" data-view-bol="${escapeHtml(String(job.id))}">View / Create BOL</button>
-              <button class="menu-item" type="button" id="menuCancelBtn" ${readOnly ? "disabled" : ""}>Cancel Job</button>
-            </span>
-          </span>
+          ${stageActions}
         </div>
       `;
 
       openModal("jobDetailsModal");
-
-      const updateBtn = document.getElementById("updateDispatchStatusBtn");
-      if (updateBtn) {
-        updateBtn.addEventListener("click", () => {
-          const select = document.getElementById("dispatchStatusSelect");
-          changeDispatchStatus(job.id, select.value, updateBtn);
-        });
-      }
-
-      const openAssignBtn = document.getElementById("openAssignBtn");
-      const menuAssignJobBtn = document.getElementById("menuAssignJobBtn");
-      if (openAssignBtn) {
-        openAssignBtn.addEventListener("click", () => openAssignModal(job.id));
-      }
-      if (menuAssignJobBtn) {
-        menuAssignJobBtn.addEventListener("click", () => openAssignModal(job.id));
-      }
-
-      const resendBtn = document.getElementById("resendDriverBtn");
-      const menuResendBtn = document.getElementById("menuResendBtn");
-      if (resendBtn) {
-        resendBtn.addEventListener("click", () => resendToDriver(job.id));
-      }
-      if (menuResendBtn) {
-        menuResendBtn.addEventListener("click", () => resendToDriver(job.id));
-      }
-
-      const editBtn = document.getElementById("editJobBtn");
-      if (editBtn) {
-        editBtn.addEventListener("click", () => openEditJobModal(job.id));
-      }
-
-      const cancelBtn = document.getElementById("menuCancelBtn");
-      if (cancelBtn) {
-        cancelBtn.addEventListener("click", () => changeDispatchStatus(job.id, "cancelled", cancelBtn));
-      }
     }
 
     function openEditJobModal(jobId) {
@@ -2214,7 +2374,6 @@
       form.customer_name.value = job.customer_name || "";
       form.customer_email.value = job.customer_email || "";
       form.customer_phone.value = job.customer_phone || "";
-      form.assigned_driver_id.value = job.assigned_driver_id || "";
       form.pickup_address.value = job.pickup_address || "";
       form.pickup_suite_floor.value = job.pickup_suite_floor || "";
       form.pickup_zip.value = job.pickup_zip || "";
@@ -2227,12 +2386,12 @@
       form.package_type.value = job.package_type || "";
       form.delivery_method.value = job.delivery_method || "";
       form.approved_price.value = job.approved_price ?? job.customer_charge ?? "";
-      form.driver_pay.value = job.driver_pay ?? "";
-      form.status.value = ["waiting_payment", "ready", "assigned", "cancelled"].includes(clean(job.status)) ? clean(job.status) : "waiting_payment";
       form.invoice_delivery_method.value = job.invoice_delivery_method || "none";
-      form.invoice_due_date.value = job.invoice_due_date || "";
       form.billing_notes.value = job.billing_notes || "";
       form.special_instructions.value = job.special_instructions || "";
+
+      state.jobWizardStep = 1;
+      renderJobWizard();
     }
 
     async function changeDispatchStatus(jobId, nextStatus, buttonRef) {
@@ -2241,11 +2400,14 @@
         return;
       }
 
-      if (nextStatus === "cancelled") {
-        const confirmed = window.confirm("Change status to CANCELED / REASSIGNED for " + (job.job_number || "this job") + "?");
-        if (!confirmed) {
-          return;
-        }
+      if (clean(nextStatus) !== "cancelled") {
+        showToast("Status changes are automated. Dispatch can only cancel manually.", "info");
+        return;
+      }
+
+      const confirmed = window.confirm("Cancel " + (job.job_number || "this job") + "?");
+      if (!confirmed) {
+        return;
       }
 
       const button = buttonRef || null;
@@ -2281,6 +2443,12 @@
     function openAssignModal(jobId) {
       const job = getRowById(jobId);
       if (!job) {
+        return;
+      }
+
+      const stage = getWorkflowStage(job);
+      if (!["ready_to_dispatch", "assigned"].includes(stage)) {
+        showToast("Driver assignment is available only when a job is Ready to Dispatch or already Assigned.", "info");
         return;
       }
 
@@ -2489,16 +2657,12 @@
 
     async function submitJobForm(event) {
       event.preventDefault();
-
-      const submitAction = event.submitter?.value || "save_pending";
-      const approveBtn = document.getElementById("approveSendBtn");
-      const saveBtn = document.getElementById("savePendingBtn");
-      setButtonLoading(approveBtn, true, "Saving...", "Approve & Send to Driver");
-      setButtonLoading(saveBtn, true, "Saving...", "Save Pending");
+      const saveBtn = elements.saveJobBtn;
+      setButtonLoading(saveBtn, true, "Saving...", saveBtn.textContent || "Create Job");
 
       try {
         const recordId = document.getElementById("jobRecordId").value;
-        const payload = formToPayload(elements.jobForm, { includeStatus: true });
+        const payload = formToPayload(elements.jobForm, { includeStatus: false });
 
         const validationError = validatePayload(payload);
         if (validationError) {
@@ -2506,15 +2670,14 @@
           return;
         }
 
-        if (submitAction === "approve_send") {
-          if (!payload.assigned_driver_id) {
-            showToast("Assign a driver before approving.", "error");
-            return;
-          }
+        delete payload.invoice_due_date;
 
-          payload.status = "assigned";
+        if (!recordId) {
+          payload.status = "pending_approval";
+          payload.assigned_driver_id = null;
+          payload.driver_pay = null;
           payload.driver_acceptance_status = "pending";
-          payload.driver_workflow_status = "assigned";
+          payload.driver_workflow_status = null;
           payload.driver_accepted_at = null;
           payload.driver_rejected_at = null;
         }
@@ -2534,8 +2697,19 @@
 
           closeModal("jobModal");
           await loadRows();
-          showToast("Job created successfully", "success");
+          showToast("Job created in Pending Approval", "success");
           return;
+        }
+
+        const original = getRowById(recordId);
+        if (original) {
+          payload.status = original.status;
+          payload.assigned_driver_id = original.assigned_driver_id;
+          payload.driver_pay = original.driver_pay;
+          payload.driver_acceptance_status = original.driver_acceptance_status;
+          payload.driver_workflow_status = original.driver_workflow_status;
+          payload.driver_accepted_at = original.driver_accepted_at;
+          payload.driver_rejected_at = original.driver_rejected_at;
         }
 
         const updateResult = await client
@@ -2555,9 +2729,53 @@
       } catch (error) {
         showToast(error.message || "Unable to save job", "error");
       } finally {
-        setButtonLoading(approveBtn, false, "Saving...", "Approve & Send to Driver");
-        setButtonLoading(saveBtn, false, "Saving...", "Save Pending");
+        setButtonLoading(saveBtn, false, "Saving...", document.getElementById("jobRecordId").value ? "Save Job" : "Create Job");
       }
+    }
+
+    function sendInvoiceForJob(jobId) {
+      const job = getRowById(jobId);
+      if (!job) {
+        return;
+      }
+
+      showToast("Invoice action is visible. Transport automation is not connected yet.", "info");
+    }
+
+    function sendPaymentLinkByText(jobId) {
+      const job = getRowById(jobId);
+      if (!job) {
+        return;
+      }
+
+      showToast("Payment link (text) action is visible. SMS transport is not connected yet.", "info");
+    }
+
+    function sendPaymentLinkByEmail(jobId) {
+      const job = getRowById(jobId);
+      if (!job) {
+        return;
+      }
+
+      showToast("Payment link (email) action is visible. Email transport is not connected yet.", "info");
+    }
+
+    function schedulePickupTime(jobId) {
+      const job = getRowById(jobId);
+      if (!job) {
+        return;
+      }
+
+      showToast("Schedule pickup time is available as a placeholder and can be wired to calendar logic next.", "info");
+    }
+
+    function viewPayment(jobId) {
+      const job = getRowById(jobId);
+      if (!job) {
+        return;
+      }
+
+      showToast("Payment status: " + String(job.payment_status || "unknown").toUpperCase(), "info");
     }
 
     async function cancelQuote(quoteId) {
@@ -2628,9 +2846,63 @@
         return;
       }
 
+      const editFromDetails = target.closest("[data-edit-job]");
+      if (editFromDetails) {
+        openEditJobModal(editFromDetails.getAttribute("data-edit-job"));
+        return;
+      }
+
       const viewBol = target.closest("[data-view-bol]");
       if (viewBol) {
         openBolForJob(viewBol.getAttribute("data-view-bol"));
+        return;
+      }
+
+      const assignJob = target.closest("[data-assign-job]");
+      if (assignJob) {
+        openAssignModal(assignJob.getAttribute("data-assign-job"));
+        return;
+      }
+
+      const resendDriver = target.closest("[data-resend-driver]");
+      if (resendDriver) {
+        resendToDriver(resendDriver.getAttribute("data-resend-driver"));
+        return;
+      }
+
+      const sendInvoice = target.closest("[data-send-invoice]");
+      if (sendInvoice) {
+        sendInvoiceForJob(sendInvoice.getAttribute("data-send-invoice"));
+        return;
+      }
+
+      const sendPayText = target.closest("[data-send-payment-text]");
+      if (sendPayText) {
+        sendPaymentLinkByText(sendPayText.getAttribute("data-send-payment-text"));
+        return;
+      }
+
+      const sendPayEmail = target.closest("[data-send-payment-email]");
+      if (sendPayEmail) {
+        sendPaymentLinkByEmail(sendPayEmail.getAttribute("data-send-payment-email"));
+        return;
+      }
+
+      const pickupSchedule = target.closest("[data-schedule-pickup]");
+      if (pickupSchedule) {
+        schedulePickupTime(pickupSchedule.getAttribute("data-schedule-pickup"));
+        return;
+      }
+
+      const paymentView = target.closest("[data-view-payment]");
+      if (paymentView) {
+        viewPayment(paymentView.getAttribute("data-view-payment"));
+        return;
+      }
+
+      const cancelJob = target.closest("[data-cancel-job]");
+      if (cancelJob) {
+        changeDispatchStatus(cancelJob.getAttribute("data-cancel-job"), "cancelled", cancelJob);
         return;
       }
 
@@ -2676,19 +2948,22 @@
     function bindEvents() {
       document.getElementById("openCreateQuoteBtn").addEventListener("click", openCreateQuoteModal);
       document.getElementById("openCreateJobBtn").addEventListener("click", openCreateJobModal);
-      document.getElementById("refreshQuotesBtn").addEventListener("click", loadDashboard);
-      document.getElementById("refreshJobsBtn").addEventListener("click", loadDashboard);
+      document.getElementById("refreshPendingBtn").addEventListener("click", loadDashboard);
+      document.getElementById("refreshReadyBtn").addEventListener("click", loadDashboard);
 
       document.getElementById("quickAssignDriverBtn").addEventListener("click", openAssignFromQuickActions);
       document.getElementById("openReportsBtn").addEventListener("click", openReportsPage);
 
-      elements.cardActiveJobs.addEventListener("click", drillToActiveJobs);
-      elements.cardWaitingPayment.addEventListener("click", drillToWaitingPayment);
-      elements.cardDriversWorking.addEventListener("click", drillToDriversWorking);
-      elements.cardCompletedToday.addEventListener("click", drillToCompletedToday);
-      elements.cardNeedsAttention.addEventListener("click", drillToNeedsAttention);
+      elements.cardPendingApproval.addEventListener("click", drillToActiveJobs);
+      elements.cardReadyDispatch.addEventListener("click", drillToWaitingPayment);
+      elements.cardAssigned.addEventListener("click", drillToDriversWorking);
+      elements.cardActiveDeliveries.addEventListener("click", drillToCompletedToday);
+      elements.cardClosedJobs.addEventListener("click", drillToNeedsAttention);
 
       elements.openAiSuggestionsBtn.addEventListener("click", openAiSuggestionsModal);
+
+      elements.jobWizardNextBtn.addEventListener("click", goToNextJobWizardStep);
+      elements.jobWizardBackBtn.addEventListener("click", goToPrevJobWizardStep);
 
       elements.quoteForm.addEventListener("submit", submitQuoteForm);
       elements.jobForm.addEventListener("submit", submitJobForm);
@@ -2713,8 +2988,10 @@
         bindEvents();
         await loadDashboard();
       } catch (error) {
-        elements.quotesRows.innerHTML = '<div class="empty">' + escapeHtml(error.message || "Unable to load dashboard") + '</div>';
-        elements.jobsRows.innerHTML = '<div class="empty">' + escapeHtml(error.message || "Unable to load dashboard") + '</div>';
+        elements.pendingRows.innerHTML = '<div class="empty">' + escapeHtml(error.message || "Unable to load dashboard") + '</div>';
+        elements.readyRows.innerHTML = '<div class="empty">' + escapeHtml(error.message || "Unable to load dashboard") + '</div>';
+        elements.assignedRows.innerHTML = '<div class="empty">' + escapeHtml(error.message || "Unable to load dashboard") + '</div>';
+        elements.activeRows.innerHTML = '<div class="empty">' + escapeHtml(error.message || "Unable to load dashboard") + '</div>';
         elements.closedRows.innerHTML = '<div class="empty">' + escapeHtml(error.message || "Unable to load dashboard") + '</div>';
         showToast(error.message || "Unable to load dashboard", "error");
       }
