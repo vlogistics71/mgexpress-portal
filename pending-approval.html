@@ -193,24 +193,79 @@
     </section>
   </div>
 
-  <div class="modal-backdrop" id="assignModal">
-    <section class="modal-panel" role="dialog" aria-modal="true" aria-labelledby="assignTitle">
-      <div class="modal-head">
-        <h3 class="modal-title" id="assignTitle">Assign / Reassign Driver</h3>
+  <div class="modal-backdrop assign-modal-backdrop" id="assignModal">
+    <section class="assign-panel" role="dialog" aria-modal="true" aria-labelledby="assignTitle">
+      <div class="assign-panel-head">
+        <div>
+          <h3 class="assign-panel-title" id="assignTitle">Assign Driver</h3>
+          <div class="assign-panel-sub">Smart assignment with recommendation and compact driver cards</div>
+        </div>
         <button class="icon-btn" type="button" data-close-modal="assignModal">×</button>
       </div>
-      <div class="modal-body">
-        <form id="assignForm" class="form-grid">
-          <input type="hidden" id="assignJobId">
-          <div class="field"><label>Driver</label><select id="assignDriverSelect" required><option value="">Select driver</option></select></div>
-          <div class="field"><label>Driver Pay</label><input id="assignDriverPay" type="number" min="0" step="0.01" placeholder="0.00"></div>
-          <div class="field full"><label>Assignment Note (optional)</label><textarea id="assignNote" placeholder="Internal note only"></textarea></div>
-          <div class="hint" id="assignNoteHint">Assignment notes are not persisted because no assignment-note column was found in current dashboard logic.</div>
-          <div class="form-actions full">
-            <button class="btn" type="button" data-close-modal="assignModal">Cancel</button>
-            <button class="btn primary" id="assignSubmitBtn" type="submit">Send to Driver</button>
+      <div class="assign-panel-body">
+        <section class="assign-job-card">
+          <div class="assign-section-label">Delivery</div>
+          <div class="assign-job-grid" id="assignJobSummary"></div>
+        </section>
+
+        <section class="assign-recommended" id="assignRecommendedCard"></section>
+
+        <section class="assign-list">
+          <div class="assign-controls">
+            <div class="field">
+              <label>Search Driver</label>
+              <input id="assignDriverSearch" type="search" placeholder="Search driver name or area">
+            </div>
+            <div class="field">
+              <label>Filter</label>
+              <select id="assignDriverFilter">
+                <option value="all">All</option>
+                <option value="available">Available</option>
+                <option value="busy">Busy</option>
+                <option value="off_duty">Off Duty</option>
+              </select>
+            </div>
           </div>
+
+          <div class="assign-list-head">
+            <h4 class="assign-list-title">Other Available Drivers</h4>
+          </div>
+          <div class="assign-driver-list" id="assignDriverCards"></div>
+        </section>
+
+        <section class="assign-future">
+          <div class="assign-section-label">Future AI Expansion</div>
+          <ul>
+            <li>Fuel savings</li>
+            <li>Route grouping</li>
+            <li>Nearby pickups</li>
+            <li>Traffic impact</li>
+          </ul>
+        </section>
+
+        <form id="assignForm" class="assign-hidden-form">
+          <input type="hidden" id="assignJobId">
+          <input type="hidden" id="assignDriverSelect">
+          <input type="hidden" id="assignDriverPay">
+          <textarea id="assignNote"></textarea>
+          <button class="btn primary" id="assignSubmitBtn" type="submit">Assign Driver</button>
         </form>
+      </div>
+    </section>
+  </div>
+
+  <div class="modal-backdrop" id="assignConfirmModal">
+    <section class="modal-panel" role="dialog" aria-modal="true" aria-labelledby="assignConfirmTitle">
+      <div class="modal-head">
+        <h3 class="modal-title" id="assignConfirmTitle">Confirm Assignment</h3>
+        <button class="icon-btn" type="button" data-close-modal="assignConfirmModal">×</button>
+      </div>
+      <div class="modal-body">
+        <div id="assignConfirmText">Assign selected driver?</div>
+        <div class="confirm-actions">
+          <button class="btn" type="button" data-close-modal="assignConfirmModal">Cancel</button>
+          <button class="btn primary" type="button" id="assignConfirmBtn">Assign Driver</button>
+        </div>
       </div>
     </section>
   </div>
