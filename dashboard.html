@@ -2622,7 +2622,9 @@
     function updateStats() {
       const pendingRows = state.rows.filter(row => getWorkflowStage(row) === "pending_approval");
       const readyRows = state.rows.filter(row => getWorkflowStage(row) === "ready_to_dispatch");
-      const assignedRows = state.rows.filter(row => getWorkflowStage(row) === "assigned");
+      const assignedRows = state.rows.filter(row => {
+        return getWorkflowStage(row) === "assigned" && clean(row.driver_acceptance_status) !== "rejected";
+      });
       const closedRows = state.rows.filter(isClosedToday);
 
       elements.countPendingApproval.textContent = String(pendingRows.length);

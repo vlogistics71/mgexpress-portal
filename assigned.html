@@ -67,6 +67,16 @@
         <span id="sectionTitle">Deliveries</span> â€¢ <span id="visibleCount">0 visible</span>
       </div>
 
+      <details class="rejected-section" id="rejectedSection" open>
+        <summary class="rejected-summary">
+          <span class="rejected-title">Rejected By Driver</span>
+          <span class="rejected-count" id="rejectedCount">0</span>
+        </summary>
+        <div class="rejected-list" id="rejectedRows">
+          <div class="rejected-empty">No rejected jobs.</div>
+        </div>
+      </details>
+
       <div class="rows" id="rowsHost"><div class="empty">Loading deliveries...</div></div>
     </section>
   </main>
@@ -265,6 +275,22 @@
         <div class="confirm-actions">
           <button class="btn" type="button" data-close-modal="assignConfirmModal">Cancel</button>
           <button class="btn primary" type="button" id="assignConfirmBtn">Assign Driver</button>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <div class="modal-backdrop" id="rejectedReturnConfirmModal">
+    <section class="modal-panel" role="dialog" aria-modal="true" aria-labelledby="rejectedReturnConfirmTitle">
+      <div class="modal-head">
+        <h3 class="modal-title" id="rejectedReturnConfirmTitle">Return to Ready</h3>
+        <button class="icon-btn" type="button" data-close-modal="rejectedReturnConfirmModal">×</button>
+      </div>
+      <div class="modal-body">
+        <div id="rejectedReturnConfirmText">Remove this job from driver and return it to Ready to Dispatch?</div>
+        <div class="confirm-actions">
+          <button class="btn" type="button" data-close-modal="rejectedReturnConfirmModal">Cancel</button>
+          <button class="btn primary" type="button" id="rejectedReturnConfirmBtn">Return to Ready</button>
         </div>
       </div>
     </section>

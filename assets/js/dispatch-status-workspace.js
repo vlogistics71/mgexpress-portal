@@ -70,11 +70,13 @@ const modeConfig = MODE_CONFIG[workspaceMode] || MODE_CONFIG.pending_approval;
 const state = {
   drivers: [],
   rows: [],
+  rejectedRows: [],
   recurringCustomers: [],
   customerDeliveryCounts: {},
   supportsEstimatedMiles: null,
   selectedJob: null,
-  pendingAssignment: null
+  pendingAssignment: null,
+  pendingRejectedReturnJobId: ""
 };
 
 const elements = {
@@ -84,6 +86,9 @@ const elements = {
   sectionTitle: document.getElementById("sectionTitle"),
   visibleCount: document.getElementById("visibleCount"),
   rowsHost: document.getElementById("rowsHost"),
+  rejectedSection: document.getElementById("rejectedSection"),
+  rejectedCount: document.getElementById("rejectedCount"),
+  rejectedRows: document.getElementById("rejectedRows"),
   searchInput: document.getElementById("searchInput"),
   customerSearchInput: document.getElementById("customerSearchInput"),
   jobSearchInput: document.getElementById("jobSearchInput"),
@@ -115,6 +120,9 @@ const elements = {
   assignConfirmModal: document.getElementById("assignConfirmModal"),
   assignConfirmText: document.getElementById("assignConfirmText"),
   assignConfirmBtn: document.getElementById("assignConfirmBtn"),
+  rejectedReturnConfirmModal: document.getElementById("rejectedReturnConfirmModal"),
+  rejectedReturnConfirmText: document.getElementById("rejectedReturnConfirmText"),
+  rejectedReturnConfirmBtn: document.getElementById("rejectedReturnConfirmBtn"),
   assignSubmitBtn: document.getElementById("assignSubmitBtn"),
   toastWrap: document.getElementById("toastWrap")
 };
@@ -571,8 +579,29 @@ async function loadRows() {
     state.rows = refresh.data || [];
   }
 
+  if (workspaceMode === "assigned") {
+    await loadRejectedJobs();
+  }
+
   buildCustomerDeliveryCounts();
   renderWorkspace();
+}
+
+async function loadRejectedJobs() {
+  const result = await client
+    .from("quotes")
+    .select("*")
+    .eq("driver_acceptance_status", "rejected")
+    .not("assigned_driver_id", "is", null)
+    .order("driver_rejected_at", { ascending: false });
+
+  if (result.error) {
+    throw result.error;
+  }
+
+  state.rejectedRows = (result.data || []).filter(row => {
+    return !isClosedStatus(row) && !isDeliveryCompleted(row);
+  });
 }
 
 function filterRowsByMode() {
@@ -585,7 +614,9 @@ function filterRowsByMode() {
   }
 
   if (workspaceMode === "assigned") {
-    return state.rows.filter(row => getWorkflowStage(row) === "assigned");
+    return state.rows.filter(row => {
+      return getWorkflowStage(row) === "assigned" && clean(row.driver_acceptance_status) !== "rejected";
+    });
   }
 
   return state.rows.filter(isClosedToday);
@@ -779,6 +810,47 @@ function renderAssignedGroupedRows(rows) {
   }).join("");
 }
 
+function renderRejectedRows() {
+  if (!elements.rejectedSection) {
+    return;
+  }
+
+  if (workspaceMode !== "assigned") {
+    elements.rejectedSection.style.display = "none";
+    return;
+  }
+
+  elements.rejectedSection.style.display = "";
+  elements.rejectedCount.textContent = String(state.rejectedRows.length);
+
+  if (!state.rejectedRows.length) {
+    elements.rejectedRows.innerHTML = '<div class="rejected-empty">No rejected jobs.</div>';
+    return;
+  }
+
+  elements.rejectedRows.innerHTML = state.rejectedRows.map(row => {
+    const driverName = driverNameById(row.assigned_driver_id);
+    return `
+      <div class="rejected-row" data-open-job="${escapeHtml(String(row.id))}" role="button" tabindex="0">
+        <div class="rejected-main">
+          <div class="rejected-topline">
+            <span class="row-id">${escapeHtml(row.job_number || "Delivery")}</span>
+            <span class="badge badge-rejected">REJECTED</span>
+          </div>
+          <div class="row-customer">${escapeHtml(row.customer_name || "Customer")}</div>
+          <div class="rejected-meta">${escapeHtml(parseCity(row.pickup_address))} -> ${escapeHtml(parseCity(row.delivery_address))}</div>
+          <div class="rejected-meta">Driver: ${escapeHtml(driverName)} • Rejected ${escapeHtml(formatDateTime(row.driver_rejected_at || row.updated_at || row.created_at))}</div>
+          <div class="rejected-meta">Total: ${escapeHtml(money(row.approved_price ?? row.customer_charge))}</div>
+          <div class="rejected-actions" data-prevent-row-open="true">
+            <button class="btn primary" type="button" data-return-rejected-ready="${escapeHtml(String(row.id))}">Unassign & Return to Ready</button>
+          </div>
+        </div>
+        <span class="row-chevron">›</span>
+      </div>
+    `;
+  }).join("");
+}
+
 function renderWorkspace() {
   const modeRows = filterRowsByMode();
   const filtered = applyFilters(modeRows);
@@ -787,6 +859,7 @@ function renderWorkspace() {
   elements.visibleCount.textContent = String(sorted.length) + " visible";
 
   if (workspaceMode === "assigned") {
+    renderRejectedRows();
     renderAssignedGroupedRows(sorted);
     return;
   }
@@ -795,7 +868,67 @@ function renderWorkspace() {
 }
 
 function getRowById(id) {
-  return state.rows.find(item => String(item.id) === String(id)) || null;
+  return state.rows.find(item => String(item.id) === String(id)) ||
+    state.rejectedRows.find(item => String(item.id) === String(id)) ||
+    null;
+}
+
+function openRejectedReturnConfirm(jobId) {
+  const job = getRowById(jobId);
+  if (!job) {
+    return;
+  }
+
+  state.pendingRejectedReturnJobId = String(job.id);
+  elements.rejectedReturnConfirmText.textContent =
+    "Remove this job from " + driverNameById(job.assigned_driver_id) + " and return it to Ready to Dispatch?";
+  openModal("rejectedReturnConfirmModal");
+}
+
+async function returnRejectedToReady() {
+  const jobId = state.pendingRejectedReturnJobId;
+  const job = getRowById(jobId);
+  if (!job || !job.id) {
+    showToast("Selected rejected job was not found.", "error");
+    return;
+  }
+
+  const button = elements.rejectedReturnConfirmBtn;
+  setButtonLoading(button, true, "Returning...", "Return to Ready");
+
+  try {
+    const payload = {
+      assigned_driver_id: null,
+      status: "ready",
+      driver_workflow_status: null,
+      driver_accepted_at: null
+    };
+
+    const result = await client
+      .from("quotes")
+      .update(payload)
+      .eq("id", job.id)
+      .select("*")
+      .maybeSingle();
+
+    if (result.error) {
+      throw result.error;
+    }
+
+    closeModal("rejectedReturnConfirmModal");
+    await loadRows();
+    try {
+      localStorage.setItem("mg_dispatch_refresh", new Date().toISOString());
+    } catch (_error) {
+      // Ignore storage write issues; main update already succeeded.
+    }
+    showToast("Job returned to Ready to Dispatch", "success");
+  } catch (error) {
+    showToast(error.message || "Unable to return rejected job", "error");
+  } finally {
+    setButtonLoading(button, false, "Returning...", "Return to Ready");
+    state.pendingRejectedReturnJobId = "";
+  }
 }
 
 function populateDriverSelects() {
@@ -1844,6 +1977,12 @@ function handleDocumentClick(event) {
     return;
   }
 
+  const returnRejected = target.closest("[data-return-rejected-ready]");
+  if (returnRejected) {
+    openRejectedReturnConfirm(returnRejected.getAttribute("data-return-rejected-ready"));
+    return;
+  }
+
   const rowAction = target.closest("[data-prevent-row-open]");
   if (rowAction) {
     return;
@@ -1969,6 +2108,9 @@ function bindEvents() {
     }
   });
   elements.assignConfirmBtn.addEventListener("click", confirmQueuedAssignment);
+  if (elements.rejectedReturnConfirmBtn) {
+    elements.rejectedReturnConfirmBtn.addEventListener("click", returnRejectedToReady);
+  }
 
   elements.customerLookupInput.addEventListener("input", handleCustomerLookupInput);
   elements.jobForm.addEventListener("input", renderNewDeliveryReview);
