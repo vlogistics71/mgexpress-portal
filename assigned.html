@@ -1,0 +1,225 @@
+﻿<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Assigned | MG Express Dispatch</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <link rel="stylesheet" href="/assets/css/dispatch-status-workspace.css">
+</head>
+<body data-workspace="assigned">
+  <header class="topbar">
+    <div class="topbar-inner">
+      <div class="brand">MG <span>EXPRESS</span> DISPATCH</div>
+      <div class="staff-email" id="staffEmail"></div>
+    </div>
+  </header>
+
+  <main class="container">
+    <section class="heading">
+      <div class="heading-top">
+        <div>
+          <div class="eyebrow">Dispatch Workspace</div>
+          <h1 class="page-title" id="pageTitle">Assigned</h1>
+          <div class="page-subtitle" id="pageSubtitle">Loading workspace...</div>
+        </div>
+        <a class="back-link" href="/dashboard.html">Home</a>
+      </div>
+    </section>
+
+    <section class="panel">
+      <div class="panel-head">
+        <div class="controls">
+          <div class="field">
+            <label>Search</label>
+            <input id="searchInput" type="search" placeholder="Search customer, route, driver, job">
+          </div>
+          <div class="field" id="customerSearchField">
+            <label>Customer Search</label>
+            <input id="customerSearchInput" type="search" placeholder="Customer name">
+          </div>
+          <div class="field" id="jobSearchField">
+            <label>Job Number</label>
+            <input id="jobSearchInput" type="search" placeholder="MGE-00045">
+          </div>
+          <div class="field">
+            <label>Filters</label>
+            <select id="statusFilter"></select>
+          </div>
+          <div class="field">
+            <label>Sort</label>
+            <select id="sortBy">
+              <option value="updated_desc">Newest Updated</option>
+              <option value="updated_asc">Oldest Updated</option>
+              <option value="job_asc">Job Number A-Z</option>
+              <option value="job_desc">Job Number Z-A</option>
+              <option value="customer_asc">Customer A-Z</option>
+            </select>
+          </div>
+          <div class="field refresh-wrap" id="refreshWrap">
+            <label>&nbsp;</label>
+            <button class="refresh-btn" id="refreshBtn" type="button">Refresh</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel-meta">
+        <span id="sectionTitle">Deliveries</span> â€¢ <span id="visibleCount">0 visible</span>
+      </div>
+
+      <div class="rows" id="rowsHost"><div class="empty">Loading deliveries...</div></div>
+    </section>
+  </main>
+
+  <div class="modal-backdrop" id="jobDetailsModal">
+    <section class="modal-panel" role="dialog" aria-modal="true" aria-labelledby="jobDetailsTitle">
+      <div class="modal-head">
+        <h3 class="modal-title" id="jobDetailsTitle">Delivery Details</h3>
+        <button class="icon-btn" type="button" data-close-modal="jobDetailsModal">Ã—</button>
+      </div>
+      <div class="modal-body" id="jobDetailsBody"></div>
+    </section>
+  </div>
+
+  <div class="modal-backdrop" id="jobModal">
+    <section class="modal-panel" role="dialog" aria-modal="true" aria-labelledby="jobModalTitle">
+      <div class="modal-head">
+        <h3 class="modal-title" id="jobModalTitle">Edit Job</h3>
+        <button class="icon-btn" type="button" data-close-modal="jobModal">Ã—</button>
+      </div>
+      <div class="modal-body">
+        <form id="jobForm" class="job-form">
+          <input type="hidden" name="record_id" id="jobRecordId">
+          <input type="hidden" name="customer_account_id" id="jobCustomerAccountId">
+
+          <section class="job-section">
+            <h4 class="job-section-title">Customer</h4>
+            <div class="job-subdivider"></div>
+            <div class="field full">
+              <label>Find Recurring Customer</label>
+              <input id="customerLookupInput" type="search" placeholder="Search recurring customers by name, company, phone, email">
+              <div class="hint">Only recurring customers are listed. If none match, continue as one-time customer.</div>
+              <div class="lookup-results" id="customerLookupResults"></div>
+            </div>
+            <div class="form-grid">
+              <div class="field"><label>Customer Name</label><input name="customer_name" required></div>
+              <div class="field"><label>Phone</label><input name="customer_phone" type="tel"></div>
+              <div class="field full"><label>Email</label><input name="customer_email" type="email"></div>
+            </div>
+          </section>
+
+          <section class="job-section">
+            <h4 class="job-section-title">Pickup</h4>
+            <div class="job-subdivider"></div>
+            <div class="form-grid">
+              <div class="field full"><label>Pickup Address</label><input name="pickup_address" required></div>
+              <div class="field full"><label>Pickup Suite / Floor</label><input name="pickup_suite_floor"></div>
+              <div class="field"><label>Pickup ZIP Code</label><input name="pickup_zip"></div>
+              <div class="field"><label>Contact Name</label><input name="pickup_contact_name"></div>
+              <div class="field"><label>Contact Phone</label><input name="pickup_contact_phone" type="tel"></div>
+              <div class="field full"><label>Pickup Instructions</label><textarea name="pickup_instructions"></textarea></div>
+            </div>
+          </section>
+
+          <section class="job-section">
+            <h4 class="job-section-title">Delivery</h4>
+            <div class="job-subdivider"></div>
+            <div class="form-grid">
+              <div class="field full"><label>Delivery Address</label><input name="delivery_address" required></div>
+              <div class="field full"><label>Delivery Suite / Floor</label><input name="delivery_suite_floor"></div>
+              <div class="field"><label>Delivery ZIP Code</label><input name="delivery_zip"></div>
+              <div class="field"><label>Contact Name</label><input name="delivery_contact_name"></div>
+              <div class="field"><label>Contact Phone</label><input name="delivery_contact_phone" type="tel"></div>
+              <div class="field full"><label>Delivery Instructions</label><textarea name="delivery_instructions"></textarea></div>
+            </div>
+          </section>
+
+          <section class="job-section">
+            <h4 class="job-section-title">Package</h4>
+            <div class="job-subdivider"></div>
+            <div class="form-grid">
+              <div class="field"><label>Vehicle Type</label>
+                <select name="vehicle_type">
+                  <option value="">Choose vehicle</option>
+                  <option value="Car">Car</option>
+                  <option value="SUV">SUV</option>
+                  <option value="Cargo Van">Cargo Van</option>
+                  <option value="Sprinter Van">Sprinter Van</option>
+                  <option value="Box Truck">Box Truck</option>
+                </select>
+              </div>
+
+              <div class="field"><label>Service Level</label>
+                <select name="delivery_speed">
+                  <option value="">Choose speed</option>
+                  <option value="2_hr">2 Hour</option>
+                  <option value="3_hr">3 Hour</option>
+                  <option value="4_hr">4 Hour</option>
+                  <option value="5_hr">5 Hour</option>
+                  <option value="6_hr">6 Hour</option>
+                  <option value="next_day">Next Day</option>
+                </select>
+              </div>
+
+              <div class="field full"><label>Package Description</label><input name="package_type"></div>
+              <div class="field"><label>Weight (optional)</label><input name="package_weight"></div>
+              <div class="field"><label>Reference Number (optional)</label><input name="reference_number"></div>
+            </div>
+          </section>
+
+          <section class="job-section">
+            <h4 class="job-section-title">Pricing</h4>
+            <div class="job-subdivider"></div>
+            <div class="form-grid">
+              <div class="field"><label>Customer Price</label><input name="approved_price" type="number" min="0" step="0.01" placeholder="0.00"></div>
+              <div class="field"><label>Estimated Miles (Optional)</label><input name="estimated_miles" type="number" min="0" step="0.01" placeholder="25.4"></div>
+              <div class="field full"><label>Internal Notes</label><textarea name="special_instructions"></textarea></div>
+            </div>
+          </section>
+
+          <section class="job-section">
+            <h4 class="job-section-title">Review</h4>
+            <div class="job-subdivider"></div>
+            <div class="review-list" id="newDeliveryReviewList"></div>
+            <div class="hint">Driver assignment and dispatch status are handled after approval/payment.</div>
+          </section>
+
+          <div class="job-submit-wrap">
+            <button class="btn" type="button" data-close-modal="jobModal">Cancel</button>
+            <button class="job-submit-btn" id="saveJobBtn" type="submit">Save Delivery</button>
+          </div>
+        </form>
+      </div>
+    </section>
+  </div>
+
+  <div class="modal-backdrop" id="assignModal">
+    <section class="modal-panel" role="dialog" aria-modal="true" aria-labelledby="assignTitle">
+      <div class="modal-head">
+        <h3 class="modal-title" id="assignTitle">Assign / Reassign Driver</h3>
+        <button class="icon-btn" type="button" data-close-modal="assignModal">Ã—</button>
+      </div>
+      <div class="modal-body">
+        <form id="assignForm" class="form-grid">
+          <input type="hidden" id="assignJobId">
+          <div class="field"><label>Driver</label><select id="assignDriverSelect" required><option value="">Select driver</option></select></div>
+          <div class="field"><label>Driver Pay</label><input id="assignDriverPay" type="number" min="0" step="0.01" placeholder="0.00"></div>
+          <div class="field full"><label>Assignment Note (optional)</label><textarea id="assignNote" placeholder="Internal note only"></textarea></div>
+          <div class="hint" id="assignNoteHint">Assignment notes are not persisted because no assignment-note column was found in current dashboard logic.</div>
+          <div class="form-actions full">
+            <button class="btn" type="button" data-close-modal="assignModal">Cancel</button>
+            <button class="btn primary" id="assignSubmitBtn" type="submit">Send to Driver</button>
+          </div>
+        </form>
+      </div>
+    </section>
+  </div>
+
+  <div class="toast-wrap" id="toastWrap"></div>
+
+  <script src="/assets/js/dispatch-status-workspace.js"></script>
+  <script src="/dispatch-menu.js"></script>
+</body>
+</html>
+
+
