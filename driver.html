@@ -457,6 +457,35 @@
       color: var(--danger);
     }
 
+    .toast-wrap {
+      position: fixed;
+      left: 12px;
+      right: 12px;
+      bottom: 12px;
+      z-index: 160;
+      display: grid;
+      gap: 8px;
+      pointer-events: none;
+    }
+
+    .toast {
+      border-radius: 11px;
+      padding: 10px 12px;
+      font-size: 13px;
+      font-weight: 800;
+      color: #fff;
+      background: #1f2b28;
+      box-shadow: 0 8px 20px rgba(0,0,0,.2);
+    }
+
+    .toast.success {
+      background: #0b633f;
+    }
+
+    .toast.error {
+      background: #a11f1f;
+    }
+
     @media (max-width: 900px) {
       .driver-row {
         grid-template-columns:
@@ -719,6 +748,8 @@
     </section>
   </main>
 
+  <div class="toast-wrap" id="toastWrap"></div>
+
   <script>
     const client = supabase.createClient(
       "https://dczlucwfjayymlwbzzdi.supabase.co",
@@ -772,6 +803,22 @@
           currency: "USD"
         }
       );
+    }
+
+    function showToast(message, type = "success") {
+      const wrap = document.getElementById("toastWrap");
+      if (!wrap) {
+        return;
+      }
+
+      const toast = document.createElement("div");
+      toast.className = "toast " + type;
+      toast.textContent = message;
+      wrap.appendChild(toast);
+
+      setTimeout(() => {
+        toast.remove();
+      }, 2800);
     }
 
     function formatDiagnosticValue(value) {
@@ -1577,6 +1624,10 @@
     }
 
     async function updateDriverWorkflow(job, action) {
+      if (!job || !job.id) {
+        throw new Error("No selected job id was found for this action.");
+      }
+
       const now = new Date().toISOString();
       const payload = {};
 
@@ -1585,9 +1636,12 @@
         payload.driver_accepted_at = now;
         payload.driver_workflow_status = "assigned";
       } else if (action === "reject") {
+        // Ready to Dispatch uses status "ready" in dispatch workflow mapping.
+        payload.assigned_driver_id = null;
         payload.driver_acceptance_status = "rejected";
         payload.driver_rejected_at = now;
-        payload.driver_workflow_status = "rejected";
+        payload.driver_workflow_status = null;
+        payload.status = "ready";
       } else if (action === "route_pickup") {
         payload.driver_workflow_status = "en_route_pickup";
         payload.en_route_pickup_at = now;
@@ -1632,6 +1686,15 @@
       }
 
       await loadDriverData();
+
+      if (action === "reject") {
+        try {
+          localStorage.setItem("mg_dispatch_refresh", now);
+        } catch (_error) {
+          // Ignore storage write issues; rejection was already persisted.
+        }
+        showToast("Job rejected and returned to dispatch", "success");
+      }
     }
 
     function renderDrivers() {
@@ -1789,15 +1852,29 @@
           return;
         }
 
+        const isReject = action === "reject";
+        const originalText = button.textContent;
+
+        if (isReject) {
+          button.disabled = true;
+          button.textContent = "Rejecting...";
+        }
+
         try {
           await updateDriverWorkflow(job, action);
         } catch (error) {
+          showToast(error.message || "Unable to update the workflow.", "error");
           const workflowBox = document.getElementById("driverWorkflowBox");
           workflowBox.innerHTML = `
             <div class="error">
               ${escapeHtml(error.message || "Unable to update the workflow.")}
             </div>
           `;
+        } finally {
+          if (isReject) {
+            button.disabled = false;
+            button.textContent = originalText;
+          }
         }
       });
 

@@ -1981,6 +1981,14 @@ function bindEvents() {
       document.querySelectorAll(".modal-backdrop.open").forEach(modal => closeModal(modal.id));
     }
   });
+
+  window.addEventListener("storage", event => {
+    if (event.key === "mg_dispatch_refresh" && event.newValue) {
+      loadRows().catch(error => {
+        showToast(error.message || "Unable to refresh workspace", "error");
+      });
+    }
+  });
 }
 
 (async function startPage() {
