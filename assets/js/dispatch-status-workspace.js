@@ -76,7 +76,10 @@ const state = {
   supportsEstimatedMiles: null,
   selectedJob: null,
   pendingAssignment: null,
-  pendingRejectedReturnJobId: ""
+  pendingRejectedReturnJobId: "",
+  assignDriverFocusId: "",
+  assignDriverFocusName: "",
+  hasShownAssignFocusToast: false
 };
 
 const elements = {
@@ -135,6 +138,15 @@ function escapeHtml(value) {
 
 function clean(value) {
   return String(value || "").trim().toLowerCase();
+}
+
+function readAssignDriverFocusFromQuery() {
+  const params = new URLSearchParams(window.location.search || "");
+  const id = String(params.get("assignDriverId") || params.get("driverId") || "").trim();
+  const name = String(params.get("assignDriverName") || "").trim();
+
+  state.assignDriverFocusId = id;
+  state.assignDriverFocusName = name;
 }
 
 function money(value) {
@@ -1122,7 +1134,10 @@ function renderOtherDriverCards(job, driverMetrics, recommendedId) {
 
 function renderAssignPanelDrivers(job) {
   const metrics = state.drivers.map(driver => getDriverMetrics(driver, job));
-  const recommended = pickRecommendedDriver(metrics);
+  const focused = state.assignDriverFocusId
+    ? metrics.find(item => item.id === String(state.assignDriverFocusId))
+    : null;
+  const recommended = focused || pickRecommendedDriver(metrics);
   renderRecommendedDriver(job, recommended);
   renderOtherDriverCards(job, metrics, recommended?.id || "");
 }
@@ -1596,7 +1611,14 @@ function openAssignModal(jobId) {
   elements.assignJobId.value = String(job.id);
   elements.assignDriverSelect.value = "";
   elements.assignDriverPay.value = String(job.driver_pay ?? "");
-  elements.assignDriverSearch.value = "";
+  if (state.assignDriverFocusId) {
+    const focusedName = driverNameById(state.assignDriverFocusId);
+    elements.assignDriverSearch.value = focusedName !== "Unassigned"
+      ? focusedName
+      : state.assignDriverFocusName;
+  } else {
+    elements.assignDriverSearch.value = "";
+  }
   elements.assignDriverFilter.value = "all";
   document.getElementById("assignNote").value = "";
   state.pendingAssignment = null;
@@ -2135,6 +2157,8 @@ function bindEvents() {
 
 (async function startPage() {
   try {
+    readAssignDriverFocusFromQuery();
+
     const session = await requireDispatchAccess();
     if (!session) {
       return;
@@ -2144,6 +2168,12 @@ function bindEvents() {
     bindEvents();
     renderNewDeliveryReview();
     await loadWorkspace();
+
+    if (workspaceMode === "ready_to_dispatch" && state.assignDriverFocusId && !state.hasShownAssignFocusToast) {
+      const label = state.assignDriverFocusName || driverNameById(state.assignDriverFocusId);
+      showToast("Driver focus active: " + label + ". Open a Ready job and tap Assign / Reassign Driver.", "info");
+      state.hasShownAssignFocusToast = true;
+    }
   } catch (error) {
     elements.rowsHost.innerHTML = '<div class="empty">' + escapeHtml(error.message || "Unable to load workspace") + '</div>';
     showToast(error.message || "Unable to load workspace", "error");
