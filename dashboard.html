@@ -1175,6 +1175,8 @@
             <div class="job-subdivider"></div>
             <div class="form-grid">
               <div class="field full"><label>Pickup Address</label><input name="pickup_address" required></div>
+              <div class="field full"><label>Pickup Suite / Floor</label><input name="pickup_suite_floor"></div>
+              <div class="field"><label>Pickup ZIP Code</label><input name="pickup_zip"></div>
               <div class="field"><label>Contact Name</label><input name="pickup_contact_name"></div>
               <div class="field"><label>Contact Phone</label><input name="pickup_contact_phone" type="tel"></div>
               <div class="field full"><label>Pickup Instructions</label><textarea name="pickup_instructions"></textarea></div>
@@ -1186,6 +1188,8 @@
             <div class="job-subdivider"></div>
             <div class="form-grid">
               <div class="field full"><label>Delivery Address</label><input name="delivery_address" required></div>
+              <div class="field full"><label>Delivery Suite / Floor</label><input name="delivery_suite_floor"></div>
+              <div class="field"><label>Delivery ZIP Code</label><input name="delivery_zip"></div>
               <div class="field"><label>Contact Name</label><input name="delivery_contact_name"></div>
               <div class="field"><label>Contact Phone</label><input name="delivery_contact_phone" type="tel"></div>
               <div class="field full"><label>Delivery Instructions</label><textarea name="delivery_instructions"></textarea></div>
@@ -1230,7 +1234,7 @@
             <div class="job-subdivider"></div>
             <div class="form-grid">
               <div class="field"><label>Customer Price</label><input name="approved_price" type="number" min="0" step="0.01" placeholder="0.00"></div>
-              <div class="field"><label>Discount (optional)</label><input name="discount_amount" type="number" min="0" step="0.01" placeholder="0.00"></div>
+              <div class="field"><label>Estimated Miles (Optional)</label><input name="estimated_miles" type="number" min="0" step="0.01" placeholder="25.4"></div>
               <div class="field full"><label>Internal Notes</label><textarea name="special_instructions"></textarea></div>
             </div>
           </section>
@@ -1308,6 +1312,7 @@
       rows: [],
       recurringCustomers: [],
       customerDeliveryCounts: {},
+      supportsEstimatedMiles: null,
       selectedQuote: null,
       selectedJob: null
     };
@@ -2241,7 +2246,7 @@
 
       const priceRaw = String(data.get("approved_price") || "").trim();
       const payRaw = String(data.get("driver_pay") || "").trim();
-      const discountRaw = String(data.get("discount_amount") || "").trim();
+      const estimatedMilesRaw = String(data.get("estimated_miles") || "").trim();
 
       const pickupContactName = String(data.get("pickup_contact_name") || "").trim();
       const pickupContactPhone = String(data.get("pickup_contact_phone") || "").trim();
@@ -2258,8 +2263,9 @@
       const billingMeta = [];
       const instructions = [];
 
-      if (discountRaw !== "") {
-        billingMeta.push("Discount: " + discountRaw);
+      const estimatedMilesValue = estimatedMilesRaw === "" ? null : Number(estimatedMilesRaw);
+      if (estimatedMilesRaw !== "" && (!Number.isFinite(estimatedMilesValue) || estimatedMilesValue < 0)) {
+        throw new Error("Estimated miles must be a valid number.");
       }
       if (pickupContactName) {
         billingMeta.push("Pickup Contact: " + pickupContactName);
@@ -2307,11 +2313,37 @@
         billing_notes: billingMeta.join("\n") || null
       };
 
+      payload._estimated_miles_value = estimatedMilesValue;
+
       if (options.includeStatus) {
         payload.status = String(data.get("status") || "new").trim();
       }
 
       return payload;
+    }
+
+    async function detectEstimatedMilesFieldSupport() {
+      if (state.supportsEstimatedMiles !== null) {
+        return state.supportsEstimatedMiles;
+      }
+
+      const probe = await client
+        .from("quotes")
+        .select("estimated_miles")
+        .limit(1);
+
+      if (!probe.error) {
+        state.supportsEstimatedMiles = true;
+        return true;
+      }
+
+      const message = String(probe.error.message || "").toLowerCase();
+      if (message.includes("column") && message.includes("estimated_miles")) {
+        state.supportsEstimatedMiles = false;
+        return false;
+      }
+
+      throw probe.error;
     }
 
     function validatePayload(payload) {
@@ -2476,10 +2508,14 @@
       form.customer_email.value = quote.customer_email || "";
       form.customer_phone.value = quote.customer_phone || "";
       form.pickup_address.value = quote.pickup_address || "";
+      form.pickup_suite_floor.value = quote.pickup_suite_floor || "";
+      form.pickup_zip.value = quote.pickup_zip || "";
       form.pickup_contact_name.value = "";
       form.pickup_contact_phone.value = "";
       form.pickup_instructions.value = "";
       form.delivery_address.value = quote.delivery_address || "";
+      form.delivery_suite_floor.value = quote.delivery_suite_floor || "";
+      form.delivery_zip.value = quote.delivery_zip || "";
       form.delivery_contact_name.value = quote.delivery_recipient_name || "";
       form.delivery_contact_phone.value = "";
       form.delivery_instructions.value = "";
@@ -2489,7 +2525,7 @@
       form.package_weight.value = "";
       form.reference_number.value = "";
       form.approved_price.value = quote.approved_price ?? quote.customer_charge ?? "";
-      form.discount_amount.value = "";
+      form.estimated_miles.value = "";
       form.special_instructions.value = quote.special_instructions || "";
       elements.jobCustomerAccountId.value = String(quote.customer_account_id || "");
       elements.customerLookupInput.value = quote.customer_name || "";
@@ -2683,10 +2719,14 @@
       form.customer_email.value = job.customer_email || "";
       form.customer_phone.value = job.customer_phone || "";
       form.pickup_address.value = job.pickup_address || "";
+      form.pickup_suite_floor.value = job.pickup_suite_floor || "";
+      form.pickup_zip.value = job.pickup_zip || "";
       form.pickup_contact_name.value = "";
       form.pickup_contact_phone.value = "";
       form.pickup_instructions.value = "";
       form.delivery_address.value = job.delivery_address || "";
+      form.delivery_suite_floor.value = job.delivery_suite_floor || "";
+      form.delivery_zip.value = job.delivery_zip || "";
       form.delivery_contact_name.value = job.delivery_recipient_name || "";
       form.delivery_contact_phone.value = "";
       form.delivery_instructions.value = "";
@@ -2696,7 +2736,7 @@
       form.package_weight.value = "";
       form.reference_number.value = "";
       form.approved_price.value = job.approved_price ?? job.customer_charge ?? "";
-      form.discount_amount.value = "";
+      form.estimated_miles.value = String(job.estimated_miles ?? "");
       form.special_instructions.value = job.special_instructions || "";
       elements.jobCustomerAccountId.value = String(job.customer_account_id || "");
       elements.customerLookupInput.value = job.customer_name || "";
@@ -2973,6 +3013,13 @@
       try {
         const recordId = document.getElementById("jobRecordId").value;
         const payload = formToPayload(elements.jobForm, { includeStatus: false });
+        const estimatedMilesValue = payload._estimated_miles_value;
+        delete payload._estimated_miles_value;
+
+        const supportsEstimatedMiles = await detectEstimatedMilesFieldSupport();
+        if (supportsEstimatedMiles) {
+          payload.estimated_miles = estimatedMilesValue;
+        }
 
         const validationError = validatePayload(payload);
         if (validationError) {
