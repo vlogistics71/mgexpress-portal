@@ -1617,7 +1617,9 @@
       supportsEstimatedMiles: null,
       selectedQuote: null,
       selectedJob: null,
-      pendingAssignment: null
+      pendingAssignment: null,
+      greetingFirstName: "Dispatch",
+      greetingTimerId: null
     };
 
     const elements = {
@@ -1884,19 +1886,53 @@
       return "badge badge-cancel";
     }
 
-    function displayNameFromEmail(email) {
-      const local = String(email || "").split("@")[0] || "Dispatch";
-      return local
-        .split(/[._-]+/)
-        .filter(Boolean)
-        .map(part => part.charAt(0).toUpperCase() + part.slice(1))
-        .join(" ") || "Dispatch";
+    function toTitleToken(text) {
+      const value = String(text || "").trim();
+      if (!value) {
+        return "";
+      }
+
+      return value.charAt(0).toUpperCase() + value.slice(1).toLowerCase();
     }
 
-    function setOperationsHeader(email) {
-      const name = displayNameFromEmail(email);
-      elements.opsGreeting.textContent = "Good Morning, " + name;
+    function firstNameFromFullText(rawName) {
+      const cleaned = String(rawName || "").trim().replace(/\s+/g, " ");
+      if (!cleaned) {
+        return "";
+      }
 
+      const first = cleaned.split(" ")[0] || "";
+      return toTitleToken(first);
+    }
+
+    function fallbackNameFromEmail(email) {
+      const local = String(email || "").split("@")[0] || "Dispatch";
+      const firstSegment = local
+        .split(/[._-]+/)
+        .map(part => part.trim())
+        .filter(Boolean)[0] || "Dispatch";
+
+      return toTitleToken(firstSegment) || "Dispatch";
+    }
+
+    function getTimeBasedGreeting() {
+      const hour = new Date().getHours();
+      if (hour >= 5 && hour <= 11) {
+        return "Good Morning";
+      }
+      if (hour >= 12 && hour <= 16) {
+        return "Good Afternoon";
+      }
+      return "Good Evening";
+    }
+
+    function updateGreetingText() {
+      const greeting = getTimeBasedGreeting();
+      const firstName = state.greetingFirstName || "Dispatch";
+      elements.opsGreeting.textContent = greeting + ", " + firstName;
+    }
+
+    function updateHeaderDate() {
       const now = new Date();
       elements.opsDate.textContent = new Intl.DateTimeFormat("en-US", {
         weekday: "long",
@@ -1904,6 +1940,69 @@
         day: "numeric",
         year: "numeric"
       }).format(now);
+    }
+
+    function startGreetingRefresh() {
+      if (state.greetingTimerId) {
+        clearInterval(state.greetingTimerId);
+      }
+
+      state.greetingTimerId = setInterval(() => {
+        updateGreetingText();
+      }, 60 * 1000);
+    }
+
+    async function resolveProfileName(userId) {
+      const profileFields = ["full_name", "display_name"];
+
+      for (const field of profileFields) {
+        const probe = await client
+          .from("profiles")
+          .select(field)
+          .eq("id", userId)
+          .maybeSingle();
+
+        if (!probe.error) {
+          const value = String(probe.data?.[field] || "").trim();
+          if (value) {
+            return value;
+          }
+          continue;
+        }
+
+        const message = String(probe.error.message || "").toLowerCase();
+        if (message.includes("column") && message.includes(field.toLowerCase())) {
+          continue;
+        }
+      }
+
+      return "";
+    }
+
+    async function resolveGreetingFirstName(session) {
+      const profileName = await resolveProfileName(session.user.id);
+      if (profileName) {
+        return firstNameFromFullText(profileName) || "Dispatch";
+      }
+
+      const meta = session.user.user_metadata || {};
+      const metadataCandidates = [meta.full_name, meta.name, meta.display_name];
+
+      for (const candidate of metadataCandidates) {
+        const first = firstNameFromFullText(candidate);
+        if (first) {
+          return first;
+        }
+      }
+
+      return fallbackNameFromEmail(session.user.email || "");
+    }
+
+    async function setOperationsHeader(session) {
+      state.greetingFirstName = await resolveGreetingFirstName(session);
+      updateGreetingText();
+      updateHeaderDate();
+      startGreetingRefresh();
     }
 
     function startOfToday() {
@@ -2103,7 +2202,6 @@
       }
 
       elements.staffEmail.textContent = session.user.email || "";
-      setOperationsHeader(session.user.email || "");
 
       const profileResult = await client
         .from("profiles")
@@ -2129,6 +2227,8 @@
 
         throw new Error("This account does not have dispatch access.");
       }
+
+      await setOperationsHeader(session);
 
       window.dispatchEvent(new CustomEvent("mg-dispatch-ready", {
         detail: { email: session.user.email }
