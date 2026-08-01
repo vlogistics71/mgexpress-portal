@@ -200,6 +200,38 @@
       line-height: 1;
     }
 
+    .ai-ops-card {
+      box-shadow: none;
+      display: grid;
+      align-content: space-between;
+      gap: 8px;
+    }
+
+    .ai-card-value {
+      margin-top: 2px;
+      font-size: 16px;
+      line-height: 1.3;
+      color: var(--ink);
+      font-weight: 800;
+    }
+
+    .ops-card-cta {
+      color: var(--green);
+      font-size: 12px;
+      font-weight: 900;
+      letter-spacing: .02em;
+      text-transform: uppercase;
+      justify-self: start;
+      user-select: none;
+    }
+
+    .ops-card-cta:focus-visible,
+    .ai-ops-card:focus-visible {
+      outline: 2px solid var(--green);
+      outline-offset: 2px;
+      border-radius: 12px;
+    }
+
     .ai-card {
       border: 1px solid var(--line);
       border-radius: 16px;
@@ -347,6 +379,26 @@
       color: var(--muted);
       font-size: 12px;
       line-height: 1.35;
+    }
+
+    @media (max-width: 599px) {
+      .ops-cards {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .ai-ops-card {
+        grid-column: 1 / -1;
+      }
+    }
+
+    @media (min-width: 600px) and (max-width: 859px) {
+      .ops-cards {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+      }
+
+      .ai-ops-card {
+        grid-column: auto;
+      }
     }
 
     .stat {
@@ -941,13 +993,13 @@
           <div class="ops-card-label">📦 Closed Today</div>
           <div class="ops-card-value" id="countClosedToday">0</div>
         </button>
-      </div>
-    </section>
 
-    <section class="ai-card" id="aiCardCompact" role="button" tabindex="0">
-      <h2 class="ai-title">MG Express AI</h2>
-      <p class="ai-text" id="aiSummaryText">0 suggestions • No urgent issues</p>
-      <button class="btn primary" id="openAiSuggestionsBtn" type="button">View Suggestions</button>
+        <section class="ops-card ai-ops-card" id="aiCardCompact" role="button" tabindex="0">
+          <div class="ops-card-label">🤖 MG Express AI</div>
+          <div class="ops-card-value ai-card-value" id="aiSummaryText">0 suggestions • No urgent issues</div>
+          <div class="ops-card-cta" id="openAiSuggestionsBtn" role="button" tabindex="0">View Suggestions ›</div>
+        </section>
+      </div>
     </section>
 
     <section class="queue-group" id="pendingGroup">
