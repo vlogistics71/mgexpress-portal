@@ -16,7 +16,13 @@ const state = {
   searchQuery: "",
   availabilityFilter: "all",
   selectedDriverId: "",
-  isLoading: false
+  isLoading: false,
+  schema: {
+    drivers: new Set(),
+    quotes: new Set(),
+    quoteOrderColumn: "",
+    driverOrderColumn: ""
+  }
 };
 
 const elements = {
@@ -44,6 +50,126 @@ function escapeHtml(value) {
 
 function clean(value) {
   return String(value || "").trim().toLowerCase();
+}
+
+function missingColumnError(error) {
+  const message = String(error?.message || "").toLowerCase();
+  return message.includes("column") && (message.includes("does not exist") || message.includes("not found"));
+}
+
+async function detectExistingColumns(tableName, candidateColumns) {
+  const existing = [];
+
+  for (const column of candidateColumns) {
+    const probe = await client
+      .from(tableName)
+      .select(column)
+      .limit(1);
+
+    if (!probe.error) {
+      existing.push(column);
+      continue;
+    }
+
+    if (missingColumnError(probe.error)) {
+      continue;
+    }
+
+    throw probe.error;
+  }
+
+  return existing;
+}
+
+function hasDriverColumn(columnName) {
+  return state.schema.drivers.has(columnName);
+}
+
+function hasQuoteColumn(columnName) {
+  return state.schema.quotes.has(columnName);
+}
+
+function firstExistingQuoteValue(quote, keys) {
+  for (const key of keys) {
+    if (!hasQuoteColumn(key)) {
+      continue;
+    }
+
+    const value = quote?.[key];
+    if (value !== null && value !== undefined && String(value).trim() !== "") {
+      return value;
+    }
+  }
+
+  return "";
+}
+
+async function inspectWorkspaceSchema() {
+  const driverColumns = await detectExistingColumns("drivers", [
+    "id",
+    "full_name",
+    "display_name",
+    "name",
+    "email",
+    "active",
+    "is_active",
+    "enabled",
+    "status",
+    "availability_status",
+    "current_area",
+    "area",
+    "city",
+    "vehicle_type",
+    "vehicle",
+    "vehicle_year",
+    "vehicle_make",
+    "vehicle_model",
+    "plate",
+    "license_plate",
+    "vehicle_color",
+    "phone",
+    "mobile_phone",
+    "notes",
+    "internal_notes",
+    "dispatch_notes",
+    "last_active_at",
+    "last_seen_at",
+    "created_at"
+  ]);
+
+  const quoteColumns = await detectExistingColumns("quotes", [
+    "id",
+    "job_number",
+    "assigned_driver_id",
+    "status",
+    "customer_name",
+    "pickup_address",
+    "delivery_address",
+    "driver_pay",
+    "driver_acceptance_status",
+    "driver_workflow_status",
+    "driver_accepted_at",
+    "driver_rejected_at",
+    "completed_at",
+    "created_at",
+    "scheduled_at",
+    "pickup_time",
+    "delivery_time"
+  ]);
+
+  state.schema.drivers = new Set(driverColumns);
+  state.schema.quotes = new Set(quoteColumns);
+
+  state.schema.driverOrderColumn = ["full_name", "email", "created_at"].find(hasDriverColumn) || "";
+  state.schema.quoteOrderColumn = [
+    "created_at",
+    "scheduled_at",
+    "pickup_time",
+    "delivery_time",
+    "completed_at",
+    "driver_rejected_at",
+    "driver_accepted_at"
+  ].find(hasQuoteColumn) || "";
 }
 
 function parseDate(value) {
@@ -94,15 +220,15 @@ function showToast(message, type = "info") {
 
 function getDriverDisplayName(driver) {
   const preferred =
-    driver.full_name ||
-    driver.display_name ||
-    driver.name;
+    (hasDriverColumn("full_name") ? driver.full_name : "") ||
+    (hasDriverColumn("display_name") ? driver.display_name : "") ||
+    (hasDriverColumn("name") ? driver.name : "");
 
   if (preferred) {
     return String(preferred);
   }
 
-  const email = String(driver.email || "");
+  const email = hasDriverColumn("email") ? String(driver.email || "") : "";
   if (!email.includes("@")) {
     return "Driver";
   }
@@ -146,21 +272,22 @@ function isRejectedAssignment(quote) {
 }
 
 function pickQuoteTimestamp(quote) {
-  return (
-    quote.driver_rejected_at ||
-    quote.driver_accepted_at ||
-    quote.updated_at ||
-    quote.created_at ||
-    ""
-  );
+  return firstExistingQuoteValue(quote, [
+    "driver_rejected_at",
+    "driver_accepted_at",
+    "created_at",
+    "scheduled_at",
+    "pickup_time",
+    "delivery_time",
+    "completed_at"
+  ]);
 }
 
 function getDriverLastActiveValue(driver, relatedQuotes) {
   const candidateFields = [
     "last_active_at",
     "last_seen_at",
-    "status_updated_at",
-    "updated_at"
+    "created_at"
   ];
 
   for (const field of candidateFields) {
@@ -181,18 +308,25 @@ function getDriverLastActiveValue(driver, relatedQuotes) {
 }
 
 function deriveVehicleText(driver) {
-  return (
-    driver.vehicle_type ||
-    driver.vehicle ||
-    [driver.vehicle_year, driver.vehicle_make, driver.vehicle_model]
-      .filter(Boolean)
-      .join(" ") ||
-    ""
-  );
+  const directType =
+    (hasDriverColumn("vehicle_type") ? driver.vehicle_type : "") ||
+    (hasDriverColumn("vehicle") ? driver.vehicle : "");
+
+  const parts = [
+    hasDriverColumn("vehicle_year") ? driver.vehicle_year : "",
+    hasDriverColumn("vehicle_make") ? driver.vehicle_make : "",
+    hasDriverColumn("vehicle_model") ? driver.vehicle_model : ""
+  ].filter(Boolean);
+
+  return directType || parts.join(" ") || "";
 }
 
 function deriveAreaWhenAvailable(driver, relatedQuotes) {
-  const fromDriver = driver.current_area || driver.area || driver.city || "";
+  const fromDriver =
+    (hasDriverColumn("current_area") ? driver.current_area : "") ||
+    (hasDriverColumn("area") ? driver.area : "") ||
+    (hasDriverColumn("city") ? driver.city : "") ||
+    "";
   if (fromDriver) {
     return String(fromDriver);
   }
@@ -218,15 +352,18 @@ function quoteWorkflowStatus(quote) {
 
 function isDriverInactive(driver) {
   const activeFlag =
-    driver.active ??
-    driver.is_active ??
-    driver.enabled;
+    (hasDriverColumn("active") ? driver.active : undefined) ??
+    (hasDriverColumn("is_active") ? driver.is_active : undefined) ??
+    (hasDriverColumn("enabled") ? driver.enabled : undefined);
 
   if (activeFlag === false) {
     return true;
   }
 
-  const statusText = clean(driver.status || driver.availability_status);
+  const statusText = clean(
+    (hasDriverColumn("status") ? driver.status : "") ||
+    (hasDriverColumn("availability_status") ? driver.availability_status : "")
+  );
   return ["inactive", "offline", "off_duty", "disabled"].includes(statusText);
 }
 
@@ -293,7 +430,13 @@ function completedTodayCount(relatedQuotes) {
       return false;
     }
 
-    const completedAt = parseDate(quote.completed_at || quote.updated_at || quote.created_at);
+    const completedAt = parseDate(firstExistingQuoteValue(quote, [
+      "completed_at",
+      "delivery_time",
+      "pickup_time",
+      "scheduled_at",
+      "created_at"
+    ]));
     if (!completedAt) {
       return false;
     }
@@ -321,7 +464,13 @@ function weeklyEarnings(relatedQuotes) {
       return sum;
     }
 
-    const when = parseDate(quote.completed_at || quote.updated_at || quote.created_at);
+    const when = parseDate(firstExistingQuoteValue(quote, [
+      "completed_at",
+      "delivery_time",
+      "pickup_time",
+      "scheduled_at",
+      "created_at"
+    ]));
     if (!when || when < weekStart) {
       return sum;
     }
@@ -347,7 +496,13 @@ function todayEarnings(relatedQuotes) {
       return sum;
     }
 
-    const when = parseDate(quote.completed_at || quote.updated_at || quote.created_at);
+    const when = parseDate(firstExistingQuoteValue(quote, [
+      "completed_at",
+      "delivery_time",
+      "pickup_time",
+      "scheduled_at",
+      "created_at"
+    ]));
     if (!when || when < start || when >= end) {
       return sum;
     }
@@ -560,7 +715,13 @@ function renderCompletedTodaySection(summary) {
       return false;
     }
 
-    const when = parseDate(quote.completed_at || quote.updated_at || quote.created_at);
+    const when = parseDate(firstExistingQuoteValue(quote, [
+      "completed_at",
+      "delivery_time",
+      "pickup_time",
+      "scheduled_at",
+      "created_at"
+    ]));
     if (!when) {
       return false;
     }
@@ -578,7 +739,13 @@ function renderCompletedTodaySection(summary) {
     <div class="job-row">
       <div class="job-title">
         <span>${escapeHtml(job.job_number || "Job")}</span>
-        <span>${escapeHtml(formatDateTime(job.completed_at || job.updated_at || job.created_at))}</span>
+        <span>${escapeHtml(formatDateTime(firstExistingQuoteValue(job, [
+          "completed_at",
+          "delivery_time",
+          "pickup_time",
+          "scheduled_at",
+          "created_at"
+        ])))}</span>
       </div>
       <div class="job-meta">${escapeHtml((toCity(job.pickup_address) || "Pickup") + " to " + (toCity(job.delivery_address) || "Delivery"))}</div>
       <div class="job-meta">Driver Pay: ${escapeHtml(money(job.driver_pay || 0))}</div>
@@ -588,7 +755,11 @@ function renderCompletedTodaySection(summary) {
 
 function renderDriverDetails(summary) {
   const driver = summary.driver;
-  const notes = driver.notes || driver.internal_notes || driver.dispatch_notes || "";
+  const notes =
+    (hasDriverColumn("notes") ? driver.notes : "") ||
+    (hasDriverColumn("internal_notes") ? driver.internal_notes : "") ||
+    (hasDriverColumn("dispatch_notes") ? driver.dispatch_notes : "") ||
+    "";
 
   const summaryRows = nonEmptyRows([
     { key: "Name", value: summary.name },
@@ -603,13 +774,25 @@ function renderDriverDetails(summary) {
 
   const vehicleRows = nonEmptyRows([
     { key: "Vehicle Type", value: deriveVehicleText(driver) },
-    { key: "Plate", value: driver.plate || driver.license_plate || "" },
-    { key: "Color", value: driver.vehicle_color || "" }
+    {
+      key: "Plate",
+      value:
+        (hasDriverColumn("plate") ? driver.plate : "") ||
+        (hasDriverColumn("license_plate") ? driver.license_plate : "") ||
+        ""
+    },
+    { key: "Color", value: hasDriverColumn("vehicle_color") ? driver.vehicle_color : "" }
   ]);
 
   const contactRows = nonEmptyRows([
-    { key: "Email", value: driver.email || "" },
-    { key: "Phone", value: driver.phone || driver.mobile_phone || "" }
+    { key: "Email", value: hasDriverColumn("email") ? driver.email : "" },
+    {
+      key: "Phone",
+      value:
+        (hasDriverColumn("phone") ? driver.phone : "") ||
+        (hasDriverColumn("mobile_phone") ? driver.mobile_phone : "") ||
+        ""
+    }
   ]);
 
   const earningsRows = nonEmptyRows([
@@ -730,10 +913,20 @@ async function requireDispatchAccess() {
 
 async function loadDrivers() {
   try {
-    const result = await client
+    const selectColumns = Array.from(state.schema.drivers);
+    if (!selectColumns.includes("id")) {
+      selectColumns.unshift("id");
+    }
+
+    let query = client
       .from("drivers")
-      .select("*")
-      .order("full_name", { ascending: true });
+      .select(selectColumns.join(","));
+
+    if (state.schema.driverOrderColumn) {
+      query = query.order(state.schema.driverOrderColumn, { ascending: true });
+    }
+
+    const result = await query;
 
     if (result.error) {
       throw result.error;
@@ -747,11 +940,44 @@ async function loadDrivers() {
 
 async function loadQuotes() {
   try {
-    const result = await client
+    const requiredColumns = [
+      "id",
+      "assigned_driver_id",
+      "job_number",
+      "status",
+      "customer_name",
+      "pickup_address",
+      "delivery_address",
+      "driver_pay",
+      "driver_acceptance_status",
+      "driver_workflow_status",
+      "driver_accepted_at",
+      "driver_rejected_at",
+      "completed_at",
+      "created_at",
+      "scheduled_at",
+      "pickup_time",
+      "delivery_time"
+    ];
+
+    const selectColumns = requiredColumns.filter(hasQuoteColumn);
+    if (!selectColumns.includes("id")) {
+      throw new Error("quotes.id is required for Driver Availability.");
+    }
+
+    let query = client
       .from("quotes")
-      .select("id,job_number,assigned_driver_id,status,customer_name,pickup_address,delivery_address,driver_pay,driver_acceptance_status,driver_workflow_status,driver_accepted_at,driver_rejected_at,completed_at,updated_at,created_at")
-      .not("assigned_driver_id", "is", null)
-      .order("updated_at", { ascending: false });
+      .select(selectColumns.join(","));
+
+    if (hasQuoteColumn("assigned_driver_id")) {
+      query = query.not("assigned_driver_id", "is", null);
+    }
+
+    if (state.schema.quoteOrderColumn) {
+      query = query.order(state.schema.quoteOrderColumn, { ascending: false });
+    }
+
+    const result = await query;
 
     if (result.error) {
       throw result.error;
@@ -868,6 +1094,7 @@ function bindEvents() {
       return;
     }
 
+    await inspectWorkspaceSchema();
     bindEvents();
     updateActiveChip();
     await loadAvailabilityWorkspace();
