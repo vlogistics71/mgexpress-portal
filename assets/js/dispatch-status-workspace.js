@@ -140,6 +140,73 @@ function clean(value) {
   return String(value || "").trim().toLowerCase();
 }
 
+function emailUsernameFallback(email) {
+  const text = String(email || "").trim();
+  if (!text.includes("@")) {
+    return "Driver";
+  }
+
+  const localPart = text.split("@")[0].replace(/[._-]+/g, " ").trim();
+  return localPart || "Driver";
+}
+
+function parseMetadataObject(value) {
+  if (!value) {
+    return null;
+  }
+
+  if (typeof value === "object") {
+    return value;
+  }
+
+  if (typeof value === "string") {
+    try {
+      return JSON.parse(value);
+    } catch (_error) {
+      return null;
+    }
+  }
+
+  return null;
+}
+
+function driverDisplayName(driver) {
+  if (!driver) {
+    return "Driver";
+  }
+
+  const direct = String(driver.full_name || driver.display_name || "").trim();
+  if (direct) {
+    return direct;
+  }
+
+  const metadata =
+    parseMetadataObject(driver.raw_user_meta_data) ||
+    parseMetadataObject(driver.user_metadata) ||
+    parseMetadataObject(driver.auth_metadata);
+
+  const metaName = String(metadata?.full_name || metadata?.name || metadata?.display_name || "").trim();
+  if (metaName) {
+    return metaName;
+  }
+
+  return emailUsernameFallback(driver.email || "");
+}
+
+function isDriverActiveFlag(driver) {
+  const activeFlag = driver.active ?? driver.is_active ?? driver.enabled;
+  if (activeFlag === false) {
+    return false;
+  }
+
+  const text = clean(driver.status || driver.availability_status);
+  if (["inactive", "offline", "off_duty", "disabled"].includes(text)) {
+    return false;
+  }
+
+  return true;
+}
+
 function readAssignDriverFocusFromQuery() {
   const params = new URLSearchParams(window.location.search || "");
   const id = String(params.get("assignDriverId") || params.get("driverId") || "").trim();
@@ -319,7 +386,7 @@ function driverNameById(driverId) {
     return "Unassigned";
   }
 
-  return driver.full_name || driver.email || "Driver";
+  return driverDisplayName(driver);
 }
 
 function driverWorkflowLabel(job) {
@@ -483,7 +550,7 @@ async function requireDispatchAccess() {
 async function loadDrivers() {
   const result = await client
     .from("drivers")
-    .select("id,full_name,email,active")
+    .select("*")
     .order("full_name", { ascending: true });
 
   if (result.error) {
@@ -952,7 +1019,7 @@ function populateDriverSelects() {
 }
 
 function deriveDriverStatus(driver, activeAssignments) {
-  const isActive = Boolean(driver.active);
+  const isActive = isDriverActiveFlag(driver);
   if (!isActive) {
     return "off_duty";
   }
@@ -1008,7 +1075,7 @@ function getDriverMetrics(driver, job) {
 
   return {
     id,
-    name: driver.full_name || driver.email || "Driver",
+    name: driverDisplayName(driver),
     status,
     statusLabel: driverStatusLabel(status),
     area,
@@ -1025,7 +1092,12 @@ function pickRecommendedDriver(metrics) {
     return null;
   }
 
-  const ranked = metrics.slice().sort((a, b) => {
+  const assignable = metrics.filter(item => item.status !== "off_duty");
+  if (!assignable.length) {
+    return null;
+  }
+
+  const ranked = assignable.slice().sort((a, b) => {
     const statusRank = { available: 0, busy: 1, off_duty: 2 };
     if (statusRank[a.status] !== statusRank[b.status]) {
       return statusRank[a.status] - statusRank[b.status];
@@ -1126,7 +1198,7 @@ function renderOtherDriverCards(job, driverMetrics, recommendedId) {
           <label>Driver Pay</label>
           <input class="assign-pay-input" type="number" min="0" step="0.01" value="${escapeHtml(String(job.driver_pay ?? ""))}" data-assign-pay-input="${escapeHtml(item.id)}" placeholder="0.00">
         </div>
-        <button class="btn" type="button" data-assign-driver="${escapeHtml(item.id)}">Assign</button>
+        <button class="btn" type="button" data-assign-driver="${escapeHtml(item.id)}" ${item.status === "off_duty" ? "disabled" : ""}>${item.status === "off_duty" ? "Inactive" : "Assign"}</button>
       </div>
     </article>
   `).join("");
@@ -1154,6 +1226,15 @@ function queueAssignment(driverId) {
     return;
   }
 
+  const activeAssignments = state.rows.filter(row => {
+    return getWorkflowStage(row) === "assigned" && String(row.assigned_driver_id || "") === String(driver.id);
+  }).length;
+
+  if (deriveDriverStatus(driver, activeAssignments) === "off_duty") {
+    showToast("Inactive drivers cannot be assigned.", "error");
+    return;
+  }
+
   const payInput = document.querySelector(`[data-assign-pay-input="${CSS.escape(String(driverId))}"]`);
   const driverPayRaw = String(payInput?.value || "").trim();
 
@@ -1170,7 +1251,7 @@ function queueAssignment(driverId) {
 
   state.pendingAssignment = {
     driverId: String(driverId),
-    driverName: driver.full_name || driver.email || "Driver",
+    driverName: driverDisplayName(driver),
     jobNumber: job.job_number || "this delivery"
   };
 
@@ -2151,6 +2232,21 @@ function bindEvents() {
       loadRows().catch(error => {
         showToast(error.message || "Unable to refresh workspace", "error");
       });
+      return;
+    }
+
+    if (event.key === "mg_driver_profile_refresh" && event.newValue) {
+      loadDrivers()
+        .then(() => {
+          renderWorkspace();
+          const job = getRowById(elements.assignJobId.value);
+          if (job && elements.assignModal.classList.contains("open")) {
+            renderAssignPanelDrivers(job);
+          }
+        })
+        .catch(error => {
+          showToast(error.message || "Unable to refresh drivers", "error");
+        });
     }
   });
 }

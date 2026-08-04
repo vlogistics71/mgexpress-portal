@@ -12,16 +12,22 @@ const DELIVERY_REMAINING_STATUSES = new Set(["picked_up", "en_route_delivery", "
 const state = {
   drivers: [],
   quotes: [],
+  profiles: [],
+  profilesById: new Map(),
   summaries: [],
   searchQuery: "",
   availabilityFilter: "all",
   selectedDriverId: "",
+  isEditMode: false,
+  savingDriver: false,
   isLoading: false,
   schema: {
     drivers: new Set(),
     quotes: new Set(),
+    profiles: new Set(),
     quoteOrderColumn: "",
-    driverOrderColumn: ""
+    driverOrderColumn: "",
+    profileOrderColumn: ""
   }
 };
 
@@ -38,6 +44,7 @@ const elements = {
   loadErrorBanner: document.getElementById("loadErrorBanner"),
   driverDetailsModal: document.getElementById("driverDetailsModal"),
   driverDetailsBody: document.getElementById("driverDetailsBody"),
+  editDriverBtn: document.getElementById("editDriverBtn"),
   assignDeliveryBtn: document.getElementById("assignDeliveryBtn"),
   toastWrap: document.getElementById("toastWrap")
 };
@@ -87,6 +94,40 @@ function hasDriverColumn(columnName) {
 
 function hasQuoteColumn(columnName) {
   return state.schema.quotes.has(columnName);
+}
+
+function hasProfileColumn(columnName) {
+  return state.schema.profiles.has(columnName);
+}
+
+function emailUsernameFallback(email) {
+  const text = String(email || "").trim();
+  if (!text.includes("@")) {
+    return "Driver";
+  }
+
+  const localPart = text.split("@")[0].replace(/[._-]+/g, " ").trim();
+  return localPart || "Driver";
+}
+
+function parseMetadataObject(value) {
+  if (!value) {
+    return null;
+  }
+
+  if (typeof value === "object") {
+    return value;
+  }
+
+  if (typeof value === "string") {
+    try {
+      return JSON.parse(value);
+    } catch (_error) {
+      return null;
+    }
+  }
+
+  return null;
 }
 
 function firstExistingQuoteValue(quote, keys) {
@@ -157,10 +198,22 @@ async function inspectWorkspaceSchema() {
     "delivery_time"
   ]);
 
+  const profileColumns = await detectExistingColumns("profiles", [
+    "id",
+    "full_name",
+    "display_name",
+    "name",
+    "user_metadata",
+    "raw_user_meta_data",
+    "created_at"
+  ]);
+
   state.schema.drivers = new Set(driverColumns);
   state.schema.quotes = new Set(quoteColumns);
+  state.schema.profiles = new Set(profileColumns);
 
   state.schema.driverOrderColumn = ["full_name", "email", "created_at"].find(hasDriverColumn) || "";
+  state.schema.profileOrderColumn = ["full_name", "display_name", "created_at"].find(hasProfileColumn) || "";
   state.schema.quoteOrderColumn = [
     "created_at",
     "scheduled_at",
@@ -170,6 +223,27 @@ async function inspectWorkspaceSchema() {
     "driver_rejected_at",
     "driver_accepted_at"
   ].find(hasQuoteColumn) || "";
+}
+
+function driverAuthId(driver) {
+  if (hasDriverColumn("auth_user_id") && driver.auth_user_id) {
+    return String(driver.auth_user_id);
+  }
+
+  if (hasDriverColumn("user_id") && driver.user_id) {
+    return String(driver.user_id);
+  }
+
+  return "";
+}
+
+function linkedProfileForDriver(driver) {
+  const authId = driverAuthId(driver);
+  if (!authId) {
+    return null;
+  }
+
+  return state.profilesById.get(authId) || null;
 }
 
 function parseDate(value) {
@@ -228,13 +302,32 @@ function getDriverDisplayName(driver) {
     return String(preferred);
   }
 
-  const email = hasDriverColumn("email") ? String(driver.email || "") : "";
-  if (!email.includes("@")) {
-    return "Driver";
+  const profile = linkedProfileForDriver(driver);
+  if (profile) {
+    const profileName =
+      (hasProfileColumn("full_name") ? profile.full_name : "") ||
+      (hasProfileColumn("display_name") ? profile.display_name : "") ||
+      "";
+    if (profileName) {
+      return String(profileName);
+    }
+
+    const metadata =
+      parseMetadataObject(hasProfileColumn("raw_user_meta_data") ? profile.raw_user_meta_data : null) ||
+      parseMetadataObject(hasProfileColumn("user_metadata") ? profile.user_metadata : null);
+
+    const metaName =
+      String(metadata?.full_name || "").trim() ||
+      String(metadata?.name || "").trim() ||
+      String(metadata?.display_name || "").trim();
+
+    if (metaName) {
+      return metaName;
+    }
   }
 
-  const localPart = email.split("@")[0].replace(/[._-]+/g, " ").trim();
-  return localPart || "Driver";
+  const email = hasDriverColumn("email") ? String(driver.email || "") : "";
+  return emailUsernameFallback(email);
 }
 
 function toCity(addressText) {
@@ -754,6 +847,9 @@ function renderCompletedTodaySection(summary) {
 }
 
 function renderDriverDetails(summary) {
+  state.isEditMode = false;
+  updateDriverModalActions();
+
   const driver = summary.driver;
   const notes =
     (hasDriverColumn("notes") ? driver.notes : "") ||
@@ -842,6 +938,293 @@ function renderDriverDetails(summary) {
   `;
 }
 
+function availabilityEditorFieldDescriptor(driver) {
+  if (hasDriverColumn("active") || hasDriverColumn("is_active") || hasDriverColumn("enabled")) {
+    const value =
+      (hasDriverColumn("active") ? driver.active : undefined) ??
+      (hasDriverColumn("is_active") ? driver.is_active : undefined) ??
+      (hasDriverColumn("enabled") ? driver.enabled : undefined);
+
+    return {
+      editable: true,
+      value: value === false ? "inactive" : "active"
+    };
+  }
+
+  if (hasDriverColumn("status") || hasDriverColumn("availability_status")) {
+    const text = clean(
+      (hasDriverColumn("status") ? driver.status : "") ||
+      (hasDriverColumn("availability_status") ? driver.availability_status : "")
+    );
+
+    return {
+      editable: true,
+      value: ["inactive", "offline", "off_duty", "disabled"].includes(text) ? "inactive" : "active"
+    };
+  }
+
+  return {
+    editable: false,
+    value: ""
+  };
+}
+
+function driverAreaValue(driver) {
+  return (
+    (hasDriverColumn("current_area") ? driver.current_area : "") ||
+    (hasDriverColumn("area") ? driver.area : "") ||
+    (hasDriverColumn("city") ? driver.city : "") ||
+    ""
+  );
+}
+
+function driverNotesValue(driver) {
+  return (
+    (hasDriverColumn("notes") ? driver.notes : "") ||
+    (hasDriverColumn("internal_notes") ? driver.internal_notes : "") ||
+    (hasDriverColumn("dispatch_notes") ? driver.dispatch_notes : "") ||
+    ""
+  );
+}
+
+function renderDriverEditMode(summary) {
+  const driver = summary.driver;
+  state.isEditMode = true;
+  updateDriverModalActions();
+
+  const statusEditor = availabilityEditorFieldDescriptor(driver);
+
+  const fullNameField = hasDriverColumn("full_name") ? `
+    <div class="kv-row">
+      <span class="kv-key">Full Name</span>
+      <span class="kv-value"><input name="full_name" value="${escapeHtml(String(driver.full_name || ""))}" /></span>
+    </div>
+  ` : "";
+
+  const displayNameField = hasDriverColumn("display_name") ? `
+    <div class="kv-row">
+      <span class="kv-key">Display Name</span>
+      <span class="kv-value"><input name="display_name" value="${escapeHtml(String(driver.display_name || ""))}" /></span>
+    </div>
+  ` : "";
+
+  const phoneFieldName = hasDriverColumn("phone") ? "phone" : hasDriverColumn("mobile_phone") ? "mobile_phone" : "";
+  const phoneField = phoneFieldName ? `
+    <div class="kv-row">
+      <span class="kv-key">Phone</span>
+      <span class="kv-value"><input name="${phoneFieldName}" value="${escapeHtml(String(driver[phoneFieldName] || ""))}" /></span>
+    </div>
+  ` : "";
+
+  const emailDisplay = hasDriverColumn("email") ? `
+    <div class="kv-row">
+      <span class="kv-key">Email (Display)</span>
+      <span class="kv-value"><input value="${escapeHtml(String(driver.email || ""))}" disabled /></span>
+    </div>
+    <div style="font-size:12px;color:#6b7872;margin-top:6px;">Login email changes require a separate account update.</div>
+  ` : "";
+
+  const vehicleTypeField = hasDriverColumn("vehicle_type") ? `
+    <div class="kv-row">
+      <span class="kv-key">Vehicle Type</span>
+      <span class="kv-value"><input name="vehicle_type" value="${escapeHtml(String(driver.vehicle_type || ""))}" /></span>
+    </div>
+  ` : "";
+
+  const vehicleMakeField = hasDriverColumn("vehicle_make") ? `
+    <div class="kv-row">
+      <span class="kv-key">Vehicle Make</span>
+      <span class="kv-value"><input name="vehicle_make" value="${escapeHtml(String(driver.vehicle_make || ""))}" /></span>
+    </div>
+  ` : "";
+
+  const vehicleModelField = hasDriverColumn("vehicle_model") ? `
+    <div class="kv-row">
+      <span class="kv-key">Vehicle Model</span>
+      <span class="kv-value"><input name="vehicle_model" value="${escapeHtml(String(driver.vehicle_model || ""))}" /></span>
+    </div>
+  ` : "";
+
+  const plateFieldName = hasDriverColumn("license_plate") ? "license_plate" : hasDriverColumn("plate") ? "plate" : "";
+  const plateField = plateFieldName ? `
+    <div class="kv-row">
+      <span class="kv-key">License Plate</span>
+      <span class="kv-value"><input name="${plateFieldName}" value="${escapeHtml(String(driver[plateFieldName] || ""))}" /></span>
+    </div>
+  ` : "";
+
+  const areaFieldName = hasDriverColumn("current_area") ? "current_area" : hasDriverColumn("area") ? "area" : hasDriverColumn("city") ? "city" : "";
+  const areaField = areaFieldName ? `
+    <div class="kv-row">
+      <span class="kv-key">Home / Service Area</span>
+      <span class="kv-value"><input name="${areaFieldName}" value="${escapeHtml(String(driverAreaValue(driver) || ""))}" /></span>
+    </div>
+  ` : "";
+
+  const notesFieldName = hasDriverColumn("notes") ? "notes" : hasDriverColumn("internal_notes") ? "internal_notes" : hasDriverColumn("dispatch_notes") ? "dispatch_notes" : "";
+  const notesField = notesFieldName ? `
+    <div class="kv-row" style="display:block;">
+      <div class="kv-key" style="margin-bottom:6px;">Notes</div>
+      <textarea name="${notesFieldName}" style="width:100%;min-height:84px;border:1px solid #dbe5e0;border-radius:10px;padding:8px;">${escapeHtml(String(driverNotesValue(driver) || ""))}</textarea>
+    </div>
+  ` : "";
+
+  const statusField = statusEditor.editable ? `
+    <div class="kv-row">
+      <span class="kv-key">Status</span>
+      <span class="kv-value">
+        <select name="active_state" style="min-height:36px;border:1px solid #dbe5e0;border-radius:10px;padding:6px 8px;">
+          <option value="active" ${statusEditor.value === "active" ? "selected" : ""}>Active</option>
+          <option value="inactive" ${statusEditor.value === "inactive" ? "selected" : ""}>Inactive</option>
+        </select>
+      </span>
+    </div>
+  ` : "";
+
+  const fieldsMarkup = [
+    fullNameField,
+    displayNameField,
+    phoneField,
+    emailDisplay,
+    vehicleTypeField,
+    vehicleMakeField,
+    vehicleModelField,
+    plateField,
+    statusField,
+    areaField,
+    notesField
+  ].filter(Boolean).join("");
+
+  elements.driverDetailsBody.innerHTML = `
+    <details class="detail-section" open>
+      <summary>Edit Driver</summary>
+      <div class="detail-body">
+        <form id="driverEditForm">
+          ${fieldsMarkup || '<div class="empty">No editable driver columns exist in the current drivers table.</div>'}
+        </form>
+      </div>
+    </details>
+  `;
+}
+
+function updateDriverModalActions() {
+  if (!elements.editDriverBtn || !elements.assignDeliveryBtn) {
+    return;
+  }
+
+  if (state.isEditMode) {
+    elements.editDriverBtn.textContent = state.savingDriver ? "Saving..." : "Save Driver";
+    elements.assignDeliveryBtn.classList.add("hidden");
+    elements.editDriverBtn.disabled = state.savingDriver;
+  } else {
+    elements.editDriverBtn.textContent = "Edit Driver";
+    elements.assignDeliveryBtn.classList.remove("hidden");
+    elements.editDriverBtn.disabled = false;
+  }
+}
+
+async function saveDriverEdits() {
+  const summary = state.summaries.find(item => item.id === String(state.selectedDriverId));
+  if (!summary) {
+    showToast("Driver details were not found.", "error");
+    return;
+  }
+
+  const form = document.getElementById("driverEditForm");
+  if (!form) {
+    showToast("No editable driver fields are available.", "info");
+    return;
+  }
+
+  const data = new FormData(form);
+  const payload = {};
+
+  const editableTextColumns = [
+    "full_name",
+    "display_name",
+    "phone",
+    "mobile_phone",
+    "vehicle_type",
+    "vehicle_make",
+    "vehicle_model",
+    "license_plate",
+    "plate",
+    "current_area",
+    "area",
+    "city",
+    "notes",
+    "internal_notes",
+    "dispatch_notes"
+  ];
+
+  editableTextColumns.forEach(column => {
+    if (!hasDriverColumn(column) || !data.has(column)) {
+      return;
+    }
+
+    payload[column] = String(data.get(column) || "").trim() || null;
+  });
+
+  if (data.has("active_state")) {
+    const active = String(data.get("active_state") || "active") !== "inactive";
+    if (hasDriverColumn("active")) {
+      payload.active = active;
+    }
+    if (hasDriverColumn("is_active")) {
+      payload.is_active = active;
+    }
+    if (hasDriverColumn("enabled")) {
+      payload.enabled = active;
+    }
+    if (hasDriverColumn("status")) {
+      payload.status = active ? "active" : "inactive";
+    }
+    if (hasDriverColumn("availability_status")) {
+      payload.availability_status = active ? "active" : "inactive";
+    }
+  }
+
+  if (!Object.keys(payload).length) {
+    showToast("No changes to save.", "info");
+    return;
+  }
+
+  state.savingDriver = true;
+  updateDriverModalActions();
+
+  try {
+    const result = await client
+      .from("drivers")
+      .update(payload)
+      .eq("id", summary.id)
+      .select("id")
+      .maybeSingle();
+
+    if (result.error) {
+      throw result.error;
+    }
+
+    await loadAvailabilityWorkspace();
+    const refreshed = state.summaries.find(item => item.id === String(summary.id));
+    if (refreshed) {
+      renderDriverDetails(refreshed);
+    }
+
+    try {
+      localStorage.setItem("mg_driver_profile_refresh", new Date().toISOString());
+    } catch (_error) {
+      // Ignore storage write issues.
+    }
+
+    showToast("Driver information updated", "success");
+  } catch (error) {
+    showToast(error.message || "Unable to update driver information", "error");
+  } finally {
+    state.savingDriver = false;
+    updateDriverModalActions();
+  }
+}
+
 function openDriverDetails(driverId) {
   const summary = state.summaries.find(item => item.id === String(driverId));
   if (!summary) {
@@ -851,11 +1234,15 @@ function openDriverDetails(driverId) {
 
   state.selectedDriverId = summary.id;
   renderDriverDetails(summary);
+  updateDriverModalActions();
   elements.driverDetailsModal.classList.add("open");
   elements.driverDetailsModal.setAttribute("aria-hidden", "false");
 }
 
 function closeDriverDetails() {
+  state.isEditMode = false;
+  state.savingDriver = false;
+  updateDriverModalActions();
   elements.driverDetailsModal.classList.remove("open");
   elements.driverDetailsModal.setAttribute("aria-hidden", "true");
 }
@@ -936,6 +1323,37 @@ async function loadDrivers() {
   } catch (error) {
     throw new Error(error.message || "Unable to load drivers.");
   }
+}
+
+async function loadProfiles() {
+  if (!state.schema.profiles.has("id")) {
+    state.profiles = [];
+    state.profilesById = new Map();
+    return [];
+  }
+
+  const selectColumns = Array.from(state.schema.profiles);
+  if (!selectColumns.includes("id")) {
+    selectColumns.unshift("id");
+  }
+
+  let query = client
+    .from("profiles")
+    .select(selectColumns.join(","));
+
+  if (state.schema.profileOrderColumn) {
+    query = query.order(state.schema.profileOrderColumn, { ascending: true });
+  }
+
+  const result = await query;
+  if (result.error) {
+    throw result.error;
+  }
+
+  const rows = result.data || [];
+  state.profiles = rows;
+  state.profilesById = new Map(rows.map(row => [String(row.id), row]));
+  return rows;
 }
 
 async function loadQuotes() {
@@ -1022,6 +1440,8 @@ async function loadAvailabilityWorkspace() {
       loadQuotes()
     ]);
 
+    await loadProfiles();
+
     state.drivers = drivers;
     state.quotes = quotes;
     buildDriverSummaries();
@@ -1082,6 +1502,34 @@ function bindEvents() {
     if (event.key === "Escape" && elements.driverDetailsModal.classList.contains("open")) {
       closeDriverDetails();
     }
+  });
+
+  window.addEventListener("storage", event => {
+    if (event.key === "mg_driver_profile_refresh" && event.newValue) {
+      loadAvailabilityWorkspace().catch(error => {
+        showToast(error.message || "Unable to refresh driver availability", "error");
+      });
+    }
+  });
+
+  elements.editDriverBtn.addEventListener("click", () => {
+    if (!state.selectedDriverId) {
+      showToast("Select a driver first.", "error");
+      return;
+    }
+
+    if (state.isEditMode) {
+      saveDriverEdits();
+      return;
+    }
+
+    const summary = state.summaries.find(item => item.id === String(state.selectedDriverId));
+    if (!summary) {
+      showToast("Driver details were not found.", "error");
+      return;
+    }
+
+    renderDriverEditMode(summary);
   });
 
   elements.assignDeliveryBtn.addEventListener("click", openAssignDeliveryForSelectedDriver);

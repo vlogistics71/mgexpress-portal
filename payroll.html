@@ -741,6 +741,55 @@
         .toLowerCase();
     }
 
+    function emailUsernameFallback(email) {
+      const text = String(email || "").trim();
+      if (!text.includes("@")) {
+        return "Driver";
+      }
+
+      const localPart = text.split("@")[0].replace(/[._-]+/g, " ").trim();
+      return localPart || "Driver";
+    }
+
+    function parseMetadataObject(value) {
+      if (!value) {
+        return null;
+      }
+
+      if (typeof value === "object") {
+        return value;
+      }
+
+      if (typeof value === "string") {
+        try {
+          return JSON.parse(value);
+        } catch (_error) {
+          return null;
+        }
+      }
+
+      return null;
+    }
+
+    function driverDisplayName(driver) {
+      const direct = String(driver.full_name || driver.display_name || "").trim();
+      if (direct) {
+        return direct;
+      }
+
+      const metadata =
+        parseMetadataObject(driver.raw_user_meta_data) ||
+        parseMetadataObject(driver.user_metadata) ||
+        parseMetadataObject(driver.auth_metadata);
+
+      const metaName = String(metadata?.full_name || metadata?.name || metadata?.display_name || "").trim();
+      if (metaName) {
+        return metaName;
+      }
+
+      return emailUsernameFallback(driver.email || "");
+    }
+
     function startOfToday() {
       const date = new Date();
       date.setHours(0, 0, 0, 0);
@@ -845,10 +894,7 @@
           String(driver.id),
           {
             id: driver.id,
-            name:
-              driver.full_name ||
-              driver.email ||
-              "Driver",
+            name: driverDisplayName(driver),
             email: driver.email || "",
             jobs: [],
             total: 0,
@@ -1464,6 +1510,18 @@
       "input",
       renderPayroll
     );
+
+    window.addEventListener("storage", event => {
+      if (event.key === "mg_driver_profile_refresh" && event.newValue) {
+        loadPayroll().catch(error => {
+          payrollBox.innerHTML = `
+            <div class="error">
+              ${escapeHtml(error.message || "Unable to refresh payroll.")}
+            </div>
+          `;
+        });
+      }
+    });
 
     document
       .getElementById("refreshButton")
