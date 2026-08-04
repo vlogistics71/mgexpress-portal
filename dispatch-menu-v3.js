@@ -559,7 +559,7 @@
 
       <a
         class="quick-link"
-        href="https://portal.migenteexpress.com/reports.html"
+        href="https://portal.migenteexpress.com/Reports.html"
       >
         Reports
       </a>

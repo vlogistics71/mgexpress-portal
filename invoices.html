@@ -849,9 +849,24 @@
         Dashboard
       </a>
 
-      <a class="menu-link" href="/jobs.html">
+      <a class="menu-link" href="/pending-approval.html">
+        <span class="menu-icon">⏳</span>
+        Pending Approval
+      </a>
+
+      <a class="menu-link" href="/ready-to-dispatch.html">
+        <span class="menu-icon">✅</span>
+        Ready to Dispatch
+      </a>
+
+      <a class="menu-link" href="/assigned.html">
+        <span class="menu-icon">🚚</span>
+        Assigned
+      </a>
+
+      <a class="menu-link" href="/closed-today.html">
         <span class="menu-icon">📦</span>
-        Active Jobs
+        Closed Today
       </a>
 
       <a class="menu-link" href="/history.html">
@@ -879,9 +894,14 @@
         Invoices
       </a>
 
-      <a class="menu-link" href="/reports.html">
+      <a class="menu-link" href="/Reports.html">
         <span class="menu-icon">📊</span>
         Reports
+      </a>
+
+      <a class="menu-link" href="/settings.html">
+        <span class="menu-icon">⚙️</span>
+        Settings
       </a>
     </nav>
 
@@ -1553,6 +1573,7 @@
 
         return [
           invoice.invoice_number,
+          String(combined.job_id || ""),
           combined.display_customer_name,
           combined.display_customer_email,
           combined.display_customer_phone,
@@ -2318,6 +2339,17 @@
       }
     );
 
+    function applyRouteFiltersFromQuery() {
+      const params = new URLSearchParams(window.location.search || "");
+      const jobFilter = String(params.get("job") || params.get("jobId") || "").trim();
+      if (!jobFilter) {
+        return;
+      }
+
+      searchInput.value = jobFilter;
+      renderInvoices();
+    }
+
     (async function startPage() {
       try {
         const session =
@@ -2328,6 +2360,7 @@
         }
 
         await loadInvoices();
+        applyRouteFiltersFromQuery();
       } catch (error) {
         invoiceList.innerHTML = `
           <div class="empty">

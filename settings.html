@@ -1,0 +1,333 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Settings | MG Express Dispatch</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    :root {
+      --bg: #eef3f1;
+      --card: #ffffff;
+      --ink: #17221e;
+      --muted: #68756f;
+      --line: #dfe8e4;
+      --green: #087455;
+      --green-dark: #064f3b;
+      --danger: #9b2b2b;
+      --danger-bg: #fff1f1;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: "Segoe UI", Arial, Helvetica, sans-serif;
+      background: var(--bg);
+      color: var(--ink);
+    }
+
+    .topbar {
+      padding: 18px;
+      background: var(--green-dark);
+      color: #fff;
+    }
+
+    .topbar-inner,
+    .container {
+      width: min(980px, 100%);
+      margin: 0 auto;
+    }
+
+    .brand {
+      font-size: 24px;
+      font-weight: 900;
+      line-height: 1.08;
+    }
+
+    .brand span { color: #ff665c; }
+
+    .staff-email {
+      margin-top: 6px;
+      font-size: 13px;
+      opacity: .86;
+      overflow-wrap: anywhere;
+    }
+
+    .container { padding: 26px 18px 64px; }
+
+    .heading {
+      display: flex;
+      align-items: end;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(28px, 4.5vw, 40px);
+    }
+
+    .eyebrow {
+      margin-bottom: 6px;
+      color: var(--muted);
+      font-size: 13px;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      font-weight: 700;
+    }
+
+    .home-link {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 44px;
+      padding: 10px 14px;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      background: #fff;
+      color: var(--green-dark);
+      text-decoration: none;
+      font-weight: 700;
+    }
+
+    .panel {
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      background: var(--card);
+      padding: 16px;
+      box-shadow: 0 10px 24px rgba(20, 37, 30, .06);
+      margin-bottom: 12px;
+    }
+
+    .panel h2 {
+      margin: 0 0 10px;
+      font-size: 20px;
+    }
+
+    .row {
+      display: grid;
+      grid-template-columns: 160px minmax(0, 1fr);
+      gap: 10px;
+      padding: 10px 0;
+      border-bottom: 1px dashed var(--line);
+      align-items: center;
+    }
+
+    .row:last-child { border-bottom: 0; }
+
+    .label {
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .06em;
+    }
+
+    .value {
+      font-size: 15px;
+      font-weight: 700;
+      overflow-wrap: anywhere;
+    }
+
+    .hint {
+      margin-top: 8px;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .danger-btn {
+      min-height: 46px;
+      padding: 10px 14px;
+      border: 1px solid #f0caca;
+      border-radius: 12px;
+      background: var(--danger-bg);
+      color: var(--danger);
+      font-weight: 800;
+      cursor: pointer;
+    }
+
+    .toast-wrap {
+      position: fixed;
+      right: 12px;
+      bottom: 12px;
+      display: grid;
+      gap: 8px;
+      z-index: 1600;
+    }
+
+    .toast {
+      min-width: 200px;
+      max-width: 320px;
+      padding: 10px 12px;
+      border-radius: 10px;
+      color: #fff;
+      background: #2e5f96;
+      box-shadow: 0 8px 22px rgba(0, 0, 0, .16);
+      font-size: 14px;
+    }
+
+    .toast.error { background: #9b2b2b; }
+    .toast.success { background: var(--green); }
+
+    @media (max-width: 720px) {
+      .row {
+        grid-template-columns: 1fr;
+        gap: 4px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header class="topbar">
+    <div class="topbar-inner">
+      <div class="brand">MG <span>EXPRESS</span> DISPATCH</div>
+      <div class="staff-email" id="staffEmail"></div>
+    </div>
+  </header>
+
+  <main class="container">
+    <div class="heading">
+      <div>
+        <div class="eyebrow">Dispatch Workspace</div>
+        <h1>Settings</h1>
+      </div>
+      <a class="home-link" href="/dashboard.html">Home</a>
+    </div>
+
+    <section class="panel">
+      <h2>Dispatcher Profile</h2>
+      <div class="row">
+        <div class="label">Display Name</div>
+        <div class="value" id="displayNameValue">Loading...</div>
+      </div>
+      <div class="row">
+        <div class="label">Login Email</div>
+        <div class="value" id="loginEmailValue">Loading...</div>
+      </div>
+      <div class="hint">Login email changes require a separate account update.</div>
+    </section>
+
+    <section class="panel">
+      <h2>Account</h2>
+      <button class="danger-btn" id="signOutBtn" type="button">Sign Out</button>
+    </section>
+  </main>
+
+  <div class="toast-wrap" id="toastWrap"></div>
+
+  <script>
+    const client = supabase.createClient(
+      "https://dczlucwfjayymlwbzzdi.supabase.co",
+      "sb_publishable_kcv_a78ZyUxMo2neKUANdw_XN7eAMpI"
+    );
+
+    window.mgDispatchClient = client;
+
+    function clean(value) {
+      return String(value || "").trim().toLowerCase();
+    }
+
+    function toTitle(text) {
+      const v = String(text || "").trim();
+      if (!v) {
+        return "";
+      }
+      return v.charAt(0).toUpperCase() + v.slice(1).toLowerCase();
+    }
+
+    function fallbackFromEmail(email) {
+      const local = String(email || "").split("@")[0] || "dispatch";
+      const first = local.split(/[._-]+/).filter(Boolean)[0] || "dispatch";
+      return toTitle(first);
+    }
+
+    function showToast(message, type) {
+      const wrap = document.getElementById("toastWrap");
+      const toast = document.createElement("div");
+      toast.className = "toast" + (type ? " " + type : "");
+      toast.textContent = message;
+      wrap.appendChild(toast);
+      setTimeout(() => toast.remove(), 2800);
+    }
+
+    async function requireDispatchAccess() {
+      const sessionResult = await client.auth.getSession();
+      const session = sessionResult.data.session;
+
+      if (!session) {
+        location.replace("/index.html");
+        return null;
+      }
+
+      document.getElementById("staffEmail").textContent = session.user.email || "";
+      document.getElementById("loginEmailValue").textContent = session.user.email || "-";
+
+      const profileResult = await client
+        .from("profiles")
+        .select("role,full_name,display_name")
+        .eq("id", session.user.id)
+        .maybeSingle();
+
+      if (profileResult.error || !profileResult.data) {
+        throw new Error(profileResult.error?.message || "No profile was found.");
+      }
+
+      const role = clean(profileResult.data.role);
+      if (!["admin", "staff", "dispatcher"].includes(role)) {
+        if (role === "driver") {
+          location.replace("/driver.html");
+          return null;
+        }
+        if (role === "customer") {
+          location.replace("/customer.html");
+          return null;
+        }
+        throw new Error("This account does not have dispatch access.");
+      }
+
+      const profileName = String(profileResult.data.full_name || profileResult.data.display_name || "").trim();
+      const meta = session.user.user_metadata || {};
+      const metadataName = String(meta.full_name || meta.name || meta.display_name || "").trim();
+      const displayName = profileName || metadataName || fallbackFromEmail(session.user.email || "");
+
+      document.getElementById("displayNameValue").textContent = displayName || "Dispatch";
+
+      window.dispatchEvent(new CustomEvent("mg-dispatch-ready", {
+        detail: {
+          email: session.user.email || "",
+          name: displayName || "Dispatch"
+        }
+      }));
+
+      return session;
+    }
+
+    document.getElementById("signOutBtn").addEventListener("click", async function () {
+      this.disabled = true;
+      this.textContent = "Signing Out...";
+
+      try {
+        await client.auth.signOut();
+      } catch (error) {
+        showToast(error.message || "Unable to sign out", "error");
+      } finally {
+        localStorage.clear();
+        sessionStorage.clear();
+        location.replace("/index.html?loggedout=1");
+      }
+    });
+
+    (async function startPage() {
+      try {
+        await requireDispatchAccess();
+      } catch (error) {
+        showToast(error.message || "Unable to open settings", "error");
+      }
+    })();
+  </script>
+
+  <script src="/dispatch-menu.js"></script>
+</body>
+</html>

@@ -8,8 +8,23 @@
       icon: "🏠"
     },
     {
-      href: "/jobs.html",
-      label: "Active Jobs",
+      href: "/pending-approval.html",
+      label: "Pending Approval",
+      icon: "⏳"
+    },
+    {
+      href: "/ready-to-dispatch.html",
+      label: "Ready to Dispatch",
+      icon: "✅"
+    },
+    {
+      href: "/assigned.html",
+      label: "Assigned",
+      icon: "🚚"
+    },
+    {
+      href: "/closed-today.html",
+      label: "Closed Today",
       icon: "📦"
     },
     {
@@ -38,9 +53,14 @@
       icon: "📄"
     },
     {
-      href: "/reports.html",
+      href: "/Reports.html",
       label: "Reports",
       icon: "📊"
+    },
+    {
+      href: "/settings.html",
+      label: "Settings",
+      icon: "⚙️"
     }
   ];
 

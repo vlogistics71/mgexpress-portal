@@ -229,6 +229,33 @@ function money(value) {
   return number.toLocaleString("en-US", { style: "currency", currency: "USD" });
 }
 
+function validHttpUrl(value) {
+  try {
+    const url = new URL(String(value || ""), window.location.origin);
+    return ["http:", "https:"].includes(url.protocol) ? url.toString() : "";
+  } catch (_error) {
+    return "";
+  }
+}
+
+function resolvePaymentLink(job) {
+  return [
+    job?.payment_link_url,
+    job?.customer_payment_link,
+    job?.invoice_payment_link,
+    job?.payment_url
+  ].find(Boolean) || "";
+}
+
+function resolveBolLink(job) {
+  return [
+    job?.bol_url,
+    job?.bill_of_lading_url,
+    job?.bol_pdf_url,
+    job?.bol_document_url
+  ].find(Boolean) || "";
+}
+
 function formatDate(value) {
   if (!value) {
     return "-";
@@ -1597,11 +1624,11 @@ function openJobDetails(jobId, readOnly = false) {
 
   const menuActions = [
     `<button class="menu-item" type="button" data-edit-job="${escapeHtml(String(job.id))}">Edit Delivery</button>`,
-    `<button class="menu-item" type="button" data-send-invoice="${escapeHtml(String(job.id))}">Email Invoice</button>`,
-    `<button class="menu-item" type="button" data-send-payment-email="${escapeHtml(String(job.id))}">Send Payment Link</button>`,
-    `<button class="menu-item" type="button" data-send-payment-text="${escapeHtml(String(job.id))}">Text Invoice</button>`,
+    `<button class="menu-item" type="button" data-send-invoice="${escapeHtml(String(job.id))}">View Invoice</button>`,
+    `<button class="menu-item" type="button" data-send-payment-email="${escapeHtml(String(job.id))}">Send Invoice by Email</button>`,
+    `<button class="menu-item" type="button" data-send-payment-text="${escapeHtml(String(job.id))}">Send Invoice by Text</button>`,
     `<button class="menu-item" type="button" data-copy-payment-link="${escapeHtml(String(job.id))}">Copy Payment Link</button>`,
-    `<button class="menu-item" type="button" data-view-payment="${escapeHtml(String(job.id))}">View Payment</button>`,
+    `<button class="menu-item" type="button" data-view-payment="${escapeHtml(String(job.id))}">Open Payment Link</button>`,
     `<button class="menu-item" type="button" data-view-bol="${escapeHtml(String(job.id))}">Print / View BOL</button>`
   ];
 
@@ -1846,8 +1873,28 @@ async function resendToDriver(jobId) {
 }
 
 function openBolForJob(jobId) {
-  const url = "/job.html?id=" + encodeURIComponent(String(jobId));
-  window.open(url, "_blank", "noopener");
+  const job = getRowById(jobId);
+  if (!job) {
+    return;
+  }
+
+  try {
+    const bolLink = resolveBolLink(job);
+    const safe = validHttpUrl(bolLink);
+
+    if (!safe) {
+      throw new Error("BOL setup required");
+    }
+
+    const newTab = window.open(safe, "_blank", "noopener");
+    if (!newTab) {
+      throw new Error("Pop-up blocked while opening BOL");
+    }
+  } catch (error) {
+    showToast(error.message || "Unable to open BOL", "error");
+  } finally {
+    // no-op finally to keep action lifecycle explicit
+  }
 }
 
 function sendInvoiceForJob(jobId) {
@@ -1856,7 +1903,14 @@ function sendInvoiceForJob(jobId) {
     return;
   }
 
-  showToast("Invoice action is visible. Transport automation is not connected yet.", "info");
+  try {
+    const url = "/invoices.html?job=" + encodeURIComponent(String(job.id));
+    window.location.href = url;
+  } catch (error) {
+    showToast(error.message || "Unable to open invoice", "error");
+  } finally {
+    // no-op finally to keep action lifecycle explicit
+  }
 }
 
 function sendPaymentLinkByText(jobId) {
@@ -1865,7 +1919,20 @@ function sendPaymentLinkByText(jobId) {
     return;
   }
 
-  showToast("Payment link (text) action is visible. SMS transport is not connected yet.", "info");
+  try {
+    const rawLink = resolvePaymentLink(job);
+    const safeLink = validHttpUrl(rawLink);
+    if (!safeLink) {
+      throw new Error("Invoice integration not connected");
+    }
+
+    const text = "MG Express delivery payment link: " + safeLink;
+    window.location.href = "sms:?&body=" + encodeURIComponent(text);
+  } catch (error) {
+    showToast(error.message || "Unable to send invoice by text", "error");
+  } finally {
+    // no-op finally to keep action lifecycle explicit
+  }
 }
 
 function sendPaymentLinkByEmail(jobId) {
@@ -1874,7 +1941,21 @@ function sendPaymentLinkByEmail(jobId) {
     return;
   }
 
-  showToast("Payment link (email) action is visible. Email transport is not connected yet.", "info");
+  try {
+    const rawLink = resolvePaymentLink(job);
+    const safeLink = validHttpUrl(rawLink);
+    if (!safeLink) {
+      throw new Error("Invoice integration not connected");
+    }
+
+    const subject = "Invoice Payment Link - " + String(job.job_number || "Delivery");
+    const body = "Please use this payment link: " + safeLink;
+    window.location.href = "mailto:?subject=" + encodeURIComponent(subject) + "&body=" + encodeURIComponent(body);
+  } catch (error) {
+    showToast(error.message || "Unable to send invoice by email", "error");
+  } finally {
+    // no-op finally to keep action lifecycle explicit
+  }
 }
 
 async function markDeliveryReady(jobId) {
@@ -1912,20 +1993,14 @@ async function copyPaymentLink(jobId) {
     return;
   }
 
-  const maybeLink = [
-    job.payment_link_url,
-    job.customer_payment_link,
-    job.invoice_payment_link,
-    job.payment_url
-  ].find(Boolean);
-
-  if (!maybeLink) {
-    showToast("Payment link backend field is not connected yet.", "info");
+  const safeLink = validHttpUrl(resolvePaymentLink(job));
+  if (!safeLink) {
+    showToast("Invoice integration not connected", "error");
     return;
   }
 
   try {
-    await navigator.clipboard.writeText(String(maybeLink));
+    await navigator.clipboard.writeText(safeLink);
     showToast("Payment link copied", "success");
   } catch (error) {
     showToast("Unable to copy payment link on this device", "error");
@@ -2021,7 +2096,21 @@ function viewPayment(jobId) {
     return;
   }
 
-  showToast("Payment status: " + String(job.payment_status || "unknown").toUpperCase(), "info");
+  try {
+    const safeLink = validHttpUrl(resolvePaymentLink(job));
+    if (!safeLink) {
+      throw new Error("Invoice integration not connected");
+    }
+
+    const newTab = window.open(safeLink, "_blank", "noopener");
+    if (!newTab) {
+      throw new Error("Pop-up blocked while opening payment link");
+    }
+  } catch (error) {
+    showToast(error.message || "Unable to open payment link", "error");
+  } finally {
+    // no-op finally to keep action lifecycle explicit
+  }
 }
 
 function applyWorkspacePresentation() {

@@ -1535,6 +1535,21 @@ function bindEvents() {
   elements.assignDeliveryBtn.addEventListener("click", openAssignDeliveryForSelectedDriver);
 }
 
+function openDriverFromQueryIfPresent() {
+  const params = new URLSearchParams(window.location.search || "");
+  const driverId = String(params.get("driver") || params.get("driverId") || "").trim();
+  if (!driverId) {
+    return;
+  }
+
+  const found = state.summaries.find(item => item.id === driverId);
+  if (!found) {
+    return;
+  }
+
+  openDriverDetails(driverId);
+}
+
 (async function startPage() {
   try {
     const session = await requireDispatchAccess();
@@ -1546,6 +1561,7 @@ function bindEvents() {
     bindEvents();
     updateActiveChip();
     await loadAvailabilityWorkspace();
+    openDriverFromQueryIfPresent();
   } catch (error) {
     const message = error.message || "Unable to open Driver Availability workspace.";
     setLoadError(message);

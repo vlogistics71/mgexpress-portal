@@ -1,86 +1,102 @@
 (() => {
   "use strict";
 
-  const PORTAL_BASE =
-    "https://portal.migenteexpress.com";
+  const PORTAL_BASE = "";
+
+  const KNOWN_ROUTES = new Set([
+    "/dashboard.html",
+    "/pending-approval.html",
+    "/ready-to-dispatch.html",
+    "/assigned.html",
+    "/closed-today.html",
+    "/customer.html",
+    "/driver.html",
+    "/payroll.html",
+    "/invoices.html",
+    "/Reports.html",
+    "/history.html",
+    "/settings.html",
+    "/index.html"
+  ]);
+
+  function routeUrl(path) {
+    const cleanPath = String(path || "").trim();
+    if (!KNOWN_ROUTES.has(cleanPath)) {
+      return "";
+    }
+
+    return PORTAL_BASE + cleanPath;
+  }
 
   const pages = [
     {
-      href:
-        PORTAL_BASE +
-        "/dashboard.html",
+      href: routeUrl("/dashboard.html"),
 
       label: "Dashboard",
       icon: "🏠"
     },
     {
-      href:
-        PORTAL_BASE +
-        "/jobs.html",
+      href: routeUrl("/pending-approval.html"),
 
-      label: "Jobs",
+      label: "Pending Approval",
+      icon: "⏳"
+    },
+    {
+      href: routeUrl("/ready-to-dispatch.html"),
+
+      label: "Ready to Dispatch",
+      icon: "✅"
+    },
+    {
+      href: routeUrl("/assigned.html"),
+
+      label: "Assigned",
+      icon: "🚚"
+    },
+    {
+      href: routeUrl("/closed-today.html"),
+
+      label: "Closed Today",
       icon: "📦"
     },
     {
-      href:
-        PORTAL_BASE +
-        "/dashboard.html",
-
-      label: "Quotes",
-      icon: "🗂️"
-    },
-    {
-      href:
-        PORTAL_BASE +
-        "/history.html",
-
-      label: "Job History",
-      icon: "📚"
-    },
-    {
-      href:
-        PORTAL_BASE +
-        "/customer.html",
+      href: routeUrl("/customer.html"),
 
       label: "Customers",
       icon: "👥"
     },
     {
-      href:
-        PORTAL_BASE +
-        "/driver.html",
+      href: routeUrl("/driver.html"),
 
       label: "Drivers",
       icon: "🚚"
     },
     {
-      href:
-        PORTAL_BASE +
-        "/payroll.html",
+      href: routeUrl("/payroll.html"),
 
       label: "Payroll",
       icon: "💵"
     },
     {
-      href:
-        PORTAL_BASE +
-        "/invoices.html",
+      href: routeUrl("/invoices.html"),
 
       label: "Invoices",
       icon: "🧾"
     },
     {
-      href:
-        PORTAL_BASE +
-        "/reports.html",
+      href: routeUrl("/Reports.html"),
 
       label: "Reports",
       icon: "📊"
     },
     {
-      href:
-        PORTAL_BASE +
-        "/index.html",
+      href: routeUrl("/history.html"),
+
+      label: "Job History",
+      icon: "📚"
+    },
+    {
+      href: routeUrl("/settings.html"),
 
       label: "Settings",
       icon: "⚙️"
@@ -265,7 +281,7 @@
       .toLowerCase();
 
   function fileName(url) {
-    return new URL(url).pathname
+    return new URL(url, window.location.origin).pathname
       .split("/")
       .pop()
       .toLowerCase();
@@ -291,10 +307,13 @@
           ? " active"
           : "";
 
+      const isEnabled = Boolean(page.href);
+
       return `
         <a
-          class="dispatch-menu-link${active}"
-          href="${page.href}"
+          class="dispatch-menu-link${active}${isEnabled ? "" : " disabled"}"
+          href="${isEnabled ? page.href : "#"}"
+          ${isEnabled ? "" : "aria-disabled=\"true\" tabindex=\"-1\""}
         >
           <span class="dispatch-menu-icon">
             ${page.icon}
@@ -472,8 +491,7 @@
           sessionStorage.clear();
 
           window.location.replace(
-            PORTAL_BASE +
-            "/index.html?loggedout=1"
+            routeUrl("/index.html") + "?loggedout=1"
           );
         }
       }
