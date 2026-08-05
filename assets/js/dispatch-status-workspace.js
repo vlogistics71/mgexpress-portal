@@ -76,6 +76,7 @@ const state = {
   supportsEstimatedMiles: null,
   selectedJob: null,
   pendingAssignment: null,
+  activeInvoice: null,
   pendingRejectedReturnJobId: "",
   assignDriverFocusId: "",
   assignDriverFocusName: "",
@@ -131,7 +132,10 @@ const elements = {
   toastWrap: document.getElementById("toastWrap"),
   bolPreviewModal: null,
   bolPreviewBody: null,
-  bolPrintBtn: null
+  bolPrintBtn: null,
+  invoicePreviewModal: null,
+  invoicePreviewBody: null,
+  invoicePrintBtn: null
 };
 
 function escapeHtml(value) {
@@ -993,7 +997,7 @@ function renderCompactRows(rows, readOnly) {
       ? `
         <div class="closed-actions" data-prevent-row-open="true">
           <button class="mini" type="button" id="viewBolBtn-${escapeHtml(String(row.id))}" data-view-bol="${escapeHtml(String(row.id))}">View BOL</button>
-          <button class="mini" type="button" data-send-invoice="${escapeHtml(String(row.id))}">Invoice</button>
+          <button class="mini" type="button" data-send-invoice="${escapeHtml(String(row.id))}">Send Invoice</button>
           <button class="mini" type="button" data-open-job-inline="${escapeHtml(String(row.id))}">View Details</button>
         </div>
       `
@@ -1910,7 +1914,7 @@ function openJobDetails(jobId, readOnly = false) {
 
   let primaryAction = "";
   if (stage === "pending_approval") {
-    primaryAction = `<button class="btn primary" type="button" data-mark-ready="${escapeHtml(String(job.id))}">Mark Ready to Dispatch</button>`;
+    primaryAction = `<button class="btn primary" type="button" data-send-invoice="${escapeHtml(String(job.id))}">Send Invoice</button>`;
   } else if (stage === "ready_to_dispatch") {
     primaryAction = `<button class="btn primary" type="button" data-assign-job="${escapeHtml(String(job.id))}">Assign Driver</button>`;
   } else if (stage === "assigned") {
@@ -1921,9 +1925,9 @@ function openJobDetails(jobId, readOnly = false) {
     `<button class="menu-item" type="button" data-edit-job="${escapeHtml(String(job.id))}">Edit Delivery</button>`,
     `<button class="menu-item" type="button" data-send-invoice="${escapeHtml(String(job.id))}">View Invoice</button>`,
     `<button class="menu-item" type="button" data-send-payment-email="${escapeHtml(String(job.id))}">Send Invoice by Email</button>`,
-    `<button class="menu-item" type="button" data-send-payment-text="${escapeHtml(String(job.id))}">Send Invoice by Text</button>`,
+    `<button class="menu-item" type="button" data-send-payment-text="${escapeHtml(String(job.id))}">Text Payment Link</button>`,
     `<button class="menu-item" type="button" data-copy-payment-link="${escapeHtml(String(job.id))}">Copy Payment Link</button>`,
-    `<button class="menu-item" type="button" data-view-payment="${escapeHtml(String(job.id))}">Open Payment Link</button>`
+    `<button class="menu-item" type="button" data-mark-paid-manual="${escapeHtml(String(job.id))}">Mark Paid Manually</button>`
   ];
 
   if (stage === "ready_to_dispatch" || stage === "assigned") {
@@ -2552,55 +2556,376 @@ function handleViewBolClick(event, buttonElement) {
   return false;
 }
 
-function sendInvoiceForJob(jobId) {
+function normalizePaymentStatusLabel(value) {
+  const token = clean(value);
+  const map = {
+    unpaid: "Unpaid",
+    payment_sent: "Payment Sent",
+    sent: "Payment Sent",
+    pending: "Payment Sent",
+    paid: "Paid",
+    received: "Paid",
+    refunded: "Refunded",
+    failed: "Failed"
+  };
+
+  return map[token] || (String(value || "Unpaid").replaceAll("_", " ").trim() || "Unpaid");
+}
+
+function parseOptionalAmount(value) {
+  const raw = String(value ?? "").trim();
+  if (!raw) {
+    return null;
+  }
+
+  const number = Number(raw);
+  return Number.isFinite(number) ? number : null;
+}
+
+function resolveInvoicePaymentLink(invoice, job) {
+  const raw = firstPresentValue([
+    invoice?.payment_link_url,
+    invoice?.payment_url,
+    invoice?.payment_link,
+    invoice?.checkout_url,
+    job?.payment_link_url,
+    job?.customer_payment_link,
+    job?.invoice_payment_link,
+    job?.payment_url
+  ]);
+  return validHttpUrl(raw);
+}
+
+function resolveInvoiceUrl(invoice) {
+  const raw = firstPresentValue([
+    invoice?.invoice_url,
+    invoice?.hosted_invoice_url,
+    invoice?.pdf_url,
+    invoice?.invoice_pdf_url
+  ]);
+  return validHttpUrl(raw);
+}
+
+async function fetchLatestInvoiceForJob(jobId) {
+  const result = await client
+    .from("invoices")
+    .select("*")
+    .eq("job_id", jobId)
+    .order("created_at", { ascending: false })
+    .limit(1);
+
+  if (result.error) {
+    throw result.error;
+  }
+
+  return result.data?.[0] || null;
+}
+
+function ensureInvoiceModalElements() {
+  if (elements.invoicePreviewModal && elements.invoicePreviewBody && elements.invoicePrintBtn) {
+    return;
+  }
+
+  let modal = document.getElementById("invoicePreviewModal");
+  if (!modal) {
+    modal = document.createElement("div");
+    modal.className = "modal-backdrop invoice-modal-backdrop";
+    modal.id = "invoicePreviewModal";
+    modal.innerHTML = `
+      <section class="modal-panel invoice-modal-panel" role="dialog" aria-modal="true" aria-labelledby="invoicePreviewTitle">
+        <div class="modal-head invoice-modal-head">
+          <div>
+            <div class="invoice-head-brand">MG EXPRESS</div>
+            <h3 class="modal-title" id="invoicePreviewTitle">Invoice</h3>
+          </div>
+          <div class="invoice-modal-actions no-print">
+            <button class="btn" type="button" id="invoicePrintBtn">Print / Save PDF</button>
+            <button class="btn" type="button" id="invoiceCopyLinkBtn">Copy Payment Link</button>
+            <button class="btn" type="button" id="invoiceEmailBtn">Email Invoice</button>
+            <button class="btn" type="button" id="invoiceTextBtn">Text Payment Link</button>
+            <button class="btn primary" type="button" data-close-modal="invoicePreviewModal">Close</button>
+          </div>
+        </div>
+        <div class="modal-body invoice-modal-body" id="invoicePreviewBody"></div>
+      </section>
+    `;
+    document.body.appendChild(modal);
+  }
+
+  elements.invoicePreviewModal = modal;
+  elements.invoicePreviewBody = modal.querySelector("#invoicePreviewBody");
+  elements.invoicePrintBtn = modal.querySelector("#invoicePrintBtn");
+  elements.invoiceCopyLinkBtn = modal.querySelector("#invoiceCopyLinkBtn");
+  elements.invoiceEmailBtn = modal.querySelector("#invoiceEmailBtn");
+  elements.invoiceTextBtn = modal.querySelector("#invoiceTextBtn");
+
+  if (elements.invoicePrintBtn && elements.invoicePrintBtn.dataset.bound !== "true") {
+    elements.invoicePrintBtn.addEventListener("click", printInvoiceModal);
+    elements.invoicePrintBtn.dataset.bound = "true";
+  }
+  if (elements.invoiceCopyLinkBtn && elements.invoiceCopyLinkBtn.dataset.bound !== "true") {
+    elements.invoiceCopyLinkBtn.addEventListener("click", () => copyPaymentLink(state.activeInvoice?.jobId || ""));
+    elements.invoiceCopyLinkBtn.dataset.bound = "true";
+  }
+  if (elements.invoiceEmailBtn && elements.invoiceEmailBtn.dataset.bound !== "true") {
+    elements.invoiceEmailBtn.addEventListener("click", () => sendPaymentLinkByEmail(state.activeInvoice?.jobId || ""));
+    elements.invoiceEmailBtn.dataset.bound = "true";
+  }
+  if (elements.invoiceTextBtn && elements.invoiceTextBtn.dataset.bound !== "true") {
+    elements.invoiceTextBtn.addEventListener("click", () => sendPaymentLinkByText(state.activeInvoice?.jobId || ""));
+    elements.invoiceTextBtn.dataset.bound = "true";
+  }
+
+  if (elements.invoicePreviewModal && elements.invoicePreviewModal.dataset.printBound !== "true") {
+    const cleanup = () => {
+      document.body.classList.remove("invoice-printing");
+      const rule = document.getElementById("invoicePrintPageRule");
+      if (rule) {
+        rule.remove();
+      }
+    };
+    window.addEventListener("afterprint", cleanup);
+    elements.invoicePreviewModal.dataset.printBound = "true";
+  }
+}
+
+function invoiceFieldRow(label, value) {
+  const cleanValue = toCleanDisplayValue(value);
+  if (!cleanValue) {
+    return "";
+  }
+
+  return `
+    <div class="invoice-kv">
+      <strong>${escapeHtml(label)}</strong>
+      <span>${escapeHtml(cleanValue)}</span>
+    </div>
+  `;
+}
+
+function buildInvoiceSection(title, rows) {
+  const filteredRows = rows.filter(Boolean);
+  if (!filteredRows.length) {
+    return "";
+  }
+
+  return `
+    <section class="invoice-section">
+      <h4>${escapeHtml(title)}</h4>
+      <div class="invoice-grid">
+        ${filteredRows.join("")}
+      </div>
+    </section>
+  `;
+}
+
+function updateInvoicePaymentActionState(paymentLink) {
+  const connected = Boolean(paymentLink);
+  const hint = connected ? "" : "Payment integration not connected";
+
+  [elements.invoiceCopyLinkBtn, elements.invoiceEmailBtn, elements.invoiceTextBtn].forEach(button => {
+    if (!button) {
+      return;
+    }
+
+    button.disabled = !connected;
+    button.title = hint;
+  });
+}
+
+function renderInvoiceData(context) {
+  ensureInvoiceModalElements();
+
+  const job = context?.job;
+  if (!job || !job.id) {
+    showToast("Unable to open invoice: selected delivery not found", "error");
+    return false;
+  }
+
+  const invoice = context.invoice || null;
+  const paymentLink = context.paymentLink || "";
+  const invoiceUrl = context.invoiceUrl || "";
+  const amount = parseOptionalAmount(firstPresentValue([invoice?.amount, job.approved_price, job.customer_charge]));
+  const taxAmount = parseOptionalAmount(firstPresentValue([invoice?.tax_amount, invoice?.taxes]));
+  const additionalFees = parseOptionalAmount(firstPresentValue([invoice?.additional_fees, invoice?.approved_fees]));
+  const explicitTotal = parseOptionalAmount(firstPresentValue([invoice?.total_due, invoice?.total_amount]));
+  const computedTotal = (amount || 0) + (taxAmount || 0) + (additionalFees || 0);
+  const totalDue = explicitTotal !== null ? explicitTotal : computedTotal;
+
+  const customerRows = [
+    invoiceFieldRow("Customer Name", firstPresentValue([invoice?.customer_name, job.customer_name])),
+    invoiceFieldRow("Company Name", firstPresentValue([invoice?.company_name, job.company_name])),
+    invoiceFieldRow("Customer Email", firstPresentValue([invoice?.customer_email, job.customer_email])),
+    invoiceFieldRow("Customer Phone", firstPresentValue([invoice?.customer_phone, job.customer_phone])),
+    invoiceFieldRow("Billing Address", firstPresentValue([
+      invoice?.billing_address,
+      invoice?.billing_address_line1,
+      job.billing_address,
+      job.customer_billing_address
+    ]))
+  ];
+
+  const deliveryRows = [
+    invoiceFieldRow("Pickup Summary", firstPresentValue([job.pickup_address])),
+    invoiceFieldRow("Delivery Summary", firstPresentValue([job.delivery_address])),
+    invoiceFieldRow("Job Category", jobCategoryLabel(job.job_category)),
+    invoiceFieldRow("Delivery Type", deliveryTypeLabel(job.delivery_type)),
+    invoiceFieldRow("Service Level", serviceLevelLabel(job.service_level)),
+    invoiceFieldRow("Delivery Speed", deliverySpeedLabel(job.delivery_speed)),
+    invoiceFieldRow("Estimated Miles", firstPresentValue([job.estimated_miles]))
+  ];
+
+  const billingRows = [
+    invoiceFieldRow("Customer Price", amount === null ? "" : money(amount)),
+    invoiceFieldRow("Taxes", taxAmount === null ? "" : money(taxAmount)),
+    invoiceFieldRow("Additional Fees", additionalFees === null ? "" : money(additionalFees)),
+    invoiceFieldRow("Total Due", totalDue === null ? "" : money(totalDue)),
+    invoiceFieldRow("Payment Status", normalizePaymentStatusLabel(firstPresentValue([invoice?.payment_status, job.payment_status, "unpaid"]))),
+    invoiceFieldRow("Payment Link", paymentLink)
+  ];
+
+  elements.invoicePreviewBody.innerHTML = `
+    <article class="invoice-sheet" id="invoicePrintContainer" data-invoice-job-id="${escapeHtml(String(job.id))}">
+      <header class="invoice-header">
+        <div>
+          <div class="invoice-brand">MG EXPRESS</div>
+          <h2 class="invoice-title">INVOICE</h2>
+        </div>
+        <div class="invoice-head-grid">
+          ${invoiceFieldRow("Invoice Number", firstPresentValue([invoice?.invoice_number]))}
+          ${invoiceFieldRow("Delivery / Job Number", firstPresentValue([job.job_number]))}
+          ${invoiceFieldRow("Invoice Date", formatDate(firstPresentValue([invoice?.created_at, job.created_at])))}
+          ${invoiceFieldRow("Invoice URL", invoiceUrl)}
+        </div>
+      </header>
+
+      <div class="invoice-layout invoice-screen-grid invoice-print-grid">
+        <div class="invoice-column">
+          ${buildInvoiceSection("Customer", customerRows)}
+          ${buildInvoiceSection("Billing", billingRows)}
+        </div>
+        <div class="invoice-column">
+          ${buildInvoiceSection("Delivery Summary", deliveryRows)}
+        </div>
+      </div>
+    </article>
+    ${!paymentLink ? '<div class="hint invoice-hint">Payment integration not connected</div>' : ""}
+  `;
+
+  updateInvoicePaymentActionState(paymentLink);
+  return true;
+}
+
+async function openInvoiceModalForJob(job) {
+  if (!job || !job.id) {
+    showToast("Unable to open invoice: selected delivery not found", "error");
+    return false;
+  }
+
+  ensureInvoiceModalElements();
+
+  try {
+    const invoice = await fetchLatestInvoiceForJob(job.id);
+    const context = {
+      job,
+      invoice,
+      jobId: String(job.id),
+      paymentLink: resolveInvoicePaymentLink(invoice, job),
+      invoiceUrl: resolveInvoiceUrl(invoice)
+    };
+
+    state.activeInvoice = context;
+
+    const rendered = renderInvoiceData(context);
+    if (!rendered) {
+      return false;
+    }
+
+    openModal("invoicePreviewModal");
+    return true;
+  } catch (error) {
+    showToast(error.message || "Unable to open invoice", "error");
+    return false;
+  }
+}
+
+async function sendInvoiceForJob(jobId) {
   const job = getRowById(jobId);
   if (!job) {
+    showToast("Unable to open invoice: selected delivery not found", "error");
     return;
   }
 
   try {
-    const url = "/invoices.html?job=" + encodeURIComponent(String(job.id));
-    window.location.href = url;
+    await openInvoiceModalForJob(job);
   } catch (error) {
     showToast(error.message || "Unable to open invoice", "error");
-  } finally {
-    // no-op finally to keep action lifecycle explicit
   }
+}
+
+function printInvoiceModal(event) {
+  if (event) {
+    event.preventDefault();
+    event.stopPropagation();
+  }
+
+  if (!elements.invoicePreviewModal || !elements.invoicePreviewModal.classList.contains("open")) {
+    showToast("Open an invoice before printing.", "info");
+    return;
+  }
+
+  if (!elements.invoicePreviewBody || elements.invoicePreviewBody.querySelectorAll("#invoicePrintContainer").length !== 1) {
+    showToast("Unable to print invoice: printable layout is not ready.", "error");
+    return;
+  }
+
+  let printRule = document.getElementById("invoicePrintPageRule");
+  if (!printRule) {
+    printRule = document.createElement("style");
+    printRule.id = "invoicePrintPageRule";
+    printRule.textContent = "@page { size: Letter portrait; margin: 0.4in; }";
+    document.head.appendChild(printRule);
+  }
+
+  document.body.classList.add("invoice-printing");
+  window.print();
 }
 
 function sendPaymentLinkByText(jobId) {
   const job = getRowById(jobId);
   if (!job) {
+    showToast("Selected delivery not found", "error");
     return;
   }
 
   try {
-    const rawLink = resolvePaymentLink(job);
-    const safeLink = validHttpUrl(rawLink);
+    const safeLink = state.activeInvoice?.jobId === String(job.id)
+      ? String(state.activeInvoice.paymentLink || "")
+      : resolveInvoicePaymentLink(state.activeInvoice?.invoice || null, job);
     if (!safeLink) {
-      throw new Error("Invoice integration not connected");
+      throw new Error("Payment integration not connected");
     }
 
     const text = "MG Express delivery payment link: " + safeLink;
     window.location.href = "sms:?&body=" + encodeURIComponent(text);
   } catch (error) {
-    showToast(error.message || "Unable to send invoice by text", "error");
-  } finally {
-    // no-op finally to keep action lifecycle explicit
+    showToast(error.message || "Unable to send payment link by text", "error");
   }
 }
 
 function sendPaymentLinkByEmail(jobId) {
   const job = getRowById(jobId);
   if (!job) {
+    showToast("Selected delivery not found", "error");
     return;
   }
 
   try {
-    const rawLink = resolvePaymentLink(job);
-    const safeLink = validHttpUrl(rawLink);
+    const safeLink = state.activeInvoice?.jobId === String(job.id)
+      ? String(state.activeInvoice.paymentLink || "")
+      : resolveInvoicePaymentLink(state.activeInvoice?.invoice || null, job);
     if (!safeLink) {
-      throw new Error("Invoice integration not connected");
+      throw new Error("Payment integration not connected");
     }
 
     const subject = "Invoice Payment Link - " + String(job.job_number || "Delivery");
@@ -2608,8 +2933,6 @@ function sendPaymentLinkByEmail(jobId) {
     window.location.href = "mailto:?subject=" + encodeURIComponent(subject) + "&body=" + encodeURIComponent(body);
   } catch (error) {
     showToast(error.message || "Unable to send invoice by email", "error");
-  } finally {
-    // no-op finally to keep action lifecycle explicit
   }
 }
 
@@ -2645,10 +2968,13 @@ async function markDeliveryReady(jobId) {
 async function copyPaymentLink(jobId) {
   const job = getRowById(jobId);
   if (!job) {
+    showToast("Selected delivery not found", "error");
     return;
   }
 
-  const safeLink = validHttpUrl(resolvePaymentLink(job));
+  const safeLink = state.activeInvoice?.jobId === String(job.id)
+    ? String(state.activeInvoice.paymentLink || "")
+    : resolveInvoicePaymentLink(state.activeInvoice?.invoice || null, job);
   if (!safeLink) {
     showToast("Invoice integration not connected", "error");
     return;
@@ -2745,26 +3071,52 @@ async function changeDispatchStatus(jobId, nextStatus, buttonRef) {
   }
 }
 
-function viewPayment(jobId) {
+async function markPaidManually(jobId) {
   const job = getRowById(jobId);
   if (!job) {
+    showToast("Selected delivery not found", "error");
+    return;
+  }
+
+  const confirmed = window.confirm("Confirm payment has been received for this delivery?");
+  if (!confirmed) {
     return;
   }
 
   try {
-    const safeLink = validHttpUrl(resolvePaymentLink(job));
-    if (!safeLink) {
-      throw new Error("Invoice integration not connected");
+    const quoteResult = await client
+      .from("quotes")
+      .update({ payment_status: "paid", status: "ready" })
+      .eq("id", jobId)
+      .select("*")
+      .maybeSingle();
+
+    if (quoteResult.error) {
+      throw quoteResult.error;
     }
 
-    const newTab = window.open(safeLink, "_blank", "noopener");
-    if (!newTab) {
-      throw new Error("Pop-up blocked while opening payment link");
+    const latestInvoice = await fetchLatestInvoiceForJob(jobId);
+    if (latestInvoice?.id) {
+      const invoiceResult = await client
+        .from("invoices")
+        .update({ payment_status: "paid" })
+        .eq("id", latestInvoice.id);
+
+      if (invoiceResult.error) {
+        throw invoiceResult.error;
+      }
     }
+
+    await loadRows();
+    try {
+      localStorage.setItem("mg_dispatch_refresh", new Date().toISOString());
+    } catch (_error) {
+      // Non-blocking cross-workspace refresh signal.
+    }
+    openJobDetails(jobId, false);
+    showToast("Payment received. Delivery is ready to dispatch.", "success");
   } catch (error) {
-    showToast(error.message || "Unable to open payment link", "error");
-  } finally {
-    // no-op finally to keep action lifecycle explicit
+    showToast(error.message || "Unable to mark payment as received", "error");
   }
 }
 
@@ -2929,6 +3281,12 @@ function handleDocumentClick(event) {
     return;
   }
 
+  const markPaidManualBtn = target.closest("[data-mark-paid-manual]");
+  if (markPaidManualBtn) {
+    markPaidManually(markPaidManualBtn.getAttribute("data-mark-paid-manual"));
+    return;
+  }
+
   const deleteDeliveryBtn = target.closest("[data-delete-delivery]");
   if (deleteDeliveryBtn) {
     deleteDelivery(deleteDeliveryBtn.getAttribute("data-delete-delivery"));
@@ -2938,12 +3296,6 @@ function handleDocumentClick(event) {
   const cancelJob = target.closest("[data-cancel-job]");
   if (cancelJob) {
     changeDispatchStatus(cancelJob.getAttribute("data-cancel-job"), "cancelled", cancelJob);
-    return;
-  }
-
-  const paymentView = target.closest("[data-view-payment]");
-  if (paymentView) {
-    viewPayment(paymentView.getAttribute("data-view-payment"));
     return;
   }
 
@@ -2965,6 +3317,7 @@ function handleDocumentClick(event) {
 
 function bindEvents() {
   ensureBolModalElements();
+  ensureInvoiceModalElements();
 
   elements.searchInput.addEventListener("input", renderWorkspace);
   elements.customerSearchInput.addEventListener("input", renderWorkspace);
