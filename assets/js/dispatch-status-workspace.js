@@ -261,19 +261,29 @@ function isDispatchWorkspaceUrl(value) {
   try {
     const url = new URL(String(value || ""), window.location.origin);
     const path = String(url.pathname || "").toLowerCase();
+    const normalized = path.endsWith("/") && path.length > 1 ? path.slice(0, -1) : path;
     return [
+      "/dashboard",
       "/dashboard.html",
+      "/pending-approval",
       "/pending-approval.html",
+      "/ready-to-dispatch",
       "/ready-to-dispatch.html",
+      "/assigned",
       "/assigned.html",
+      "/closed-today",
       "/closed-today.html"
-    ].includes(path);
+    ].includes(normalized);
   } catch (_error) {
     return false;
   }
 }
 
 const DISPATCH_BOL_PAGE = "/jobs-backup.html";
+const BOL_DIAGNOSTIC_MODE = true;
+const BOL_DIAGNOSTIC_PANEL_ID = "bolDiagnosticsPanel";
+const VIEW_BOL_HANDLER_NAME = "handleViewBolClick";
+let viewBolClickCount = 0;
 
 function getBolActionForJob(job) {
   const safeSavedUrl = validHttpUrl(resolveBolLink(job));
@@ -1001,7 +1011,7 @@ function renderCompactRows(rows, readOnly) {
     const closedActions = workspaceMode === "closed_today"
       ? `
         <div class="closed-actions" data-prevent-row-open="true">
-          <button class="mini" type="button" data-view-bol="${escapeHtml(String(row.id))}">Print BOL</button>
+          <button class="mini" type="button" id="viewBolBtn-${escapeHtml(String(row.id))}" data-view-bol="${escapeHtml(String(row.id))}">Print BOL</button>
           <button class="mini" type="button" data-send-invoice="${escapeHtml(String(row.id))}">Invoice</button>
           <button class="mini" type="button" data-open-job-inline="${escapeHtml(String(row.id))}">View Details</button>
         </div>
@@ -2016,7 +2026,7 @@ function openJobDetails(jobId, readOnly = false) {
         <div class="kv"><strong>BOL Category</strong><span>${escapeHtml(jobCategoryLabel(job.job_category))}</span></div>
         <div class="kv"><strong>BOL Return</strong><span>${hasReturnRequired(job) ? "RETURN REQUIRED" : "No Return"}</span></div>
         <div class="form-actions">
-          <button class="btn primary" type="button" data-view-bol="${escapeHtml(String(job.id))}" ${bolAction.disabled ? "disabled" : ""}>${escapeHtml(bolAction.label)}</button>
+          <button class="btn primary" type="button" id="viewBolBtn-${escapeHtml(String(job.id))}" data-view-bol="${escapeHtml(String(job.id))}" ${bolAction.disabled ? "disabled" : ""}>${escapeHtml(bolAction.label)}</button>
           ${bolAction.disabled ? `<div class="hint">${escapeHtml(bolAction.reason)}</div>` : ""}
         </div>
       </div>
@@ -2243,6 +2253,102 @@ function openBolForJob(selectedDelivery) {
   } finally {
     // no-op finally to keep action lifecycle explicit
   }
+}
+
+function getBolDiagnosticsPanel() {
+  let panel = document.getElementById(BOL_DIAGNOSTIC_PANEL_ID);
+  if (panel) {
+    return panel;
+  }
+
+  panel = document.createElement("div");
+  panel.id = BOL_DIAGNOSTIC_PANEL_ID;
+  panel.style.position = "fixed";
+  panel.style.right = "12px";
+  panel.style.bottom = "12px";
+  panel.style.zIndex = "3000";
+  panel.style.maxWidth = "460px";
+  panel.style.width = "calc(100vw - 24px)";
+  panel.style.maxHeight = "42vh";
+  panel.style.overflow = "auto";
+  panel.style.background = "#0f172a";
+  panel.style.color = "#f8fafc";
+  panel.style.border = "1px solid #334155";
+  panel.style.borderRadius = "10px";
+  panel.style.boxShadow = "0 10px 30px rgba(0,0,0,.35)";
+  panel.style.padding = "10px 12px";
+  panel.style.fontFamily = "ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, Liberation Mono, monospace";
+  panel.style.fontSize = "12px";
+  panel.style.lineHeight = "1.35";
+  panel.setAttribute("role", "status");
+  panel.setAttribute("aria-live", "polite");
+  document.body.appendChild(panel);
+  return panel;
+}
+
+function renderBolDiagnostics(details) {
+  const panel = getBolDiagnosticsPanel();
+  const lines = [
+    "BOL Diagnostics (navigation paused)",
+    "time: " + new Date().toISOString(),
+    "selectedDelivery.id: " + String(details.selectedDeliveryId || "(missing)"),
+    "button element id: " + String(details.buttonElementId || "(none)"),
+    "button href: " + String(details.buttonHref || "(none)"),
+    "handler: " + String(details.handlerName || VIEW_BOL_HANDLER_NAME),
+    "intended BOL URL: " + String(details.intendedBolUrl || "(none)"),
+    "current pathname: " + String(details.pathname || window.location.pathname),
+    "handler run count: " + String(details.handlerRunCount || 0)
+  ];
+
+  panel.textContent = lines.join("\n");
+}
+
+function handleViewBolClick(event, buttonElement) {
+  event.preventDefault();
+  event.stopPropagation();
+  if (typeof event.stopImmediatePropagation === "function") {
+    event.stopImmediatePropagation();
+  }
+
+  viewBolClickCount += 1;
+
+  const selectedDelivery = state.selectedJob && state.selectedJob.id
+    ? state.selectedJob
+    : getRowById(buttonElement?.getAttribute("data-view-bol"));
+
+  const bolAction = selectedDelivery ? getBolActionForJob(selectedDelivery) : null;
+  const selectedId = selectedDelivery?.id ? encodeURIComponent(String(selectedDelivery.id)) : "";
+  const intendedBolUrl = bolAction
+    ? (bolAction.mode === "create"
+      ? (DISPATCH_BOL_PAGE + "?id=" + selectedId)
+      : String(bolAction.url || ""))
+    : "";
+
+  const diagnostics = {
+    selectedDeliveryId: selectedDelivery?.id || "",
+    buttonElementId: buttonElement?.id || "",
+    buttonHref: buttonElement?.getAttribute("href") || "",
+    handlerName: VIEW_BOL_HANDLER_NAME,
+    intendedBolUrl,
+    pathname: window.location.pathname,
+    handlerRunCount: viewBolClickCount
+  };
+
+  console.log("[BOL_DIAGNOSTICS]", diagnostics);
+  renderBolDiagnostics(diagnostics);
+  showToast("BOL diagnostics captured. Navigation paused.", "info");
+
+  if (!selectedDelivery || !selectedDelivery.id) {
+    showToast("Unable to open BOL: selected delivery not found", "error");
+    return false;
+  }
+
+  if (BOL_DIAGNOSTIC_MODE) {
+    return false;
+  }
+
+  openBolForJob(selectedDelivery);
+  return false;
 }
 
 function sendInvoiceForJob(jobId) {
@@ -2535,22 +2641,7 @@ function handleDocumentClick(event) {
 
   const viewBol = target.closest("[data-view-bol]");
   if (viewBol) {
-    event.preventDefault();
-    event.stopPropagation();
-    if (typeof event.stopImmediatePropagation === "function") {
-      event.stopImmediatePropagation();
-    }
-
-    const selectedDelivery = state.selectedJob && state.selectedJob.id
-      ? state.selectedJob
-      : getRowById(viewBol.getAttribute("data-view-bol"));
-
-    if (!selectedDelivery || !selectedDelivery.id) {
-      showToast("Unable to open BOL: selected delivery not found", "error");
-      return;
-    }
-
-    openBolForJob(selectedDelivery);
+    handleViewBolClick(event, viewBol);
     return;
   }
 
@@ -2718,6 +2809,7 @@ function bindEvents() {
   elements.jobForm.addEventListener("submit", submitJobForm);
   elements.assignForm.addEventListener("submit", assignOrReassignDriver);
 
+  document.removeEventListener("click", handleDocumentClick);
   document.addEventListener("click", handleDocumentClick);
   document.addEventListener("keydown", event => {
     if (event.key === "Escape") {
