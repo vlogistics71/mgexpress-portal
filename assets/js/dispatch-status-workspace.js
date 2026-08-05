@@ -257,6 +257,39 @@ function resolveBolLink(job) {
   ].find(Boolean) || "";
 }
 
+const DISPATCH_BOL_PAGE = "/jobs-backup.html";
+
+function getBolActionForJob(job) {
+  const safeSavedUrl = validHttpUrl(resolveBolLink(job));
+  if (safeSavedUrl) {
+    return {
+      label: "View BOL",
+      mode: "view",
+      url: safeSavedUrl,
+      disabled: false,
+      reason: ""
+    };
+  }
+
+  if (DISPATCH_BOL_PAGE) {
+    return {
+      label: "Create BOL",
+      mode: "create",
+      url: DISPATCH_BOL_PAGE + "?id=" + encodeURIComponent(String(job?.id || "")),
+      disabled: false,
+      reason: ""
+    };
+  }
+
+  return {
+    label: "BOL Setup Required",
+    mode: "missing",
+    url: "",
+    disabled: true,
+    reason: "Missing BOL page or generator implementation."
+  };
+}
+
 function formatDate(value) {
   if (!value) {
     return "-";
@@ -1265,13 +1298,24 @@ function getRecommendedReasons(driverMetric) {
 }
 
 function renderAssignJobSummary(job) {
+  const driverPayDraft = String(elements.assignDriverPay?.value || job.driver_pay || "").trim();
   elements.assignJobSummary.innerHTML = `
     <div class="kv"><strong>Job Number</strong><span>${escapeHtml(job.job_number || "-")}</span></div>
     <div class="kv"><strong>Customer</strong><span>${escapeHtml(job.customer_name || "-")}</span></div>
     <div class="kv"><strong>Pickup</strong><span>${escapeHtml(job.pickup_address || "-")}</span></div>
     <div class="kv"><strong>Delivery</strong><span>${escapeHtml(job.delivery_address || "-")}</span></div>
     <div class="kv"><strong>Customer Price</strong><span>${escapeHtml(money(job.approved_price ?? job.customer_charge))}</span></div>
-    <div class="kv"><strong>Driver Pay</strong><span>${escapeHtml(money(job.driver_pay))}</span></div>
+    <div class="kv"><strong>Driver Pay</strong><span>
+      <input
+        id="assignPanelDriverPayInput"
+        class="assign-pay-input"
+        type="number"
+        min="0"
+        step="0.01"
+        value="${escapeHtml(driverPayDraft)}"
+        placeholder="0.00"
+      >
+    </span></div>
   `;
 }
 
@@ -1377,14 +1421,24 @@ function queueAssignment(driverId) {
   }
 
   const payInput = document.querySelector(`[data-assign-pay-input="${CSS.escape(String(driverId))}"]`);
-  const driverPayRaw = String(payInput?.value || "").trim();
+  const panelPayInput = document.getElementById("assignPanelDriverPayInput");
+  const rawFromCard = String(payInput?.value || "").trim();
+  const rawFromPanel = String(panelPayInput?.value || "").trim();
+  const driverPayRaw = rawFromCard || rawFromPanel;
 
-  if (driverPayRaw !== "") {
-    const numeric = Number(driverPayRaw);
-    if (!Number.isFinite(numeric) || numeric < 0) {
-      showToast("Driver pay must be a valid number", "error");
-      return;
-    }
+  if (driverPayRaw === "") {
+    showToast("Enter driver pay before assigning this delivery.", "error");
+    return;
+  }
+
+  const numeric = Number(driverPayRaw);
+  if (!Number.isFinite(numeric) || numeric < 0) {
+    showToast("Driver pay must be a valid number", "error");
+    return;
+  }
+  if (numeric <= 0) {
+    showToast("Driver pay must be greater than 0.", "error");
+    return;
   }
 
   elements.assignDriverSelect.value = String(driverId);
@@ -1852,9 +1906,11 @@ function openJobDetails(jobId, readOnly = false) {
     primaryAction = `<button class="btn primary" type="button" data-mark-ready="${escapeHtml(String(job.id))}">Mark Ready to Dispatch</button>`;
   } else if (stage === "ready_to_dispatch") {
     primaryAction = `<button class="btn primary" type="button" data-assign-job="${escapeHtml(String(job.id))}">Assign Driver</button>`;
-  } else {
-    primaryAction = `<button class="btn" type="button" data-view-bol="${escapeHtml(String(job.id))}">View / Create BOL</button>`;
+  } else if (stage === "assigned") {
+    primaryAction = `<button class="btn primary" type="button" data-assign-job="${escapeHtml(String(job.id))}">Assign / Reassign Driver</button>`;
   }
+
+  const bolAction = getBolActionForJob(job);
 
   const menuActions = [
     `<button class="menu-item" type="button" data-edit-job="${escapeHtml(String(job.id))}">Edit Delivery</button>`,
@@ -1862,8 +1918,7 @@ function openJobDetails(jobId, readOnly = false) {
     `<button class="menu-item" type="button" data-send-payment-email="${escapeHtml(String(job.id))}">Send Invoice by Email</button>`,
     `<button class="menu-item" type="button" data-send-payment-text="${escapeHtml(String(job.id))}">Send Invoice by Text</button>`,
     `<button class="menu-item" type="button" data-copy-payment-link="${escapeHtml(String(job.id))}">Copy Payment Link</button>`,
-    `<button class="menu-item" type="button" data-view-payment="${escapeHtml(String(job.id))}">Open Payment Link</button>`,
-    `<button class="menu-item" type="button" data-view-bol="${escapeHtml(String(job.id))}">Print / View BOL</button>`
+    `<button class="menu-item" type="button" data-view-payment="${escapeHtml(String(job.id))}">Open Payment Link</button>`
   ];
 
   if (stage === "ready_to_dispatch" || stage === "assigned") {
@@ -1892,6 +1947,7 @@ function openJobDetails(jobId, readOnly = false) {
         <div class="kv"><strong>Status</strong><span class="${escapeHtml(badgeClass(job))}">${escapeHtml(statusLabel(job))}</span></div>
         <div class="kv"><strong>Job Category</strong><span>${escapeHtml(jobCategoryLabel(job.job_category))}</span></div>
         <div class="kv"><strong>Return Service</strong><span>${hasReturnRequired(job) ? "RETURN REQUIRED" : "No Return"}</span></div>
+        ${(stage === "ready_to_dispatch" || stage === "assigned") ? `<div class="kv"><strong>Driver Pay</strong><span><input type="number" data-driver-pay-detail="${escapeHtml(String(job.id))}" min="0" step="0.01" placeholder="0.00" value="${escapeHtml(String(job.driver_pay ?? ""))}"></span></div>` : ""}
         <div class="kv"><strong>Customer</strong><span>${escapeHtml(job.customer_name || "-")}</span></div>
         <div class="kv"><strong>Pickup</strong><span>${escapeHtml(job.pickup_address || "-")}</span></div>
         <div class="kv"><strong>Delivery</strong><span>${escapeHtml(job.delivery_address || "-")}</span></div>
@@ -1943,6 +1999,10 @@ function openJobDetails(jobId, readOnly = false) {
         <div class="kv"><strong>BOL</strong><span>${escapeHtml(String(job.bol_status || "Unknown"))}</span></div>
         <div class="kv"><strong>BOL Category</strong><span>${escapeHtml(jobCategoryLabel(job.job_category))}</span></div>
         <div class="kv"><strong>BOL Return</strong><span>${hasReturnRequired(job) ? "RETURN REQUIRED" : "No Return"}</span></div>
+        <div class="form-actions">
+          <button class="btn primary" type="button" data-view-bol="${escapeHtml(String(job.id))}" ${bolAction.disabled ? "disabled" : ""}>${escapeHtml(bolAction.label)}</button>
+          ${bolAction.disabled ? `<div class="hint">${escapeHtml(bolAction.reason)}</div>` : ""}
+        </div>
       </div>
     </details>
 
@@ -1960,7 +2020,7 @@ function openJobDetails(jobId, readOnly = false) {
   openModal("jobDetailsModal");
 }
 
-function openAssignModal(jobId) {
+function openAssignModal(jobId, suggestedDriverPay = "") {
   const job = getRowById(jobId);
   if (!job) {
     return;
@@ -1974,7 +2034,8 @@ function openAssignModal(jobId) {
 
   elements.assignJobId.value = String(job.id);
   elements.assignDriverSelect.value = "";
-  elements.assignDriverPay.value = String(job.driver_pay ?? "");
+  const seedPay = String(suggestedDriverPay || job.driver_pay || "").trim();
+  elements.assignDriverPay.value = seedPay;
   if (state.assignDriverFocusId) {
     const focusedName = driverNameById(state.assignDriverFocusId);
     elements.assignDriverSearch.value = focusedName !== "Unassigned"
@@ -2008,29 +2069,30 @@ async function assignOrReassignDriver(event) {
     return;
   }
 
+  if (driverPayRaw === "") {
+    showToast("Enter driver pay before assigning this delivery.", "error");
+    return;
+  }
+
   const driverPay = driverPayRaw === "" ? null : Number(driverPayRaw);
   if (driverPay !== null && (!Number.isFinite(driverPay) || driverPay < 0)) {
     showToast("Driver pay must be a valid number", "error");
     return;
   }
-
-  const shouldResetWorkflow =
-    String(job.assigned_driver_id || "") !== driverId ||
-    clean(job.status) !== "assigned" ||
-    clean(job.driver_acceptance_status) === "rejected";
+  if (driverPay === null || driverPay <= 0) {
+    showToast("Driver pay must be greater than 0.", "error");
+    return;
+  }
 
   const payload = {
     assigned_driver_id: driverId,
     driver_pay: driverPay,
-    status: "assigned"
+    status: "assigned",
+    driver_acceptance_status: "pending",
+    driver_workflow_status: "assigned",
+    driver_accepted_at: null,
+    driver_rejected_at: null
   };
-
-  if (shouldResetWorkflow) {
-    payload.driver_acceptance_status = "pending";
-    payload.driver_workflow_status = "assigned";
-    payload.driver_accepted_at = null;
-    payload.driver_rejected_at = null;
-  }
 
   setButtonLoading(elements.assignSubmitBtn, true, "Sending...", "Assign Driver");
 
@@ -2049,8 +2111,13 @@ async function assignOrReassignDriver(event) {
     closeModal("assignConfirmModal");
     closeModal("assignModal");
     await loadRows();
+    try {
+      localStorage.setItem("mg_dispatch_refresh", new Date().toISOString());
+    } catch (_error) {
+      // Non-blocking storage refresh signal.
+    }
     openJobDetails(jobId, false);
-    showToast("Driver assigned successfully.", "success");
+    showToast("Driver assigned successfully", "success");
   } catch (error) {
     showToast(error.message || "Unable to assign driver", "error");
   } finally {
@@ -2135,11 +2202,14 @@ function openBolForJob(jobId) {
   }
 
   try {
-    const bolLink = resolveBolLink(job);
-    const safe = validHttpUrl(bolLink);
+    const bolAction = getBolActionForJob(job);
+    if (bolAction.disabled) {
+      throw new Error(bolAction.reason || "BOL setup required");
+    }
 
+    const safe = validHttpUrl(bolAction.url);
     if (!safe) {
-      throw new Error("BOL setup required");
+      throw new Error("BOL URL is invalid or missing");
     }
 
     const newTab = window.open(safe, "_blank", "noopener");
@@ -2472,12 +2542,18 @@ function handleDocumentClick(event) {
 
   const assignJob = target.closest("[data-assign-job]");
   if (assignJob) {
-    openAssignModal(assignJob.getAttribute("data-assign-job"));
+    const detailPayInput = target.closest(".card-body")?.querySelector("[data-driver-pay-detail]");
+    const payDraft = String(detailPayInput?.value || "").trim();
+    openAssignModal(assignJob.getAttribute("data-assign-job"), payDraft);
     return;
   }
 
   const assignDriver = target.closest("[data-assign-driver]");
   if (assignDriver) {
+    const panelPayInput = document.getElementById("assignPanelDriverPayInput");
+    if (panelPayInput) {
+      elements.assignDriverPay.value = String(panelPayInput.value || "").trim();
+    }
     queueAssignment(assignDriver.getAttribute("data-assign-driver"));
     return;
   }

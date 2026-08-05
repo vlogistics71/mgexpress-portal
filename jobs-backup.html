@@ -1,7 +1,487 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Job Details | Mi Gente Express</title><link rel="stylesheet" href="/assets/styles.css"></head>
-<body><header class="topbar no-print"><div class="container topbar-inner"><div class="brand">MI GENTE <span>EXPRESS</span></div><div class="nav"><button onclick="history.back()" class="secondary">Back</button><button onclick="print()">Print BOL</button></div></div></header><main><div class="container"><section id="job" class="panel"><h1>Loading…</h1></section></div></main>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="/config.js"></script><script type="module">
-import {db,sessionAndProfile,escapeHtml,money,statusLabel} from "/assets/js/core.js";await sessionAndProfile(["admin","dispatcher","customer","driver"]);const id=new URLSearchParams(location.search).get("id");
-const {data:q,error}=await db.from("quotes").select("*").eq("id",id).single();if(error){job.innerHTML=`<div class="notice error">${escapeHtml(error.message)}</div>`}else{job.innerHTML=`<div class="toolbar"><div><p class="muted">Bill of Lading / Delivery Order</p><h1>${escapeHtml(q.job_number)}</h1></div><div><b>${statusLabel(q.status)}</b><br>${escapeHtml(q.payment_status||"unpaid").toUpperCase()}</div></div>
-<div class="detail-grid"><div class="detail"><strong>Customer</strong><span>${escapeHtml(q.customer_name)}<br>${escapeHtml(q.customer_email)}<br>${escapeHtml(q.customer_phone||"")}</span></div><div class="detail"><strong>Service</strong><span>${escapeHtml(q.vehicle_type||"")}<br>${escapeHtml(q.delivery_speed||"")}<br>${money(q.approved_price)}</span></div><div class="detail"><strong>Pickup</strong><span>${escapeHtml(q.pickup_address)}</span></div><div class="detail"><strong>Delivery</strong><span>${escapeHtml(q.delivery_address)}</span></div></div><h2>Package</h2><p>${escapeHtml(q.package_type||"")} — ${escapeHtml(q.weight||"")}</p><h2>Instructions</h2><p>${escapeHtml(q.special_instructions||"None")}</p><div class="grid"><div class="signature">Pickup signature / date / time</div><div class="signature">Delivery signature / date / time</div></div>`}
-</script></body></html>
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>MG Express BOL</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    * { box-sizing: border-box; }
+    :root {
+      --dark-green: #064f3b;
+      --green: #087455;
+      --line: #dfe8e4;
+      --muted: #68756f;
+      --ink: #17221e;
+      --bg: #f3f8f6;
+      --warn-bg: #fff5d8;
+      --warn: #986200;
+    }
+    body {
+      margin: 0;
+      font-family: "SF Pro Text", "SF Pro Display", "Helvetica Neue", Helvetica, Arial, sans-serif;
+      background: var(--bg);
+      color: var(--ink);
+    }
+    .topbar {
+      position: sticky;
+      top: 0;
+      z-index: 5;
+      background: var(--dark-green);
+      color: #fff;
+      padding: 14px 16px;
+    }
+    .topbar-inner,
+    .container {
+      width: min(980px, 100%);
+      margin: auto;
+    }
+    .brand {
+      font-size: 22px;
+      font-weight: 900;
+      line-height: 1.06;
+    }
+    .brand span { color: #ff665c; }
+    .actions {
+      margin-top: 10px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    button,
+    .link-btn,
+    input {
+      font: inherit;
+    }
+    .btn,
+    .link-btn {
+      min-height: 40px;
+      border-radius: 10px;
+      border: 1px solid var(--line);
+      background: #fff;
+      color: var(--dark-green);
+      font-weight: 800;
+      padding: 8px 12px;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+    }
+    .container {
+      padding: 16px;
+    }
+    .sheet {
+      background: #fff;
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      overflow: hidden;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, .05);
+    }
+    .sheet-head {
+      padding: 14px;
+      border-bottom: 1px solid var(--line);
+      display: grid;
+      gap: 6px;
+    }
+    .sheet-title {
+      margin: 0;
+      color: var(--dark-green);
+      font-size: 26px;
+      font-weight: 900;
+      line-height: 1.05;
+    }
+    .sheet-sub {
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 700;
+    }
+    .meta {
+      display: grid;
+      gap: 8px;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      padding: 14px;
+      border-bottom: 1px solid var(--line);
+    }
+    .kv {
+      display: grid;
+      gap: 4px;
+    }
+    .kv strong {
+      color: var(--dark-green);
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: .04em;
+    }
+    .kv span {
+      font-size: 14px;
+      line-height: 1.35;
+      overflow-wrap: anywhere;
+    }
+    .section {
+      padding: 14px;
+      border-bottom: 1px solid var(--line);
+    }
+    .section:last-child {
+      border-bottom: 0;
+    }
+    .section h3 {
+      margin: 0 0 8px;
+      color: var(--dark-green);
+      font-size: 17px;
+      font-weight: 900;
+    }
+    .notes {
+      font-size: 12px;
+      color: var(--muted);
+      line-height: 1.35;
+      margin-top: 8px;
+      border: 1px dashed var(--line);
+      border-radius: 10px;
+      padding: 8px;
+      background: #f8fcfa;
+    }
+    .status {
+      display: inline-flex;
+      width: fit-content;
+      border-radius: 999px;
+      padding: 5px 8px;
+      font-size: 11px;
+      font-weight: 900;
+      text-transform: uppercase;
+      letter-spacing: .03em;
+      background: var(--warn-bg);
+      color: var(--warn);
+    }
+    .empty {
+      padding: 16px;
+      color: var(--muted);
+      font-size: 14px;
+    }
+    .photo-list {
+      display: grid;
+      gap: 8px;
+      margin-top: 10px;
+    }
+    .photo-list a {
+      color: var(--dark-green);
+      font-weight: 700;
+      text-decoration: none;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 8px 10px;
+      background: #fff;
+    }
+    @media print {
+      .topbar,
+      .actions,
+      .notes {
+        display: none !important;
+      }
+      body {
+        background: #fff;
+      }
+      .container {
+        padding: 0;
+        width: 100%;
+      }
+      .sheet {
+        box-shadow: none;
+        border: 0;
+        border-radius: 0;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header class="topbar">
+    <div class="topbar-inner">
+      <div class="brand">MG <span>EXPRESS</span> BOL</div>
+      <div class="actions">
+        <a class="link-btn" href="/dashboard.html">Back to Dispatch</a>
+        <button class="btn" id="printButton" type="button">Print BOL</button>
+        <label class="btn" for="includeProofToggle" style="gap:8px;">
+          <input id="includeProofToggle" type="checkbox" style="width:auto;min-height:auto;">
+          Include Proof Photos
+        </label>
+      </div>
+    </div>
+  </header>
+
+  <main class="container">
+    <section class="sheet" id="bolSheet">
+      <div class="empty">Loading BOL...</div>
+    </section>
+  </main>
+
+  <script>
+    (function () {
+      "use strict";
+
+      const client = supabase.createClient(
+        "https://dczlucwfjayymlwbzzdi.supabase.co",
+        "sb_publishable_kcv_a78ZyUxMo2neKUANdw_XN7eAMpI"
+      );
+
+      const sheet = document.getElementById("bolSheet");
+      const includeProofToggle = document.getElementById("includeProofToggle");
+      const printButton = document.getElementById("printButton");
+
+      function escapeHtml(value) {
+        const div = document.createElement("div");
+        div.textContent = value ?? "";
+        return div.innerHTML;
+      }
+
+      function clean(value) {
+        return String(value || "").trim().toLowerCase();
+      }
+
+      function formatDate(value) {
+        if (!value) {
+          return "-";
+        }
+
+        const date = new Date(value);
+        if (Number.isNaN(date.getTime())) {
+          return "-";
+        }
+
+        return new Intl.DateTimeFormat("en-US", {
+          month: "short",
+          day: "numeric",
+          year: "numeric",
+          hour: "numeric",
+          minute: "2-digit"
+        }).format(date);
+      }
+
+      function deliverySpeedLabel(value) {
+        const map = {
+          "2_hr": "2 Hour",
+          "3_hr": "3 Hour",
+          "4_hr": "4 Hour",
+          "5_hr": "5 Hour",
+          "6_hr": "6 Hour",
+          next_day: "Next Day"
+        };
+
+        return map[value] || String(value || "-");
+      }
+
+      function categoryLabel(value) {
+        const map = {
+          medical: "Medical",
+          pallet: "Pallet",
+          legal: "Legal",
+          general: "General",
+          special: "Special"
+        };
+
+        return map[clean(value)] || "General";
+      }
+
+      function deliveryTypeLabel(value) {
+        const map = {
+          business_to_business: "Business to Business",
+          business_to_residential: "Business to Residential",
+          residential_to_business: "Residential to Business",
+          residential_to_residential: "Residential to Residential"
+        };
+
+        return map[clean(value)] || "-";
+      }
+
+      function serviceLevelLabel(value) {
+        const map = {
+          standard: "Standard",
+          priority: "Priority",
+          stat: "STAT",
+          scheduled: "Scheduled",
+          on_demand: "On Demand"
+        };
+
+        return map[clean(value)] || "-";
+      }
+
+      function returnRequiredFlag(value) {
+        if (value === true) {
+          return true;
+        }
+        return ["true", "1", "yes"].includes(clean(value));
+      }
+
+      function returnLocationLabel(value) {
+        const map = {
+          same_as_pickup: "Same as Original Pickup",
+          different_location: "Different Return Location"
+        };
+
+        return map[clean(value)] || "Same as Original Pickup";
+      }
+
+      function returnTimingLabel(value) {
+        const map = {
+          immediate: "Immediately After Delivery",
+          later_today: "Later Today",
+          another_day: "Another Day"
+        };
+
+        return map[clean(value)] || "Immediately After Delivery";
+      }
+
+      function returnDestinationText(q) {
+        if (!returnRequiredFlag(q.return_required)) {
+          return "No Return";
+        }
+
+        if (clean(q.return_location_type) !== "different_location") {
+          return "Same as Original Pickup: " + String(q.pickup_address || "-");
+        }
+
+        const parts = [
+          String(q.return_address || "").trim(),
+          String(q.return_suite_floor || "").trim(),
+          String(q.return_zip || "").trim()
+        ].filter(Boolean);
+
+        return parts.length ? parts.join(" • ") : "Different Return Location";
+      }
+
+      function photoListHtml(q) {
+        if (!includeProofToggle.checked) {
+          return "";
+        }
+
+        const links = [
+          { label: "Pickup Photo", url: q.pickup_photo_url },
+          { label: "Delivery Photo", url: q.delivery_photo_url }
+        ].filter(item => /^https?:\/\//i.test(String(item.url || "")));
+
+        if (!links.length) {
+          return '<div class="notes">Proof photos were requested, but no photo URLs are available for this delivery.</div>';
+        }
+
+        return `
+          <div class="section">
+            <h3>Proof Photos</h3>
+            <div class="photo-list">
+              ${links.map(item => `<a href="${escapeHtml(item.url)}" target="_blank" rel="noopener">${escapeHtml(item.label)}</a>`).join("")}
+            </div>
+          </div>
+        `;
+      }
+
+      function renderBol(q) {
+        const returnRequired = returnRequiredFlag(q.return_required);
+        sheet.innerHTML = `
+          <div class="sheet-head">
+            <h1 class="sheet-title">Bill of Lading / Delivery Order</h1>
+            <div class="sheet-sub">MG Express Dispatch Document</div>
+            <span class="status">${escapeHtml(String(q.status || "pending").replaceAll("_", " "))}</span>
+          </div>
+
+          <div class="meta">
+            <div class="kv"><strong>Delivery Number</strong><span>${escapeHtml(q.job_number || "-")}</span></div>
+            <div class="kv"><strong>Customer</strong><span>${escapeHtml(q.customer_name || "-")}</span></div>
+            <div class="kv"><strong>Created</strong><span>${escapeHtml(formatDate(q.created_at))}</span></div>
+            <div class="kv"><strong>Delivery Recipient</strong><span>${escapeHtml(q.delivery_recipient_name || q.pod_recipient_name || "-")}</span></div>
+          </div>
+
+          <div class="section">
+            <h3>Pickup</h3>
+            <div class="meta" style="padding:0;border:0;">
+              <div class="kv"><strong>Address</strong><span>${escapeHtml(q.pickup_address || "-")}</span></div>
+              <div class="kv"><strong>Suite / Floor</strong><span>${escapeHtml(q.pickup_suite_floor || "-")}</span></div>
+              <div class="kv"><strong>ZIP</strong><span>${escapeHtml(q.pickup_zip || "-")}</span></div>
+            </div>
+          </div>
+
+          <div class="section">
+            <h3>Delivery</h3>
+            <div class="meta" style="padding:0;border:0;">
+              <div class="kv"><strong>Address</strong><span>${escapeHtml(q.delivery_address || "-")}</span></div>
+              <div class="kv"><strong>Suite / Floor</strong><span>${escapeHtml(q.delivery_suite_floor || "-")}</span></div>
+              <div class="kv"><strong>ZIP</strong><span>${escapeHtml(q.delivery_zip || "-")}</span></div>
+            </div>
+          </div>
+
+          <div class="section">
+            <h3>Service Details</h3>
+            <div class="meta" style="padding:0;border:0;">
+              <div class="kv"><strong>Category</strong><span>${escapeHtml(categoryLabel(q.job_category))}</span></div>
+              <div class="kv"><strong>Delivery Type</strong><span>${escapeHtml(deliveryTypeLabel(q.delivery_type))}</span></div>
+              <div class="kv"><strong>Service Level</strong><span>${escapeHtml(serviceLevelLabel(q.service_level))}</span></div>
+              <div class="kv"><strong>Delivery Speed</strong><span>${escapeHtml(deliverySpeedLabel(q.delivery_speed))}</span></div>
+              <div class="kv"><strong>Package</strong><span>${escapeHtml(q.package_type || "-")}</span></div>
+              <div class="kv"><strong>Vehicle Type</strong><span>${escapeHtml(q.vehicle_type || "-")}</span></div>
+            </div>
+          </div>
+
+          <div class="section">
+            <h3>Return Service</h3>
+            <div class="meta" style="padding:0;border:0;">
+              <div class="kv"><strong>Return Required</strong><span>${returnRequired ? "Yes" : "No"}</span></div>
+              <div class="kv"><strong>Return Location</strong><span>${returnRequired ? escapeHtml(returnLocationLabel(q.return_location_type)) : "-"}</span></div>
+              <div class="kv"><strong>Return Destination</strong><span>${escapeHtml(returnDestinationText(q))}</span></div>
+              <div class="kv"><strong>Return Timing</strong><span>${returnRequired ? escapeHtml(returnTimingLabel(q.return_timing)) : "-"}</span></div>
+            </div>
+          </div>
+
+          ${photoListHtml(q)}
+
+          <div class="section">
+            <div class="notes">
+              Pickup and delivery photos are not included automatically. Dispatch can include proof photos only when requested.
+            </div>
+          </div>
+        `;
+      }
+
+      async function loadQuote() {
+        const params = new URLSearchParams(window.location.search || "");
+        const id = String(params.get("id") || "").trim();
+        if (!id) {
+          throw new Error("Missing delivery id for BOL page.");
+        }
+
+        const result = await client
+          .from("quotes")
+          .select("id,job_number,status,customer_name,pickup_address,pickup_suite_floor,pickup_zip,delivery_address,delivery_suite_floor,delivery_zip,delivery_recipient_name,pod_recipient_name,package_type,vehicle_type,delivery_speed,job_category,delivery_type,service_level,return_required,return_location_type,return_address,return_suite_floor,return_zip,return_timing,pickup_photo_url,delivery_photo_url,created_at")
+          .eq("id", id)
+          .maybeSingle();
+
+        if (result.error) {
+          throw result.error;
+        }
+        if (!result.data) {
+          throw new Error("Delivery was not found for BOL.");
+        }
+
+        return result.data;
+      }
+
+      let quoteCache = null;
+
+      includeProofToggle.addEventListener("change", function () {
+        if (quoteCache) {
+          renderBol(quoteCache);
+        }
+      });
+
+      printButton.addEventListener("click", function () {
+        window.print();
+      });
+
+      (async function start() {
+        try {
+          quoteCache = await loadQuote();
+          renderBol(quoteCache);
+        } catch (error) {
+          sheet.innerHTML = `<div class="empty">${escapeHtml(error.message || "Unable to load BOL")}</div>`;
+        }
+      })();
+    })();
+  </script>
+</body>
+</html>
