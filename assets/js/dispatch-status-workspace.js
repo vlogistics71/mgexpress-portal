@@ -2235,27 +2235,67 @@ function ensureBolModalElements() {
     elements.bolPrintBtn.addEventListener("click", printBolModal);
     elements.bolPrintBtn.dataset.bound = "true";
   }
+
+  if (elements.bolPreviewModal && elements.bolPreviewModal.dataset.printBound !== "true") {
+    const cleanup = () => {
+      document.body.classList.remove("bol-printing");
+    };
+
+    window.addEventListener("afterprint", cleanup);
+    elements.bolPreviewModal.dataset.printBound = "true";
+  }
+}
+
+function compactMultilineText(value) {
+  const text = String(value || "").replace(/\r\n?/g, "\n").trim();
+  if (!text) {
+    return "";
+  }
+
+  return text
+    .split("\n")
+    .map(line => line.trim())
+    .filter(Boolean)
+    .join("\n");
+}
+
+function toCleanDisplayValue(value) {
+  if (value === null || value === undefined) {
+    return "";
+  }
+
+  if (typeof value === "number") {
+    return Number.isFinite(value) ? String(value) : "";
+  }
+
+  return compactMultilineText(value);
 }
 
 function bolFieldRow(label, value) {
-  return `
-    <div class="bol-kv">
-      <strong>${escapeHtml(label)}</strong>
-      <span>${escapeHtml(value || "-")}</span>
-    </div>
-  `;
-}
-
-function buildBolSection(title, rows) {
-  if (!rows.length) {
+  const cleanValue = toCleanDisplayValue(value);
+  if (!cleanValue) {
     return "";
   }
 
   return `
-    <section class="bol-section">
+    <div class="bol-kv">
+      <strong>${escapeHtml(label)}</strong>
+      <span>${escapeHtml(cleanValue)}</span>
+    </div>
+  `;
+}
+
+function buildBolSection(title, rows, sectionClass = "") {
+  const filteredRows = rows.filter(Boolean);
+  if (!filteredRows.length) {
+    return "";
+  }
+
+  return `
+    <section class="bol-section ${escapeHtml(sectionClass)}">
       <h4>${escapeHtml(title)}</h4>
       <div class="bol-grid">
-        ${rows.join("")}
+        ${filteredRows.join("")}
       </div>
     </section>
   `;
@@ -2282,21 +2322,11 @@ function renderBolDeliveryData(selectedDelivery) {
     "requested_pickup_at",
     "pickup_window_start"
   ]));
-  const actualPickup = toDisplayDateTime(readJobField(job, [
-    "actual_pickup_at",
-    "picked_up_at",
-    "pickup_completed_at"
-  ]));
   const deliveryScheduled = toDisplayDateTime(readJobField(job, [
     "scheduled_delivery_at",
     "delivery_scheduled_at",
     "requested_delivery_at",
     "delivery_window_start"
-  ]));
-  const completedDelivery = toDisplayDateTime(readJobField(job, [
-    "completed_at",
-    "delivered_at",
-    "delivery_completed_at"
   ]));
 
   const customerRows = [
@@ -2320,24 +2350,24 @@ function renderBolDeliveryData(selectedDelivery) {
 
   const customerReference = readJobField(job, ["reference_number", "customer_reference_number"]);
   if (customerReference) {
-    customerRows.push(bolFieldRow("Customer Reference Number", customerReference));
+    customerRows.push(bolFieldRow("Reference Number", customerReference));
   }
 
   const pickupRows = [
-    bolFieldRow("Pickup Address", String(job.pickup_address || "-")),
-    bolFieldRow("Pickup Suite / Floor", String(job.pickup_suite_floor || "-")),
-    bolFieldRow("Pickup City", parseCity(job.pickup_address || "")),
-    bolFieldRow("Pickup ZIP", String(job.pickup_zip || "-"))
+    bolFieldRow("Pickup Address", job.pickup_address),
+    bolFieldRow("Suite / Floor", job.pickup_suite_floor),
+    bolFieldRow("City", parseCity(job.pickup_address || "")),
+    bolFieldRow("ZIP", job.pickup_zip)
   ];
 
   const pickupContactName = readJobField(job, ["pickup_contact_name"]);
   if (pickupContactName) {
-    pickupRows.push(bolFieldRow("Pickup Contact Name", pickupContactName));
+    pickupRows.push(bolFieldRow("Pickup Contact", pickupContactName));
   }
 
   const pickupContactPhone = readJobField(job, ["pickup_contact_phone"]);
   if (pickupContactPhone) {
-    pickupRows.push(bolFieldRow("Pickup Contact Phone", pickupContactPhone));
+    pickupRows.push(bolFieldRow("Pickup Phone", pickupContactPhone));
   }
 
   const pickupInstructions = readJobField(job, ["pickup_instructions"]);
@@ -2349,25 +2379,21 @@ function renderBolDeliveryData(selectedDelivery) {
     pickupRows.push(bolFieldRow("Scheduled Pickup Date / Time", pickupScheduled));
   }
 
-  if (actualPickup) {
-    pickupRows.push(bolFieldRow("Actual Pickup Time", actualPickup));
-  }
-
   const deliveryRows = [
-    bolFieldRow("Delivery Address", String(job.delivery_address || "-")),
-    bolFieldRow("Delivery Suite / Floor", String(job.delivery_suite_floor || "-")),
-    bolFieldRow("Delivery City", parseCity(job.delivery_address || "")),
-    bolFieldRow("Delivery ZIP", String(job.delivery_zip || "-"))
+    bolFieldRow("Delivery Address", job.delivery_address),
+    bolFieldRow("Suite / Floor", job.delivery_suite_floor),
+    bolFieldRow("City", parseCity(job.delivery_address || "")),
+    bolFieldRow("ZIP", job.delivery_zip)
   ];
 
   const recipientName = readJobField(job, ["delivery_recipient_name"]);
   if (recipientName) {
-    deliveryRows.push(bolFieldRow("Delivery Recipient Name", recipientName));
+    deliveryRows.push(bolFieldRow("Delivery Recipient", recipientName));
   }
 
   const deliveryContactPhone = readJobField(job, ["delivery_contact_phone"]);
   if (deliveryContactPhone) {
-    deliveryRows.push(bolFieldRow("Delivery Contact Phone", deliveryContactPhone));
+    deliveryRows.push(bolFieldRow("Delivery Phone", deliveryContactPhone));
   }
 
   const deliveryInstructions = readJobField(job, ["delivery_instructions"]);
@@ -2379,18 +2405,14 @@ function renderBolDeliveryData(selectedDelivery) {
     deliveryRows.push(bolFieldRow("Scheduled Delivery Date / Time", deliveryScheduled));
   }
 
-  if (completedDelivery) {
-    deliveryRows.push(bolFieldRow("Completed Delivery Time", completedDelivery));
-  }
-
   const podRecipientName = readJobField(job, ["pod_recipient_name"]);
   if (podRecipientName) {
     deliveryRows.push(bolFieldRow("POD Recipient Name", podRecipientName));
   }
 
   const packageRows = [
-    bolFieldRow("Package Type / Description", String(job.package_type || "-")),
-    bolFieldRow("Vehicle Type", String(job.vehicle_type || "-")),
+    bolFieldRow("Package Type / Description", job.package_type),
+    bolFieldRow("Vehicle Type", job.vehicle_type),
     bolFieldRow("Delivery Type", deliveryTypeLabel(job.delivery_type)),
     bolFieldRow("Service Level", serviceLevelLabel(job.service_level)),
     bolFieldRow("Delivery Speed", deliverySpeedLabel(job.delivery_speed))
@@ -2419,15 +2441,9 @@ function renderBolDeliveryData(selectedDelivery) {
     packageRows.push(bolFieldRow("Special Handling Instructions", specialHandling));
   }
 
-  const driverRows = [
-    bolFieldRow("Vehicle Type", String(job.vehicle_type || "-")),
-    bolFieldRow("Delivery Workflow Status", driverWorkflowLabel(job))
-  ];
-
   let returnSection = "";
   if (hasReturnRequired(job)) {
     const returnRows = [
-      bolFieldRow("Return Required", "Yes"),
       bolFieldRow("Return Timing", returnTimingLabel(job.return_timing)),
       bolFieldRow("Return Destination Type", returnLocationLabel(job.return_location_type))
     ];
@@ -2435,9 +2451,9 @@ function renderBolDeliveryData(selectedDelivery) {
     if (clean(job.return_location_type) === "same_as_pickup") {
       returnRows.push(bolFieldRow("Return Destination", "Original Pickup Location"));
     } else {
-      returnRows.push(bolFieldRow("Return Address", String(job.return_address || "-")));
-      returnRows.push(bolFieldRow("Return Suite / Floor", String(job.return_suite_floor || "-")));
-      returnRows.push(bolFieldRow("Return ZIP", String(job.return_zip || "-")));
+      returnRows.push(bolFieldRow("Return Address", job.return_address));
+      returnRows.push(bolFieldRow("Return Suite / Floor", job.return_suite_floor));
+      returnRows.push(bolFieldRow("Return ZIP", job.return_zip));
     }
 
     const returnInstructions = readJobField(job, ["return_instructions"]);
@@ -2448,42 +2464,37 @@ function renderBolDeliveryData(selectedDelivery) {
     returnSection = buildBolSection("Return Service", returnRows);
   }
 
-  const timelineRows = [];
-  const createdTime = toDisplayDateTime(job.created_at);
-  if (createdTime) {
-    timelineRows.push(bolFieldRow("Delivery Created", createdTime));
-  }
-  if (completedDelivery) {
-    timelineRows.push(bolFieldRow("Delivered", completedDelivery));
-  }
-
   const returnBadge = hasReturnRequired(job)
     ? '<span class="badge badge-return bol-return-badge">RETURN REQUIRED</span>'
     : "";
 
   elements.bolPreviewBody.innerHTML = `
-    <article class="bol-sheet" data-bol-id="${escapeHtml(String(job.id))}">
+    <article class="bol-sheet" id="bolPrintContainer" data-bol-id="${escapeHtml(String(job.id))}">
       <header class="bol-header">
         <div class="bol-title-wrap">
           <div class="bol-brand">MG EXPRESS</div>
           <h2 class="bol-title">BILL OF LADING</h2>
         </div>
         <div class="bol-head-grid">
-          ${bolFieldRow("Delivery / Job Number", String(job.job_number || "-"))}
+          ${bolFieldRow("Job / Delivery Number", String(job.job_number || "-"))}
           ${bolFieldRow("Created Date", formatDate(job.created_at))}
-          ${bolFieldRow("Current Delivery Status", statusLabel(job))}
           ${bolFieldRow("Job Category", jobCategoryLabel(job.job_category))}
         </div>
         ${returnBadge}
       </header>
 
-      ${buildBolSection("Customer Information", customerRows)}
-      ${buildBolSection("Pickup Information", pickupRows)}
-      ${buildBolSection("Delivery Information", deliveryRows)}
-      ${buildBolSection("Package and Service", packageRows)}
+      <div class="bol-layout bol-screen-grid bol-print-grid">
+        <div class="bol-column">
+          ${buildBolSection("Customer", customerRows, "bol-section-compact")}
+          ${buildBolSection("Pickup", pickupRows, "bol-section-compact")}
+        </div>
+        <div class="bol-column">
+          ${buildBolSection("Delivery", deliveryRows, "bol-section-compact")}
+          ${buildBolSection("Package and Service", packageRows, "bol-section-compact")}
+        </div>
+      </div>
+
       ${returnSection}
-      ${buildBolSection("Driver Information", driverRows)}
-      ${timelineRows.length ? buildBolSection("Delivery Timeline", timelineRows) : ""}
     </article>
   `;
 
@@ -2515,6 +2526,13 @@ function printBolModal(event) {
     showToast("Open a BOL before printing.", "info");
     return;
   }
+
+  if (!elements.bolPreviewBody || elements.bolPreviewBody.querySelectorAll("#bolPrintContainer").length !== 1) {
+    showToast("Unable to print BOL: printable layout is not ready.", "error");
+    return;
+  }
+
+  document.body.classList.add("bol-printing");
 
   window.print();
 }
