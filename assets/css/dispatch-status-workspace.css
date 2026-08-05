@@ -190,6 +190,7 @@ textarea {
 
 .rows {
   display: grid;
+  padding: 6px 0;
 }
 
 .row {
@@ -198,18 +199,24 @@ textarea {
   gap: 8px;
   align-items: center;
   width: 100%;
-  border: 0;
-  border-bottom: 1px solid var(--line);
+  border: 1px solid var(--line);
+  border-left: 6px solid #d7dde1;
+  border-radius: 14px;
   background: #fff;
   text-align: left;
   padding: 12px;
   cursor: pointer;
   color: inherit;
+  margin: 8px 10px;
 }
 
-.row:last-child {
-  border-bottom: 0;
-}
+.row:last-child { margin-bottom: 10px; }
+
+.category-medical { border-left-color: #c0392b; }
+.category-pallet { border-left-color: #8b5a2b; }
+.category-legal { border-left-color: #c49b00; }
+.category-general { border-left-color: #d7dde1; }
+.category-special { border-left-color: #d97706; }
 
 .row-main {
   display: grid;
@@ -264,6 +271,22 @@ textarea {
 .badge-ready { background: var(--light-green); color: var(--green); }
 .badge-assigned { background: var(--blue-bg); color: var(--blue); }
 .badge-cancel { background: var(--danger-bg); color: var(--danger); }
+.badge-category { background: #f4f7f9; color: #264653; }
+.badge-return { background: #fff2e8; color: #b45309; }
+
+.return-details[hidden] {
+  display: none;
+}
+
+.return-readback {
+  border: 1px dashed var(--line);
+  border-radius: 12px;
+  padding: 9px 10px;
+  background: #f8fcfa;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.35;
+}
 
 .assigned-driver-group {
   border-bottom: 1px solid var(--line);
@@ -353,10 +376,17 @@ textarea {
   grid-template-columns: minmax(0, 1fr) auto;
   gap: 8px;
   padding: 11px 12px;
+  border-left: 6px solid #d7dde1;
   border-bottom: 1px solid #f3e2cd;
   background: #fff;
   cursor: pointer;
 }
+
+.rejected-row.category-medical { border-left-color: #c0392b; }
+.rejected-row.category-pallet { border-left-color: #8b5a2b; }
+.rejected-row.category-legal { border-left-color: #c49b00; }
+.rejected-row.category-general { border-left-color: #d7dde1; }
+.rejected-row.category-special { border-left-color: #d97706; }
 
 .rejected-row:last-child {
   border-bottom: 0;

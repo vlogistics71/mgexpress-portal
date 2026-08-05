@@ -570,16 +570,24 @@
       gap: 8px;
       align-items: center;
       width: 100%;
-      border: 0;
-      border-bottom: 1px solid var(--line);
+      border: 1px solid var(--line);
+      border-left: 6px solid #e7e7e7;
+      border-radius: 14px;
       background: #fff;
       text-align: left;
       padding: 12px;
       cursor: pointer;
       color: inherit;
+      margin: 8px 10px;
     }
 
-    .row:last-child { border-bottom: 0; }
+    .row:last-child { margin-bottom: 10px; }
+
+    .category-medical { border-left-color: #c0392b; }
+    .category-pallet { border-left-color: #8b5a2b; }
+    .category-legal { border-left-color: #c49b00; }
+    .category-general { border-left-color: #d7dde1; }
+    .category-special { border-left-color: #d97706; }
 
     .row-main {
       display: grid;
@@ -644,6 +652,22 @@
     .badge-ready { background: var(--light-green); color: var(--green); }
     .badge-assigned { background: var(--blue-bg); color: var(--blue); }
     .badge-cancel { background: var(--danger-bg); color: var(--danger); }
+    .badge-category { background: #f4f7f9; color: #264653; }
+    .badge-return { background: #fff2e8; color: #b45309; }
+
+    .return-details[hidden] {
+      display: none;
+    }
+
+    .return-readback {
+      border: 1px dashed var(--line);
+      border-radius: 12px;
+      padding: 9px 10px;
+      background: #f8fcfa;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.35;
+    }
 
     .row-menu {
       position: relative;
@@ -1458,7 +1482,7 @@
                 </select>
               </div>
 
-              <div class="field"><label>Service Level</label>
+              <div class="field"><label>Delivery Speed</label>
                 <select name="delivery_speed">
                   <option value="">Choose speed</option>
                   <option value="2_hr">2 Hour</option>
@@ -1470,9 +1494,70 @@
                 </select>
               </div>
 
+              <div class="field"><label>Job Category</label>
+                <select name="job_category">
+                  <option value="general">General</option>
+                  <option value="medical">Medical</option>
+                  <option value="pallet">Pallet</option>
+                  <option value="legal">Legal</option>
+                  <option value="special">Special</option>
+                </select>
+              </div>
+
+              <div class="field"><label>Delivery Type</label>
+                <select name="delivery_type">
+                  <option value="">Choose delivery type</option>
+                  <option value="business_to_business">Business to Business</option>
+                  <option value="business_to_residential">Business to Residential</option>
+                  <option value="residential_to_business">Residential to Business</option>
+                  <option value="residential_to_residential">Residential to Residential</option>
+                </select>
+              </div>
+
+              <div class="field"><label>Service Level</label>
+                <select name="service_level">
+                  <option value="">Choose service level</option>
+                  <option value="standard">Standard</option>
+                  <option value="priority">Priority</option>
+                  <option value="stat">STAT</option>
+                  <option value="scheduled">Scheduled</option>
+                  <option value="on_demand">On Demand</option>
+                </select>
+              </div>
+
+              <div class="field"><label>Return Service</label>
+                <select name="return_required" id="returnRequiredSelect">
+                  <option value="false">No Return</option>
+                  <option value="true">Return Required</option>
+                </select>
+              </div>
+
               <div class="field full"><label>Package Description</label><input name="package_type"></div>
               <div class="field"><label>Weight (optional)</label><input name="package_weight"></div>
               <div class="field"><label>Reference Number (optional)</label><input name="reference_number"></div>
+            </div>
+
+            <div class="form-grid return-details" id="returnDetailsSection" hidden>
+              <div class="field"><label>Return Location</label>
+                <select name="return_location_type" id="returnLocationTypeSelect">
+                  <option value="same_as_pickup">Same as Original Pickup</option>
+                  <option value="different_location">Different Return Location</option>
+                </select>
+              </div>
+
+              <div class="field"><label>Return Timing</label>
+                <select name="return_timing">
+                  <option value="immediate">Immediately After Delivery</option>
+                  <option value="later_today">Later Today</option>
+                  <option value="another_day">Another Day</option>
+                </select>
+              </div>
+
+              <div class="field full return-readback" id="returnPickupReadback">Return destination will use the original pickup address.</div>
+
+              <div class="field full return-different-field" data-return-different><label>Return Address</label><input name="return_address"></div>
+              <div class="field return-different-field" data-return-different><label>Return Suite / Floor</label><input name="return_suite_floor"></div>
+              <div class="field return-different-field" data-return-different><label>Return ZIP</label><input name="return_zip"></div>
             </div>
           </section>
 
@@ -1941,6 +2026,110 @@
       };
 
       return map[value] || String(value || "Not set");
+    }
+
+    function normalizeJobCategory(value) {
+      const cleanValue = clean(value);
+      return ["medical", "pallet", "legal", "general", "special"].includes(cleanValue)
+        ? cleanValue
+        : "general";
+    }
+
+    function jobCategoryLabel(value) {
+      const map = {
+        medical: "Medical",
+        pallet: "Pallet",
+        legal: "Legal",
+        general: "General",
+        special: "Special"
+      };
+
+      return map[normalizeJobCategory(value)] || "General";
+    }
+
+    function jobCategoryClass(value) {
+      return "category-" + normalizeJobCategory(value);
+    }
+
+    function deliveryTypeLabel(value) {
+      const map = {
+        business_to_business: "Business to Business",
+        business_to_residential: "Business to Residential",
+        residential_to_business: "Residential to Business",
+        residential_to_residential: "Residential to Residential"
+      };
+
+      return map[clean(value)] || "-";
+    }
+
+    function serviceLevelLabel(value) {
+      const map = {
+        standard: "Standard",
+        priority: "Priority",
+        stat: "STAT",
+        scheduled: "Scheduled",
+        on_demand: "On Demand"
+      };
+
+      return map[clean(value)] || "-";
+    }
+
+    function returnRequiredFlag(value) {
+      if (value === true) {
+        return true;
+      }
+
+      const token = clean(value);
+      return token === "true" || token === "1" || token === "yes";
+    }
+
+    function returnLocationLabel(value) {
+      const map = {
+        same_as_pickup: "Same as Original Pickup",
+        different_location: "Different Return Location"
+      };
+
+      return map[clean(value)] || "Same as Original Pickup";
+    }
+
+    function returnTimingLabel(value) {
+      const map = {
+        immediate: "Immediately After Delivery",
+        later_today: "Later Today",
+        another_day: "Another Day"
+      };
+
+      return map[clean(value)] || "Immediately After Delivery";
+    }
+
+    function hasReturnRequired(job) {
+      return returnRequiredFlag(job?.return_required);
+    }
+
+    function returnDestinationText(job) {
+      if (!hasReturnRequired(job)) {
+        return "No Return";
+      }
+
+      if (clean(job.return_location_type) !== "different_location") {
+        return "Same as Original Pickup: " + String(job.pickup_address || "-");
+      }
+
+      const parts = [
+        String(job.return_address || "").trim(),
+        String(job.return_suite_floor || "").trim(),
+        String(job.return_zip || "").trim()
+      ].filter(Boolean);
+
+      return parts.length ? parts.join(" • ") : "Different Return Location";
+    }
+
+    function categoryBadgesHtml(job) {
+      const categoryBadge = `<span class="badge badge-category">${escapeHtml(jobCategoryLabel(job.job_category))}</span>`;
+      const returnBadge = hasReturnRequired(job)
+        ? '<span class="badge badge-return">RETURN REQUIRED</span>'
+        : "";
+      return categoryBadge + returnBadge;
     }
 
     function statusLabel(jobOrStatus) {
@@ -2455,6 +2644,60 @@
       renderCustomerLookupResults(found, found.length === 0);
     }
 
+    function syncReturnDetailsVisibility() {
+      const form = elements.jobForm;
+      if (!form) {
+        return;
+      }
+
+      const returnRequired = returnRequiredFlag(form.return_required?.value);
+      const returnDetails = document.getElementById("returnDetailsSection");
+      const returnPickupReadback = document.getElementById("returnPickupReadback");
+      const differentFields = form.querySelectorAll("[data-return-different]");
+      const locationType = clean(form.return_location_type?.value || "same_as_pickup");
+      const differentLocation = locationType === "different_location";
+
+      if (returnDetails) {
+        returnDetails.hidden = !returnRequired;
+      }
+
+      if (returnPickupReadback) {
+        returnPickupReadback.hidden = !returnRequired || differentLocation;
+      }
+
+      differentFields.forEach(field => {
+        field.hidden = !returnRequired || !differentLocation;
+      });
+
+      if (!returnRequired) {
+        if (form.return_location_type) {
+          form.return_location_type.value = "same_as_pickup";
+        }
+        if (form.return_address) {
+          form.return_address.value = "";
+        }
+        if (form.return_suite_floor) {
+          form.return_suite_floor.value = "";
+        }
+        if (form.return_zip) {
+          form.return_zip.value = "";
+        }
+        if (form.return_timing) {
+          form.return_timing.value = "immediate";
+        }
+      } else if (!differentLocation) {
+        if (form.return_address) {
+          form.return_address.value = "";
+        }
+        if (form.return_suite_floor) {
+          form.return_suite_floor.value = "";
+        }
+        if (form.return_zip) {
+          form.return_zip.value = "";
+        }
+      }
+    }
+
     function renderNewDeliveryReview() {
       if (!elements.newDeliveryReviewList) {
         return;
@@ -2465,11 +2708,20 @@
         ["Customer", form.customer_name.value || "-"],
         ["Pickup", form.pickup_address.value || "-"],
         ["Delivery", form.delivery_address.value || "-"],
+        ["Job Category", jobCategoryLabel(form.job_category?.value)],
+        ["Delivery Type", deliveryTypeLabel(form.delivery_type?.value)],
+        ["Service Level", serviceLevelLabel(form.service_level?.value)],
         ["Vehicle", form.vehicle_type.value || "-"],
         ["Service", deliverySpeedLabel(form.delivery_speed.value || "")],
+        ["Return Service", returnRequiredFlag(form.return_required?.value) ? "Return Required" : "No Return"],
         ["Customer Price", money(form.approved_price.value)],
         ["Status After Save", "WAITING PAYMENT"]
       ];
+
+      if (returnRequiredFlag(form.return_required?.value)) {
+        rows.push(["Return Location", returnLocationLabel(form.return_location_type?.value)]);
+        rows.push(["Return Timing", returnTimingLabel(form.return_timing?.value)]);
+      }
 
       elements.newDeliveryReviewList.innerHTML = rows.map(item => {
         return `<div><strong>${escapeHtml(item[0])}:</strong> ${escapeHtml(String(item[1]))}</div>`;
@@ -2863,11 +3115,12 @@
       }
 
       target.innerHTML = rows.map(row => `
-        <div class="row" data-open-job="${escapeHtml(String(row.id))}" data-readonly="${getWorkflowStage(row) === "closed" ? "true" : "false"}" tabindex="0" role="button">
+        <div class="row ${escapeHtml(jobCategoryClass(row.job_category))}" data-open-job="${escapeHtml(String(row.id))}" data-readonly="${getWorkflowStage(row) === "closed" ? "true" : "false"}" tabindex="0" role="button">
           <span class="row-main">
             <span class="row-topline">
               <span class="row-id">${escapeHtml(row.job_number || "Job")}</span>
               <span class="badge ${escapeHtml(badgeClass(row))}">${escapeHtml(statusLabel(row))}</span>
+              ${categoryBadgesHtml(row)}
             </span>
             <span class="row-customer">${escapeHtml(row.customer_name || "Customer")}</span>
             <span class="row-meta">Pickup: ${escapeHtml(row.pickup_address || "-")}</span>
@@ -2911,11 +3164,12 @@
             </summary>
             <div class="rows">
               ${deliveries.map(row => `
-                <div class="row" data-open-job="${escapeHtml(String(row.id))}" tabindex="0" role="button">
+                <div class="row ${escapeHtml(jobCategoryClass(row.job_category))}" data-open-job="${escapeHtml(String(row.id))}" tabindex="0" role="button">
                   <span class="row-main">
                     <span class="row-topline">
                       <span class="row-id">${escapeHtml(row.job_number || "Delivery")}</span>
                       <span class="badge ${escapeHtml(badgeClass(row))}">${escapeHtml(statusLabel(row))}</span>
+                      ${categoryBadgesHtml(row)}
                     </span>
                     <span class="row-customer">${escapeHtml(row.customer_name || "Customer")}</span>
                     <span class="row-meta">${escapeHtml(parseCity(row.pickup_address))} -> ${escapeHtml(parseCity(row.delivery_address))}</span>
@@ -2940,11 +3194,12 @@
       }
 
       elements.closedRows.innerHTML = rows.map(row => `
-        <div class="row" data-open-job="${escapeHtml(String(row.id))}" data-readonly="true" tabindex="0" role="button">
+        <div class="row ${escapeHtml(jobCategoryClass(row.job_category))}" data-open-job="${escapeHtml(String(row.id))}" data-readonly="true" tabindex="0" role="button">
           <span class="row-main">
             <span class="row-topline">
               <span class="row-id">${escapeHtml(row.job_number || "Delivery")}</span>
               <span class="badge ${escapeHtml(badgeClass(row))}">${escapeHtml(statusLabel(row))}</span>
+              ${categoryBadgesHtml(row)}
             </span>
             <span class="row-customer">${escapeHtml(row.customer_name || "Customer")}</span>
             <span class="row-meta">${escapeHtml(parseCity(row.pickup_address))} -> ${escapeHtml(parseCity(row.delivery_address))}</span>
@@ -3043,6 +3298,15 @@
         delivery_recipient_name: deliveryContactName || String(data.get("delivery_recipient_name") || "").trim() || null,
         vehicle_type: String(data.get("vehicle_type") || "").trim(),
         delivery_speed: String(data.get("delivery_speed") || "").trim(),
+        job_category: normalizeJobCategory(data.get("job_category")),
+        delivery_type: String(data.get("delivery_type") || "").trim() || null,
+        service_level: String(data.get("service_level") || "").trim() || null,
+        return_required: returnRequiredFlag(data.get("return_required")),
+        return_location_type: String(data.get("return_location_type") || "same_as_pickup").trim() || "same_as_pickup",
+        return_address: String(data.get("return_address") || "").trim() || null,
+        return_suite_floor: String(data.get("return_suite_floor") || "").trim() || null,
+        return_zip: String(data.get("return_zip") || "").trim() || null,
+        return_timing: String(data.get("return_timing") || "immediate").trim() || "immediate",
         package_type: String(data.get("package_type") || "").trim(),
         delivery_method: String(data.get("delivery_method") || "").trim(),
         special_instructions: [internalNotes].concat(instructions).filter(Boolean).join("\n") || null,
@@ -3052,6 +3316,19 @@
         invoice_delivery_method: String(data.get("invoice_delivery_method") || "none").trim(),
         billing_notes: billingMeta.join("\n") || null
       };
+
+      if (!payload.return_required) {
+        payload.return_location_type = null;
+        payload.return_address = null;
+        payload.return_suite_floor = null;
+        payload.return_zip = null;
+        payload.return_timing = null;
+      } else if (clean(payload.return_location_type) !== "different_location") {
+        payload.return_address = null;
+        payload.return_suite_floor = null;
+        payload.return_zip = null;
+        payload.return_location_type = "same_as_pickup";
+      }
 
       payload._estimated_miles_value = estimatedMilesValue;
 
@@ -3121,6 +3398,13 @@
       elements.jobCustomerAccountId.value = "";
       elements.customerLookupInput.value = "";
       elements.customerLookupResults.classList.remove("open");
+      elements.jobForm.job_category.value = "general";
+      elements.jobForm.delivery_type.value = "";
+      elements.jobForm.service_level.value = "";
+      elements.jobForm.return_required.value = "false";
+      elements.jobForm.return_location_type.value = "same_as_pickup";
+      elements.jobForm.return_timing.value = "immediate";
+      syncReturnDetailsVisibility();
       renderNewDeliveryReview();
       openModal("jobModal");
     }
@@ -3261,6 +3545,15 @@
       form.delivery_instructions.value = "";
       form.vehicle_type.value = quote.vehicle_type || "";
       form.delivery_speed.value = quote.delivery_speed || "";
+      form.job_category.value = normalizeJobCategory(quote.job_category);
+      form.delivery_type.value = quote.delivery_type || "";
+      form.service_level.value = quote.service_level || "";
+      form.return_required.value = returnRequiredFlag(quote.return_required) ? "true" : "false";
+      form.return_location_type.value = quote.return_location_type || "same_as_pickup";
+      form.return_address.value = quote.return_address || "";
+      form.return_suite_floor.value = quote.return_suite_floor || "";
+      form.return_zip.value = quote.return_zip || "";
+      form.return_timing.value = quote.return_timing || "immediate";
       form.package_type.value = quote.package_type || "";
       form.package_weight.value = "";
       form.reference_number.value = "";
@@ -3270,6 +3563,7 @@
       elements.jobCustomerAccountId.value = String(quote.customer_account_id || "");
       elements.customerLookupInput.value = quote.customer_name || "";
       elements.saveJobBtn.textContent = "Create Delivery";
+      syncReturnDetailsVisibility();
       renderNewDeliveryReview();
       closeModal("quoteDetailsModal");
     }
@@ -3332,6 +3626,8 @@
           <div class="card-body">
             <div class="kv"><strong>Job #</strong><span>${escapeHtml(job.job_number || "-")}</span></div>
             <div class="kv"><strong>Status</strong><span class="${escapeHtml(badgeClass(job))}">${escapeHtml(statusLabel(job))}</span></div>
+            <div class="kv"><strong>Job Category</strong><span>${escapeHtml(jobCategoryLabel(job.job_category))}</span></div>
+            <div class="kv"><strong>Return Service</strong><span>${hasReturnRequired(job) ? "RETURN REQUIRED" : "No Return"}</span></div>
             <div class="kv"><strong>Customer</strong><span>${escapeHtml(job.customer_name || "-")}</span></div>
             <div class="kv"><strong>Pickup</strong><span>${escapeHtml(job.pickup_address || "-")}</span></div>
             <div class="kv"><strong>Delivery</strong><span>${escapeHtml(job.delivery_address || "-")}</span></div>
@@ -3375,10 +3671,22 @@
 
         <details class="card"><summary>Package</summary>
           <div class="card-body">
+            <div class="kv"><strong>Category</strong><span>${escapeHtml(jobCategoryLabel(job.job_category))}</span></div>
+            <div class="kv"><strong>Delivery Type</strong><span>${escapeHtml(deliveryTypeLabel(job.delivery_type))}</span></div>
+            <div class="kv"><strong>Service Level</strong><span>${escapeHtml(serviceLevelLabel(job.service_level))}</span></div>
             <div class="kv"><strong>Vehicle</strong><span>${escapeHtml(job.vehicle_type || "-")}</span></div>
-            <div class="kv"><strong>Service</strong><span>${escapeHtml(deliverySpeedLabel(job.delivery_speed))}</span></div>
+            <div class="kv"><strong>Delivery Speed</strong><span>${escapeHtml(deliverySpeedLabel(job.delivery_speed))}</span></div>
             <div class="kv"><strong>Description</strong><span>${escapeHtml(job.package_type || "-")}</span></div>
             <div class="kv"><strong>Method</strong><span>${escapeHtml(job.delivery_method || "-")}</span></div>
+          </div>
+        </details>
+
+        <details class="card"><summary>Return Service</summary>
+          <div class="card-body">
+            <div class="kv"><strong>Return Required</strong><span>${hasReturnRequired(job) ? "Yes" : "No"}</span></div>
+            <div class="kv"><strong>Return Location</strong><span>${hasReturnRequired(job) ? escapeHtml(returnLocationLabel(job.return_location_type)) : "-"}</span></div>
+            <div class="kv"><strong>Return Destination</strong><span>${escapeHtml(returnDestinationText(job))}</span></div>
+            <div class="kv"><strong>Return Timing</strong><span>${hasReturnRequired(job) ? escapeHtml(returnTimingLabel(job.return_timing)) : "-"}</span></div>
           </div>
         </details>
 
@@ -3406,6 +3714,8 @@
         <details class="card"><summary>BOL</summary>
           <div class="card-body">
             <div class="kv"><strong>BOL Status</strong><span>${escapeHtml(String(job.bol_status || "Unknown"))}</span></div>
+            <div class="kv"><strong>Category</strong><span>${escapeHtml(jobCategoryLabel(job.job_category))}</span></div>
+            <div class="kv"><strong>Return</strong><span>${hasReturnRequired(job) ? "RETURN REQUIRED" : "No Return"}</span></div>
             <div class="kv"><strong>BOL Created</strong><span>${escapeHtml(formatDate(job.bol_created_at))}</span></div>
             <div class="kv"><strong>BOL Sent</strong><span>${escapeHtml(formatDate(job.bol_sent_at))}</span></div>
             <div class="form-actions">
@@ -3472,6 +3782,15 @@
       form.delivery_instructions.value = "";
       form.vehicle_type.value = job.vehicle_type || "";
       form.delivery_speed.value = job.delivery_speed || "";
+      form.job_category.value = normalizeJobCategory(job.job_category);
+      form.delivery_type.value = job.delivery_type || "";
+      form.service_level.value = job.service_level || "";
+      form.return_required.value = returnRequiredFlag(job.return_required) ? "true" : "false";
+      form.return_location_type.value = job.return_location_type || "same_as_pickup";
+      form.return_address.value = job.return_address || "";
+      form.return_suite_floor.value = job.return_suite_floor || "";
+      form.return_zip.value = job.return_zip || "";
+      form.return_timing.value = job.return_timing || "immediate";
       form.package_type.value = job.package_type || "";
       form.package_weight.value = "";
       form.reference_number.value = "";
@@ -3481,6 +3800,7 @@
       elements.jobCustomerAccountId.value = String(job.customer_account_id || "");
       elements.customerLookupInput.value = job.customer_name || "";
       elements.saveJobBtn.textContent = "Save Delivery";
+      syncReturnDetailsVisibility();
       renderNewDeliveryReview();
     }
 
@@ -4250,7 +4570,22 @@
       });
 
       elements.customerLookupInput.addEventListener("input", handleCustomerLookupInput);
-      elements.jobForm.addEventListener("input", renderNewDeliveryReview);
+      elements.jobForm.addEventListener("input", () => {
+        syncReturnDetailsVisibility();
+        renderNewDeliveryReview();
+      });
+      if (elements.jobForm.return_required) {
+        elements.jobForm.return_required.addEventListener("change", () => {
+          syncReturnDetailsVisibility();
+          renderNewDeliveryReview();
+        });
+      }
+      if (elements.jobForm.return_location_type) {
+        elements.jobForm.return_location_type.addEventListener("change", () => {
+          syncReturnDetailsVisibility();
+          renderNewDeliveryReview();
+        });
+      }
       elements.assignDriverSearch.addEventListener("input", () => {
         const job = getRowById(elements.assignJobId.value);
         if (job) {
@@ -4309,6 +4644,8 @@
         }
 
         bindEvents();
+        syncReturnDetailsVisibility();
+        renderNewDeliveryReview();
         await loadDashboard();
       } catch (error) {
         showToast(error.message || "Unable to load dashboard", "error");
