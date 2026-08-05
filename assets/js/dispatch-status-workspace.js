@@ -257,11 +257,27 @@ function resolveBolLink(job) {
   ].find(Boolean) || "";
 }
 
+function isDispatchWorkspaceUrl(value) {
+  try {
+    const url = new URL(String(value || ""), window.location.origin);
+    const path = String(url.pathname || "").toLowerCase();
+    return [
+      "/dashboard.html",
+      "/pending-approval.html",
+      "/ready-to-dispatch.html",
+      "/assigned.html",
+      "/closed-today.html"
+    ].includes(path);
+  } catch (_error) {
+    return false;
+  }
+}
+
 const DISPATCH_BOL_PAGE = "/jobs-backup.html";
 
 function getBolActionForJob(job) {
   const safeSavedUrl = validHttpUrl(resolveBolLink(job));
-  if (safeSavedUrl) {
+  if (safeSavedUrl && !isDispatchWorkspaceUrl(safeSavedUrl)) {
     return {
       label: "View BOL",
       mode: "view",
@@ -2195,29 +2211,35 @@ async function resendToDriver(jobId) {
   }
 }
 
-function openBolForJob(jobId) {
-  const job = getRowById(jobId);
-  if (!job) {
+function openBolForJob(selectedDelivery) {
+  if (!selectedDelivery || !selectedDelivery.id) {
+    showToast("Unable to open BOL: selected delivery not found", "error");
     return;
   }
 
   try {
-    const bolAction = getBolActionForJob(job);
+    const bolAction = getBolActionForJob(selectedDelivery);
     if (bolAction.disabled) {
       throw new Error(bolAction.reason || "BOL setup required");
     }
 
-    const safe = validHttpUrl(bolAction.url);
+    const selectedId = encodeURIComponent(String(selectedDelivery.id));
+    const rawUrl = bolAction.mode === "create"
+      ? (DISPATCH_BOL_PAGE + "?id=" + selectedId)
+      : bolAction.url;
+
+    const safe = validHttpUrl(rawUrl);
     if (!safe) {
       throw new Error("BOL URL is invalid or missing");
     }
 
-    const newTab = window.open(safe, "_blank", "noopener");
+    const newTab = window.open(safe, "_blank", "noopener,noreferrer");
     if (!newTab) {
       throw new Error("Pop-up blocked while opening BOL");
     }
   } catch (error) {
-    showToast(error.message || "Unable to open BOL", "error");
+    const message = String(error?.message || "Unknown error");
+    showToast("Unable to open BOL: " + message, "error");
   } finally {
     // no-op finally to keep action lifecycle explicit
   }
@@ -2511,6 +2533,27 @@ function handleDocumentClick(event) {
     return;
   }
 
+  const viewBol = target.closest("[data-view-bol]");
+  if (viewBol) {
+    event.preventDefault();
+    event.stopPropagation();
+    if (typeof event.stopImmediatePropagation === "function") {
+      event.stopImmediatePropagation();
+    }
+
+    const selectedDelivery = state.selectedJob && state.selectedJob.id
+      ? state.selectedJob
+      : getRowById(viewBol.getAttribute("data-view-bol"));
+
+    if (!selectedDelivery || !selectedDelivery.id) {
+      showToast("Unable to open BOL: selected delivery not found", "error");
+      return;
+    }
+
+    openBolForJob(selectedDelivery);
+    return;
+  }
+
   const openInline = target.closest("[data-open-job-inline]");
   if (openInline) {
     openJobDetails(openInline.getAttribute("data-open-job-inline"), workspaceMode === "closed_today");
@@ -2591,12 +2634,6 @@ function handleDocumentClick(event) {
   const copyPayment = target.closest("[data-copy-payment-link]");
   if (copyPayment) {
     copyPaymentLink(copyPayment.getAttribute("data-copy-payment-link"));
-    return;
-  }
-
-  const viewBol = target.closest("[data-view-bol]");
-  if (viewBol) {
-    openBolForJob(viewBol.getAttribute("data-view-bol"));
     return;
   }
 
