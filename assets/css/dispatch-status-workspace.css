@@ -1286,7 +1286,7 @@ details.card > summary::-webkit-details-marker {
   body {
     background: #fff !important;
     color: #000 !important;
-    width: 100% !important;
+    width: 8.5in !important;
     height: auto !important;
     margin: 0 !important;
     padding: 0 !important;
@@ -1300,9 +1300,12 @@ details.card > summary::-webkit-details-marker {
   }
 
   body.bol-printing .bol-modal-backdrop.open,
-  body.bol-printing .bol-modal-backdrop.open *,
-  body.invoice-printing .invoice-modal-backdrop.open,
-  body.invoice-printing .invoice-modal-backdrop.open * {
+  body.bol-printing .bol-modal-backdrop.open * {
+    visibility: visible !important;
+  }
+
+  body.invoice-printing #invoicePrintArea,
+  body.invoice-printing #invoicePrintArea * {
     visibility: visible !important;
   }
 
@@ -1324,6 +1327,10 @@ details.card > summary::-webkit-details-marker {
     background: #fff !important;
     width: 100% !important;
     height: auto !important;
+    max-height: none !important;
+    min-height: 0 !important;
+    overflow: visible !important;
+    transform: none !important;
   }
 
   .bol-modal-panel {
@@ -1350,6 +1357,9 @@ details.card > summary::-webkit-details-marker {
     box-shadow: none !important;
     transform: none !important;
     overflow: visible !important;
+    position: static !important;
+    margin: 0 !important;
+    padding: 0 !important;
   }
 
   .bol-modal-body {
@@ -1360,6 +1370,9 @@ details.card > summary::-webkit-details-marker {
   .invoice-modal-body {
     padding: 0 !important;
     overflow: visible !important;
+    position: static !important;
+    max-height: none !important;
+    min-height: 0 !important;
   }
 
   .modal-head,
@@ -1377,6 +1390,28 @@ details.card > summary::-webkit-details-marker {
   #rejectedReturnConfirmModal,
   .toast-wrap {
     display: none !important;
+  }
+
+  .invoice-modal-backdrop,
+  .invoice-modal-panel,
+  .invoice-modal-body {
+    box-shadow: none !important;
+    border-radius: 0 !important;
+  }
+
+  #invoicePrintArea {
+    position: static !important;
+    width: 100% !important;
+    height: auto !important;
+    max-height: none !important;
+    overflow: visible !important;
+    transform: none !important;
+    box-shadow: none !important;
+    border-radius: 0 !important;
+    background: #fff !important;
+    color: #000 !important;
+    margin: 0 !important;
+    padding: 0 !important;
   }
 
   .bol-sheet {
@@ -1406,7 +1441,7 @@ details.card > summary::-webkit-details-marker {
   }
 
   .invoice-title {
-    font-size: 16pt !important;
+    font-size: 14pt !important;
     line-height: 1.05 !important;
     margin: 0 !important;
   }
@@ -1416,7 +1451,7 @@ details.card > summary::-webkit-details-marker {
   }
 
   .invoice-brand {
-    font-size: 10pt !important;
+    font-size: 16pt !important;
   }
 
   .bol-section h4 {
@@ -1465,8 +1500,8 @@ details.card > summary::-webkit-details-marker {
   }
 
   .invoice-section {
-    padding: 7pt !important;
-    gap: 6pt !important;
+    padding: 6pt !important;
+    gap: 5pt !important;
   }
 
   .bol-grid,
@@ -1478,7 +1513,7 @@ details.card > summary::-webkit-details-marker {
   .invoice-grid,
   .invoice-column,
   .invoice-layout {
-    gap: 6pt !important;
+    gap: 5pt !important;
   }
 
   .bol-print-grid {
@@ -1490,7 +1525,7 @@ details.card > summary::-webkit-details-marker {
   .invoice-print-grid {
     display: grid !important;
     grid-template-columns: 1fr 1fr !important;
-    gap: 7pt !important;
+    gap: 6pt !important;
   }
 
   .bol-kv {
@@ -1500,7 +1535,9 @@ details.card > summary::-webkit-details-marker {
 
   .invoice-kv {
     grid-template-columns: 92pt minmax(0, 1fr) !important;
-    gap: 5pt !important;
+    gap: 3pt !important;
+    word-break: break-word !important;
+    overflow-wrap: anywhere !important;
   }
 
   .bol-header,

@@ -2679,24 +2679,20 @@ function ensureInvoiceModalElements() {
   if (elements.invoicePreviewModal && elements.invoicePreviewModal.dataset.printBound !== "true") {
     const cleanup = () => {
       document.body.classList.remove("invoice-printing");
-      const rule = document.getElementById("invoicePrintPageRule");
-      if (rule) {
-        rule.remove();
-      }
     };
     window.addEventListener("afterprint", cleanup);
     elements.invoicePreviewModal.dataset.printBound = "true";
   }
 }
 
-function invoiceFieldRow(label, value) {
+function invoiceFieldRow(label, value, rowClass = "") {
   const cleanValue = toCleanDisplayValue(value);
-  if (!cleanValue) {
+  if (!cleanValue || cleanValue === "-") {
     return "";
   }
 
   return `
-    <div class="invoice-kv">
+    <div class="invoice-kv ${escapeHtml(rowClass)}">
       <strong>${escapeHtml(label)}</strong>
       <span>${escapeHtml(cleanValue)}</span>
     </div>
@@ -2779,36 +2775,38 @@ function renderInvoiceData(context) {
     invoiceFieldRow("Customer Price", amount === null ? "" : money(amount)),
     invoiceFieldRow("Taxes", taxAmount === null ? "" : money(taxAmount)),
     invoiceFieldRow("Additional Fees", additionalFees === null ? "" : money(additionalFees)),
-    invoiceFieldRow("Total Due", totalDue === null ? "" : money(totalDue)),
+    invoiceFieldRow("Total Due", totalDue === null ? "" : money(totalDue), "invoice-total"),
     invoiceFieldRow("Payment Status", normalizePaymentStatusLabel(firstPresentValue([invoice?.payment_status, job.payment_status, "unpaid"]))),
     invoiceFieldRow("Payment Link", paymentLink)
   ];
 
   elements.invoicePreviewBody.innerHTML = `
-    <article class="invoice-sheet" id="invoicePrintContainer" data-invoice-job-id="${escapeHtml(String(job.id))}">
-      <header class="invoice-header">
-        <div>
-          <div class="invoice-brand">MG EXPRESS</div>
-          <h2 class="invoice-title">INVOICE</h2>
-        </div>
-        <div class="invoice-head-grid">
-          ${invoiceFieldRow("Invoice Number", firstPresentValue([invoice?.invoice_number]))}
-          ${invoiceFieldRow("Delivery / Job Number", firstPresentValue([job.job_number]))}
-          ${invoiceFieldRow("Invoice Date", formatDate(firstPresentValue([invoice?.created_at, job.created_at])))}
-          ${invoiceFieldRow("Invoice URL", invoiceUrl)}
-        </div>
-      </header>
+    <section class="invoice-print-area" id="invoicePrintArea">
+      <article class="invoice-sheet" id="invoicePrintContainer" data-invoice-job-id="${escapeHtml(String(job.id))}">
+        <header class="invoice-header">
+          <div>
+            <div class="invoice-brand">MG EXPRESS</div>
+            <h2 class="invoice-title">INVOICE</h2>
+          </div>
+          <div class="invoice-head-grid">
+            ${invoiceFieldRow("Invoice Number", firstPresentValue([invoice?.invoice_number]))}
+            ${invoiceFieldRow("Delivery / Job Number", firstPresentValue([job.job_number]))}
+            ${invoiceFieldRow("Invoice Date", formatDate(firstPresentValue([invoice?.created_at, job.created_at])))}
+            ${invoiceFieldRow("Invoice URL", invoiceUrl)}
+          </div>
+        </header>
 
-      <div class="invoice-layout invoice-screen-grid invoice-print-grid">
-        <div class="invoice-column">
-          ${buildInvoiceSection("Customer", customerRows)}
-          ${buildInvoiceSection("Billing", billingRows)}
+        <div class="invoice-layout invoice-screen-grid invoice-print-grid">
+          <div class="invoice-column">
+            ${buildInvoiceSection("Customer", customerRows)}
+            ${buildInvoiceSection("Billing", billingRows)}
+          </div>
+          <div class="invoice-column">
+            ${buildInvoiceSection("Delivery Summary", deliveryRows)}
+          </div>
         </div>
-        <div class="invoice-column">
-          ${buildInvoiceSection("Delivery Summary", deliveryRows)}
-        </div>
-      </div>
-    </article>
+      </article>
+    </section>
     ${!paymentLink ? '<div class="hint invoice-hint">Payment integration not connected</div>' : ""}
   `;
 
@@ -2874,21 +2872,17 @@ function printInvoiceModal(event) {
     return;
   }
 
-  if (!elements.invoicePreviewBody || elements.invoicePreviewBody.querySelectorAll("#invoicePrintContainer").length !== 1) {
+  if (!elements.invoicePreviewBody || elements.invoicePreviewBody.querySelectorAll("#invoicePrintArea").length !== 1 || elements.invoicePreviewBody.querySelectorAll("#invoicePrintContainer").length !== 1) {
     showToast("Unable to print invoice: printable layout is not ready.", "error");
     return;
   }
 
-  let printRule = document.getElementById("invoicePrintPageRule");
-  if (!printRule) {
-    printRule = document.createElement("style");
-    printRule.id = "invoicePrintPageRule";
-    printRule.textContent = "@page { size: Letter portrait; margin: 0.4in; }";
-    document.head.appendChild(printRule);
-  }
-
   document.body.classList.add("invoice-printing");
-  window.print();
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => {
+      window.print();
+    });
+  });
 }
 
 function sendPaymentLinkByText(jobId) {
