@@ -128,7 +128,10 @@ const elements = {
   rejectedReturnConfirmText: document.getElementById("rejectedReturnConfirmText"),
   rejectedReturnConfirmBtn: document.getElementById("rejectedReturnConfirmBtn"),
   assignSubmitBtn: document.getElementById("assignSubmitBtn"),
-  toastWrap: document.getElementById("toastWrap")
+  toastWrap: document.getElementById("toastWrap"),
+  bolPreviewModal: null,
+  bolPreviewBody: null,
+  bolPrintBtn: null
 };
 
 function escapeHtml(value) {
@@ -257,63 +260,41 @@ function resolveBolLink(job) {
   ].find(Boolean) || "";
 }
 
-function isDispatchWorkspaceUrl(value) {
-  try {
-    const url = new URL(String(value || ""), window.location.origin);
-    const path = String(url.pathname || "").toLowerCase();
-    const normalized = path.endsWith("/") && path.length > 1 ? path.slice(0, -1) : path;
-    return [
-      "/dashboard",
-      "/dashboard.html",
-      "/pending-approval",
-      "/pending-approval.html",
-      "/ready-to-dispatch",
-      "/ready-to-dispatch.html",
-      "/assigned",
-      "/assigned.html",
-      "/closed-today",
-      "/closed-today.html"
-    ].includes(normalized);
-  } catch (_error) {
-    return false;
+function firstPresentValue(values) {
+  for (const value of values) {
+    if (value === null || value === undefined) {
+      continue;
+    }
+
+    if (typeof value === "number" && Number.isFinite(value)) {
+      return String(value);
+    }
+
+    const text = String(value).trim();
+    if (text) {
+      return text;
+    }
   }
+
+  return "";
 }
 
-const DISPATCH_BOL_PAGE = "/jobs-backup.html";
-const BOL_DIAGNOSTIC_MODE = true;
-const BOL_DIAGNOSTIC_PANEL_ID = "bolDiagnosticsPanel";
-const VIEW_BOL_HANDLER_NAME = "handleViewBolClick";
-let viewBolClickCount = 0;
+function readJobField(job, keys) {
+  return firstPresentValue(keys.map(key => job?.[key]));
+}
 
-function getBolActionForJob(job) {
-  const safeSavedUrl = validHttpUrl(resolveBolLink(job));
-  if (safeSavedUrl && !isDispatchWorkspaceUrl(safeSavedUrl)) {
-    return {
-      label: "View BOL",
-      mode: "view",
-      url: safeSavedUrl,
-      disabled: false,
-      reason: ""
-    };
+function toDisplayDateTime(value) {
+  const text = String(value || "").trim();
+  if (!text) {
+    return "";
   }
 
-  if (DISPATCH_BOL_PAGE) {
-    return {
-      label: "Create BOL",
-      mode: "create",
-      url: DISPATCH_BOL_PAGE + "?id=" + encodeURIComponent(String(job?.id || "")),
-      disabled: false,
-      reason: ""
-    };
+  const parsed = new Date(text);
+  if (Number.isNaN(parsed.getTime())) {
+    return "";
   }
 
-  return {
-    label: "BOL Setup Required",
-    mode: "missing",
-    url: "",
-    disabled: true,
-    reason: "Missing BOL page or generator implementation."
-  };
+  return formatDateTime(text);
 }
 
 function formatDate(value) {
@@ -1011,7 +992,7 @@ function renderCompactRows(rows, readOnly) {
     const closedActions = workspaceMode === "closed_today"
       ? `
         <div class="closed-actions" data-prevent-row-open="true">
-          <button class="mini" type="button" id="viewBolBtn-${escapeHtml(String(row.id))}" data-view-bol="${escapeHtml(String(row.id))}">Print BOL</button>
+          <button class="mini" type="button" id="viewBolBtn-${escapeHtml(String(row.id))}" data-view-bol="${escapeHtml(String(row.id))}">View BOL</button>
           <button class="mini" type="button" data-send-invoice="${escapeHtml(String(row.id))}">Invoice</button>
           <button class="mini" type="button" data-open-job-inline="${escapeHtml(String(row.id))}">View Details</button>
         </div>
@@ -1936,8 +1917,6 @@ function openJobDetails(jobId, readOnly = false) {
     primaryAction = `<button class="btn primary" type="button" data-assign-job="${escapeHtml(String(job.id))}">Assign / Reassign Driver</button>`;
   }
 
-  const bolAction = getBolActionForJob(job);
-
   const menuActions = [
     `<button class="menu-item" type="button" data-edit-job="${escapeHtml(String(job.id))}">Edit Delivery</button>`,
     `<button class="menu-item" type="button" data-send-invoice="${escapeHtml(String(job.id))}">View Invoice</button>`,
@@ -2026,8 +2005,7 @@ function openJobDetails(jobId, readOnly = false) {
         <div class="kv"><strong>BOL Category</strong><span>${escapeHtml(jobCategoryLabel(job.job_category))}</span></div>
         <div class="kv"><strong>BOL Return</strong><span>${hasReturnRequired(job) ? "RETURN REQUIRED" : "No Return"}</span></div>
         <div class="form-actions">
-          <button class="btn primary" type="button" id="viewBolBtn-${escapeHtml(String(job.id))}" data-view-bol="${escapeHtml(String(job.id))}" ${bolAction.disabled ? "disabled" : ""}>${escapeHtml(bolAction.label)}</button>
-          ${bolAction.disabled ? `<div class="hint">${escapeHtml(bolAction.reason)}</div>` : ""}
+          <button class="btn primary" type="button" id="viewBolBtn-${escapeHtml(String(job.id))}" data-view-bol="${escapeHtml(String(job.id))}">View BOL</button>
         </div>
       </div>
     </details>
@@ -2221,86 +2199,324 @@ async function resendToDriver(jobId) {
   }
 }
 
-function openBolForJob(selectedDelivery) {
-  if (!selectedDelivery || !selectedDelivery.id) {
-    showToast("Unable to open BOL: selected delivery not found", "error");
+function ensureBolModalElements() {
+  if (elements.bolPreviewModal && elements.bolPreviewBody && elements.bolPrintBtn) {
     return;
   }
 
-  try {
-    const bolAction = getBolActionForJob(selectedDelivery);
-    if (bolAction.disabled) {
-      throw new Error(bolAction.reason || "BOL setup required");
-    }
+  let modal = document.getElementById("bolPreviewModal");
+  if (!modal) {
+    modal = document.createElement("div");
+    modal.className = "modal-backdrop bol-modal-backdrop";
+    modal.id = "bolPreviewModal";
+    modal.innerHTML = `
+      <section class="modal-panel bol-modal-panel" role="dialog" aria-modal="true" aria-labelledby="bolPreviewTitle">
+        <div class="modal-head bol-modal-head">
+          <div>
+            <div class="bol-head-brand">MG EXPRESS</div>
+            <h3 class="modal-title" id="bolPreviewTitle">Bill of Lading</h3>
+          </div>
+          <div class="bol-modal-actions no-print">
+            <button class="btn" type="button" id="bolPrintBtn">Print / Save PDF</button>
+            <button class="btn primary" type="button" data-close-modal="bolPreviewModal">Close</button>
+          </div>
+        </div>
+        <div class="modal-body bol-modal-body" id="bolPreviewBody"></div>
+      </section>
+    `;
+    document.body.appendChild(modal);
+  }
 
-    const selectedId = encodeURIComponent(String(selectedDelivery.id));
-    const rawUrl = bolAction.mode === "create"
-      ? (DISPATCH_BOL_PAGE + "?id=" + selectedId)
-      : bolAction.url;
+  elements.bolPreviewModal = modal;
+  elements.bolPreviewBody = modal.querySelector("#bolPreviewBody");
+  elements.bolPrintBtn = modal.querySelector("#bolPrintBtn");
 
-    const safe = validHttpUrl(rawUrl);
-    if (!safe) {
-      throw new Error("BOL URL is invalid or missing");
-    }
-
-    const newTab = window.open(safe, "_blank", "noopener,noreferrer");
-    if (!newTab) {
-      throw new Error("Pop-up blocked while opening BOL");
-    }
-  } catch (error) {
-    const message = String(error?.message || "Unknown error");
-    showToast("Unable to open BOL: " + message, "error");
-  } finally {
-    // no-op finally to keep action lifecycle explicit
+  if (elements.bolPrintBtn && elements.bolPrintBtn.dataset.bound !== "true") {
+    elements.bolPrintBtn.addEventListener("click", printBolModal);
+    elements.bolPrintBtn.dataset.bound = "true";
   }
 }
 
-function getBolDiagnosticsPanel() {
-  let panel = document.getElementById(BOL_DIAGNOSTIC_PANEL_ID);
-  if (panel) {
-    return panel;
-  }
-
-  panel = document.createElement("div");
-  panel.id = BOL_DIAGNOSTIC_PANEL_ID;
-  panel.style.position = "fixed";
-  panel.style.right = "12px";
-  panel.style.bottom = "12px";
-  panel.style.zIndex = "3000";
-  panel.style.maxWidth = "460px";
-  panel.style.width = "calc(100vw - 24px)";
-  panel.style.maxHeight = "42vh";
-  panel.style.overflow = "auto";
-  panel.style.background = "#0f172a";
-  panel.style.color = "#f8fafc";
-  panel.style.border = "1px solid #334155";
-  panel.style.borderRadius = "10px";
-  panel.style.boxShadow = "0 10px 30px rgba(0,0,0,.35)";
-  panel.style.padding = "10px 12px";
-  panel.style.fontFamily = "ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, Liberation Mono, monospace";
-  panel.style.fontSize = "12px";
-  panel.style.lineHeight = "1.35";
-  panel.setAttribute("role", "status");
-  panel.setAttribute("aria-live", "polite");
-  document.body.appendChild(panel);
-  return panel;
+function bolFieldRow(label, value) {
+  return `
+    <div class="bol-kv">
+      <strong>${escapeHtml(label)}</strong>
+      <span>${escapeHtml(value || "-")}</span>
+    </div>
+  `;
 }
 
-function renderBolDiagnostics(details) {
-  const panel = getBolDiagnosticsPanel();
-  const lines = [
-    "BOL Diagnostics (navigation paused)",
-    "time: " + new Date().toISOString(),
-    "selectedDelivery.id: " + String(details.selectedDeliveryId || "(missing)"),
-    "button element id: " + String(details.buttonElementId || "(none)"),
-    "button href: " + String(details.buttonHref || "(none)"),
-    "handler: " + String(details.handlerName || VIEW_BOL_HANDLER_NAME),
-    "intended BOL URL: " + String(details.intendedBolUrl || "(none)"),
-    "current pathname: " + String(details.pathname || window.location.pathname),
-    "handler run count: " + String(details.handlerRunCount || 0)
+function buildBolSection(title, rows) {
+  if (!rows.length) {
+    return "";
+  }
+
+  return `
+    <section class="bol-section">
+      <h4>${escapeHtml(title)}</h4>
+      <div class="bol-grid">
+        ${rows.join("")}
+      </div>
+    </section>
+  `;
+}
+
+function renderBolDeliveryData(selectedDelivery) {
+  ensureBolModalElements();
+
+  const selectedId = String(selectedDelivery?.id || "").trim();
+  if (!selectedId) {
+    showToast("Unable to open BOL: selected delivery not found", "error");
+    return false;
+  }
+
+  const job = getRowById(selectedId);
+  if (!job || !job.id) {
+    showToast("Unable to open BOL: selected delivery not found", "error");
+    return false;
+  }
+
+  const pickupScheduled = toDisplayDateTime(readJobField(job, [
+    "scheduled_pickup_at",
+    "pickup_scheduled_at",
+    "requested_pickup_at",
+    "pickup_window_start"
+  ]));
+  const actualPickup = toDisplayDateTime(readJobField(job, [
+    "actual_pickup_at",
+    "picked_up_at",
+    "pickup_completed_at"
+  ]));
+  const deliveryScheduled = toDisplayDateTime(readJobField(job, [
+    "scheduled_delivery_at",
+    "delivery_scheduled_at",
+    "requested_delivery_at",
+    "delivery_window_start"
+  ]));
+  const completedDelivery = toDisplayDateTime(readJobField(job, [
+    "completed_at",
+    "delivered_at",
+    "delivery_completed_at"
+  ]));
+
+  const customerRows = [
+    bolFieldRow("Customer Name", String(job.customer_name || "-"))
   ];
 
-  panel.textContent = lines.join("\n");
+  const companyName = readJobField(job, ["company_name"]);
+  if (companyName) {
+    customerRows.push(bolFieldRow("Company Name", companyName));
+  }
+
+  const customerPhone = readJobField(job, ["customer_phone", "phone"]);
+  if (customerPhone) {
+    customerRows.push(bolFieldRow("Customer Phone", customerPhone));
+  }
+
+  const customerEmail = readJobField(job, ["customer_email", "email"]);
+  if (customerEmail) {
+    customerRows.push(bolFieldRow("Customer Email", customerEmail));
+  }
+
+  const customerReference = readJobField(job, ["reference_number", "customer_reference_number"]);
+  if (customerReference) {
+    customerRows.push(bolFieldRow("Customer Reference Number", customerReference));
+  }
+
+  const pickupRows = [
+    bolFieldRow("Pickup Address", String(job.pickup_address || "-")),
+    bolFieldRow("Pickup Suite / Floor", String(job.pickup_suite_floor || "-")),
+    bolFieldRow("Pickup City", parseCity(job.pickup_address || "")),
+    bolFieldRow("Pickup ZIP", String(job.pickup_zip || "-"))
+  ];
+
+  const pickupContactName = readJobField(job, ["pickup_contact_name"]);
+  if (pickupContactName) {
+    pickupRows.push(bolFieldRow("Pickup Contact Name", pickupContactName));
+  }
+
+  const pickupContactPhone = readJobField(job, ["pickup_contact_phone"]);
+  if (pickupContactPhone) {
+    pickupRows.push(bolFieldRow("Pickup Contact Phone", pickupContactPhone));
+  }
+
+  const pickupInstructions = readJobField(job, ["pickup_instructions"]);
+  if (pickupInstructions) {
+    pickupRows.push(bolFieldRow("Pickup Instructions", pickupInstructions));
+  }
+
+  if (pickupScheduled) {
+    pickupRows.push(bolFieldRow("Scheduled Pickup Date / Time", pickupScheduled));
+  }
+
+  if (actualPickup) {
+    pickupRows.push(bolFieldRow("Actual Pickup Time", actualPickup));
+  }
+
+  const deliveryRows = [
+    bolFieldRow("Delivery Address", String(job.delivery_address || "-")),
+    bolFieldRow("Delivery Suite / Floor", String(job.delivery_suite_floor || "-")),
+    bolFieldRow("Delivery City", parseCity(job.delivery_address || "")),
+    bolFieldRow("Delivery ZIP", String(job.delivery_zip || "-"))
+  ];
+
+  const recipientName = readJobField(job, ["delivery_recipient_name"]);
+  if (recipientName) {
+    deliveryRows.push(bolFieldRow("Delivery Recipient Name", recipientName));
+  }
+
+  const deliveryContactPhone = readJobField(job, ["delivery_contact_phone"]);
+  if (deliveryContactPhone) {
+    deliveryRows.push(bolFieldRow("Delivery Contact Phone", deliveryContactPhone));
+  }
+
+  const deliveryInstructions = readJobField(job, ["delivery_instructions"]);
+  if (deliveryInstructions) {
+    deliveryRows.push(bolFieldRow("Delivery Instructions", deliveryInstructions));
+  }
+
+  if (deliveryScheduled) {
+    deliveryRows.push(bolFieldRow("Scheduled Delivery Date / Time", deliveryScheduled));
+  }
+
+  if (completedDelivery) {
+    deliveryRows.push(bolFieldRow("Completed Delivery Time", completedDelivery));
+  }
+
+  const podRecipientName = readJobField(job, ["pod_recipient_name"]);
+  if (podRecipientName) {
+    deliveryRows.push(bolFieldRow("POD Recipient Name", podRecipientName));
+  }
+
+  const packageRows = [
+    bolFieldRow("Package Type / Description", String(job.package_type || "-")),
+    bolFieldRow("Vehicle Type", String(job.vehicle_type || "-")),
+    bolFieldRow("Delivery Type", deliveryTypeLabel(job.delivery_type)),
+    bolFieldRow("Service Level", serviceLevelLabel(job.service_level)),
+    bolFieldRow("Delivery Speed", deliverySpeedLabel(job.delivery_speed))
+  ];
+
+  const quantity = readJobField(job, ["package_quantity", "quantity", "item_quantity"]);
+  if (quantity) {
+    packageRows.push(bolFieldRow("Quantity", quantity));
+  }
+
+  const weight = readJobField(job, ["package_weight", "weight"]);
+  if (weight) {
+    packageRows.push(bolFieldRow("Weight", weight));
+  }
+
+  const estimatedMiles = readJobField(job, ["estimated_miles"]);
+  if (estimatedMiles) {
+    packageRows.push(bolFieldRow("Estimated Miles", estimatedMiles));
+  }
+
+  const specialHandling = readJobField(job, [
+    "special_handling_instructions",
+    "handling_instructions"
+  ]);
+  if (specialHandling) {
+    packageRows.push(bolFieldRow("Special Handling Instructions", specialHandling));
+  }
+
+  const driverRows = [
+    bolFieldRow("Vehicle Type", String(job.vehicle_type || "-")),
+    bolFieldRow("Delivery Workflow Status", driverWorkflowLabel(job))
+  ];
+
+  let returnSection = "";
+  if (hasReturnRequired(job)) {
+    const returnRows = [
+      bolFieldRow("Return Required", "Yes"),
+      bolFieldRow("Return Timing", returnTimingLabel(job.return_timing)),
+      bolFieldRow("Return Destination Type", returnLocationLabel(job.return_location_type))
+    ];
+
+    if (clean(job.return_location_type) === "same_as_pickup") {
+      returnRows.push(bolFieldRow("Return Destination", "Original Pickup Location"));
+    } else {
+      returnRows.push(bolFieldRow("Return Address", String(job.return_address || "-")));
+      returnRows.push(bolFieldRow("Return Suite / Floor", String(job.return_suite_floor || "-")));
+      returnRows.push(bolFieldRow("Return ZIP", String(job.return_zip || "-")));
+    }
+
+    const returnInstructions = readJobField(job, ["return_instructions"]);
+    if (returnInstructions) {
+      returnRows.push(bolFieldRow("Return Instructions", returnInstructions));
+    }
+
+    returnSection = buildBolSection("Return Service", returnRows);
+  }
+
+  const timelineRows = [];
+  const createdTime = toDisplayDateTime(job.created_at);
+  if (createdTime) {
+    timelineRows.push(bolFieldRow("Delivery Created", createdTime));
+  }
+  if (completedDelivery) {
+    timelineRows.push(bolFieldRow("Delivered", completedDelivery));
+  }
+
+  const returnBadge = hasReturnRequired(job)
+    ? '<span class="badge badge-return bol-return-badge">RETURN REQUIRED</span>'
+    : "";
+
+  elements.bolPreviewBody.innerHTML = `
+    <article class="bol-sheet" data-bol-id="${escapeHtml(String(job.id))}">
+      <header class="bol-header">
+        <div class="bol-title-wrap">
+          <div class="bol-brand">MG EXPRESS</div>
+          <h2 class="bol-title">BILL OF LADING</h2>
+        </div>
+        <div class="bol-head-grid">
+          ${bolFieldRow("Delivery / Job Number", String(job.job_number || "-"))}
+          ${bolFieldRow("Created Date", formatDate(job.created_at))}
+          ${bolFieldRow("Current Delivery Status", statusLabel(job))}
+          ${bolFieldRow("Job Category", jobCategoryLabel(job.job_category))}
+        </div>
+        ${returnBadge}
+      </header>
+
+      ${buildBolSection("Customer Information", customerRows)}
+      ${buildBolSection("Pickup Information", pickupRows)}
+      ${buildBolSection("Delivery Information", deliveryRows)}
+      ${buildBolSection("Package and Service", packageRows)}
+      ${returnSection}
+      ${buildBolSection("Driver Information", driverRows)}
+      ${timelineRows.length ? buildBolSection("Delivery Timeline", timelineRows) : ""}
+    </article>
+  `;
+
+  return true;
+}
+
+function openBolModalForJob(selectedDelivery) {
+  if (!selectedDelivery || !selectedDelivery.id) {
+    showToast("Unable to open BOL: selected delivery not found", "error");
+    return false;
+  }
+
+  const rendered = renderBolDeliveryData(selectedDelivery);
+  if (!rendered) {
+    return false;
+  }
+
+  openModal("bolPreviewModal");
+  return true;
+}
+
+function printBolModal(event) {
+  if (event) {
+    event.preventDefault();
+    event.stopPropagation();
+  }
+
+  if (!elements.bolPreviewModal || !elements.bolPreviewModal.classList.contains("open")) {
+    showToast("Open a BOL before printing.", "info");
+    return;
+  }
+
+  window.print();
 }
 
 function handleViewBolClick(event, buttonElement) {
@@ -2310,44 +2526,11 @@ function handleViewBolClick(event, buttonElement) {
     event.stopImmediatePropagation();
   }
 
-  viewBolClickCount += 1;
-
   const selectedDelivery = state.selectedJob && state.selectedJob.id
     ? state.selectedJob
     : getRowById(buttonElement?.getAttribute("data-view-bol"));
 
-  const bolAction = selectedDelivery ? getBolActionForJob(selectedDelivery) : null;
-  const selectedId = selectedDelivery?.id ? encodeURIComponent(String(selectedDelivery.id)) : "";
-  const intendedBolUrl = bolAction
-    ? (bolAction.mode === "create"
-      ? (DISPATCH_BOL_PAGE + "?id=" + selectedId)
-      : String(bolAction.url || ""))
-    : "";
-
-  const diagnostics = {
-    selectedDeliveryId: selectedDelivery?.id || "",
-    buttonElementId: buttonElement?.id || "",
-    buttonHref: buttonElement?.getAttribute("href") || "",
-    handlerName: VIEW_BOL_HANDLER_NAME,
-    intendedBolUrl,
-    pathname: window.location.pathname,
-    handlerRunCount: viewBolClickCount
-  };
-
-  console.log("[BOL_DIAGNOSTICS]", diagnostics);
-  renderBolDiagnostics(diagnostics);
-  showToast("BOL diagnostics captured. Navigation paused.", "info");
-
-  if (!selectedDelivery || !selectedDelivery.id) {
-    showToast("Unable to open BOL: selected delivery not found", "error");
-    return false;
-  }
-
-  if (BOL_DIAGNOSTIC_MODE) {
-    return false;
-  }
-
-  openBolForJob(selectedDelivery);
+  openBolModalForJob(selectedDelivery);
   return false;
 }
 
@@ -2763,6 +2946,8 @@ function handleDocumentClick(event) {
 }
 
 function bindEvents() {
+  ensureBolModalElements();
+
   elements.searchInput.addEventListener("input", renderWorkspace);
   elements.customerSearchInput.addEventListener("input", renderWorkspace);
   elements.jobSearchInput.addEventListener("input", renderWorkspace);
