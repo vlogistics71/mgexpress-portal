@@ -85,13 +85,34 @@
       <div class="modal-foot">
         <button class="btn" type="button" data-close-driver-modal>Close</button>
         <button class="btn" type="button" id="editDriverBtn">Edit Driver</button>
+        <button class="btn" type="button" id="viewDriverRouteBtn">View Route</button>
         <button class="btn primary" type="button" id="assignDeliveryBtn">Assign Delivery</button>
+      </div>
+    </section>
+  </div>
+
+  <div class="modal-backdrop" id="routePreviewModal" aria-hidden="true">
+    <section class="driver-modal" role="dialog" aria-modal="true" aria-labelledby="routePreviewTitle">
+      <div class="modal-head">
+        <div>
+          <h3 id="routePreviewTitle">Driver Route Preview</h3>
+          <div class="route-preview-subtitle" id="routePreviewSubtitle"></div>
+        </div>
+        <button class="icon-btn" type="button" data-close-route-preview-modal>Close</button>
+      </div>
+
+      <div class="modal-body" id="routePreviewBody"></div>
+
+      <div class="modal-foot">
+        <button class="btn" type="button" data-close-route-preview-modal>Close</button>
+        <button class="btn" type="button" id="routePreviewNavigateBtn">Navigate Route</button>
       </div>
     </section>
   </div>
 
   <div class="toast-wrap" id="toastWrap"></div>
 
+  <script src="/assets/js/route-preview.js"></script>
   <script src="/assets/js/driver-availability.js"></script>
   <script src="/dispatch-menu.js"></script>
 </body>

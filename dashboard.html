@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>MG Express Dispatch</title>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="/assets/js/route-preview.js"></script>
   <style>
     * { box-sizing: border-box; }
 
@@ -968,6 +969,120 @@
       transform: translateY(0);
     }
 
+    .route-preview-panel .modal-body {
+      display: grid;
+      gap: 12px;
+    }
+
+    .route-preview-subtitle {
+      margin-top: 4px;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 800;
+      letter-spacing: .03em;
+      text-transform: uppercase;
+    }
+
+    .route-preview-note {
+      border: 1px solid var(--line);
+      background: #f8fbf9;
+      border-radius: 14px;
+      padding: 10px 12px;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.45;
+    }
+
+    .route-preview-summary {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    .route-preview-summary .kv {
+      margin: 0;
+      padding: 10px 12px;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      background: #f8fbf9;
+    }
+
+    .route-preview-summary .kv strong {
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    .route-preview-summary .kv span {
+      font-size: 18px;
+      font-weight: 900;
+      color: var(--dark-green);
+    }
+
+    .route-preview-stops {
+      display: grid;
+      gap: 10px;
+    }
+
+    .route-preview-stop {
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      background: #fff;
+      padding: 12px;
+      display: grid;
+      gap: 7px;
+    }
+
+    .route-preview-stop-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .route-preview-stop-title {
+      font-size: 14px;
+      font-weight: 900;
+      color: var(--dark-green);
+    }
+
+    .route-preview-stop-meta {
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.45;
+    }
+
+    .route-preview-stop-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 4px;
+    }
+
+    .route-preview-stop-actions .btn,
+    .route-preview-stop-actions a {
+      min-height: 38px;
+    }
+
+    .route-preview-foot {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .route-preview-fab {
+      min-height: 38px;
+      padding: 8px 12px;
+      border-radius: 999px;
+      border: 1px solid var(--line);
+      background: #fff;
+      color: var(--dark-green);
+      font-weight: 800;
+      cursor: pointer;
+    }
+
     .modal-head {
       position: sticky;
       top: 0;
@@ -1607,6 +1722,26 @@
     </section>
   </div>
 
+  <div class="modal-backdrop" id="routePreviewModal">
+    <section class="modal-panel route-preview-panel" role="dialog" aria-modal="true" aria-labelledby="routePreviewTitle">
+      <div class="modal-head">
+        <div>
+          <h3 class="modal-title" id="routePreviewTitle">Driver Route Preview</h3>
+          <div class="route-preview-subtitle" id="routePreviewSubtitle"></div>
+        </div>
+        <button class="icon-btn" type="button" data-close-modal="routePreviewModal">×</button>
+      </div>
+      <div class="modal-body" id="routePreviewBody"></div>
+      <div class="modal-foot route-preview-foot">
+        <div class="hint">Read-only preview built from existing assigned jobs.</div>
+        <div class="route-preview-stop-actions">
+          <button class="btn" type="button" data-close-modal="routePreviewModal">Close</button>
+          <button class="btn primary" type="button" id="routePreviewNavigateBtn">Navigate Route</button>
+        </div>
+      </div>
+    </section>
+  </div>
+
   <div class="modal-backdrop assign-modal-backdrop" id="assignModal">
     <section class="assign-panel" role="dialog" aria-modal="true" aria-labelledby="assignTitle">
       <div class="assign-panel-head">
@@ -1702,6 +1837,7 @@
       supportsEstimatedMiles: null,
       selectedQuote: null,
       selectedJob: null,
+      routePreviewContext: null,
       pendingAssignment: null,
       greetingFirstName: "Dispatch",
       greetingTimerId: null
@@ -1745,6 +1881,10 @@
       quoteDetailsBody: document.getElementById("quoteDetailsBody"),
       jobDetailsModal: document.getElementById("jobDetailsModal"),
       jobDetailsBody: document.getElementById("jobDetailsBody"),
+      routePreviewModal: document.getElementById("routePreviewModal"),
+      routePreviewSubtitle: document.getElementById("routePreviewSubtitle"),
+      routePreviewBody: document.getElementById("routePreviewBody"),
+      routePreviewNavigateBtn: document.getElementById("routePreviewNavigateBtn"),
       assignModal: document.getElementById("assignModal"),
       assignForm: document.getElementById("assignForm"),
       assignJobId: document.getElementById("assignJobId"),
@@ -2932,6 +3072,7 @@
           <label>Driver Pay</label>
           <input class="assign-pay-input" type="number" min="0" step="0.01" value="${escapeHtml(String(driverPayValue))}" data-assign-pay-input="${escapeHtml(driverMetric.id)}" placeholder="0.00">
         </div>
+        ${driverMetric.activeAssignments > 0 ? `<button class="btn" type="button" data-view-route-driver="${escapeHtml(driverMetric.id)}">View Route</button>` : ""}
         <ul class="assign-rec-reasons">
           ${reasons.map(reason => `<li>${escapeHtml(reason)}</li>`).join("")}
         </ul>
@@ -2976,10 +3117,101 @@
               <label>Driver Pay</label>
               <input class="assign-pay-input" type="number" min="0" step="0.01" value="${escapeHtml(String(job.driver_pay ?? ""))}" data-assign-pay-input="${escapeHtml(item.id)}" placeholder="0.00">
             </div>
+            ${item.activeAssignments > 0 ? `<button class="btn" type="button" data-view-route-driver="${escapeHtml(item.id)}">View Route</button>` : ""}
             <button class="btn" type="button" data-assign-driver="${escapeHtml(item.id)}" ${item.status === "off_duty" ? "disabled" : ""}>${item.status === "off_duty" ? "Inactive" : "Assign"}</button>
           </div>
         </article>
       `).join("");
+    }
+
+    function renderRoutePreview(context) {
+      state.routePreviewContext = context;
+
+      const summaryRows = [
+        { key: "Driver", value: context.driverName },
+        { key: "Availability", value: context.availabilityLabel || "Assigned" },
+        { key: "Active Jobs", value: String(context.activeJobsCount) },
+        { key: "Pickups Remaining", value: String(context.pickupRemaining) },
+        { key: "Deliveries Remaining", value: String(context.deliveryRemaining) },
+        { key: "Return Stops", value: String(context.returnStopsRemaining) },
+        { key: "Driver Pay", value: money(context.totalDriverPay) }
+      ];
+
+      if (elements.routePreviewSubtitle) {
+        elements.routePreviewSubtitle.textContent = `${context.activeJobsCount} active job${context.activeJobsCount === 1 ? "" : "s"}`;
+      }
+
+      elements.routePreviewBody.innerHTML = `
+        <div class="route-preview-note">Stops are ordered from the current assigned job flow and only use existing delivery data. No route changes are written back.</div>
+        <div class="route-preview-summary">
+          ${summaryRows.map(item => `
+            <div class="kv"><strong>${escapeHtml(item.key)}</strong><span>${escapeHtml(item.value)}</span></div>
+          `).join("")}
+        </div>
+        ${context.nextStop ? `<div class="route-preview-note"><strong>Next Stop:</strong> ${escapeHtml(context.nextStop.jobNumber)} • ${escapeHtml(context.nextStop.stopLabel)} • ${escapeHtml(context.nextStop.address)}</div>` : ""}
+        ${context.routeStops.length ? `
+          <div class="route-preview-stops">
+            ${context.routeStops.map(stop => `
+              <article class="route-preview-stop">
+                <div class="route-preview-stop-head">
+                  <div class="route-preview-stop-title">${escapeHtml(stop.stopLabel)} • ${escapeHtml(stop.jobNumber)}</div>
+                  <span class="badge ${stop.stopType === "pickup" ? "badge-ready" : stop.stopType === "delivery" ? "badge-assigned" : "badge-return"}">${escapeHtml(stop.stopType)}</span>
+                </div>
+                <div class="route-preview-stop-meta">${escapeHtml(stop.customerName)}</div>
+                <div class="route-preview-stop-meta">${escapeHtml(stop.address)}</div>
+                ${stop.detail ? `<div class="route-preview-stop-meta">${escapeHtml(stop.detail)}</div>` : ""}
+                <div class="route-preview-stop-actions">
+                  <button class="btn primary" type="button" data-route-open-job="${escapeHtml(stop.jobId)}">Open Delivery</button>
+                </div>
+              </article>
+            `).join("")}
+          </div>
+        ` : '<div class="empty">No active route stops found for this driver.</div>'}
+      `;
+
+      if (elements.routePreviewNavigateBtn) {
+        elements.routePreviewNavigateBtn.disabled = !context.mapsUrl;
+        elements.routePreviewNavigateBtn.textContent = context.mapsUrl ? "Navigate Route" : "No Route Available";
+      }
+    }
+
+    function openRoutePreviewForDriver(driverId) {
+      const driver = state.drivers.find(item => String(item.id) === String(driverId));
+      if (!driver) {
+        showToast("Driver was not found.", "error");
+        return;
+      }
+
+      const jobs = state.rows.filter(row => {
+        return getWorkflowStage(row) === "assigned" && String(row.assigned_driver_id || "") === String(driver.id);
+      });
+
+      if (!jobs.length) {
+        showToast("No active route is available for this driver.", "info");
+        return;
+      }
+
+      const status = deriveDriverStatus(driver, jobs.length);
+      const context = window.MG_ROUTE_PREVIEW.buildRoutePreviewData({
+        driverName: driverDisplayName(driver),
+        availabilityLabel: driverStatusLabel(status),
+        jobs
+      });
+
+      renderRoutePreview(context);
+      openModal("routePreviewModal");
+    }
+
+    function openRoutePreviewDirections() {
+      if (!state.routePreviewContext || !state.routePreviewContext.mapsUrl) {
+        showToast("No map route is available.", "info");
+        return;
+      }
+
+      const newTab = window.open(state.routePreviewContext.mapsUrl, "_blank", "noopener,noreferrer");
+      if (!newTab) {
+        showToast("Pop-up blocked while opening route directions.", "error");
+      }
     }
 
     function renderAssignPanelDrivers(job) {
@@ -3231,6 +3463,7 @@
             <summary>
               <span class="assigned-driver-name">${escapeHtml(driverName)}</span>
               <span class="assigned-driver-count">${escapeHtml(String(deliveries.length))} deliveries</span>
+              ${driverId === "unassigned" ? "" : `<button class="route-preview-fab" type="button" data-view-route-driver="${escapeHtml(String(driverId))}">View Route</button>`}
             </summary>
             <div class="rows">
               ${deliveries.map(row => `
@@ -4510,6 +4743,44 @@
         return;
       }
 
+      const routeDriver = target.closest("[data-view-route-driver]");
+      if (routeDriver) {
+        event.preventDefault();
+        event.stopPropagation();
+        if (typeof event.stopImmediatePropagation === "function") {
+          event.stopImmediatePropagation();
+        }
+
+        openRoutePreviewForDriver(routeDriver.getAttribute("data-view-route-driver"));
+        return;
+      }
+
+      const routeOpenJob = target.closest("[data-route-open-job]");
+      if (routeOpenJob) {
+        event.preventDefault();
+        event.stopPropagation();
+        if (typeof event.stopImmediatePropagation === "function") {
+          event.stopImmediatePropagation();
+        }
+
+        const jobId = routeOpenJob.getAttribute("data-route-open-job");
+        closeModal("routePreviewModal");
+        openJobDetails(jobId, isClosed(getRowById(jobId)));
+        return;
+      }
+
+      const routeNavigate = target.closest("[data-route-navigate]");
+      if (routeNavigate) {
+        event.preventDefault();
+        event.stopPropagation();
+        if (typeof event.stopImmediatePropagation === "function") {
+          event.stopImmediatePropagation();
+        }
+
+        openRoutePreviewDirections();
+        return;
+      }
+
       const quoteRow = target.closest("[data-open-quote]");
       if (quoteRow) {
         openQuoteDetails(quoteRow.getAttribute("data-open-quote"));
@@ -4707,6 +4978,9 @@
         }
       });
       elements.assignConfirmBtn.addEventListener("click", confirmQueuedAssignment);
+      if (elements.routePreviewNavigateBtn) {
+        elements.routePreviewNavigateBtn.addEventListener("click", openRoutePreviewDirections);
+      }
 
       elements.quoteForm.addEventListener("submit", submitQuoteForm);
       elements.jobForm.addEventListener("submit", submitJobForm);
@@ -4744,6 +5018,21 @@
       });
     }
 
+    function openJobFromUrlIfPresent() {
+      const params = new URLSearchParams(window.location.search || "");
+      const jobId = String(params.get("job") || "").trim();
+      if (!jobId) {
+        return;
+      }
+
+      const job = getRowById(jobId);
+      if (!job) {
+        return;
+      }
+
+      openJobDetails(jobId, isClosed(job));
+    }
+
     (async function startPage() {
       try {
         const session = await requireDispatchAccess();
@@ -4755,6 +5044,7 @@
         syncReturnDetailsVisibility();
         renderNewDeliveryReview();
         await loadDashboard();
+        openJobFromUrlIfPresent();
       } catch (error) {
         showToast(error.message || "Unable to load dashboard", "error");
       }

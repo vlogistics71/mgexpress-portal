@@ -18,6 +18,7 @@ const state = {
   searchQuery: "",
   availabilityFilter: "all",
   selectedDriverId: "",
+  routePreviewContext: null,
   isEditMode: false,
   savingDriver: false,
   isLoading: false,
@@ -44,7 +45,12 @@ const elements = {
   loadErrorBanner: document.getElementById("loadErrorBanner"),
   driverDetailsModal: document.getElementById("driverDetailsModal"),
   driverDetailsBody: document.getElementById("driverDetailsBody"),
+  routePreviewModal: document.getElementById("routePreviewModal"),
+  routePreviewSubtitle: document.getElementById("routePreviewSubtitle"),
+  routePreviewBody: document.getElementById("routePreviewBody"),
+  routePreviewNavigateBtn: document.getElementById("routePreviewNavigateBtn"),
   editDriverBtn: document.getElementById("editDriverBtn"),
+  viewDriverRouteBtn: document.getElementById("viewDriverRouteBtn"),
   assignDeliveryBtn: document.getElementById("assignDeliveryBtn"),
   toastWrap: document.getElementById("toastWrap")
 };
@@ -1264,6 +1270,121 @@ function openAssignDeliveryForSelectedDriver() {
   window.location.href = url;
 }
 
+function availabilityCssClass(label) {
+  const token = clean(label);
+  if (token === "available") {
+    return "available";
+  }
+  if (token === "busy") {
+    return "busy";
+  }
+  return "offline";
+}
+
+function routePreviewContextFromSummary(summary) {
+  const jobs = summary.relatedQuotes.filter(quote => {
+    if (isRejectedAssignment(quote)) {
+      return false;
+    }
+    if (isQuoteClosed(quote)) {
+      return false;
+    }
+    return true;
+  });
+
+  return window.MG_ROUTE_PREVIEW.buildRoutePreviewData({
+    driverName: summary.name,
+    availabilityLabel: availabilityLabel(summary.availability),
+    jobs
+  });
+}
+
+function renderRoutePreviewModal(summary, context) {
+  state.routePreviewContext = context;
+
+  if (elements.routePreviewSubtitle) {
+    elements.routePreviewSubtitle.textContent = `${context.activeJobsCount} active job${context.activeJobsCount === 1 ? "" : "s"}`;
+  }
+
+  elements.routePreviewBody.innerHTML = `
+    <div class="route-preview-note">Read-only preview using assigned jobs currently linked to this driver. No workflow updates are written from this view.</div>
+
+    <div class="route-preview-summary">
+      <div class="kv-row"><span class="kv-key">Driver</span><span class="kv-value">${escapeHtml(summary.name)}</span></div>
+      <div class="kv-row"><span class="kv-key">Availability</span><span class="kv-value"><span class="status-badge ${availabilityCssClass(context.availabilityLabel)}">${escapeHtml(context.availabilityLabel || "Offline")}</span></span></div>
+      <div class="kv-row"><span class="kv-key">Active Jobs</span><span class="kv-value">${escapeHtml(String(context.activeJobsCount))}</span></div>
+      <div class="kv-row"><span class="kv-key">Pickups Remaining</span><span class="kv-value">${escapeHtml(String(context.pickupRemaining))}</span></div>
+      <div class="kv-row"><span class="kv-key">Deliveries Remaining</span><span class="kv-value">${escapeHtml(String(context.deliveryRemaining))}</span></div>
+      <div class="kv-row"><span class="kv-key">Return Stops</span><span class="kv-value">${escapeHtml(String(context.returnStopsRemaining))}</span></div>
+      <div class="kv-row"><span class="kv-key">Total Driver Pay</span><span class="kv-value">${escapeHtml(money(context.totalDriverPay))}</span></div>
+    </div>
+
+    ${context.nextStop ? `<div class="route-preview-note"><strong>Next Stop:</strong> ${escapeHtml(context.nextStop.jobNumber)} • ${escapeHtml(context.nextStop.stopLabel)} • ${escapeHtml(context.nextStop.address)}</div>` : ""}
+
+    ${context.routeStops.length ? `
+      <div class="route-preview-stops">
+        ${context.routeStops.map(stop => `
+          <article class="route-preview-stop">
+            <div class="route-preview-stop-head">
+              <div class="route-preview-stop-title">${escapeHtml(stop.stopLabel)} • ${escapeHtml(stop.jobNumber)}</div>
+              <span class="status-badge ${stop.stopType === "pickup" ? "available" : stop.stopType === "delivery" ? "busy" : "offline"}">${escapeHtml(stop.stopType)}</span>
+            </div>
+            <div class="route-preview-stop-meta">${escapeHtml(stop.customerName)}</div>
+            <div class="route-preview-stop-meta">${escapeHtml(stop.address)}</div>
+            ${stop.detail ? `<div class="route-preview-stop-meta">${escapeHtml(stop.detail)}</div>` : ""}
+            <div class="route-preview-stop-actions">
+              <button class="btn primary" type="button" data-route-open-job="${escapeHtml(stop.jobId)}">Open Delivery</button>
+            </div>
+          </article>
+        `).join("")}
+      </div>
+    ` : '<div class="empty">No active route stops found for this driver.</div>'}
+  `;
+
+  elements.routePreviewNavigateBtn.disabled = !context.mapsUrl;
+  elements.routePreviewNavigateBtn.textContent = context.mapsUrl ? "Navigate Route" : "No Route Available";
+}
+
+function openRoutePreviewForSelectedDriver() {
+  if (!state.selectedDriverId) {
+    showToast("Select a driver first.", "error");
+    return;
+  }
+
+  const summary = state.summaries.find(item => item.id === state.selectedDriverId);
+  if (!summary) {
+    showToast("Driver details were not found.", "error");
+    return;
+  }
+
+  const context = routePreviewContextFromSummary(summary);
+  if (!context.activeJobsCount) {
+    showToast("No active route is available for this driver.", "info");
+    return;
+  }
+
+  renderRoutePreviewModal(summary, context);
+  elements.routePreviewModal.classList.add("open");
+  elements.routePreviewModal.setAttribute("aria-hidden", "false");
+}
+
+function closeRoutePreview() {
+  elements.routePreviewModal.classList.remove("open");
+  elements.routePreviewModal.setAttribute("aria-hidden", "true");
+}
+
+function openRouteDirections() {
+  if (!state.routePreviewContext || !state.routePreviewContext.mapsUrl) {
+    showToast("No map route is available.", "info");
+    return;
+  }
+
+  const newTab = window.open(state.routePreviewContext.mapsUrl, "_blank", "noopener,noreferrer");
+  if (!newTab) {
+    showToast("Pop-up blocked while opening route directions.", "error");
+  }
+}
+
 async function requireDispatchAccess() {
   const sessionResult = await client.auth.getSession();
   const session = sessionResult.data.session;
@@ -1493,12 +1614,34 @@ function bindEvents() {
       return;
     }
 
+    if (event.target.matches("[data-close-route-preview-modal]")) {
+      closeRoutePreview();
+      return;
+    }
+
+    const routeOpenJob = event.target.closest("[data-route-open-job]");
+    if (routeOpenJob) {
+      const jobId = routeOpenJob.getAttribute("data-route-open-job");
+      window.location.href = "/dashboard.html?job=" + encodeURIComponent(String(jobId));
+      return;
+    }
+
     if (event.target === elements.driverDetailsModal) {
       closeDriverDetails();
+      return;
+    }
+
+    if (event.target === elements.routePreviewModal) {
+      closeRoutePreview();
     }
   });
 
   document.addEventListener("keydown", event => {
+    if (event.key === "Escape" && elements.routePreviewModal.classList.contains("open")) {
+      closeRoutePreview();
+      return;
+    }
+
     if (event.key === "Escape" && elements.driverDetailsModal.classList.contains("open")) {
       closeDriverDetails();
     }
@@ -1532,6 +1675,8 @@ function bindEvents() {
     renderDriverEditMode(summary);
   });
 
+  elements.viewDriverRouteBtn.addEventListener("click", openRoutePreviewForSelectedDriver);
+  elements.routePreviewNavigateBtn.addEventListener("click", openRouteDirections);
   elements.assignDeliveryBtn.addEventListener("click", openAssignDeliveryForSelectedDriver);
 }
 
