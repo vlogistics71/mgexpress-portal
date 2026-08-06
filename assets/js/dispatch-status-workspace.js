@@ -3391,28 +3391,73 @@ function bindEvents() {
   });
 }
 
-(async function startPage() {
-  try {
-    readAssignDriverFocusFromQuery();
+window.MG_DISPATCH_WORKSPACE = Object.freeze({
+  client,
+  state,
+  getWorkflowStage,
+  statusLabel,
+  badgeClass,
+  jobCategoryLabel,
+  jobCategoryClass,
+  deliverySpeedLabel,
+  deliveryTypeLabel,
+  serviceLevelLabel,
+  hasReturnRequired,
+  returnLocationLabel,
+  returnTimingLabel,
+  returnDestinationText,
+  formatDate,
+  formatDateTime,
+  money,
+  parseCity,
+  getRowById,
+  openJobDetails,
+  openEditJobModal,
+  openAssignModal,
+  sendInvoiceForJob,
+  sendPaymentLinkByText,
+  sendPaymentLinkByEmail,
+  copyPaymentLink,
+  markPaidManually,
+  deleteDelivery,
+  changeDispatchStatus,
+  resendToDriver,
+  openBolForJob,
+  handleDocumentClick,
+  openRejectedReturnConfirm,
+  returnRejectedToReady,
+  loadDrivers,
+  loadRows,
+  renderWorkspace,
+  openModal,
+  closeModal,
+  showToast
+});
 
-    const session = await requireDispatchAccess();
-    if (!session) {
-      return;
+if (workspaceMode !== "deliveries_center") {
+  (async function startPage() {
+    try {
+      readAssignDriverFocusFromQuery();
+
+      const session = await requireDispatchAccess();
+      if (!session) {
+        return;
+      }
+
+      applyWorkspacePresentation();
+      bindEvents();
+      syncReturnDetailsVisibility();
+      renderNewDeliveryReview();
+      await loadWorkspace();
+
+      if (workspaceMode === "ready_to_dispatch" && state.assignDriverFocusId && !state.hasShownAssignFocusToast) {
+        const label = state.assignDriverFocusName || driverNameById(state.assignDriverFocusId);
+        showToast("Driver focus active: " + label + ". Open a Ready job and tap Assign / Reassign Driver.", "info");
+        state.hasShownAssignFocusToast = true;
+      }
+    } catch (error) {
+      elements.rowsHost.innerHTML = '<div class="empty">' + escapeHtml(error.message || "Unable to load workspace") + '</div>';
+      showToast(error.message || "Unable to load workspace", "error");
     }
-
-    applyWorkspacePresentation();
-    bindEvents();
-    syncReturnDetailsVisibility();
-    renderNewDeliveryReview();
-    await loadWorkspace();
-
-    if (workspaceMode === "ready_to_dispatch" && state.assignDriverFocusId && !state.hasShownAssignFocusToast) {
-      const label = state.assignDriverFocusName || driverNameById(state.assignDriverFocusId);
-      showToast("Driver focus active: " + label + ". Open a Ready job and tap Assign / Reassign Driver.", "info");
-      state.hasShownAssignFocusToast = true;
-    }
-  } catch (error) {
-    elements.rowsHost.innerHTML = '<div class="empty">' + escapeHtml(error.message || "Unable to load workspace") + '</div>';
-    showToast(error.message || "Unable to load workspace", "error");
-  }
-})();
+  })();
+}
