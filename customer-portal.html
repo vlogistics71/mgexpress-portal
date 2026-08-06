@@ -526,6 +526,94 @@
       </div>
     </section>
 
+    <div
+      class="portal-modal-overlay hidden"
+      id="trackingModalOverlay"
+    >
+      <section class="portal-modal">
+        <div class="portal-modal-heading">
+          <div>
+            <div class="portal-eyebrow">
+              Customer-safe tracking
+            </div>
+
+            <h2 id="trackingModalTitle">
+              Delivery Status
+            </h2>
+          </div>
+
+          <button
+            class="customer-modal-close"
+            id="closeTrackingModalButton"
+            type="button"
+            aria-label="Close tracking details"
+          >
+            ×
+          </button>
+        </div>
+
+        <div class="portal-modal-grid">
+          <div class="portal-modal-box">
+            <span>Job Number</span>
+            <strong id="trackingJobNumber">—</strong>
+          </div>
+
+          <div class="portal-modal-box">
+            <span>Status</span>
+            <strong id="trackingJobStatus">—</strong>
+          </div>
+
+          <div class="portal-modal-box">
+            <span>Scheduled Date</span>
+            <strong id="trackingScheduledDate">—</strong>
+          </div>
+
+          <div class="portal-modal-box">
+            <span>Estimated Drop-Off</span>
+            <strong id="trackingEta">—</strong>
+          </div>
+
+          <div class="portal-modal-box full">
+            <span>Route</span>
+            <strong id="trackingRoute">—</strong>
+          </div>
+
+          <div class="portal-modal-box full">
+            <span>Customer Notes</span>
+            <strong id="trackingNotes">—</strong>
+          </div>
+
+          <div class="portal-modal-box">
+            <span>Invoice Status</span>
+            <strong id="trackingInvoiceStatus">—</strong>
+          </div>
+
+          <div class="portal-modal-box">
+            <span>Payment Due</span>
+            <strong id="trackingPaymentDue">—</strong>
+          </div>
+        </div>
+
+        <div class="portal-modal-actions">
+          <button
+            class="portal-secondary-button"
+            id="trackingInvoiceButton"
+            type="button"
+          >
+            View Invoice
+          </button>
+
+          <button
+            class="portal-secondary-button"
+            id="trackingCloseButton"
+            type="button"
+          >
+            Close
+          </button>
+        </div>
+      </section>
+    </div>
+
     <!-- History -->
     <section
       class="portal-view"

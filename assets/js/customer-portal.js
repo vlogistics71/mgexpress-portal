@@ -25,6 +25,47 @@
   const deliveryRequestForm =
     document.getElementById("deliveryRequestForm");
 
+  const trackingModalOverlay =
+    document.getElementById("trackingModalOverlay");
+
+  const trackingModalTitle =
+    document.getElementById("trackingModalTitle");
+
+  const trackingJobNumber =
+    document.getElementById("trackingJobNumber");
+
+  const trackingJobStatus =
+    document.getElementById("trackingJobStatus");
+
+  const trackingScheduledDate =
+    document.getElementById("trackingScheduledDate");
+
+  const trackingEta =
+    document.getElementById("trackingEta");
+
+  const trackingRoute =
+    document.getElementById("trackingRoute");
+
+  const trackingNotes =
+    document.getElementById("trackingNotes");
+
+  const trackingInvoiceStatus =
+    document.getElementById("trackingInvoiceStatus");
+
+  const trackingPaymentDue =
+    document.getElementById("trackingPaymentDue");
+
+  const trackingInvoiceButton =
+    document.getElementById("trackingInvoiceButton");
+
+  const closeTrackingModalButton =
+    document.getElementById("closeTrackingModalButton");
+
+  const trackingCloseButton =
+    document.getElementById("trackingCloseButton");
+
+  let trackingJobId = null;
+
   let authData = null;
   let customerAccount = null;
   let jobs = [];
@@ -345,6 +386,132 @@
     return "";
   }
 
+  function safeJobStatus(job) {
+    const status =
+      jobStatus(job);
+
+    const labels = {
+      quote_pending: "Quote Requested",
+      pending_quote: "Quote Requested",
+      quoted: "Quote Ready",
+      approved: "Approved",
+      waiting_payment: "Waiting for Payment",
+      payment_pending: "Waiting for Payment",
+      assigned: "Driver Assigned",
+      accepted: "Driver Assigned",
+      picked_up: "Picked Up",
+      in_transit: "In Transit",
+      en_route: "In Transit",
+      delayed: "Running Late",
+      delivered: "Delivered",
+      completed: "Completed",
+      cancelled: "Cancelled",
+      canceled: "Cancelled",
+      rejected: "Cancelled"
+    };
+
+    return labels[status] || friendlyJobStatus(job);
+  }
+
+  function firstPresent(...values) {
+    return values.find(value =>
+      String(value || "").trim()
+    ) || "";
+  }
+
+  function jobInvoices(job) {
+    return invoices.filter(invoice =>
+      String(invoice.job_id || "") === String(job.id || "")
+    );
+  }
+
+  function formatNotes(job) {
+    const notes = firstPresent(
+      job.special_instructions,
+      job.customer_notes,
+      job.billing_notes
+    );
+
+    return notes || "No customer-facing notes are available yet.";
+  }
+
+  function trackingJobLabel(job) {
+    return job.job_number || "Delivery Request";
+  }
+
+  function openTrackingModal(jobId) {
+    const job = jobs.find(entry =>
+      String(entry.id) === String(jobId)
+    );
+
+    if (!job) {
+      setPortalMessage(
+        "That delivery could not be found.",
+        "error"
+      );
+
+      return;
+    }
+
+    const relatedInvoices =
+      jobInvoices(job);
+
+    const invoice = relatedInvoices[0] || null;
+    const paid = invoice ? isPaid(invoice) : false;
+    const overdue = invoice ? isOverdue(invoice) : false;
+
+    trackingJobId = job.id;
+
+    trackingModalTitle.textContent =
+      trackingJobLabel(job);
+    trackingJobNumber.textContent =
+      trackingJobLabel(job);
+    trackingJobStatus.textContent =
+      safeJobStatus(job);
+    trackingScheduledDate.textContent =
+      formatDate(job.scheduled_date || job.created_at);
+    trackingEta.textContent =
+      job.estimated_delivery_time
+        ? formatTime(job.estimated_delivery_time)
+        : "Time pending";
+    trackingRoute.innerHTML = `
+      ${escapeHtml(job.pickup_address || "Pickup pending")}
+      <br>
+      <strong>to</strong>
+      <br>
+      ${escapeHtml(job.delivery_address || "Delivery pending")}
+    `;
+    trackingNotes.textContent =
+      formatNotes(job);
+
+    if (invoice) {
+      trackingInvoiceStatus.textContent =
+        paid ? "Paid" : overdue ? "Overdue" : "Unpaid";
+      trackingPaymentDue.textContent =
+        money(invoice.amount || 0);
+      trackingInvoiceButton.disabled = false;
+      trackingInvoiceButton.textContent =
+        "View Invoice";
+    } else {
+      trackingInvoiceStatus.textContent =
+        "No invoice yet";
+      trackingPaymentDue.textContent =
+        "Not billed";
+      trackingInvoiceButton.disabled = true;
+      trackingInvoiceButton.textContent =
+        "Invoice Not Available";
+    }
+
+    trackingModalOverlay.classList.remove("hidden");
+    document.body.classList.add("portal-menu-open");
+  }
+
+  function closeTrackingModal() {
+    trackingJobId = null;
+    trackingModalOverlay.classList.add("hidden");
+    document.body.classList.remove("portal-menu-open");
+  }
+
   function routeText(job) {
     return `
       ${escapeHtml(
@@ -419,6 +586,28 @@
               )}
             </span>
           </div>
+        </div>
+
+        <div class="portal-card-actions">
+          <button
+            class="portal-card-button primary"
+            type="button"
+            data-track-job="${escapeHtml(
+              job.id
+            )}"
+          >
+            Track Delivery
+          </button>
+
+          <button
+            class="portal-card-button"
+            type="button"
+            data-open-invoices="${escapeHtml(
+              job.id
+            )}"
+          >
+            View Invoice
+          </button>
         </div>
       </article>
     `;
@@ -598,6 +787,30 @@
       </article>
     `;
   }
+
+    function openInvoiceForJob(jobId) {
+      const job = jobs.find(entry =>
+        String(entry.id) === String(jobId)
+      );
+
+      if (!job) {
+        showView("invoices");
+        return;
+      }
+
+      showView("invoices");
+
+      const invoice = invoices.find(entry =>
+        String(entry.job_id || "") === String(job.id || "")
+      );
+
+      if (invoice) {
+        setPortalMessage(
+          `Invoice ${invoice.invoice_number || ""} is available below for ${trackingJobLabel(job)}.`,
+          "success"
+        );
+      }
+    }
 
   function locationCard(location) {
     const tags = [];
@@ -1290,6 +1503,67 @@
         }
       }
     );
+
+  document
+    .getElementById(
+      "activeDeliveriesList"
+    )
+    .addEventListener(
+      "click",
+      function (event) {
+        const trackButton =
+          event.target.closest(
+            "[data-track-job]"
+          );
+
+        if (trackButton) {
+          openTrackingModal(
+            trackButton.getAttribute("data-track-job")
+          );
+          return;
+        }
+
+        const invoiceButton =
+          event.target.closest(
+            "[data-open-invoices]"
+          );
+
+        if (invoiceButton) {
+          openInvoiceForJob(
+            invoiceButton.getAttribute("data-open-invoices")
+          );
+        }
+      }
+    );
+
+  closeTrackingModalButton.addEventListener(
+    "click",
+    closeTrackingModal
+  );
+
+  trackingCloseButton.addEventListener(
+    "click",
+    closeTrackingModal
+  );
+
+  trackingModalOverlay.addEventListener(
+    "click",
+    function (event) {
+      if (event.target === trackingModalOverlay) {
+        closeTrackingModal();
+      }
+    }
+  );
+
+  trackingInvoiceButton.addEventListener(
+    "click",
+    function () {
+      if (trackingJobId) {
+        closeTrackingModal();
+        openInvoiceForJob(trackingJobId);
+      }
+    }
+  );
 
   document
     .getElementById(
