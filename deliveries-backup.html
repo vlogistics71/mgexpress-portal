@@ -1,0 +1,394 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Deliveries | MG Express Dispatch</title>
+  <script defer src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <link rel="stylesheet" href="/assets/css/dispatch-status-workspace.css">
+</head>
+<body data-workspace="deliveries_center">
+  <header class="topbar">
+    <div class="topbar-inner">
+      <div class="brand">MG <span>EXPRESS</span> DISPATCH</div>
+      <div class="staff-email" id="staffEmail"></div>
+    </div>
+  </header>
+
+  <main class="container deliveries-center">
+    <section id="commandCenterDiagnostics" style="display:none;margin:0 0 12px 0;padding:10px 12px;border:1px solid #f0b3b3;border-left:4px solid #b42318;background:#fff1f1;color:#7a1919;border-radius:10px;font:12px/1.45 'Segoe UI',Arial,sans-serif;white-space:pre-wrap;"></section>
+
+    <section class="heading deliveries-heading">
+      <div class="heading-top deliveries-heading-top">
+        <div class="deliveries-heading-copy">
+          <a class="back-link deliveries-back-link" href="/dashboard.html">← Dashboard</a>
+          <div class="eyebrow">Dispatch Workspace</div>
+          <h1 class="page-title" id="pageTitle">Deliveries</h1>
+          <div class="page-subtitle" id="pageSubtitle">Single command center for dispatch.</div>
+        </div>
+        <button class="action-btn primary" id="newDeliveryButton" type="button">+ New Delivery</button>
+      </div>
+
+      <div class="delivery-tabs" id="deliveryTabs">
+        <button class="delivery-tab active" type="button" data-delivery-tab="pending">
+          <span>Pending</span><span class="tab-count">(0)</span>
+        </button>
+        <button class="delivery-tab" type="button" data-delivery-tab="ready">
+          <span>Ready</span><span class="tab-count">(0)</span>
+        </button>
+        <button class="delivery-tab" type="button" data-delivery-tab="assigned">
+          <span>Assigned</span><span class="tab-count">(0)</span>
+        </button>
+        <button class="delivery-tab" type="button" data-delivery-tab="rejected">
+          <span>Rejected</span><span class="tab-count">(0)</span>
+        </button>
+        <button class="delivery-tab" type="button" data-delivery-tab="completed">
+          <span>Completed</span><span class="tab-count">(0)</span>
+        </button>
+        <button class="delivery-tab" type="button" data-delivery-tab="search">
+          <span>Search</span><span class="tab-count">(0)</span>
+        </button>
+      </div>
+    </section>
+
+    <section class="panel command-panel">
+      <div class="panel-head command-panel-head">
+        <div class="command-controls" id="commandControls">
+          <div class="command-chips" id="commandChips">
+            <button class="command-chip active" type="button" data-delivery-category="all">All</button>
+            <button class="command-chip" type="button" data-delivery-category="medical">Medical</button>
+            <button class="command-chip" type="button" data-delivery-category="legal">Legal</button>
+            <button class="command-chip" type="button" data-delivery-category="general">General</button>
+            <button class="command-chip" type="button" data-delivery-category="pallet">Pallet</button>
+            <button class="command-chip" type="button" data-delivery-category="special">Special</button>
+            <button class="command-chip" type="button" data-delivery-category="return_jobs">Return Jobs</button>
+            <button class="command-chip" type="button" data-delivery-category="stat">STAT</button>
+          </div>
+
+          <div class="command-sort-wrap">
+            <label for="sortSelect">Sort</label>
+            <select id="sortSelect">
+              <option value="newest">Newest</option>
+              <option value="oldest">Oldest</option>
+              <option value="pickup_time">Pickup Time</option>
+              <option value="delivery_time">Delivery Time</option>
+              <option value="customer">Customer</option>
+              <option value="company">Company</option>
+            </select>
+          </div>
+
+          <div class="command-sort-wrap">
+            <label for="refreshBtn">&nbsp;</label>
+            <button class="refresh-btn" id="refreshBtn" type="button">Refresh</button>
+          </div>
+        </div>
+
+        <div class="search-panel hidden" id="searchPanel">
+          <div class="field full">
+            <label for="searchInput">Search deliveries</label>
+            <input id="searchInput" type="search" placeholder="Job number, customer, company, pickup, delivery, phone, reference number">
+          </div>
+          <div class="search-hint">
+            Search by Job Number, Customer, Company, Pickup, Delivery, Phone, Reference Number.
+          </div>
+        </div>
+      </div>
+
+      <div class="panel-meta">
+        <span id="workspaceSectionLabel">Pending Deliveries</span> • <span id="visibleCount">0 visible</span>
+      </div>
+
+      <div class="rows delivery-list" id="deliveryList">
+        <div class="delivery-empty">
+          <div class="delivery-empty-title">Loading deliveries...</div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <div class="toast-wrap" id="toastWrap"></div>
+
+  <div class="modal-backdrop delivery-details-modal" id="deliveryDetailsModal">
+    <section class="modal-panel delivery-details-panel" role="dialog" aria-modal="true" aria-labelledby="deliveryDetailsTitle">
+      <div class="modal-head delivery-details-head">
+        <div>
+          <div class="eyebrow">Delivery Command Center</div>
+          <h3 class="modal-title" id="deliveryDetailsTitle">Delivery Details</h3>
+          <div class="page-subtitle" id="deliveryDetailsSubtitle"></div>
+        </div>
+        <button class="icon-btn" type="button" data-close-delivery-details>×</button>
+      </div>
+      <div class="modal-body delivery-details-body" id="deliveryDetailsBody"></div>
+    </section>
+  </div>
+
+  <div class="modal-backdrop" id="jobModal">
+    <section class="modal-panel command-create-modal" role="dialog" aria-modal="true" aria-labelledby="jobModalTitle">
+      <div class="modal-head">
+        <h3 class="modal-title" id="jobModalTitle">New Delivery</h3>
+        <button class="icon-btn" type="button" data-close-modal="jobModal">×</button>
+      </div>
+      <div class="modal-body">
+        <form id="jobForm" class="job-form">
+          <input type="hidden" name="record_id" id="jobRecordId">
+          <input type="hidden" name="customer_account_id" id="jobCustomerAccountId">
+
+          <section class="job-section">
+            <h4 class="job-section-title">Customer</h4>
+            <div class="job-subdivider"></div>
+            <div class="field full">
+              <label>Find Recurring Customer</label>
+              <input id="customerLookupInput" type="search" placeholder="Search recurring customers by name, company, phone, email">
+              <div class="hint">Only recurring customers are listed. If none match, continue as one-time customer.</div>
+              <div class="lookup-results" id="customerLookupResults"></div>
+            </div>
+            <div class="form-grid">
+              <div class="field"><label>Customer Name</label><input name="customer_name" required></div>
+              <div class="field"><label>Phone</label><input name="customer_phone" type="tel"></div>
+              <div class="field full"><label>Email</label><input name="customer_email" type="email"></div>
+            </div>
+          </section>
+
+          <section class="job-section">
+            <h4 class="job-section-title">Pickup</h4>
+            <div class="job-subdivider"></div>
+            <div class="form-grid">
+              <div class="field full"><label>Pickup Address</label><input name="pickup_address" required></div>
+              <div class="field full"><label>Pickup Suite / Floor</label><input name="pickup_suite_floor"></div>
+              <div class="field"><label>Pickup ZIP Code</label><input name="pickup_zip"></div>
+              <div class="field"><label>Contact Name</label><input name="pickup_contact_name"></div>
+              <div class="field"><label>Contact Phone</label><input name="pickup_contact_phone" type="tel"></div>
+              <div class="field full"><label>Pickup Instructions</label><textarea name="pickup_instructions"></textarea></div>
+            </div>
+          </section>
+
+          <section class="job-section">
+            <h4 class="job-section-title">Delivery</h4>
+            <div class="job-subdivider"></div>
+            <div class="form-grid">
+              <div class="field full"><label>Delivery Address</label><input name="delivery_address" required></div>
+              <div class="field full"><label>Delivery Suite / Floor</label><input name="delivery_suite_floor"></div>
+              <div class="field"><label>Delivery ZIP Code</label><input name="delivery_zip"></div>
+              <div class="field"><label>Contact Name</label><input name="delivery_contact_name"></div>
+              <div class="field"><label>Contact Phone</label><input name="delivery_contact_phone" type="tel"></div>
+              <div class="field full"><label>Delivery Instructions</label><textarea name="delivery_instructions"></textarea></div>
+            </div>
+          </section>
+
+          <section class="job-section">
+            <h4 class="job-section-title">Package</h4>
+            <div class="job-subdivider"></div>
+            <div class="form-grid">
+              <div class="field"><label>Vehicle Type</label>
+                <select name="vehicle_type">
+                  <option value="">Choose vehicle</option>
+                  <option value="Car">Car</option>
+                  <option value="SUV">SUV</option>
+                  <option value="Cargo Van">Cargo Van</option>
+                  <option value="Sprinter Van">Sprinter Van</option>
+                  <option value="Box Truck">Box Truck</option>
+                </select>
+              </div>
+
+              <div class="field"><label>Delivery Speed</label>
+                <select name="delivery_speed">
+                  <option value="">Choose speed</option>
+                  <option value="2_hr">2 Hour</option>
+                  <option value="3_hr">3 Hour</option>
+                  <option value="4_hr">4 Hour</option>
+                  <option value="5_hr">5 Hour</option>
+                  <option value="6_hr">6 Hour</option>
+                  <option value="next_day">Next Day</option>
+                </select>
+              </div>
+
+              <div class="field"><label>Job Category</label>
+                <select name="job_category">
+                  <option value="general">General</option>
+                  <option value="medical">Medical</option>
+                  <option value="pallet">Pallet</option>
+                  <option value="legal">Legal</option>
+                  <option value="special">Special</option>
+                </select>
+              </div>
+
+              <div class="field"><label>Delivery Type</label>
+                <select name="delivery_type">
+                  <option value="">Choose delivery type</option>
+                  <option value="business_to_business">Business to Business</option>
+                  <option value="business_to_residential">Business to Residential</option>
+                  <option value="residential_to_business">Residential to Business</option>
+                  <option value="residential_to_residential">Residential to Residential</option>
+                </select>
+              </div>
+
+              <div class="field"><label>Service Level</label>
+                <select name="service_level">
+                  <option value="">Choose service level</option>
+                  <option value="standard">Standard</option>
+                  <option value="priority">Priority</option>
+                  <option value="stat">STAT</option>
+                  <option value="scheduled">Scheduled</option>
+                  <option value="on_demand">On Demand</option>
+                </select>
+              </div>
+
+              <div class="field"><label>Return Service</label>
+                <select name="return_required" id="returnRequiredSelect">
+                  <option value="false">No Return</option>
+                  <option value="true">Return Required</option>
+                </select>
+              </div>
+
+              <div class="field full"><label>Package Description</label><input name="package_type"></div>
+              <div class="field"><label>Weight (optional)</label><input name="package_weight"></div>
+              <div class="field"><label>Reference Number (optional)</label><input name="reference_number"></div>
+            </div>
+
+            <div class="form-grid return-details" id="returnDetailsSection" hidden>
+              <div class="field"><label>Return Location</label>
+                <select name="return_location_type" id="returnLocationTypeSelect">
+                  <option value="same_as_pickup">Same as Original Pickup</option>
+                  <option value="different_location">Different Return Location</option>
+                </select>
+              </div>
+
+              <div class="field"><label>Return Timing</label>
+                <select name="return_timing">
+                  <option value="immediate">Immediately After Delivery</option>
+                  <option value="later_today">Later Today</option>
+                  <option value="another_day">Another Day</option>
+                </select>
+              </div>
+
+              <div class="field full return-readback" id="returnPickupReadback">Return destination will use the original pickup address.</div>
+
+              <div class="field full return-different-field" data-return-different><label>Return Address</label><input name="return_address"></div>
+              <div class="field return-different-field" data-return-different><label>Return Suite / Floor</label><input name="return_suite_floor"></div>
+              <div class="field return-different-field" data-return-different><label>Return ZIP</label><input name="return_zip"></div>
+            </div>
+          </section>
+
+          <section class="job-section">
+            <h4 class="job-section-title">Pricing</h4>
+            <div class="job-subdivider"></div>
+            <div class="form-grid">
+              <div class="field"><label>Customer Price</label><input name="approved_price" type="number" min="0" step="0.01" placeholder="0.00"></div>
+              <div class="field"><label>Estimated Miles (Optional)</label><input name="estimated_miles" type="number" min="0" step="0.01" placeholder="25.4"></div>
+              <div class="field full"><label>Internal Notes</label><textarea name="special_instructions"></textarea></div>
+            </div>
+          </section>
+
+          <section class="job-section">
+            <h4 class="job-section-title">Review</h4>
+            <div class="job-subdivider"></div>
+            <div class="review-list" id="newDeliveryReviewList"></div>
+            <div class="hint">Driver assignment and dispatch status are handled after approval/payment.</div>
+          </section>
+
+          <div class="job-submit-wrap">
+            <button class="btn" type="button" data-close-modal="jobModal">Cancel</button>
+            <button class="job-submit-btn" id="saveJobBtn" type="submit">Create Delivery</button>
+          </div>
+        </form>
+      </div>
+    </section>
+  </div>
+
+  <div class="modal-backdrop assign-modal-backdrop" id="assignModal">
+    <section class="assign-panel" role="dialog" aria-modal="true" aria-labelledby="assignTitle">
+      <div class="assign-panel-head">
+        <div>
+          <h3 class="assign-panel-title" id="assignTitle">Assign Driver</h3>
+          <div class="assign-panel-sub">Smart assignment with recommendation and compact driver cards</div>
+        </div>
+        <button class="icon-btn" type="button" data-close-modal="assignModal">×</button>
+      </div>
+      <div class="assign-panel-body">
+        <section class="assign-job-card">
+          <div class="assign-section-label">Delivery</div>
+          <div class="assign-job-grid" id="assignJobSummary"></div>
+        </section>
+
+        <section class="assign-recommended" id="assignRecommendedCard"></section>
+
+        <section class="assign-list">
+          <div class="assign-controls">
+            <div class="field">
+              <label>Search Driver</label>
+              <input id="assignDriverSearch" type="search" placeholder="Search driver name or area">
+            </div>
+            <div class="field">
+              <label>Filter</label>
+              <select id="assignDriverFilter">
+                <option value="all">All</option>
+                <option value="available">Available</option>
+                <option value="busy">Busy</option>
+                <option value="off_duty">Off Duty</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="assign-list-head">
+            <h4 class="assign-list-title">Other Available Drivers</h4>
+          </div>
+          <div class="assign-driver-list" id="assignDriverCards"></div>
+        </section>
+
+        <section class="assign-future">
+          <div class="assign-section-label">Automation Queue</div>
+          <ul>
+            <li>Fuel savings</li>
+            <li>Route grouping</li>
+            <li>Nearby pickups</li>
+            <li>Traffic impact</li>
+          </ul>
+        </section>
+
+        <form id="assignForm" class="assign-hidden-form">
+          <input type="hidden" id="assignJobId">
+          <input type="hidden" id="assignDriverSelect">
+          <input type="hidden" id="assignDriverPay">
+          <textarea id="assignNote"></textarea>
+          <button class="btn primary" id="assignSubmitBtn" type="submit">Assign Driver</button>
+        </form>
+      </div>
+    </section>
+  </div>
+
+  <div class="modal-backdrop" id="assignConfirmModal">
+    <section class="modal-panel" role="dialog" aria-modal="true" aria-labelledby="assignConfirmTitle">
+      <div class="modal-head">
+        <h3 class="modal-title" id="assignConfirmTitle">Confirm Assignment</h3>
+        <button class="icon-btn" type="button" data-close-modal="assignConfirmModal">×</button>
+      </div>
+      <div class="modal-body">
+        <p id="assignConfirmText">Assign this delivery?</p>
+        <div class="form-actions">
+          <button class="btn" type="button" data-close-modal="assignConfirmModal">Cancel</button>
+          <button class="btn primary" id="assignConfirmBtn" type="button">Confirm Assignment</button>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <div class="modal-backdrop" id="rejectedReturnConfirmModal">
+    <section class="modal-panel" role="dialog" aria-modal="true" aria-labelledby="rejectedReturnConfirmTitle">
+      <div class="modal-head">
+        <h3 class="modal-title" id="rejectedReturnConfirmTitle">Return to Ready</h3>
+        <button class="icon-btn" type="button" data-close-modal="rejectedReturnConfirmModal">×</button>
+      </div>
+      <div class="modal-body">
+        <p id="rejectedReturnConfirmText">Return this rejected job to Ready?</p>
+        <div class="form-actions">
+          <button class="btn" type="button" data-close-modal="rejectedReturnConfirmModal">Cancel</button>
+          <button class="btn primary" id="rejectedReturnConfirmBtn" type="button">Return to Ready</button>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <script defer src="/assets/js/dispatch-status-workspace.js"></script>
+  <script defer src="/assets/js/delivery-command-center.js"></script>
+</body>
+</html>
