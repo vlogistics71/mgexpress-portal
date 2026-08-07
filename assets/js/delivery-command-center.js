@@ -341,12 +341,54 @@
     document.title = "Deliveries | MG Express Dispatch";
   }
 
-  function showToast(message, type) {
-    if (typeof dispatch.showToast === "function") {
-      dispatch.showToast(message, type);
+  function fallbackToast(message, type = "info") {
+    const normalizedType = type === "error" ? "error" : (type === "success" ? "success" : "info");
+    console[normalizedType === "error" ? "error" : "log"](message);
+
+    const host = document.getElementById("toastWrap") || document.body;
+    if (!host || !document.body) {
       return;
     }
-    console[type === "error" ? "error" : "log"](message);
+
+    const toast = document.createElement("div");
+    toast.className = `command-center-toast command-center-toast-${normalizedType}`;
+    toast.textContent = String(message || "");
+    toast.setAttribute("role", "status");
+    toast.style.position = "fixed";
+    toast.style.right = "16px";
+    toast.style.bottom = "16px";
+    toast.style.zIndex = "9999";
+    toast.style.maxWidth = "320px";
+    toast.style.padding = "10px 12px";
+    toast.style.borderRadius = "10px";
+    toast.style.color = "#fff";
+    toast.style.background = normalizedType === "error" ? "#9b2929" : (normalizedType === "success" ? "#0a7a57" : "#374151");
+    toast.style.boxShadow = "0 8px 22px rgba(0,0,0,.2)";
+
+    host.appendChild(toast);
+    window.setTimeout(() => {
+      toast.remove();
+    }, 4000);
+  }
+
+  function resolveShowToast() {
+    const candidate =
+      dispatch?.showToast ||
+      window.MG_DISPATCH_WORKSPACE?.showToast ||
+      window.MGDispatchHelpers?.showToast ||
+      window.DispatchWorkspace?.showToast ||
+      (typeof window.showToast === "function" ? window.showToast : null);
+
+    if (typeof candidate === "function") {
+      return candidate;
+    }
+
+    return fallbackToast;
+  }
+
+  function showToast(message, type) {
+    const showToastSafe = resolveShowToast();
+    showToastSafe(message, type);
   }
 
   function setActiveTab(tab, updateUrl = true) {
