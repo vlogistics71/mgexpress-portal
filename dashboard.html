@@ -10,38 +10,25 @@
     * { box-sizing: border-box; }
 
     :root {
+      --dark-green: #064f3b;
       --green: #087455;
-      --green-deep: #064f3b;
-      --green-soft: #eaf7f1;
-      --ink: #15211c;
-      --muted: #6d7a74;
-      --line: #dfe7e2;
-      --surface: #ffffff;
-      --surface-soft: #f8fbf9;
-      --shadow: 0 16px 34px rgba(13, 32, 23, .08);
-      --shadow-soft: 0 10px 20px rgba(13, 32, 23, .05);
-      --radius-xl: 24px;
-      --radius-lg: 20px;
-      --radius-md: 16px;
-      --medical: #c63d32;
-      --legal: #c59a00;
-      --pallet: #8b5a2b;
-      --special: #d97706;
-      --general: #9aa5a0;
-      --good-bg: #e9f7ef;
-      --warn-bg: #fff5da;
-      --bad-bg: #fdecec;
+      --light-green: #e7f5ef;
+      --coral: #ff665c;
+      --background: #f3f8f6;
+      --white: #ffffff;
+      --ink: #17221e;
+      --muted: #68756f;
+      --line: #dfe8e4;
+      --danger: #a32d2d;
     }
 
-    html { background: #eef4f0; }
+    html { background: var(--background); }
 
     body {
       margin: 0;
-      font-family: "SF Pro Text", "SF Pro Display", "Helvetica Neue", Helvetica, Arial, sans-serif;
+      font-family: Arial, Helvetica, sans-serif;
+      background: var(--background);
       color: var(--ink);
-      background:
-        radial-gradient(circle at top left, rgba(218, 241, 232, .9), rgba(218, 241, 232, 0) 28%),
-        linear-gradient(180deg, #f7fbf9 0%, #eef4f0 100%);
     }
 
     button,
@@ -51,12 +38,15 @@
       font: inherit;
     }
 
+    button,
+    a { -webkit-tap-highlight-color: transparent; }
+
     button { appearance: none; }
 
     .hidden { display: none !important; }
 
     .container {
-      width: min(1160px, calc(100% - 24px));
+      width: min(1050px, calc(100% - 24px));
       margin: 0 auto;
     }
 
@@ -64,14 +54,13 @@
       position: sticky;
       top: 0;
       z-index: 40;
-      background: linear-gradient(180deg, #0a6c50 0%, #07533d 100%);
+      background: var(--dark-green);
       color: #fff;
       box-shadow: 0 12px 30px rgba(7, 67, 49, .22);
     }
 
     .topbar .container {
-      padding-top: 14px;
-      padding-bottom: 16px;
+      padding: 18px 0 16px;
     }
 
     .topbar-inner {
@@ -79,6 +68,7 @@
       align-items: center;
       justify-content: space-between;
       gap: 12px;
+      flex-wrap: wrap;
     }
 
     .topbar-main {
@@ -88,7 +78,7 @@
 
     .brand {
       font-size: clamp(24px, 4.8vw, 36px);
-      font-weight: 950;
+      font-weight: 900;
       letter-spacing: .12em;
       line-height: .95;
       text-transform: uppercase;
@@ -120,7 +110,6 @@
       border-radius: 14px;
       cursor: pointer;
       font-weight: 800;
-      transition: transform .18s ease, box-shadow .18s ease, background .18s ease, color .18s ease, border-color .18s ease;
     }
 
     .action-btn,
@@ -131,99 +120,88 @@
     }
 
     .action-btn {
-      background: linear-gradient(180deg, #12a06e 0%, #0a7a57 100%);
-      color: #fff;
-      box-shadow: 0 12px 24px rgba(10, 122, 87, .24);
-    }
-
-    .action-btn:hover,
-    .mini-btn:hover,
-    .icon-btn:hover,
-    .ops-card:hover,
-    .summary-link:hover,
-    .compact-card:hover,
-    .status-card:hover {
-      transform: translateY(-2px);
+      background: #fff;
+      color: var(--dark-green);
     }
 
     .mini-btn {
-      background: rgba(255, 255, 255, .12);
+      background: rgba(255, 255, 255, .14);
       color: #fff;
       border: 1px solid rgba(255, 255, 255, .16);
-      box-shadow: inset 0 1px 0 rgba(255, 255, 255, .08);
     }
 
-    .action-btn:focus-visible,
-    .mini-btn:focus-visible,
-    .icon-btn:focus-visible,
-    .ops-card:focus-visible,
-    .summary-link:focus-visible,
-    .sheet-link:focus-visible,
-    .card-action:focus-visible {
-      outline: 2px solid rgba(22, 176, 128, .9);
-      outline-offset: 2px;
-    }
-
-    .hero-shell {
-      margin-top: 14px;
-      padding: 18px;
-      border-radius: 26px;
-      border: 1px solid rgba(255, 255, 255, .14);
-      background: linear-gradient(135deg, rgba(255, 255, 255, .09), rgba(255, 255, 255, .04));
-      box-shadow: inset 0 1px 0 rgba(255, 255, 255, .08);
-      display: grid;
-      gap: 12px;
-    }
-
-    .hero-shell-inner {
-      display: grid;
-      gap: 12px;
-      grid-template-columns: minmax(0, 1.1fr) minmax(280px, .9fr);
-      align-items: stretch;
+    .page-heading,
+    .panel-heading,
+    .jobs-heading {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      gap: 14px;
+      margin-bottom: 20px;
     }
 
     .eyebrow {
-      color: rgba(255, 255, 255, .76);
-      text-transform: uppercase;
-      letter-spacing: .22em;
-      font-size: 11px;
-      font-weight: 800;
+      color: var(--muted);
+      font-size: 18px;
+      margin-bottom: 5px;
+      text-transform: none;
+      letter-spacing: 0;
+      font-weight: 400;
     }
 
-    .hero-title {
-      margin: 8px 0 6px;
-      color: #fff;
-      font-size: clamp(30px, 6vw, 44px);
-      line-height: 1.02;
-      letter-spacing: -.03em;
-      font-weight: 900;
+    h1 {
+      margin: 0;
+      font-size: 44px;
+      line-height: 1.05;
     }
 
-    .hero-date {
-      color: rgba(255, 255, 255, .82);
-      font-size: 13px;
+    h2 {
+      margin: 0;
+      font-size: 29px;
+    }
+
+    .section-copy,
+    .card-meta,
+    .card-caption,
+    .activity-meta,
+    .sheet-meta,
+    .hint,
+    .modal-subtitle {
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.35;
       font-weight: 700;
     }
 
-    .hero-subtitle {
-      margin: 10px 0 0;
-      max-width: 56ch;
-      color: rgba(255, 255, 255, .78);
-      font-size: 13px;
-      line-height: 1.45;
-      font-weight: 600;
+    .status-card,
+    .ops-card,
+    .summary-link,
+    .compact-card,
+    .ai-card,
+    .panel {
+      background: #fff;
+      border: 1px solid var(--line);
+      border-radius: 20px;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, .04);
     }
 
     .status-card {
-      background: rgba(255, 255, 255, .97);
-      border-radius: 22px;
-      border: 1px solid rgba(255, 255, 255, .45);
-      box-shadow: var(--shadow);
-      padding: 16px;
+      position: relative;
+      min-width: min(100%, 320px);
+      padding: 16px 16px 16px 20px;
       display: grid;
       gap: 10px;
       align-content: center;
-      min-height: 132px;
+    }
+
+    .status-card::before,
+    .ops-card::before {
+      content: "";
+      position: absolute;
+      inset: 0 auto 0 0;
+      width: 4px;
+      border-radius: inherit;
+      background: var(--green);
     }
 
     .status-line {
@@ -241,107 +219,27 @@
     }
 
     main.container {
-      padding-top: 14px;
-      padding-bottom: 22px;
+      padding: 22px 0 60px;
       display: grid;
-      gap: 12px;
-    }
-
-    .section-head {
-      display: flex;
-      justify-content: space-between;
-      align-items: end;
-      gap: 10px;
-      margin-bottom: 10px;
-    }
-
-    .section-title {
-      margin: 0;
-      font-size: 18px;
-      line-height: 1.08;
-      font-weight: 900;
-      color: var(--ink);
-      letter-spacing: -.02em;
-    }
-
-    .section-copy {
-      margin-top: 3px;
-      color: var(--muted);
-      font-size: 12px;
-      line-height: 1.35;
-      font-weight: 700;
+      gap: 22px;
     }
 
     .ops-grid {
       display: grid;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: 10px;
-      grid-auto-rows: minmax(154px, 1fr);
-    }
-
-    .ops-card,
-    .attention-card,
-    .ai-card,
-    .summary-link,
-    .compact-card {
-      position: relative;
-      border: 1px solid var(--line);
-      border-radius: var(--radius-lg);
-      background: var(--surface);
-      box-shadow: var(--shadow-soft);
-      transition: transform .18s ease, box-shadow .18s ease, border-color .18s ease;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 13px;
     }
 
     .ops-card {
+      position: relative;
       width: 100%;
-      padding: 14px 14px 14px 18px;
+      padding: 20px;
       text-align: left;
       cursor: pointer;
-      min-height: 154px;
+      min-height: 145px;
       display: grid;
-      gap: 8px;
+      gap: 12px;
       align-content: space-between;
-      overflow: hidden;
-    }
-
-    .ops-card::before,
-    .attention-card::before,
-    .status-card::before {
-      content: "";
-      position: absolute;
-      inset: 0 auto 0 0;
-      width: 4px;
-      border-radius: inherit;
-      background: var(--general);
-    }
-
-    .ops-card[data-accent="medical"]::before,
-    .attention-card[data-accent="medical"]::before,
-    .status-card[data-accent="medical"]::before { background: var(--medical); }
-
-    .ops-card[data-accent="legal"]::before,
-    .attention-card[data-accent="legal"]::before,
-    .status-card[data-accent="legal"]::before { background: var(--legal); }
-
-    .ops-card[data-accent="pallet"]::before,
-    .attention-card[data-accent="pallet"]::before,
-    .status-card[data-accent="pallet"]::before { background: var(--pallet); }
-
-    .ops-card[data-accent="special"]::before,
-    .attention-card[data-accent="special"]::before,
-    .status-card[data-accent="special"]::before { background: var(--special); }
-
-    .ops-card[data-accent="general"]::before,
-    .attention-card[data-accent="general"]::before,
-    .status-card[data-accent="general"]::before { background: var(--general); }
-
-    .ops-card:hover,
-    .attention-card:hover,
-    .ai-card:hover,
-    .summary-link:hover,
-    .compact-card:hover {
-      border-color: #cfdcd6;
-      box-shadow: 0 18px 34px rgba(13, 32, 23, .1);
     }
 
     .card-top {
@@ -355,12 +253,12 @@
       width: 36px;
       height: 36px;
       border-radius: 13px;
-      background: var(--surface-soft);
+      background: var(--light-green);
       display: grid;
       place-items: center;
       font-size: 16px;
       font-weight: 900;
-      color: var(--ink);
+      color: var(--dark-green);
       flex: 0 0 auto;
     }
 
@@ -380,50 +278,47 @@
       width: 8px;
       height: 8px;
       border-radius: 999px;
-      background: var(--general);
+      background: var(--green);
       flex: 0 0 8px;
     }
 
-    .category-accent.medical { background: var(--medical); }
-    .category-accent.legal { background: var(--legal); }
-    .category-accent.pallet { background: var(--pallet); }
-    .category-accent.special { background: var(--special); }
-    .category-accent.general { background: var(--general); }
+    .category-accent.medical { background: #c63d32; }
+    .category-accent.legal { background: #c59a00; }
+    .category-accent.pallet { background: #8b5a2b; }
+    .category-accent.special { background: #d97706; }
+    .category-accent.general { background: var(--green); }
 
     .card-value {
       font-size: clamp(32px, 6vw, 44px);
       line-height: .95;
-      font-weight: 950;
+      font-weight: 900;
       letter-spacing: -.04em;
-      color: var(--ink);
+      color: var(--green);
     }
 
-    .card-meta,
-    .card-caption,
-    .activity-meta,
-    .sheet-meta,
-    .hint {
-      color: var(--muted);
-      font-size: 12px;
-      line-height: 1.35;
-      font-weight: 700;
-    }
-
-    .summary-grid {
-      display: grid;
-      gap: 12px;
-    }
+    .ops-card[data-accent="medical"]::before,
+    .status-card[data-accent="medical"]::before { background: #c63d32; }
+    .ops-card[data-accent="legal"]::before,
+    .status-card[data-accent="legal"]::before { background: #c59a00; }
+    .ops-card[data-accent="pallet"]::before,
+    .status-card[data-accent="pallet"]::before { background: #8b5a2b; }
+    .ops-card[data-accent="special"]::before,
+    .status-card[data-accent="special"]::before { background: #d97706; }
+    .ops-card[data-accent="general"]::before,
+    .status-card[data-accent="general"]::before { background: var(--green); }
 
     .support-grid {
       display: grid;
-      gap: 12px;
+      gap: 13px;
       grid-template-columns: repeat(2, minmax(0, 1fr));
       align-items: start;
     }
 
+    .compact-card,
+    .ai-card,
     .summary-link,
-    .compact-card {
-      padding: 14px;
+    .panel {
+      padding: 20px;
     }
 
     .summary-link {
@@ -434,47 +329,37 @@
       gap: 10px;
     }
 
-    .snapshot-grid {
+    .snapshot-grid,
+    .driver-status-grid,
+    .revenue-grid {
       display: grid;
-      grid-template-columns: repeat(3, minmax(0, 1fr));
       gap: 8px;
     }
 
+    .snapshot-grid,
     .driver-status-grid {
-      display: grid;
       grid-template-columns: repeat(3, minmax(0, 1fr));
-      gap: 8px;
     }
 
-    .snapshot-item {
+    .revenue-grid {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    .snapshot-item,
+    .driver-status-item,
+    .revenue-item {
       min-height: 68px;
       padding: 10px;
-      border-radius: 16px;
-      background: var(--surface-soft);
+      border-radius: 13px;
+      background: #f7faf9;
       display: grid;
       gap: 6px;
       align-content: space-between;
     }
 
-    .snapshot-item strong {
-      font-size: 10px;
-      color: var(--muted);
-      font-weight: 900;
-      letter-spacing: .12em;
-      text-transform: uppercase;
-    }
-
-    .driver-status-item {
-      min-height: 68px;
-      padding: 10px;
-      border-radius: 16px;
-      background: var(--surface-soft);
-      display: grid;
-      gap: 6px;
-      align-content: space-between;
-    }
-
-    .driver-status-item strong {
+    .snapshot-item strong,
+    .driver-status-item strong,
+    .revenue-item strong {
       font-size: 10px;
       color: var(--muted);
       font-weight: 900;
@@ -483,41 +368,12 @@
     }
 
     .snapshot-number,
-    .driver-status-number {
-      font-size: 22px;
-      line-height: 1;
-      font-weight: 950;
-      color: var(--ink);
-    }
-
-    .revenue-grid {
-      display: grid;
-      grid-template-columns: repeat(3, minmax(0, 1fr));
-      gap: 8px;
-    }
-
-    .revenue-item {
-      min-height: 76px;
-      padding: 10px;
-      border-radius: 16px;
-      background: var(--surface-soft);
-      display: grid;
-      gap: 6px;
-      align-content: start;
-    }
-
-    .revenue-item strong {
-      color: var(--muted);
-      font-size: 10px;
-      letter-spacing: .12em;
-      text-transform: uppercase;
-    }
-
+    .driver-status-number,
     .revenue-value {
-      color: var(--ink);
-      font-size: 18px;
-      line-height: 1.2;
+      font-size: 22px;
+      line-height: 1.1;
       font-weight: 900;
+      color: var(--ink);
       overflow-wrap: anywhere;
     }
 
@@ -551,17 +407,17 @@
       min-height: 24px;
       padding: 4px 8px;
       border-radius: 999px;
-      background: #f3f6f4;
-      color: var(--ink);
+      background: var(--light-green);
+      color: var(--green);
       font-size: 10px;
       font-weight: 900;
       letter-spacing: .05em;
       text-transform: uppercase;
     }
 
-    .status-pill.good { background: var(--good-bg); color: #0d7a51; }
-    .status-pill.warn { background: var(--warn-bg); color: #9a6800; }
-    .status-pill.bad { background: var(--bad-bg); color: #9b2929; }
+    .status-pill.good { background: var(--light-green); color: var(--green); }
+    .status-pill.warn { background: #fff5da; color: #9a6800; }
+    .status-pill.bad { background: #fdecec; color: #9b2929; }
 
     .unavailable {
       color: var(--muted);
@@ -571,7 +427,6 @@
     }
 
     .ai-card {
-      padding: 14px;
       display: grid;
       gap: 12px;
     }
@@ -588,12 +443,13 @@
       min-height: 40px;
       padding: 0 14px;
       border-radius: 12px;
-      border: 1px solid #d7e3dd;
-      background: linear-gradient(180deg, #ffffff 0%, #f2f8f4 100%);
-      color: var(--green-deep);
+      border: 1px solid var(--line);
+      background: #f7faf9;
+      color: var(--dark-green);
       font-size: 12px;
       font-weight: 900;
       width: fit-content;
+      cursor: pointer;
     }
 
     .toast-wrap {
@@ -666,13 +522,6 @@
       font-weight: 900;
     }
 
-    .modal-subtitle {
-      margin-top: 4px;
-      color: var(--muted);
-      font-size: 13px;
-      font-weight: 800;
-    }
-
     .modal-body {
       overflow: auto;
       padding: 16px;
@@ -688,25 +537,30 @@
       border: 1px solid var(--line);
       border-radius: 14px;
       background: #fff;
-      color: var(--green-deep);
+      color: var(--dark-green);
       font-size: 20px;
       font-weight: 900;
       cursor: pointer;
     }
 
-    @media (min-width: 700px) {
-      .support-grid {
+    @media (max-width: 900px) {
+      .ops-grid {
         grid-template-columns: repeat(2, minmax(0, 1fr));
       }
-    }
 
-    @media (max-width: 900px) {
-      .hero-shell-inner {
+      .support-grid {
         grid-template-columns: 1fr;
       }
     }
 
-    @media (max-width: 680px) {
+    @media (max-width: 650px) {
+      .page-heading,
+      .panel-heading,
+      .jobs-heading {
+        align-items: stretch;
+        flex-direction: column;
+      }
+
       .topbar-inner {
         align-items: flex-start;
         flex-direction: column;
@@ -725,19 +579,18 @@
       .ops-grid,
       .revenue-grid,
       .snapshot-grid,
+      .driver-status-grid,
       .support-grid {
         grid-template-columns: 1fr;
       }
 
-      main.container,
-      .topbar .container {
-        width: min(100%, calc(100% - 16px));
-      }
-    }
+      h1 { font-size: 40px; }
 
-    @media (max-width: 420px) {
-      .ops-grid {
-        grid-auto-rows: minmax(146px, 1fr);
+      .panel,
+      .compact-card,
+      .ai-card,
+      .summary-link {
+        padding: 18px;
       }
     }
   </style>
@@ -756,33 +609,33 @@
         </div>
       </div>
 
-      <section class="hero-shell">
-        <div class="hero-shell-inner">
-          <div>
-            <div class="eyebrow">Dispatch Command Center</div>
-            <h1 class="hero-title" id="opsGreeting">Good Morning, Dispatch</h1>
-            <div class="hero-date" id="opsDate">Loading date...</div>
-            <p class="hero-subtitle">Live summary of the production dispatch system.</p>
-          </div>
-
-          <section class="status-card" id="operationsStatusCard" data-accent="general">
-            <div class="card-label"><span class="category-accent general"></span>OPERATIONS STATUS</div>
-            <div class="status-line" id="needsAttentionCaption">Checking active alerts...</div>
-            <div class="status-subline">Based on live production data only.</div>
-          </section>
-        </div>
-      </section>
+      <div class="staff-email" id="staffEmail"></div>
     </div>
   </header>
 
   <main class="container">
-    <section>
-      <div class="section-head">
+    <div class="page-heading">
+      <div>
+        <div class="eyebrow">Dispatch control center</div>
+        <h1 id="opsGreeting">Good Morning, Dispatch</h1>
+        <div class="section-copy" id="opsDate">Loading date...</div>
+      </div>
+
+      <section class="status-card" id="operationsStatusCard" data-accent="general">
+        <div class="card-label"><span class="category-accent general"></span>OPERATIONS STATUS</div>
+        <div class="status-line" id="needsAttentionCaption">Checking active alerts...</div>
+        <div class="status-subline">Based on live production data only.</div>
+      </section>
+    </div>
+
+    <section class="panel">
+      <div class="panel-heading">
         <div>
-          <h2 class="section-title">Operations</h2>
+          <h2>Operations</h2>
           <div class="section-copy">Live dispatch counts.</div>
         </div>
       </div>
+
       <div class="ops-grid">
         <button class="ops-card" id="cardPendingApproval" type="button" data-accent="medical">
           <div class="card-top">
@@ -841,10 +694,10 @@
     </section>
 
     <section class="support-grid">
-      <section class="compact-card" id="todaySnapshotCard">
-        <div class="section-head" style="margin-bottom: 12px;">
+      <section class="panel compact-card" id="todaySnapshotCard">
+        <div class="panel-heading" style="margin-bottom: 12px;">
           <div>
-            <h2 class="section-title">Today Snapshot</h2>
+            <h2>Today Snapshot</h2>
             <div class="section-copy">Compact category mix.</div>
           </div>
         </div>
@@ -880,10 +733,10 @@
         </div>
       </section>
 
-      <section class="compact-card" id="revenueCard">
-        <div class="section-head" style="margin-bottom: 12px;">
+      <section class="panel compact-card" id="revenueCard">
+        <div class="panel-heading" style="margin-bottom: 12px;">
           <div>
-            <h2 class="section-title">Revenue Snapshot</h2>
+            <h2>Revenue Snapshot</h2>
             <div class="section-copy" id="revenueSectionCopy">Dispatch-only daily estimate.</div>
           </div>
         </div>
@@ -903,17 +756,17 @@
         </div>
       </section>
 
-      <section class="compact-card hidden" id="activitySection">
-        <div class="section-head" style="margin-bottom: 12px;">
+      <section class="panel compact-card hidden" id="activitySection">
+        <div class="panel-heading" style="margin-bottom: 12px;">
           <div>
-            <h2 class="section-title">Recent Activity</h2>
+            <h2>Recent Activity</h2>
             <div class="section-copy" id="activitySectionCopy">Latest 5 operational events.</div>
           </div>
         </div>
         <div class="activity-list" id="activityList"></div>
       </section>
 
-      <section class="ai-card" id="aiCardCompact" role="button" tabindex="0">
+      <section class="panel ai-card" id="aiCardCompact" role="button" tabindex="0">
         <div class="ai-headline">
           <div class="card-label"><span class="category-accent general"></span>MG EXPRESS AI</div>
           <div class="card-value" style="font-size: 20px; line-height: 1.15;" id="aiSummaryText">0 suggestions • No urgent issues</div>
@@ -922,7 +775,7 @@
         <div class="ai-action" id="openAiSuggestionsBtn">View Suggestions</div>
       </section>
 
-      <button class="summary-link driver-status-card hidden" id="driverStatusCard" type="button">
+      <button class="panel summary-link driver-status-card hidden" id="driverStatusCard" type="button">
         <div>
           <div class="card-label"><span class="category-accent general"></span>DRIVER STATUS</div>
           <div class="card-meta">Open drivers workspace</div>
@@ -993,10 +846,16 @@
   <div class="toast-wrap" id="toastWrap"></div>
 
   <script>
-    const client = window.mgSupabase || window.supabase.createClient(
-      "https://dczlucwfjayymlwbzzdi.supabase.co",
-      "sb_publishable_kcv_a78ZyUxMo2neKUANdw_XN7eAMpI"
-    );
+    const client = window.mgSupabase || (window.supabase && window.supabase.createClient
+      ? window.supabase.createClient(
+        "https://dczlucwfjayymlwbzzdi.supabase.co",
+        "sb_publishable_kcv_a78ZyUxMo2neKUANdw_XN7eAMpI"
+      )
+      : null);
+
+    if (!client) {
+      throw new Error("Supabase client unavailable.");
+    }
 
     window.mgDispatchClient = client;
 
