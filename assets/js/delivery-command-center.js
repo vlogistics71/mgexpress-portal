@@ -1,8 +1,9 @@
 (function () {
   "use strict";
 
-  const dispatch = window.MG_DISPATCH_WORKSPACE;
-  const client = dispatch?.client || window.mgDispatchClient;
+  let dispatch = null;
+  let client = null;
+  const debugMode = new URLSearchParams(window.location.search || "").get("debug") === "1";
 
   let commandCenterInitialized = false;
   let commandCenterEventsBound = false;
@@ -153,6 +154,7 @@
     rowsVersion: 0,
     diagnosticsMissing: [],
     lastError: "",
+    lastErrorStack: "",
     lastSupabaseError: "",
     startupStarted: false,
     queryStarted: false,
@@ -226,8 +228,11 @@
       lines.push(diagnosticsLine("missing optional elements", state.diagnosticsMissing.join(", ")));
     }
 
-    elements.diagnosticsBox.style.display = "block";
-    elements.diagnosticsBox.textContent = lines.join("\n");
+    const shouldShow = debugMode || Boolean(state.lastError || state.lastSupabaseError);
+    elements.diagnosticsBox.style.display = shouldShow ? "block" : "none";
+    if (shouldShow) {
+      elements.diagnosticsBox.textContent = lines.join("\n");
+    }
   }
 
   function setDiagnosticsError(error, supabaseError = "") {
@@ -272,17 +277,58 @@
     `;
   }
 
-  if (!client || !dispatch) {
-    state.startupStarted = true;
-    state.queryStarted = false;
-    state.queryCompleted = false;
-    setDiagnosticsError(
-      new Error("MG Express delivery command center requires the shared dispatch workspace helpers."),
-      "Shared helper bootstrap missing"
-    );
-    renderDeliveryError("Unable to initialize delivery command center.");
-    console.error("MG Express delivery command center requires the shared dispatch workspace helpers.");
-    return;
+  function resolveBootstrapDependencies() {
+    dispatch = window.MG_DISPATCH_WORKSPACE || null;
+    client = dispatch?.client || window.mgDispatchClient || null;
+
+    if (!dispatch) {
+      throw new Error("MG Express delivery command center requires the shared dispatch workspace helpers.");
+    }
+
+    if (!client) {
+      throw new Error("Supabase client is unavailable for Delivery Command Center.");
+    }
+  }
+
+  async function requireDispatchSession() {
+    const sessionResult = await client.auth.getSession();
+    const session = sessionResult?.data?.session || null;
+
+    if (!session) {
+      state.activeUserId = "none";
+      renderDiagnostics();
+      window.location.replace("/index.html");
+      return null;
+    }
+
+    state.activeUserId = session.user?.id || "none";
+
+    const profileResult = await client
+      .from("profiles")
+      .select("role")
+      .eq("id", session.user.id)
+      .maybeSingle();
+
+    if (profileResult.error || !profileResult.data) {
+      throw new Error(profileResult.error?.message || "No dispatch profile was found for this account.");
+    }
+
+    const role = String(profileResult.data.role || "").trim().toLowerCase();
+    if (!["admin", "staff", "dispatcher"].includes(role)) {
+      if (role === "driver") {
+        window.location.replace("/driver.html");
+        return null;
+      }
+      if (role === "customer") {
+        window.location.replace("/customer.html");
+        return null;
+      }
+      window.location.replace("/index.html");
+      return null;
+    }
+
+    renderDiagnostics();
+    return session;
   }
 
   function setTitle() {
@@ -1562,13 +1608,15 @@
     renderDiagnostics();
 
     try {
+      resolveBootstrapDependencies();
       validateDomElements();
       bindEvents();
       updateCounts();
 
-      const sessionResult = await client.auth.getSession();
-      state.activeUserId = sessionResult?.data?.session?.user?.id || "none";
-      renderDiagnostics();
+      const session = await requireDispatchSession();
+      if (!session) {
+        return;
+      }
 
       await loadInitialData();
 
@@ -1580,7 +1628,10 @@
         }).catch(() => {});
       }, 60000);
     } catch (error) {
-      const supabaseMessage = error?.details || error?.hint || error?.code || "";
+      const isBootstrapError = String(error?.message || "").includes("shared dispatch workspace helpers");
+      const supabaseMessage = isBootstrapError
+        ? "Shared helper bootstrap missing"
+        : (error?.details || error?.hint || error?.code || "");
       setDiagnosticsError(error, supabaseMessage);
       showToast(error.message || "Unable to load deliveries", "error");
       renderDeliveryError(error.message || "Unable to load deliveries");
