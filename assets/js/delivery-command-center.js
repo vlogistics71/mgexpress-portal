@@ -4,6 +4,8 @@
   let dispatch = null;
   let client = null;
   const debugMode = new URLSearchParams(window.location.search || "").get("debug") === "1";
+  const SUPABASE_URL = "https://dczlucwfjayymlwbzzdi.supabase.co";
+  const SUPABASE_KEY = "sb_publishable_kcv_a78ZyUxMo2neKUANdw_XN7eAMpI";
 
   let commandCenterInitialized = false;
   let commandCenterEventsBound = false;
@@ -277,17 +279,210 @@
     `;
   }
 
-  function resolveBootstrapDependencies() {
-    dispatch = window.MG_DISPATCH_WORKSPACE || null;
-    client = dispatch?.client || window.mgDispatchClient || null;
+  function ensureClient() {
+    if (client) {
+      return client;
+    }
 
-    if (!dispatch) {
-      throw new Error("MG Express delivery command center requires the shared dispatch workspace helpers.");
+    client = window.mgDispatchClient || null;
+    if (!client && typeof window.supabase?.createClient === "function") {
+      client = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+      window.mgDispatchClient = client;
     }
 
     if (!client) {
       throw new Error("Supabase client is unavailable for Delivery Command Center.");
     }
+
+    return client;
+  }
+
+  function localReturnRequiredFlag(value) {
+    const token = String(value ?? "").trim().toLowerCase();
+    return value === true || token === "true" || token === "1" || token === "yes";
+  }
+
+  function localHasReturnRequired(job) {
+    return localReturnRequiredFlag(job?.return_required);
+  }
+
+  function localGetWorkflowStage(job) {
+    const status = helpers.clean(job?.status);
+    const flow = helpers.clean(job?.driver_workflow_status);
+    const payment = helpers.clean(job?.payment_status);
+
+    if (["cancelled", "canceled", "closed", "completed", "delivered"].includes(status) || ["complete_delivery", "delivered"].includes(flow)) {
+      return "closed";
+    }
+
+    if (["assigned", "in_progress"].includes(status) || Boolean(flow)) {
+      return "assigned";
+    }
+
+    if (["ready", "ready_to_dispatch", "paid"].includes(status) || ["paid", "received", "completed"].includes(payment)) {
+      return "ready_to_dispatch";
+    }
+
+    return "pending_approval";
+  }
+
+  function localStatusLabel(rowOrStatus) {
+    if (rowOrStatus && typeof rowOrStatus === "object") {
+      const stage = localGetWorkflowStage(rowOrStatus);
+      if (stage === "pending_approval") {
+        return "PENDING APPROVAL";
+      }
+      if (stage === "ready_to_dispatch") {
+        return "READY TO DISPATCH";
+      }
+      if (stage === "assigned") {
+        return "ASSIGNED";
+      }
+      return "COMPLETED";
+    }
+
+    return String(rowOrStatus || "UNKNOWN").replaceAll("_", " ").toUpperCase();
+  }
+
+  function localJobCategoryLabel(value) {
+    const normalized = helpers.normalizeCategory(value);
+    const map = {
+      medical: "Medical",
+      legal: "Legal",
+      general: "General",
+      pallet: "Pallet",
+      special: "Special"
+    };
+    return map[normalized] || "General";
+  }
+
+  function localJobCategoryClass(value) {
+    return "category-" + helpers.normalizeCategory(value);
+  }
+
+  function localDeliveryTypeLabel(value) {
+    const map = {
+      business_to_business: "Business to Business",
+      business_to_residential: "Business to Residential",
+      residential_to_business: "Residential to Business",
+      residential_to_residential: "Residential to Residential"
+    };
+    return map[helpers.clean(value)] || "-";
+  }
+
+  function localServiceLevelLabel(value) {
+    const map = {
+      standard: "Standard",
+      priority: "Priority",
+      stat: "STAT",
+      scheduled: "Scheduled",
+      on_demand: "On Demand"
+    };
+    return map[helpers.clean(value)] || "-";
+  }
+
+  function localDeliverySpeedLabel(value) {
+    const map = {
+      "2_hr": "2 Hour",
+      "3_hr": "3 Hour",
+      "4_hr": "4 Hour",
+      "5_hr": "5 Hour",
+      "6_hr": "6 Hour",
+      next_day: "Next Day"
+    };
+    return map[String(value || "")] || String(value || "Not set");
+  }
+
+  function localMoney(value) {
+    const numeric = Number(value);
+    if (!Number.isFinite(numeric)) {
+      return "-";
+    }
+    return numeric.toLocaleString("en-US", { style: "currency", currency: "USD" });
+  }
+
+  function localReturnLocationLabel(value) {
+    const map = {
+      same_as_pickup: "Same as Original Pickup",
+      different_location: "Different Return Location"
+    };
+    return map[helpers.clean(value)] || "Same as Original Pickup";
+  }
+
+  function localReturnTimingLabel(value) {
+    const map = {
+      immediate: "Immediately After Delivery",
+      later_today: "Later Today",
+      another_day: "Another Day"
+    };
+    return map[helpers.clean(value)] || "Immediately After Delivery";
+  }
+
+  function localOpenModal(id) {
+    const modal = document.getElementById(id);
+    if (!modal) {
+      return;
+    }
+    modal.classList.add("open");
+    document.body.style.overflow = "hidden";
+  }
+
+  function localCloseModal(id) {
+    const modal = document.getElementById(id);
+    if (!modal) {
+      return;
+    }
+    modal.classList.remove("open");
+    if (![...document.querySelectorAll(".modal-backdrop.open")].length) {
+      document.body.style.overflow = "";
+    }
+  }
+
+  function localActionUnavailable(actionName) {
+    fallbackToast(actionName + " is not available in this view.", "info");
+  }
+
+  function initializeDispatchRuntime() {
+    ensureClient();
+
+    const localFacade = {
+      client,
+      state: {
+        rows: [],
+        customerDeliveryCounts: {}
+      },
+      showToast: fallbackToast,
+      getWorkflowStage: localGetWorkflowStage,
+      statusLabel: localStatusLabel,
+      jobCategoryLabel: localJobCategoryLabel,
+      jobCategoryClass: localJobCategoryClass,
+      deliveryTypeLabel: localDeliveryTypeLabel,
+      serviceLevelLabel: localServiceLevelLabel,
+      deliverySpeedLabel: localDeliverySpeedLabel,
+      hasReturnRequired: localHasReturnRequired,
+      money: localMoney,
+      returnLocationLabel: localReturnLocationLabel,
+      returnTimingLabel: localReturnTimingLabel,
+      openModal: localOpenModal,
+      closeModal: localCloseModal,
+      loadDrivers: async () => {},
+      openJobDetails: () => localActionUnavailable("Delivery Details"),
+      openAssignModal: () => localActionUnavailable("Assign Driver"),
+      markPaidManually: async () => localActionUnavailable("Mark Paid"),
+      changeDispatchStatus: async () => localActionUnavailable("Status update"),
+      sendInvoiceForJob: () => localActionUnavailable("Invoice"),
+      openBolForJob: () => localActionUnavailable("BOL"),
+      openRejectedReturnConfirm: () => localActionUnavailable("Return to Ready"),
+      handleDocumentClick: () => {}
+    };
+
+    const shared = window.MG_DISPATCH_WORKSPACE && typeof window.MG_DISPATCH_WORKSPACE === "object"
+      ? window.MG_DISPATCH_WORKSPACE
+      : {};
+
+    dispatch = Object.assign({}, localFacade, shared);
+    dispatch.state = (shared.state && typeof shared.state === "object") ? shared.state : localFacade.state;
+    dispatch.client = shared.client || client;
   }
 
   async function requireDispatchSession() {
@@ -1650,7 +1845,7 @@
     renderDiagnostics();
 
     try {
-      resolveBootstrapDependencies();
+      initializeDispatchRuntime();
       validateDomElements();
       bindEvents();
       updateCounts();
@@ -1670,10 +1865,7 @@
         }).catch(() => {});
       }, 60000);
     } catch (error) {
-      const isBootstrapError = String(error?.message || "").includes("shared dispatch workspace helpers");
-      const supabaseMessage = isBootstrapError
-        ? "Shared helper bootstrap missing"
-        : (error?.details || error?.hint || error?.code || "");
+      const supabaseMessage = error?.details || error?.hint || error?.code || "";
       setDiagnosticsError(error, supabaseMessage);
       showToast(error.message || "Unable to load deliveries", "error");
       renderDeliveryError(error.message || "Unable to load deliveries");
