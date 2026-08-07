@@ -100,6 +100,15 @@
     }
   };
 
+  function ensureSharedDeliveryRow(delivery) {
+    if (!delivery || !dispatch?.state) {
+      return;
+    }
+
+    const currentRows = Array.isArray(dispatch.state.rows) ? dispatch.state.rows : [];
+    dispatch.state.rows = dedupeRows([delivery, ...currentRows]);
+  }
+
   const TAB_META = {
     pending: {
       label: "Pending",
@@ -667,6 +676,14 @@
       seen.add(key);
       return true;
     });
+  }
+
+  function logDeliveryClickDiagnostic(details) {
+    if (!debugMode || typeof console === "undefined" || typeof console.info !== "function") {
+      return;
+    }
+
+    console.info("Delivery click diagnostic", details);
   }
 
   function activeTabQueryValues(tab) {
@@ -1663,6 +1680,88 @@
     await loadDeliveriesForActiveTab();
   }
 
+  async function openDeliveryById(deliveryId, clickedJobNumber = "") {
+    const requestedId = String(deliveryId || "").trim();
+    const runtime = resolveDispatchRuntime();
+    const localRows = Array.isArray(state.visibleRows) ? state.visibleRows : [];
+
+    try {
+      if (!requestedId) {
+        throw new Error("Missing delivery id.");
+      }
+
+      let delivery = localRows.find(item => String(item?.id || "") === requestedId) || null;
+
+      logDeliveryClickDiagnostic({
+        requestedId,
+        clickedJobNumber: clickedJobNumber || delivery?.job_number || "",
+        currentDeliveriesLength: localRows.length,
+        currentDeliveryIds: localRows.map(item => String(item?.id || "")),
+        currentDeliveryJobNumbers: localRows.map(item => String(item?.job_number || "")),
+        inMemoryMatch: Boolean(delivery),
+        databaseFallbackAttempted: false,
+        databaseFallbackSuccess: false,
+        deliveryDetailsFunctionAvailable: typeof runtime?.openJobDetails === "function",
+        selectedMatchResult: delivery ? { id: String(delivery.id || ""), job_number: String(delivery.job_number || "") } : null
+      });
+
+      if (!delivery) {
+        const result = await client
+          .from("quotes")
+          .select("*")
+          .eq("id", requestedId)
+          .single();
+
+        if (result.error) {
+          logDeliveryClickDiagnostic({
+            requestedId,
+            clickedJobNumber,
+            currentDeliveriesLength: localRows.length,
+            currentDeliveryIds: localRows.map(item => String(item?.id || "")),
+            currentDeliveryJobNumbers: localRows.map(item => String(item?.job_number || "")),
+            inMemoryMatch: false,
+            databaseFallbackAttempted: true,
+            databaseFallbackSuccess: false,
+            deliveryDetailsFunctionAvailable: typeof runtime?.openJobDetails === "function",
+            selectedMatchResult: null,
+            error: result.error.message || String(result.error)
+          });
+          throw result.error;
+        }
+
+        delivery = result.data || null;
+
+        logDeliveryClickDiagnostic({
+          requestedId,
+          clickedJobNumber: clickedJobNumber || delivery?.job_number || "",
+          currentDeliveriesLength: localRows.length,
+          currentDeliveryIds: localRows.map(item => String(item?.id || "")),
+          currentDeliveryJobNumbers: localRows.map(item => String(item?.job_number || "")),
+          inMemoryMatch: false,
+          databaseFallbackAttempted: true,
+          databaseFallbackSuccess: Boolean(delivery),
+          deliveryDetailsFunctionAvailable: typeof runtime?.openJobDetails === "function",
+          selectedMatchResult: delivery ? { id: String(delivery.id || ""), job_number: String(delivery.job_number || "") } : null
+        });
+      }
+
+      if (!delivery) {
+        throw new Error("Delivery record not found.");
+      }
+
+      if (typeof runtime?.openJobDetails !== "function") {
+        throw new Error("Delivery Details function is unavailable.");
+      }
+
+      state.selectedDelivery = delivery;
+      ensureSharedDeliveryRow(delivery);
+      runtime.openJobDetails(delivery.id, state.activeTab === "completed");
+    } catch (error) {
+      console.error("Unable to open delivery:", error);
+      showToast(error?.message || "Unable to open delivery.", "error");
+    }
+  }
+
   function triggerQuickAction(jobId, action) {
     const runtime = resolveDispatchRuntime();
     const row = state.visibleRows.find(item => String(item.id) === String(jobId));
@@ -1671,7 +1770,7 @@
     }
 
     if (action === "details") {
-      openDeliveryDetails(row);
+      openDeliveryById(jobId, row?.job_number || "");
       return;
     }
 
@@ -1706,22 +1805,6 @@
     }
   }
 
-  function openDeliveryDetails(delivery) {
-    if (!delivery) {
-      showToast("Unable to open delivery.", "error");
-      return;
-    }
-
-    state.selectedDelivery = delivery;
-    const runtime = resolveDispatchRuntime();
-    if (typeof runtime?.openJobDetails !== "function") {
-      showToast("Unable to open delivery.", "error");
-      return;
-    }
-
-    runtime.openJobDetails(delivery.id, state.activeTab === "completed");
-  }
-
   function handleRowsHostClick(event) {
     const actionButton = event.target.closest("[data-delivery-action]");
     if (actionButton) {
@@ -1741,15 +1824,11 @@
     }
 
     const deliveryId = row.getAttribute("data-delivery-id");
-    const delivery = state.renderedRows.find(item => String(item.id) === String(deliveryId));
-    if (!delivery) {
-      showToast("Unable to open delivery.", "error");
-      return;
-    }
+    const clickedJobNumber = row.querySelector(".delivery-job-number")?.textContent?.trim() || "";
 
     event.preventDefault();
     event.stopPropagation();
-    openDeliveryDetails(delivery);
+    openDeliveryById(deliveryId, clickedJobNumber);
   }
 
   function handleRowsHostKeydown(event) {
@@ -1763,15 +1842,11 @@
     }
 
     const deliveryId = row.getAttribute("data-delivery-id");
-    const delivery = state.renderedRows.find(item => String(item.id) === String(deliveryId));
-    if (!delivery) {
-      showToast("Unable to open delivery.", "error");
-      return;
-    }
+    const clickedJobNumber = row.querySelector(".delivery-job-number")?.textContent?.trim() || "";
 
     event.preventDefault();
     event.stopPropagation();
-    openDeliveryDetails(delivery);
+    openDeliveryById(deliveryId, clickedJobNumber);
   }
 
   function handleDocumentClicks(event) {
