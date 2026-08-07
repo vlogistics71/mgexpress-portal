@@ -66,6 +66,13 @@
     return String(value || "").trim().toLowerCase();
   }
 
+  function readInitialTabFromUrl() {
+    const params = new URLSearchParams(window.location.search || "");
+    const requested = clean(params.get("tab"));
+    const allowed = new Set(["pending", "ready", "assigned", "rejected", "completed", "search"]);
+    return allowed.has(requested) ? requested : "pending";
+  }
+
   function escapeHtml(value) {
     const div = document.createElement("div");
     div.textContent = value == null ? "" : String(value);
@@ -1125,6 +1132,7 @@
       return;
     }
 
+    state.activeTab = readInitialTabFromUrl();
     bindEvents();
     renderTabs();
     renderCategories();
