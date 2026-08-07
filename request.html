@@ -1,14 +1,667 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Request a Delivery | Mi Gente Express</title><link rel="stylesheet" href="/assets/css/dispatch.css"></head>
-<body><header class="topbar"><div class="container topbar-inner"><div class="brand">MI GENTE <span>EXPRESS</span></div><a class="btn secondary" href="https://migenteexpress.com">Main Website</a></div></header>
-<main><div class="container"><section class="hero"><h1>Request a delivery quote</h1><p>Serving Denver, Fort Collins, Colorado Springs, Sterling, and surrounding Colorado communities.</p></section>
-<section class="panel"><form id="requestForm" class="grid">
-<label>Full Name<input name="customer_name" required></label><label>Email<input name="customer_email" type="email" required></label><label>Phone<input name="customer_phone" required></label><label>Company<input name="company"></label>
-<label>Pickup Address<textarea name="pickup_address" required></textarea></label><label>Delivery Address<textarea name="delivery_address" required></textarea></label>
-<label>Vehicle Needed<select name="vehicle_type"><option>Sedan / Small Car</option><option>Small Cargo Van</option><option>Sprinter Van</option><option>Not Sure</option></select></label>
-<label>How Quickly?<select name="delivery_speed"><option>2-Hour Delivery</option><option>3-Hour Delivery</option><option>4-Hour Delivery</option><option>5-Hour Delivery</option><option>6-Hour Delivery</option><option>Next-Day Delivery</option></select></label>
-<label>Package Type<select name="package_type"><option>Documents</option><option>Medical Supplies</option><option>Auto Parts</option><option>Small Package</option><option>Medium Package</option><option>Large Package</option><option>Other</option></select></label>
-<label>Approximate Weight<select name="weight"><option>Under 10 lbs</option><option>10–25 lbs</option><option>25–50 lbs</option><option>50–100 lbs</option><option>Over 100 lbs</option></select></label>
-<label class="full">Special Instructions<textarea name="special_instructions" rows="4"></textarea></label><div class="full"><button>Submit Request</button></div></form><div id="msg"></div></section></div></main>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="/assets/js/config.js"></script><script type="module">
-import {db} from "/assets/js/core.js";requestForm.onsubmit=async e=>{e.preventDefault();const body=Object.fromEntries(new FormData(requestForm).entries());body.status="new";const {error}=await db.from("quotes").insert(body);msg.className="notice "+(error?"error":"success");msg.textContent=error?error.message:"Your request was received. Mi Gente Express will contact you with pricing.";if(!error)requestForm.reset()};
-</script></body></html>
+<!doctype html>
+<html lang="en">
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<title>Create Job | MG Express Dispatch</title>
+	<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+	<script src="assets/js/config.js"></script>
+	<style>
+		* { box-sizing: border-box; }
+
+		:root {
+			--dark-green: #064f3b;
+			--green: #087455;
+			--light-green: #e7f5ef;
+			--background: #f4faf7;
+			--surface: #ffffff;
+			--ink: #17221e;
+			--muted: #68756f;
+			--line: #dfe8e4;
+			--coral: #ff665c;
+			--danger: #9b2929;
+			--danger-bg: #fff0f0;
+			--shadow: 0 16px 32px rgba(15, 35, 26, .08);
+			--radius: 18px;
+		}
+
+		body {
+			margin: 0;
+			font-family: "SF Pro Text", "SF Pro Display", "Helvetica Neue", Helvetica, Arial, sans-serif;
+			color: var(--ink);
+			background:
+				radial-gradient(circle at top left, rgba(231, 245, 239, .92), rgba(231, 245, 239, 0) 28%),
+				linear-gradient(180deg, #f8fcfa 0%, #eef5f1 100%);
+		}
+
+		button,
+		input,
+		select,
+		textarea {
+			font: inherit;
+		}
+
+		.topbar {
+			position: sticky;
+			top: 0;
+			z-index: 20;
+			background: linear-gradient(180deg, #0a6c50 0%, #07533d 100%);
+			color: #fff;
+			box-shadow: 0 12px 28px rgba(7, 67, 49, .22);
+		}
+
+		.container {
+			width: min(1120px, calc(100% - 20px));
+			margin: 0 auto;
+		}
+
+		.topbar-inner {
+			min-height: 76px;
+			display: flex;
+			align-items: center;
+			justify-content: space-between;
+			gap: 12px;
+			padding: 14px 0;
+		}
+
+		.brand {
+			font-size: clamp(22px, 5vw, 34px);
+			font-weight: 950;
+			letter-spacing: .12em;
+			line-height: 1;
+			text-transform: uppercase;
+		}
+
+		.brand span { color: #d9fff0; }
+
+		.topbar-copy {
+			min-width: 0;
+			display: grid;
+			gap: 6px;
+		}
+
+		.staff-email {
+			font-size: 12px;
+			font-weight: 700;
+			color: rgba(255, 255, 255, .8);
+			overflow-wrap: anywhere;
+		}
+
+		.back-link {
+			min-height: 42px;
+			padding: 10px 14px;
+			border-radius: 999px;
+			border: 1px solid rgba(255, 255, 255, .16);
+			color: #fff;
+			text-decoration: none;
+			font-weight: 900;
+			white-space: nowrap;
+			background: rgba(255, 255, 255, .08);
+		}
+
+		main {
+			padding: 16px 0 30px;
+		}
+
+		.hero {
+			display: grid;
+			gap: 8px;
+			margin-bottom: 14px;
+		}
+
+		.eyebrow {
+			color: var(--muted);
+			font-size: 12px;
+			font-weight: 900;
+			letter-spacing: .14em;
+			text-transform: uppercase;
+		}
+
+		h1 {
+			margin: 0;
+			color: var(--dark-green);
+			font-size: clamp(30px, 7vw, 48px);
+			line-height: 1.02;
+			letter-spacing: -.03em;
+		}
+
+		.hero p {
+			margin: 0;
+			color: var(--muted);
+			font-size: 13px;
+			font-weight: 700;
+			line-height: 1.45;
+			max-width: 60ch;
+		}
+
+		.panel {
+			border: 1px solid var(--line);
+			border-radius: 22px;
+			background: var(--surface);
+			box-shadow: var(--shadow);
+			padding: 14px;
+		}
+
+		.job-form {
+			display: grid;
+			gap: 14px;
+		}
+
+		.job-section {
+			border: 1px solid var(--line);
+			border-radius: var(--radius);
+			background: #fff;
+			padding: 14px;
+			display: grid;
+			gap: 12px;
+		}
+
+		.job-section-title {
+			margin: 0;
+			color: var(--dark-green);
+			font-size: 16px;
+			font-weight: 950;
+			letter-spacing: .02em;
+		}
+
+		.job-subdivider {
+			height: 1px;
+			background: var(--line);
+		}
+
+		.form-grid {
+			display: grid;
+			grid-template-columns: 1fr;
+			gap: 12px;
+		}
+
+		.field {
+			display: grid;
+			gap: 6px;
+			min-width: 0;
+		}
+
+		.field label {
+			color: var(--muted);
+			font-size: 11px;
+			font-weight: 900;
+			letter-spacing: .04em;
+			text-transform: uppercase;
+		}
+
+		.field input,
+		.field select,
+		.field textarea {
+			width: 100%;
+			min-height: 48px;
+			padding: 12px 14px;
+			border: 1px solid var(--line);
+			border-radius: 14px;
+			background: #fff;
+			color: var(--ink);
+		}
+
+		.field textarea {
+			min-height: 108px;
+			resize: vertical;
+		}
+
+		.field.full {
+			grid-column: 1 / -1;
+		}
+
+		.hint {
+			color: var(--muted);
+			font-size: 12px;
+			line-height: 1.35;
+			font-weight: 700;
+		}
+
+		.lookup-results {
+			display: none;
+			gap: 8px;
+		}
+
+		.lookup-results.open {
+			display: grid;
+		}
+
+		.lookup-row {
+			text-align: left;
+			border: 1px solid var(--line);
+			border-radius: 14px;
+			background: #fff;
+			padding: 12px 14px;
+			display: grid;
+			gap: 4px;
+			cursor: pointer;
+		}
+
+		.lookup-title {
+			color: var(--dark-green);
+			font-size: 13px;
+			font-weight: 900;
+		}
+
+		.lookup-meta {
+			color: var(--muted);
+			font-size: 12px;
+			font-weight: 700;
+			line-height: 1.3;
+		}
+
+		.actions-bar {
+			position: sticky;
+			bottom: 0;
+			z-index: 4;
+			display: grid;
+			gap: 10px;
+			margin-top: 4px;
+			padding-top: 10px;
+			background: linear-gradient(180deg, rgba(255,255,255,0) 0%, rgba(244,250,247,.94) 24%, rgba(244,250,247,.98) 100%);
+		}
+
+		.primary-button {
+			min-height: 50px;
+			padding: 12px 18px;
+			border: 0;
+			border-radius: 16px;
+			background: linear-gradient(180deg, #12a06e 0%, #0a7a57 100%);
+			color: #fff;
+			font-weight: 900;
+			box-shadow: 0 14px 30px rgba(10, 122, 87, .24);
+			cursor: pointer;
+		}
+
+		.message {
+			margin-top: 12px;
+			padding: 14px;
+			border-radius: 14px;
+			font-size: 13px;
+			line-height: 1.45;
+			font-weight: 700;
+		}
+
+		.message.success {
+			background: var(--light-green);
+			color: var(--dark-green);
+		}
+
+		.message.error {
+			background: var(--danger-bg);
+			color: var(--danger);
+		}
+
+		.return-details[hidden] {
+			display: none !important;
+		}
+
+		@media (min-width: 760px) {
+			.form-grid.two-up {
+				grid-template-columns: repeat(2, minmax(0, 1fr));
+			}
+
+			.form-grid.three-up {
+				grid-template-columns: repeat(3, minmax(0, 1fr));
+			}
+
+			.form-grid.four-up {
+				grid-template-columns: repeat(4, minmax(0, 1fr));
+			}
+		}
+
+		@media (max-width: 760px) {
+			.topbar-inner {
+				align-items: stretch;
+				flex-direction: column;
+			}
+
+			.back-link {
+				width: 100%;
+				text-align: center;
+			}
+
+			.panel {
+				padding-bottom: 92px;
+			}
+
+			.actions-bar {
+				position: fixed;
+				left: 10px;
+				right: 10px;
+				bottom: 10px;
+				padding-top: 0;
+				background: transparent;
+			}
+
+			.primary-button {
+				width: 100%;
+				box-shadow: 0 18px 34px rgba(10, 122, 87, .26);
+			}
+		}
+	</style>
+</head>
+<body>
+	<header class="topbar">
+		<div class="container topbar-inner">
+			<div class="topbar-copy">
+				<div class="brand">MG <span>EXPRESS</span> DISPATCH</div>
+				<div class="staff-email">Create Job</div>
+			</div>
+			<a class="back-link" href="deliveries.html">← Back to Queue</a>
+		</div>
+	</header>
+
+	<main>
+		<div class="container">
+			<section class="hero">
+				<div class="eyebrow">Dispatch intake</div>
+				<h1>Create Job</h1>
+				<p>Enter the customer, pickup, delivery, and service details. The form stays single-page and mobile-first, with return-service fields appearing only when needed.</p>
+			</section>
+
+			<section class="panel">
+				<form id="requestForm" class="job-form">
+					<section class="job-section">
+						<h2 class="job-section-title">Customer</h2>
+						<div class="job-subdivider"></div>
+						<div class="form-grid two-up">
+							<div class="field">
+								<label for="customer_name">Full Name</label>
+								<input id="customer_name" name="customer_name" required autocomplete="name">
+							</div>
+							<div class="field">
+								<label for="customer_email">Email</label>
+								<input id="customer_email" name="customer_email" type="email" autocomplete="email">
+							</div>
+							<div class="field">
+								<label for="customer_phone">Phone</label>
+								<input id="customer_phone" name="customer_phone" type="tel" autocomplete="tel">
+							</div>
+							<div class="field">
+								<label for="company">Company</label>
+								<input id="company" name="company" autocomplete="organization">
+							</div>
+						</div>
+					</section>
+
+					<section class="job-section">
+						<h2 class="job-section-title">Pickup</h2>
+						<div class="job-subdivider"></div>
+						<div class="form-grid two-up">
+							<div class="field full">
+								<label for="pickup_address">Pickup Address</label>
+								<textarea id="pickup_address" name="pickup_address" required rows="2"></textarea>
+							</div>
+							<div class="field">
+								<label for="pickup_suite_floor">Suite / Floor</label>
+								<input id="pickup_suite_floor" name="pickup_suite_floor">
+							</div>
+							<div class="field">
+								<label for="pickup_zip">ZIP</label>
+								<input id="pickup_zip" name="pickup_zip" inputmode="numeric">
+							</div>
+							<div class="field">
+								<label for="pickup_contact_name">Pickup Contact</label>
+								<input id="pickup_contact_name" name="pickup_contact_name">
+							</div>
+							<div class="field">
+								<label for="pickup_contact_phone">Pickup Phone</label>
+								<input id="pickup_contact_phone" name="pickup_contact_phone" type="tel">
+							</div>
+							<div class="field full">
+								<label for="pickup_instructions">Pickup Instructions</label>
+								<textarea id="pickup_instructions" name="pickup_instructions" rows="3"></textarea>
+							</div>
+						</div>
+					</section>
+
+					<section class="job-section">
+						<h2 class="job-section-title">Delivery</h2>
+						<div class="job-subdivider"></div>
+						<div class="form-grid two-up">
+							<div class="field full">
+								<label for="delivery_address">Delivery Address</label>
+								<textarea id="delivery_address" name="delivery_address" required rows="2"></textarea>
+							</div>
+							<div class="field">
+								<label for="delivery_suite_floor">Suite / Floor</label>
+								<input id="delivery_suite_floor" name="delivery_suite_floor">
+							</div>
+							<div class="field">
+								<label for="delivery_zip">ZIP</label>
+								<input id="delivery_zip" name="delivery_zip" inputmode="numeric">
+							</div>
+							<div class="field">
+								<label for="delivery_contact_name">Delivery Contact / Recipient</label>
+								<input id="delivery_contact_name" name="delivery_contact_name">
+							</div>
+							<div class="field">
+								<label for="delivery_contact_phone">Delivery Phone</label>
+								<input id="delivery_contact_phone" name="delivery_contact_phone" type="tel">
+							</div>
+							<div class="field full">
+								<label for="delivery_instructions">Delivery Instructions</label>
+								<textarea id="delivery_instructions" name="delivery_instructions" rows="3"></textarea>
+							</div>
+						</div>
+					</section>
+
+					<section class="job-section">
+						<h2 class="job-section-title">Service</h2>
+						<div class="job-subdivider"></div>
+						<div class="form-grid two-up three-up">
+							<div class="field">
+								<label for="vehicle_type">Vehicle Needed</label>
+								<select id="vehicle_type" name="vehicle_type">
+									<option value="">Choose vehicle</option>
+									<option>Car</option>
+									<option>SUV</option>
+									<option>Cargo Van</option>
+									<option>Sprinter Van</option>
+									<option>Box Truck</option>
+								</select>
+							</div>
+							<div class="field">
+								<label for="delivery_speed">Delivery Speed</label>
+								<select id="delivery_speed" name="delivery_speed">
+									<option value="">Choose speed</option>
+									<option value="2_hr">2 Hour</option>
+									<option value="3_hr">3 Hour</option>
+									<option value="4_hr">4 Hour</option>
+									<option value="5_hr">5 Hour</option>
+									<option value="6_hr">6 Hour</option>
+									<option value="next_day">Next Day</option>
+								</select>
+							</div>
+							<div class="field">
+								<label for="job_category">Job Category</label>
+								<select id="job_category" name="job_category">
+									<option value="general">General</option>
+									<option value="medical">Medical</option>
+									<option value="legal">Legal</option>
+									<option value="pallet">Pallet</option>
+									<option value="special">Special</option>
+								</select>
+							</div>
+							<div class="field">
+								<label for="delivery_type">Delivery Type</label>
+								<select id="delivery_type" name="delivery_type">
+									<option value="">Choose type</option>
+									<option value="business_to_business">Business to Business</option>
+									<option value="business_to_residential">Business to Residential</option>
+									<option value="residential_to_business">Residential to Business</option>
+									<option value="residential_to_residential">Residential to Residential</option>
+								</select>
+							</div>
+							<div class="field">
+								<label for="service_level">Service Level</label>
+								<select id="service_level" name="service_level">
+									<option value="">Choose level</option>
+									<option value="standard">Standard</option>
+									<option value="priority">Priority</option>
+									<option value="stat">STAT</option>
+									<option value="scheduled">Scheduled</option>
+									<option value="on_demand">On Demand</option>
+								</select>
+							</div>
+							<div class="field">
+								<label for="package_type">Package Type</label>
+								<select id="package_type" name="package_type">
+									<option value="">Choose package</option>
+									<option>Documents</option>
+									<option>Medical Supplies</option>
+									<option>Auto Parts</option>
+									<option>Small Package</option>
+									<option>Medium Package</option>
+									<option>Large Package</option>
+									<option>Other</option>
+								</select>
+							</div>
+							<div class="field">
+								<label for="weight">Approximate Weight</label>
+								<select id="weight" name="weight">
+									<option value="">Choose weight</option>
+									<option>Under 10 lbs</option>
+									<option>10–25 lbs</option>
+									<option>25–50 lbs</option>
+									<option>50–100 lbs</option>
+									<option>Over 100 lbs</option>
+								</select>
+							</div>
+							<div class="field">
+								<label for="estimated_miles">Miles (Optional)</label>
+								<input id="estimated_miles" name="estimated_miles" type="number" min="0" step="0.1" inputmode="decimal" placeholder="0">
+							</div>
+							<div class="field full">
+								<label for="special_instructions">Special Instructions</label>
+								<textarea id="special_instructions" name="special_instructions" rows="4"></textarea>
+							</div>
+						</div>
+					</section>
+
+					<section class="job-section">
+						<h2 class="job-section-title">Return Service</h2>
+						<div class="job-subdivider"></div>
+						<div class="form-grid two-up">
+							<div class="field">
+								<label for="return_required">Return Required</label>
+								<select id="return_required" name="return_required">
+									<option value="false">No</option>
+									<option value="true">Yes</option>
+								</select>
+							</div>
+						</div>
+						<div id="returnDetails" class="form-grid two-up return-details" hidden>
+							<div class="field">
+								<label for="return_location_type">Return Location Type</label>
+								<select id="return_location_type" name="return_location_type">
+									<option value="same_as_pickup">Same as Pickup</option>
+									<option value="different_location">Different Location</option>
+								</select>
+							</div>
+							<div class="field">
+								<label for="return_timing">Return Timing</label>
+								<select id="return_timing" name="return_timing">
+									<option value="immediate">Immediately After Delivery</option>
+									<option value="later_today">Later Today</option>
+									<option value="another_day">Another Day</option>
+								</select>
+							</div>
+							<div class="field full" data-return-different>
+								<label for="return_address">Return Address</label>
+								<textarea id="return_address" name="return_address" rows="2"></textarea>
+							</div>
+							<div class="field" data-return-different>
+								<label for="return_suite_floor">Return Suite / Floor</label>
+								<input id="return_suite_floor" name="return_suite_floor">
+							</div>
+							<div class="field" data-return-different>
+								<label for="return_zip">Return ZIP</label>
+								<input id="return_zip" name="return_zip" inputmode="numeric">
+							</div>
+						</div>
+					</section>
+
+					<div class="actions-bar">
+						<button class="primary-button" id="submitBtn" type="submit">Create Job</button>
+						<div id="msg"></div>
+					</div>
+				</form>
+			</section>
+		</div>
+	</main>
+
+	<script>
+		const client = window.mgSupabase || window.supabase.createClient(
+			"https://dczlucwfjayymlwbzzdi.supabase.co",
+			"sb_publishable_kcv_a78ZyUxMo2neKUANdw_XN7eAMpI"
+		);
+
+		const requestForm = document.getElementById("requestForm");
+		const msg = document.getElementById("msg");
+		const submitBtn = document.getElementById("submitBtn");
+		const returnRequired = document.getElementById("return_required");
+		const returnDetails = document.getElementById("returnDetails");
+
+		function syncReturnFields() {
+			const enabled = String(returnRequired.value || "false") === "true";
+			returnDetails.hidden = !enabled;
+
+			if (!enabled) {
+				requestForm.return_location_type.value = "same_as_pickup";
+				requestForm.return_timing.value = "immediate";
+				requestForm.return_address.value = "";
+				requestForm.return_suite_floor.value = "";
+				requestForm.return_zip.value = "";
+			}
+
+			requestForm.querySelectorAll("[data-return-different]").forEach(field => {
+				field.hidden = !enabled || String(requestForm.return_location_type.value || "same_as_pickup") !== "different_location";
+			});
+		}
+
+		function setMessage(text, type) {
+			msg.className = "message " + type;
+			msg.textContent = text;
+		}
+
+		let submitting = false;
+
+		returnRequired.addEventListener("change", syncReturnFields);
+		requestForm.return_location_type.addEventListener("change", syncReturnFields);
+		syncReturnFields();
+
+		requestForm.addEventListener("submit", async event => {
+			event.preventDefault();
+			if (submitting) {
+				return;
+			}
+
+			submitting = true;
+			submitBtn.disabled = true;
+			submitBtn.textContent = "Creating...";
+
+			try {
+				const body = Object.fromEntries(new FormData(requestForm).entries());
+				body.status = "new";
+
+				const { error } = await client.from("quotes").insert(body);
+				if (error) {
+					throw error;
+				}
+
+				setMessage("Your job was created successfully.", "success");
+				requestForm.reset();
+				syncReturnFields();
+			} catch (error) {
+				setMessage(error.message || "Unable to create job.", "error");
+			} finally {
+				submitting = false;
+				submitBtn.disabled = false;
+				submitBtn.textContent = "Create Job";
+			}
+		});
+	</script>
+</body>
+</html>

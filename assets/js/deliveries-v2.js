@@ -11,7 +11,7 @@
     profile: null,
     deliveries: [],
     drivers: [],
-    activeTab: "pending",
+    activeTab: "all_open",
     activeCategory: "all",
     search: "",
     sort: "newest",
@@ -27,12 +27,17 @@
   const elements = {
     staffEmail: document.getElementById("staffEmail"),
     newDeliveryButton: document.getElementById("newDeliveryButton"),
+    statusFilter: document.getElementById("statusFilter"),
     tabs: document.getElementById("tabs"),
     categoryFilters: document.getElementById("categoryFilters"),
     searchInput: document.getElementById("searchInput"),
     sortSelect: document.getElementById("sortSelect"),
     refreshButton: document.getElementById("refreshButton"),
     statusSummary: document.getElementById("statusSummary"),
+    summaryTotalOpen: document.getElementById("summaryTotalOpen"),
+    summaryUnassigned: document.getElementById("summaryUnassigned"),
+    summaryInTransit: document.getElementById("summaryInTransit"),
+    summaryWaitingPayment: document.getElementById("summaryWaitingPayment"),
     workspaceLabel: document.getElementById("workspaceLabel"),
     visibleCount: document.getElementById("visibleCount"),
     deliveryList: document.getElementById("deliveryList"),
@@ -69,8 +74,11 @@
   function readInitialTabFromUrl() {
     const params = new URLSearchParams(window.location.search || "");
     const requested = clean(params.get("tab"));
-    const allowed = new Set(["pending", "ready", "assigned", "rejected", "completed", "search"]);
-    return allowed.has(requested) ? requested : "pending";
+    const allowed = new Set(["all_open", "waiting_payment", "ready", "assigned", "in_transit", "rejected", "completed", "search", "pending"]);
+    if (requested === "pending") {
+      return "all_open";
+    }
+    return allowed.has(requested) ? requested : "all_open";
   }
 
   function escapeHtml(value) {
@@ -166,6 +174,13 @@
   function isReady(delivery) {
     const status = clean(delivery?.status);
     return status === "ready" || status === "ready_to_dispatch";
+  }
+
+  function isInTransit(delivery) {
+    const status = clean(delivery?.status);
+    const workflow = clean(delivery?.driver_workflow_status);
+    return ["assigned", "in_progress", "en_route", "en_route_pickup", "arrived_pickup", "picked_up", "en_route_delivery", "arrived_delivery"].includes(status)
+      || ["in_progress", "en_route", "en_route_pickup", "arrived_pickup", "picked_up", "en_route_delivery", "arrived_delivery"].includes(workflow);
   }
 
   function getCategoryClass(category) {
@@ -289,16 +304,21 @@
 
   function matchesTab(delivery) {
     switch (state.activeTab) {
+      case "all_open":
       case "pending":
-        return !isAssigned(delivery) && !isReady(delivery) && !isComplete(delivery) && !isCancelled(delivery) && !isRejected(delivery);
+        return !isComplete(delivery) && !isCancelled(delivery);
+      case "waiting_payment":
+        return !isComplete(delivery) && !isCancelled(delivery) && clean(delivery.payment_status) !== "paid";
       case "ready":
         return isReady(delivery) || clean(delivery.status) === "ready_to_dispatch";
       case "assigned":
         return isAssigned(delivery);
-      case "rejected":
-        return isRejected(delivery);
+      case "in_transit":
+        return isInTransit(delivery);
       case "completed":
         return isComplete(delivery);
+      case "rejected":
+        return isRejected(delivery);
       case "search":
       default:
         return true;
@@ -397,11 +417,44 @@
     const total = state.deliveries.length;
     const assigned = state.deliveries.filter(isAssigned).length;
     const ready = state.deliveries.filter(isReady).length;
-    const pending = state.deliveries.filter(delivery => !isAssigned(delivery) && !isReady(delivery) && !isRejected(delivery) && !isComplete(delivery) && !isCancelled(delivery)).length;
+    const openRows = state.deliveries.filter(delivery => !isComplete(delivery) && !isCancelled(delivery));
+    const unassigned = openRows.filter(delivery => !isAssigned(delivery)).length;
+    const inTransit = state.deliveries.filter(isInTransit).length;
+    const waitingPayment = openRows.filter(delivery => clean(delivery.payment_status) !== "paid").length;
 
-    elements.workspaceLabel.textContent = `${state.activeTab === "search" ? "Search Results" : `${state.activeTab.charAt(0).toUpperCase() + state.activeTab.slice(1)} Deliveries`}`;
-    elements.visibleCount.textContent = `${visible.length} visible of ${total}`;
-    elements.statusSummary.textContent = `Pending ${pending} • Ready ${ready} • Assigned ${assigned}`;
+    const labelMap = {
+      all_open: "All Open Jobs",
+      waiting_payment: "Waiting Payment",
+      ready: "Ready to Dispatch",
+      assigned: "Assigned",
+      in_transit: "In Transit",
+      rejected: "Rejected",
+      completed: "Completed",
+      search: "Search Results"
+    };
+
+    if (elements.summaryTotalOpen) {
+      elements.summaryTotalOpen.textContent = String(openRows.length);
+    }
+    if (elements.summaryUnassigned) {
+      elements.summaryUnassigned.textContent = String(unassigned);
+    }
+    if (elements.summaryInTransit) {
+      elements.summaryInTransit.textContent = String(inTransit);
+    }
+    if (elements.summaryWaitingPayment) {
+      elements.summaryWaitingPayment.textContent = String(waitingPayment);
+    }
+
+    if (elements.workspaceLabel) {
+      elements.workspaceLabel.textContent = labelMap[state.activeTab] || "All Open Jobs";
+    }
+    if (elements.visibleCount) {
+      elements.visibleCount.textContent = `${visible.length} visible of ${total}`;
+    }
+    if (elements.statusSummary) {
+      elements.statusSummary.textContent = `Open ${openRows.length} • Ready ${ready} • Assigned ${assigned}`;
+    }
   }
 
   function rowActionsHtml(delivery) {
@@ -1033,6 +1086,13 @@
       renderDeliveries();
     });
 
+    if (elements.statusFilter) {
+      elements.statusFilter.addEventListener("change", () => {
+        state.activeTab = elements.statusFilter.value || "all_open";
+        renderDeliveries();
+      });
+    }
+
     elements.sortSelect.addEventListener("change", () => {
       state.sort = elements.sortSelect.value;
       renderDeliveries();
@@ -1133,6 +1193,9 @@
     }
 
     state.activeTab = readInitialTabFromUrl();
+    if (elements.statusFilter) {
+      elements.statusFilter.value = state.activeTab;
+    }
     bindEvents();
     renderTabs();
     renderCategories();

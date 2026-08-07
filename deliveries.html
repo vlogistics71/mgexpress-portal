@@ -169,64 +169,258 @@
     .assign-hidden-form { display: none; }
     @media (max-width: 980px) { .controls { grid-template-columns: 1fr 1fr; } .delivery-details-modal { align-items: flex-end; padding: 0; } .delivery-details-panel { width: 100%; height: 100dvh; max-height: 100dvh; border-radius: 0; } .modal-backdrop { padding: 0; } .modal-panel { width: 100%; max-height: 100dvh; border-radius: 0; } .details-action-grid { grid-template-columns: 1fr 1fr; } .assign-controls { grid-template-columns: 1fr; } .assign-panel { width: 100%; max-height: 100dvh; border-radius: 0; } }
     @media (max-width: 720px) { .page-head-top { flex-direction: column; align-items: stretch; } .controls { grid-template-columns: 1fr; } .card { grid-template-columns: 1fr; } .actions { justify-content: flex-start; } .details-summary { flex-direction: column; } .details-action-grid { grid-template-columns: 1fr; } .details-kv { grid-template-columns: 1fr; } }
+
+    .topbar-inner {
+      width: min(1180px, 100%);
+      margin: auto;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .topbar-copy {
+      min-width: 0;
+      display: grid;
+      gap: 4px;
+    }
+
+    .menu-btn {
+      min-width: 44px;
+      min-height: 44px;
+      border: 1px solid rgba(255, 255, 255, .18);
+      border-radius: 14px;
+      background: rgba(255, 255, 255, .08);
+      color: #fff;
+      font-size: 20px;
+      font-weight: 900;
+      cursor: pointer;
+    }
+
+    .page-head {
+      margin: 18px 0 0;
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .page-title {
+      margin: 4px 0 0;
+      color: var(--dark-green);
+      font-size: clamp(28px, 6vw, 42px);
+      line-height: 1.02;
+      font-weight: 950;
+      letter-spacing: -.03em;
+    }
+
+    .action-btn.primary-compact {
+      min-height: 48px;
+      padding: 12px 18px;
+      border-radius: 16px;
+      background: linear-gradient(180deg, #129867 0%, #087455 100%);
+      box-shadow: 0 14px 30px rgba(8, 116, 85, .2);
+    }
+
+    .summary-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+      margin-top: 14px;
+    }
+
+    .summary-card {
+      min-height: 118px;
+      padding: 14px;
+      border: 1px solid var(--line);
+      border-radius: 20px;
+      background: #fff;
+      box-shadow: 0 10px 22px rgba(0, 0, 0, .04);
+      display: grid;
+      align-content: space-between;
+      gap: 8px;
+    }
+
+    .summary-label {
+      color: var(--muted);
+      font-size: 11px;
+      font-weight: 900;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+    }
+
+    .summary-value {
+      color: var(--green);
+      font-size: clamp(30px, 8vw, 42px);
+      font-weight: 950;
+      line-height: .95;
+      letter-spacing: -.04em;
+    }
+
+    .summary-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 999px;
+      background: var(--general);
+      display: inline-block;
+      margin-right: 8px;
+      vertical-align: middle;
+    }
+
+    .summary-dot.medical { background: #c0392b; }
+    .summary-dot.legal { background: #c49b00; }
+    .summary-dot.pallet { background: #8b5a2b; }
+    .summary-dot.special { background: #d97706; }
+
+    .toolbar {
+      margin-top: 14px;
+      display: grid;
+      grid-template-columns: minmax(0, 1.35fr) minmax(220px, .65fr);
+      gap: 10px;
+      align-items: end;
+    }
+
+    .toolbar .control label {
+      display: block;
+      margin-bottom: 6px;
+      color: var(--muted);
+      font-size: 11px;
+      font-weight: 900;
+      letter-spacing: .04em;
+      text-transform: uppercase;
+    }
+
+    .toolbar .control input,
+    .toolbar .control select {
+      width: 100%;
+      min-height: 48px;
+      padding: 12px 14px;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      background: #fff;
+      color: var(--ink);
+    }
+
+    .toolbar-note {
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 700;
+      line-height: 1.35;
+      min-height: 18px;
+    }
+
+    .tabs,
+    .filters,
+    #sortSelect,
+    #refreshButton,
+    .panel-meta {
+      display: none !important;
+    }
+
+    .panel {
+      border-radius: 20px;
+      margin-top: 14px;
+    }
+
+    .list {
+      padding: 0;
+      gap: 8px;
+    }
+
+    @media (max-width: 980px) {
+      .toolbar { grid-template-columns: 1fr; }
+      .summary-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .delivery-details-modal { align-items: flex-end; padding: 0; }
+      .delivery-details-panel { width: 100%; height: 100dvh; max-height: 100dvh; border-radius: 0; }
+      .modal-backdrop { padding: 0; }
+      .modal-panel { width: 100%; max-height: 100dvh; border-radius: 0; }
+      .details-action-grid { grid-template-columns: 1fr 1fr; }
+      .assign-controls { grid-template-columns: 1fr; }
+      .assign-panel { width: 100%; max-height: 100dvh; border-radius: 0; }
+    }
+
+    @media (max-width: 720px) {
+      .page-head { align-items: stretch; }
+      .page-head > * { width: 100%; }
+      .summary-grid { gap: 8px; }
+      .card { grid-template-columns: 1fr; }
+      .actions { justify-content: flex-start; }
+      .details-summary { flex-direction: column; }
+      .details-action-grid { grid-template-columns: 1fr; }
+      .details-kv { grid-template-columns: 1fr; }
+    }
   </style>
 </head>
 <body>
   <header class="topbar">
     <div class="topbar-inner">
-      <div class="brand">MG <span>EXPRESS</span> DISPATCH</div>
-      <div class="staff-email" id="staffEmail"></div>
+      <div class="topbar-copy">
+        <div class="brand">MG <span>EXPRESS</span> DISPATCH</div>
+        <div class="staff-email" id="staffEmail"></div>
+      </div>
+      <button class="menu-btn" type="button" aria-label="Menu">☰</button>
     </div>
   </header>
 
   <main class="container">
     <section class="page-head">
-      <div class="page-head-top">
-        <div class="page-copy">
-          <a class="back-link" href="dashboard.html">← Dashboard</a>
-          <div class="eyebrow">Dispatch Workspace</div>
-          <h1 class="page-title">Deliveries</h1>
-          <div class="page-subtitle">Use Details to open a delivery. Use tabs, filters, and search to narrow the list.</div>
-        </div>
-        <button class="action-btn" id="newDeliveryButton" type="button">+ New Delivery</button>
+      <div>
+        <div class="eyebrow">Dispatch work queue</div>
+        <h1 class="page-title">Active Jobs</h1>
       </div>
-      <div class="page-subtitle">Use Details to open a delivery. Use tabs, filters, and search to narrow the list.</div>
+      <button class="action-btn primary-compact" id="newDeliveryButton" type="button">+ Create New Job</button>
+    </section>
+
+    <section class="summary-grid">
+      <div class="summary-card">
+        <div class="summary-label"><span class="summary-dot general"></span>Total Open</div>
+        <div class="summary-value" id="summaryTotalOpen">--</div>
+      </div>
+      <div class="summary-card">
+        <div class="summary-label"><span class="summary-dot medical"></span>Unassigned</div>
+        <div class="summary-value" id="summaryUnassigned">--</div>
+      </div>
+      <div class="summary-card">
+        <div class="summary-label"><span class="summary-dot special"></span>In Transit</div>
+        <div class="summary-value" id="summaryInTransit">--</div>
+      </div>
+      <div class="summary-card">
+        <div class="summary-label"><span class="summary-dot legal"></span>Waiting Payment</div>
+        <div class="summary-value" id="summaryWaitingPayment">--</div>
+      </div>
     </section>
 
     <section class="toolbar">
-      <div class="tabs" id="tabs"></div>
-      <div class="filters" id="categoryFilters"></div>
-      <div class="controls">
-        <div class="control">
-          <label for="searchInput">Search deliveries</label>
-          <input id="searchInput" type="search" placeholder="Job number, customer, company, pickup, delivery, phone, reference number">
-        </div>
-        <div class="control">
-          <label for="sortSelect">Sort</label>
-          <select id="sortSelect">
-            <option value="newest">Newest</option>
-            <option value="oldest">Oldest</option>
-            <option value="pickup_time">Pickup Time</option>
-            <option value="delivery_time">Delivery Time</option>
-            <option value="customer">Customer</option>
-          </select>
-        </div>
-        <div class="control">
-          <label for="refreshButton">&nbsp;</label>
-          <button class="action-btn secondary" id="refreshButton" type="button">Refresh</button>
-        </div>
-        <div class="control">
-          <label for="statusSummary">&nbsp;</label>
-          <div class="sheet-note" id="statusSummary"></div>
-        </div>
+      <div class="control">
+        <label for="searchInput">Search</label>
+        <input id="searchInput" type="search" placeholder="Job number, customer, driver or address">
       </div>
+      <div class="control">
+        <label for="statusFilter">Status</label>
+        <select id="statusFilter">
+          <option value="all_open">All Open Jobs</option>
+          <option value="waiting_payment">Waiting Payment</option>
+          <option value="ready">Ready to Dispatch</option>
+          <option value="assigned">Assigned</option>
+          <option value="in_transit">In Transit</option>
+          <option value="completed">Completed</option>
+        </select>
+      </div>
+      <div class="toolbar-note" id="statusSummary"></div>
+      <div class="hidden" id="tabs"></div>
+      <div class="hidden" id="categoryFilters"></div>
+      <select id="sortSelect" class="hidden">
+        <option value="newest">Newest</option>
+        <option value="oldest">Oldest</option>
+        <option value="pickup_time">Pickup Time</option>
+        <option value="delivery_time">Delivery Time</option>
+        <option value="customer">Customer</option>
+      </select>
+      <button class="action-btn secondary hidden" id="refreshButton" type="button">Refresh</button>
     </section>
 
     <section class="panel">
-      <div class="panel-meta">
-        <span id="workspaceLabel">Pending Deliveries</span>
-        <span id="visibleCount">0 visible</span>
-      </div>
       <div class="list" id="deliveryList">
         <div class="empty">
           <div>
