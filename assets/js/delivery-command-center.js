@@ -4,10 +4,8 @@
   const dispatch = window.MG_DISPATCH_WORKSPACE;
   const client = dispatch?.client || window.mgDispatchClient;
 
-  if (!client || !dispatch) {
-    console.error("MG Express delivery command center requires the shared dispatch workspace helpers.");
-    return;
-  }
+  let commandCenterInitialized = false;
+  let commandCenterEventsBound = false;
 
   const helpers = {
     escapeHtml(value) {
@@ -152,7 +150,15 @@
     supportEstimatedMiles: null,
     loading: false,
     searchTimer: null,
-    rowsVersion: 0
+    rowsVersion: 0,
+    diagnosticsMissing: [],
+    lastError: "",
+    lastSupabaseError: "",
+    startupStarted: false,
+    queryStarted: false,
+    queryCompleted: false,
+    returnedRows: 0,
+    activeUserId: "none"
   };
 
   const elements = {
@@ -161,11 +167,13 @@
     visibleCount: document.getElementById("visibleCount"),
     sectionLabel: document.getElementById("workspaceSectionLabel"),
     rowsHost: document.getElementById("deliveryList"),
+    diagnosticsBox: document.getElementById("commandCenterDiagnostics"),
     tabs: Array.from(document.querySelectorAll("[data-delivery-tab]")),
     categoryChips: Array.from(document.querySelectorAll("[data-delivery-category]")),
     sortSelect: document.getElementById("sortSelect"),
     searchPanel: document.getElementById("searchPanel"),
     searchInput: document.getElementById("searchInput"),
+    refreshButton: document.getElementById("refreshBtn"),
     newDeliveryButton: document.getElementById("newDeliveryButton"),
     newDeliveryButtonFab: document.getElementById("newDeliveryButtonFab"),
     toastWrap: document.getElementById("toastWrap"),
@@ -188,14 +196,111 @@
     assignSubmitBtn: document.getElementById("assignSubmitBtn")
   };
 
+  function diagnosticsLine(label, value) {
+    return `${label}: ${value}`;
+  }
+
+  function renderDiagnostics() {
+    if (!elements.diagnosticsBox) {
+      return;
+    }
+
+    const stackLocation = state.lastError && state.lastErrorStack
+      ? String(state.lastErrorStack).split("\n").slice(0, 2).join(" | ")
+      : "none";
+
+    const lines = [
+      diagnosticsLine("page initialization started", state.startupStarted ? "yes" : "no"),
+      diagnosticsLine("Supabase client available", client ? "yes" : "no"),
+      diagnosticsLine("authenticated user id", state.activeUserId || "none"),
+      diagnosticsLine("active tab", state.activeTab),
+      diagnosticsLine("delivery query started", state.queryStarted ? "yes" : "no"),
+      diagnosticsLine("delivery query completed", state.queryCompleted ? "yes" : "no"),
+      diagnosticsLine("number of rows returned", String(state.returnedRows || 0)),
+      diagnosticsLine("exact JavaScript error message", state.lastError || "none"),
+      diagnosticsLine("exact Supabase error message", state.lastSupabaseError || "none"),
+      diagnosticsLine("stack location", stackLocation)
+    ];
+
+    if (state.diagnosticsMissing.length) {
+      lines.push(diagnosticsLine("missing optional elements", state.diagnosticsMissing.join(", ")));
+    }
+
+    elements.diagnosticsBox.style.display = "block";
+    elements.diagnosticsBox.textContent = lines.join("\n");
+  }
+
+  function setDiagnosticsError(error, supabaseError = "") {
+    state.lastError = String(error?.message || error || "").trim() || "unknown error";
+    state.lastErrorStack = String(error?.stack || "").trim();
+    const supabaseParts = [
+      String(error?.message || "").trim(),
+      String(supabaseError || "").trim()
+    ].filter(Boolean);
+    state.lastSupabaseError = supabaseParts.join(" | ");
+    renderDiagnostics();
+  }
+
+  function recordMissingElement(name) {
+    if (!state.diagnosticsMissing.includes(name)) {
+      state.diagnosticsMissing.push(name);
+    }
+  }
+
+  function setDeliveryLoading(isLoading) {
+    state.loading = Boolean(isLoading);
+    if (!elements.rowsHost) {
+      return;
+    }
+
+    if (isLoading) {
+      elements.rowsHost.innerHTML = '<div class="delivery-empty"><div class="delivery-empty-title">Loading deliveries...</div></div>';
+    }
+  }
+
+  function renderDeliveryError(message) {
+    if (!elements.rowsHost) {
+      return;
+    }
+
+    const text = helpers.escapeHtml(message || "Unable to load deliveries");
+    elements.rowsHost.innerHTML = `
+      <div class="delivery-empty">
+        <div class="delivery-empty-title">${text}</div>
+        <button class="delivery-empty-cta" type="button" id="retryLoadDeliveriesButton">Retry</button>
+      </div>
+    `;
+  }
+
+  if (!client || !dispatch) {
+    state.startupStarted = true;
+    state.queryStarted = false;
+    state.queryCompleted = false;
+    setDiagnosticsError(
+      new Error("MG Express delivery command center requires the shared dispatch workspace helpers."),
+      "Shared helper bootstrap missing"
+    );
+    renderDeliveryError("Unable to initialize delivery command center.");
+    console.error("MG Express delivery command center requires the shared dispatch workspace helpers.");
+    return;
+  }
+
   function setTitle() {
-    elements.title.textContent = "Deliveries";
-    elements.subtitle.textContent = "Single command center for dispatch.";
+    if (elements.title) {
+      elements.title.textContent = "Deliveries";
+    }
+    if (elements.subtitle) {
+      elements.subtitle.textContent = "Single command center for dispatch.";
+    }
     document.title = "Deliveries | MG Express Dispatch";
   }
 
   function showToast(message, type) {
-    dispatch.showToast(message, type);
+    if (typeof dispatch.showToast === "function") {
+      dispatch.showToast(message, type);
+      return;
+    }
+    console[type === "error" ? "error" : "log"](message);
   }
 
   function setActiveTab(tab, updateUrl = true) {
@@ -205,9 +310,15 @@
       button.classList.toggle("active", button.dataset.deliveryTab === state.activeTab);
     });
 
-    elements.searchPanel.classList.toggle("hidden", state.activeTab !== "search");
-    elements.visibleCount.textContent = "Loading...";
-    elements.sectionLabel.textContent = TAB_META[state.activeTab].label + " Deliveries";
+    if (elements.searchPanel) {
+      elements.searchPanel.classList.toggle("hidden", state.activeTab !== "search");
+    }
+    if (elements.visibleCount) {
+      elements.visibleCount.textContent = "Loading...";
+    }
+    if (elements.sectionLabel) {
+      elements.sectionLabel.textContent = TAB_META[state.activeTab].label + " Deliveries";
+    }
 
     if (updateUrl) {
       const params = new URLSearchParams(window.location.search || "");
@@ -501,11 +612,13 @@
 
   function renderVisibleRows() {
     const visible = sortRows(
-      state.visibleRows.filter(row => rowPassesCategory(row) && rowPassesSearch(row))
+      (Array.isArray(state.visibleRows) ? state.visibleRows : []).filter(row => rowPassesCategory(row) && rowPassesSearch(row))
     );
 
     state.renderedRows = visible;
-    elements.visibleCount.textContent = `${visible.length} visible`;
+    if (elements.visibleCount) {
+      elements.visibleCount.textContent = `${visible.length} visible`;
+    }
 
     if (!visible.length) {
       renderEmptyState();
@@ -529,10 +642,14 @@
 
   function updateHeaderCopy() {
     const meta = TAB_META[state.activeTab];
-    elements.sectionLabel.textContent = meta.label + (state.activeTab === "search" ? " Search" : " Deliveries");
-    elements.subtitle.textContent = state.activeTab === "search"
-      ? "Search by job number, customer, company, pickup, delivery, phone or reference number."
-      : "Single command center for dispatch.";
+    if (elements.sectionLabel) {
+      elements.sectionLabel.textContent = meta.label + (state.activeTab === "search" ? " Search" : " Deliveries");
+    }
+    if (elements.subtitle) {
+      elements.subtitle.textContent = state.activeTab === "search"
+        ? "Search by job number, customer, company, pickup, delivery, phone or reference number."
+        : "Single command center for dispatch.";
+    }
   }
 
   function countQuery(tab) {
@@ -562,16 +679,12 @@
     }
 
     if (tab === "rejected") {
-      query = query.eq("driver_acceptance_status", "rejected").not("assigned_driver_id", "is", null).order("driver_rejected_at", { ascending: false });
+      query = query.eq("driver_acceptance_status", "rejected").not("assigned_driver_id", "is", null).order("created_at", { ascending: false });
       return query;
     }
 
     const values = TAB_META[tab]?.query || [];
     query = query.in("status", values).order("created_at", { ascending: false });
-
-    if (tab === "completed") {
-      query = query.order("completed_at", { ascending: false });
-    }
 
     return query;
   }
@@ -644,7 +757,7 @@
       .from("quotes")
       .select("*")
       .in("status", ["assigned", "in_progress"])
-      .order("updated_at", { ascending: false })
+      .order("created_at", { ascending: false })
       .limit(100);
 
     if (result.error) {
@@ -655,15 +768,11 @@
   }
 
   async function fetchTodayClosedSnapshot() {
-    const start = helpers.startOfToday().toISOString();
-    const end = helpers.tomorrowStart().toISOString();
     const result = await client
       .from("quotes")
       .select("*")
       .or("status.eq.completed,status.eq.delivered,status.eq.closed,status.eq.cancelled,status.eq.canceled")
-      .gte("completed_at", start)
-      .lt("completed_at", end)
-      .order("completed_at", { ascending: false })
+      .order("created_at", { ascending: false })
       .limit(100);
 
     if (result.error) {
@@ -980,6 +1089,13 @@
   }
 
   function openCreateJobModal() {
+    if (!elements.jobForm || !elements.jobModalTitle || !elements.saveJobBtn || !elements.jobCustomerAccountId || !elements.customerLookupInput || !elements.customerLookupResults) {
+      const error = new Error("New Delivery modal elements are missing.");
+      setDiagnosticsError(error);
+      showToast(error.message, "error");
+      return;
+    }
+
     elements.jobForm.reset();
     elements.jobRecordId.value = "";
     elements.jobModalTitle.textContent = "New Delivery";
@@ -1000,6 +1116,13 @@
 
   async function submitJobForm(event) {
     event.preventDefault();
+    if (!elements.saveJobBtn || !elements.jobForm || !elements.jobRecordId) {
+      const error = new Error("Delivery form elements are missing.");
+      setDiagnosticsError(error);
+      showToast(error.message, "error");
+      return;
+    }
+
     const saveBtn = elements.saveJobBtn;
     saveBtn.disabled = true;
     saveBtn.textContent = "Saving...";
@@ -1132,6 +1255,10 @@
 
   async function loadVisibleRows() {
     const tab = state.activeTab;
+    state.queryStarted = true;
+    state.queryCompleted = false;
+    renderDiagnostics();
+
     if (tab === "search") {
       state.visibleRows = await fetchSearchRows(state.searchTerm);
     } else {
@@ -1144,27 +1271,72 @@
 
     state.assignedSnapshot = await fetchAssignedSnapshot();
     state.metricsSnapshot = await fetchTodayClosedSnapshot();
+    state.returnedRows = Array.isArray(state.visibleRows) ? state.visibleRows.length : 0;
+    state.queryCompleted = true;
     updateWorkspaceRowsCache(getDisplayRows());
     renderVisibleRows();
     updateHeaderCopy();
+    renderDiagnostics();
   }
 
-  async function refreshCurrentTab() {
+  async function loadDeliveriesForActiveTab() {
     if (state.loading) {
       return;
     }
 
-    state.loading = true;
-    elements.rowsHost.innerHTML = '<div class="delivery-empty"><div class="delivery-empty-title">Loading deliveries...</div></div>';
+    setDeliveryLoading(true);
+    state.lastError = "";
+    state.lastErrorStack = "";
+    state.lastSupabaseError = "";
+    renderDiagnostics();
 
     try {
       await loadCounts();
       await loadVisibleRows();
     } catch (error) {
-      elements.rowsHost.innerHTML = `<div class="delivery-empty"><div class="delivery-empty-title">${helpers.escapeHtml(error.message || "Unable to load deliveries")}</div></div>`;
+      const supabaseMessage = error?.details || error?.hint || error?.code || "";
+      setDiagnosticsError(error, supabaseMessage);
+      renderDeliveryError(error.message || "Unable to load deliveries");
       showToast(error.message || "Unable to load deliveries", "error");
     } finally {
-      state.loading = false;
+      setDeliveryLoading(false);
+    }
+  }
+
+  async function refreshCurrentTab() {
+    await loadDeliveriesForActiveTab();
+  }
+
+  function hasTabButton(tabName) {
+    return elements.tabs.some(button => String(button.dataset.deliveryTab || "") === tabName);
+  }
+
+  function validateDomElements() {
+    const requiredTabNames = ["pending", "ready", "assigned", "rejected", "completed", "search"];
+    requiredTabNames.forEach(tabName => {
+      if (!hasTabButton(tabName)) {
+        recordMissingElement(`tab:${tabName}`);
+      }
+    });
+
+    const optionalElements = [
+      ["category chips", elements.categoryChips.length > 0],
+      ["sort dropdown", Boolean(elements.sortSelect)],
+      ["search input", Boolean(elements.searchInput)],
+      ["delivery list container", Boolean(elements.rowsHost)],
+      ["top New Delivery button", Boolean(elements.newDeliveryButton)],
+      ["floating New Delivery button", Boolean(elements.newDeliveryButtonFab)],
+      ["refresh button", Boolean(elements.refreshButton)]
+    ];
+
+    optionalElements.forEach(item => {
+      if (!item[1]) {
+        recordMissingElement(item[0]);
+      }
+    });
+
+    if (!elements.rowsHost) {
+      throw new Error("Delivery list container is missing.");
     }
   }
 
@@ -1180,14 +1352,16 @@
       }
     }
 
-    elements.sortSelect.value = state.sortBy;
+    if (elements.sortSelect) {
+      elements.sortSelect.value = state.sortBy;
+    }
     setActiveTab(state.activeTab, false);
     setCategory("all");
     updateHeaderCopy();
 
     await dispatch.loadDrivers();
     await loadRecurringCustomers();
-    await refreshCurrentTab();
+    await loadDeliveriesForActiveTab();
   }
 
   function triggerQuickAction(jobId, action) {
@@ -1251,8 +1425,12 @@
     const tabButton = event.target.closest("[data-delivery-tab]");
     if (tabButton) {
       event.preventDefault();
+      event.stopPropagation();
       setActiveTab(tabButton.dataset.deliveryTab);
-      refreshCurrentTab();
+      loadDeliveriesForActiveTab().catch(error => {
+        setDiagnosticsError(error);
+        renderDeliveryError(error.message || "Unable to load deliveries");
+      });
       return;
     }
 
@@ -1269,34 +1447,71 @@
       return;
     }
 
+    const retryButton = event.target.closest("#retryLoadDeliveriesButton");
+    if (retryButton) {
+      event.preventDefault();
+      loadDeliveriesForActiveTab().catch(error => {
+        setDiagnosticsError(error);
+        renderDeliveryError(error.message || "Unable to load deliveries");
+      });
+      return;
+    }
+
     dispatch.handleDocumentClick(event);
   }
 
   function bindEvents() {
-    elements.sortSelect.addEventListener("change", () => {
-      setSort(elements.sortSelect.value);
-    });
+    if (commandCenterEventsBound) {
+      return;
+    }
 
-    elements.searchInput.addEventListener("input", () => {
-      state.searchTerm = elements.searchInput.value;
-      if (state.activeTab === "search") {
-        clearTimeout(state.searchTimer);
-        state.searchTimer = setTimeout(() => {
-          refreshCurrentTab();
-        }, 220);
-      }
-    });
+    if (elements.sortSelect) {
+      elements.sortSelect.addEventListener("change", () => {
+        setSort(elements.sortSelect.value || "newest");
+      });
+    }
 
-    elements.newDeliveryButton.addEventListener("click", openCreateJobModal);
+    if (elements.searchInput) {
+      elements.searchInput.addEventListener("input", () => {
+        state.searchTerm = elements.searchInput.value || "";
+        if (state.activeTab === "search") {
+          clearTimeout(state.searchTimer);
+          state.searchTimer = setTimeout(() => {
+            loadDeliveriesForActiveTab().catch(error => {
+              setDiagnosticsError(error);
+              renderDeliveryError(error.message || "Unable to load deliveries");
+            });
+          }, 220);
+        }
+      });
+    }
+
+    if (elements.newDeliveryButton) {
+      elements.newDeliveryButton.addEventListener("click", openCreateJobModal);
+    }
     if (elements.newDeliveryButtonFab) {
       elements.newDeliveryButtonFab.addEventListener("click", openCreateJobModal);
     }
-    elements.jobForm.addEventListener("submit", submitJobForm);
-    elements.customerLookupInput.addEventListener("input", handleCustomerLookupInput);
-    elements.jobForm.addEventListener("input", () => {
-      syncReturnDetailsVisibility();
-      renderNewDeliveryReview();
-    });
+    if (elements.refreshButton) {
+      elements.refreshButton.addEventListener("click", () => {
+        loadDeliveriesForActiveTab().catch(error => {
+          setDiagnosticsError(error);
+          renderDeliveryError(error.message || "Unable to load deliveries");
+        });
+      });
+    }
+    if (elements.jobForm) {
+      elements.jobForm.addEventListener("submit", submitJobForm);
+    }
+    if (elements.customerLookupInput) {
+      elements.customerLookupInput.addEventListener("input", handleCustomerLookupInput);
+    }
+    if (elements.jobForm) {
+      elements.jobForm.addEventListener("input", () => {
+        syncReturnDetailsVisibility();
+        renderNewDeliveryReview();
+      });
+    }
     if (elements.returnRequired) {
       elements.returnRequired.addEventListener("change", () => {
         syncReturnDetailsVisibility();
@@ -1319,13 +1534,13 @@
 
     window.addEventListener("storage", event => {
       if (event.key === "mg_dispatch_refresh" && event.newValue) {
-        refreshCurrentTab().catch(error => showToast(error.message || "Unable to refresh deliveries", "error"));
+        loadDeliveriesForActiveTab().catch(error => showToast(error.message || "Unable to refresh deliveries", "error"));
       }
 
       if (event.key === "mg_driver_profile_refresh" && event.newValue) {
         dispatch.loadDrivers().then(() => {
           if (state.activeTab === "search" || state.activeTab === "assigned") {
-            refreshCurrentTab().catch(error => showToast(error.message || "Unable to refresh deliveries", "error"));
+            loadDeliveriesForActiveTab().catch(error => showToast(error.message || "Unable to refresh deliveries", "error"));
           }
         });
       }
@@ -1334,23 +1549,53 @@
     window.addEventListener("focus", () => {
       loadCounts().catch(() => {});
     });
+
+    commandCenterEventsBound = true;
   }
 
-  (async function start() {
+  async function initializeDeliveryCommandCenter() {
+    if (commandCenterInitialized) {
+      return;
+    }
+    commandCenterInitialized = true;
+    state.startupStarted = true;
+    renderDiagnostics();
+
     try {
+      validateDomElements();
       bindEvents();
       updateCounts();
+
+      const sessionResult = await client.auth.getSession();
+      state.activeUserId = sessionResult?.data?.session?.user?.id || "none";
+      renderDiagnostics();
+
       await loadInitialData();
+
       setInterval(() => {
         loadCounts().then(() => {
           if (!state.loading) {
-            refreshCurrentTab().catch(() => {});
+            loadDeliveriesForActiveTab().catch(() => {});
           }
         }).catch(() => {});
       }, 60000);
     } catch (error) {
+      const supabaseMessage = error?.details || error?.hint || error?.code || "";
+      setDiagnosticsError(error, supabaseMessage);
       showToast(error.message || "Unable to load deliveries", "error");
-      elements.rowsHost.innerHTML = `<div class="delivery-empty"><div class="delivery-empty-title">${helpers.escapeHtml(error.message || "Unable to load deliveries")}</div></div>`;
+      renderDeliveryError(error.message || "Unable to load deliveries");
+    } finally {
+      setDeliveryLoading(false);
+      renderDiagnostics();
     }
-  })();
+  }
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", initializeDeliveryCommandCenter, { once: true });
+  } else {
+    initializeDeliveryCommandCenter().catch(error => {
+      setDiagnosticsError(error);
+      renderDeliveryError(error.message || "Unable to load deliveries");
+    });
+  }
 })();
