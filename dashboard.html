@@ -2,12 +2,20 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1"
+  >
+
   <title>MG Express Dispatch</title>
+
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="assets/js/config.js"></script>
+
   <style>
-    * { box-sizing: border-box; }
+    * {
+      box-sizing: border-box;
+    }
 
     :root {
       --dark-green: #064f3b;
@@ -21,8 +29,6 @@
       --line: #dfe8e4;
       --danger: #a32d2d;
     }
-
-    html { background: var(--background); }
 
     body {
       margin: 0;
@@ -39,114 +45,74 @@
     }
 
     button,
-    a { -webkit-tap-highlight-color: transparent; }
-
-    button { appearance: none; }
-
-    .hidden { display: none !important; }
-
-    .container {
-      width: min(1050px, calc(100% - 24px));
-      margin: 0 auto;
+    a {
+      -webkit-tap-highlight-color: transparent;
     }
 
     .topbar {
       position: sticky;
       top: 0;
-      z-index: 40;
+      z-index: 50;
       background: var(--dark-green);
-      color: #fff;
-      box-shadow: 0 12px 30px rgba(7, 67, 49, .22);
-    }
-
-    .topbar .container {
-      padding: 18px 0 16px;
+      color: white;
+      padding: 18px 20px;
     }
 
     .topbar-inner {
+      width: min(1050px, 100%);
+      margin: auto;
       display: flex;
       align-items: center;
       justify-content: space-between;
-      gap: 12px;
-      flex-wrap: wrap;
-    }
-
-    .topbar-main {
-      min-width: 0;
-      flex: 1 1 auto;
+      gap: 15px;
     }
 
     .brand {
-      font-size: clamp(24px, 4.8vw, 36px);
+      font-size: 24px;
       font-weight: 900;
-      letter-spacing: .12em;
-      line-height: .95;
-      text-transform: uppercase;
+      line-height: 1.08;
     }
 
-    .brand span { color: #d9fff0; }
+    .brand span {
+      color: var(--coral);
+    }
 
     .staff-email {
-      margin-top: 6px;
-      font-size: 12px;
-      font-weight: 700;
-      color: rgba(255, 255, 255, .76);
+      margin-top: 7px;
+      font-size: 13px;
+      opacity: .82;
       overflow-wrap: anywhere;
     }
 
-    .topbar-actions {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      flex: 0 0 auto;
-      flex-wrap: wrap;
-      justify-content: flex-end;
-    }
-
-    .action-btn,
-    .mini-btn,
-    .icon-btn {
+    .signout {
       border: 0;
-      border-radius: 14px;
-      cursor: pointer;
-      font-weight: 800;
-    }
-
-    .action-btn,
-    .mini-btn {
-      min-height: 42px;
-      padding: 10px 16px;
-      white-space: nowrap;
-    }
-
-    .action-btn {
-      background: #fff;
+      border-radius: 16px;
+      padding: 15px 18px;
+      background: white;
       color: var(--dark-green);
+      font-weight: 900;
+      cursor: pointer;
+      min-width: 112px;
     }
 
-    .mini-btn {
-      background: rgba(255, 255, 255, .14);
-      color: #fff;
-      border: 1px solid rgba(255, 255, 255, .16);
+    .container {
+      width: min(1050px, 100%);
+      margin: auto;
+      padding: 30px 18px 60px;
     }
 
-    .page-heading,
-    .panel-heading,
-    .jobs-heading {
+    .page-heading {
       display: flex;
       justify-content: space-between;
       align-items: flex-end;
-      gap: 14px;
-      margin-bottom: 20px;
+      gap: 18px;
+      margin-bottom: 24px;
     }
 
     .eyebrow {
       color: var(--muted);
       font-size: 18px;
       margin-bottom: 5px;
-      text-transform: none;
-      letter-spacing: 0;
-      font-weight: 400;
     }
 
     h1 {
@@ -160,456 +126,356 @@
       font-size: 29px;
     }
 
-    .section-copy,
-    .card-meta,
-    .card-caption,
-    .activity-meta,
-    .sheet-meta,
-    .hint,
-    .modal-subtitle {
-      color: var(--muted);
-      font-size: 12px;
-      line-height: 1.35;
-      font-weight: 700;
+    .primary-button {
+      border: 0;
+      border-radius: 14px;
+      padding: 15px 20px;
+      background: var(--green);
+      color: white;
+      font-weight: 900;
+      cursor: pointer;
     }
 
-    .status-card,
-    .ops-card,
-    .summary-link,
-    .compact-card,
-    .ai-card,
-    .panel {
-      background: #fff;
+    .secondary-button {
+      border: 1px solid var(--line);
+      border-radius: 13px;
+      padding: 13px 16px;
+      background: white;
+      color: var(--dark-green);
+      font-weight: 900;
+      cursor: pointer;
+    }
+
+    .navigation {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-bottom: 24px;
+    }
+
+    .navigation a {
+      text-decoration: none;
+      display: inline-block;
+    }
+
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+      gap: 13px;
+      margin-bottom: 30px;
+    }
+
+    .stat-card {
+      background: white;
       border: 1px solid var(--line);
       border-radius: 20px;
-      box-shadow: 0 8px 24px rgba(0, 0, 0, .04);
-    }
-
-    .status-card {
-      position: relative;
-      min-width: min(100%, 320px);
-      padding: 16px 16px 16px 20px;
-      display: grid;
-      gap: 10px;
-      align-content: center;
-    }
-
-    .status-card::before,
-    .ops-card::before {
-      content: "";
-      position: absolute;
-      inset: 0 auto 0 0;
-      width: 4px;
-      border-radius: inherit;
-      background: var(--green);
-    }
-
-    .status-line {
-      font-size: 15px;
-      line-height: 1.35;
-      font-weight: 800;
-      color: var(--ink);
-    }
-
-    .status-subline {
-      color: var(--muted);
-      font-size: 12px;
-      line-height: 1.35;
-      font-weight: 700;
-    }
-
-    main.container {
-      padding: 22px 0 60px;
-      display: grid;
-      gap: 22px;
-    }
-
-    .ops-grid {
-      display: grid;
-      grid-template-columns: repeat(3, minmax(0, 1fr));
-      gap: 13px;
-    }
-
-    .ops-card {
-      position: relative;
-      width: 100%;
       padding: 20px;
-      text-align: left;
-      cursor: pointer;
       min-height: 145px;
-      display: grid;
-      gap: 12px;
-      align-content: space-between;
+      box-shadow: 0 8px 25px rgba(0, 0, 0, .04);
     }
 
-    .card-top {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 10px;
-    }
-
-    .card-icon {
-      width: 36px;
-      height: 36px;
-      border-radius: 13px;
-      background: var(--light-green);
-      display: grid;
-      place-items: center;
-      font-size: 16px;
-      font-weight: 900;
-      color: var(--dark-green);
-      flex: 0 0 auto;
-    }
-
-    .card-label {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      color: var(--muted);
-      font-size: 11px;
-      font-weight: 900;
-      letter-spacing: .14em;
-      text-transform: uppercase;
-      line-height: 1.2;
-    }
-
-    .category-accent {
-      width: 8px;
-      height: 8px;
-      border-radius: 999px;
-      background: var(--green);
-      flex: 0 0 8px;
-    }
-
-    .category-accent.medical { background: #c63d32; }
-    .category-accent.legal { background: #c59a00; }
-    .category-accent.pallet { background: #8b5a2b; }
-    .category-accent.special { background: #d97706; }
-    .category-accent.general { background: var(--green); }
-
-    .card-value {
-      font-size: clamp(32px, 6vw, 44px);
-      line-height: .95;
-      font-weight: 900;
-      letter-spacing: -.04em;
+    .stat-number {
       color: var(--green);
+      font-size: 38px;
+      font-weight: 900;
     }
 
-    .ops-card[data-accent="medical"]::before,
-    .status-card[data-accent="medical"]::before { background: #c63d32; }
-    .ops-card[data-accent="legal"]::before,
-    .status-card[data-accent="legal"]::before { background: #c59a00; }
-    .ops-card[data-accent="pallet"]::before,
-    .status-card[data-accent="pallet"]::before { background: #8b5a2b; }
-    .ops-card[data-accent="special"]::before,
-    .status-card[data-accent="special"]::before { background: #d97706; }
-    .ops-card[data-accent="general"]::before,
-    .status-card[data-accent="general"]::before { background: var(--green); }
-
-    .support-grid {
-      display: grid;
-      gap: 13px;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-      align-items: start;
-    }
-
-    .compact-card,
-    .ai-card,
-    .summary-link,
-    .panel {
-      padding: 20px;
-    }
-
-    .summary-link {
-      width: 100%;
-      text-align: left;
-      cursor: pointer;
-      display: grid;
-      gap: 10px;
-    }
-
-    .snapshot-grid,
-    .driver-status-grid,
-    .revenue-grid {
-      display: grid;
-      gap: 8px;
-    }
-
-    .snapshot-grid,
-    .driver-status-grid {
-      grid-template-columns: repeat(3, minmax(0, 1fr));
-    }
-
-    .revenue-grid {
-      grid-template-columns: repeat(3, minmax(0, 1fr));
-    }
-
-    .snapshot-item,
-    .driver-status-item,
-    .revenue-item {
-      min-height: 68px;
-      padding: 10px;
-      border-radius: 13px;
-      background: #f7faf9;
-      display: grid;
-      gap: 6px;
-      align-content: space-between;
-    }
-
-    .snapshot-item strong,
-    .driver-status-item strong,
-    .revenue-item strong {
-      font-size: 10px;
+    .stat-label {
       color: var(--muted);
-      font-weight: 900;
-      letter-spacing: .12em;
-      text-transform: uppercase;
-    }
-
-    .snapshot-number,
-    .driver-status-number,
-    .revenue-value {
-      font-size: 22px;
-      line-height: 1.1;
-      font-weight: 900;
-      color: var(--ink);
-      overflow-wrap: anywhere;
-    }
-
-    .activity-list,
-    .sheet-list {
-      display: grid;
-      gap: 8px;
-    }
-
-    .activity-item,
-    .sheet-item {
-      border-radius: 16px;
-      border: 1px solid var(--line);
-      background: #fff;
-      padding: 10px 12px;
-      display: grid;
-      gap: 4px;
-    }
-
-    .activity-title,
-    .sheet-title {
-      color: var(--ink);
-      font-size: 13px;
-      font-weight: 900;
-    }
-
-    .status-pill {
-      display: inline-flex;
-      align-items: center;
-      width: fit-content;
-      min-height: 24px;
-      padding: 4px 8px;
-      border-radius: 999px;
-      background: var(--light-green);
-      color: var(--green);
-      font-size: 10px;
-      font-weight: 900;
-      letter-spacing: .05em;
-      text-transform: uppercase;
-    }
-
-    .status-pill.good { background: var(--light-green); color: var(--green); }
-    .status-pill.warn { background: #fff5da; color: #9a6800; }
-    .status-pill.bad { background: #fdecec; color: #9b2929; }
-
-    .unavailable {
-      color: var(--muted);
-      font-size: 16px;
-      font-weight: 900;
+      margin-top: 9px;
       line-height: 1.3;
     }
 
-    .ai-card {
-      display: grid;
-      gap: 12px;
-    }
-
-    .ai-headline {
-      display: grid;
-      gap: 6px;
-    }
-
-    .ai-action {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      min-height: 40px;
-      padding: 0 14px;
-      border-radius: 12px;
+    .panel {
+      background: white;
       border: 1px solid var(--line);
-      background: #f7faf9;
-      color: var(--dark-green);
+      border-radius: 22px;
+      padding: 23px;
+      margin-bottom: 26px;
+      box-shadow: 0 9px 28px rgba(0, 0, 0, .05);
+    }
+
+    .hidden {
+      display: none;
+    }
+
+    .panel-heading,
+    .jobs-heading {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 14px;
+      margin-bottom: 20px;
+    }
+
+    .quote-form {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 15px;
+    }
+
+    label {
+      display: block;
+      color: var(--muted);
       font-size: 12px;
       font-weight: 900;
-      width: fit-content;
-      cursor: pointer;
+      text-transform: uppercase;
     }
 
-    .toast-wrap {
-      position: fixed;
-      right: 14px;
-      bottom: 14px;
-      z-index: 300;
+    label.full {
+      grid-column: 1 / -1;
+    }
+
+    input,
+    select,
+    textarea {
+      width: 100%;
+      margin-top: 7px;
+      padding: 14px;
+      border: 1px solid #ccd8d3;
+      border-radius: 12px;
+      background: white;
+      color: var(--ink);
+      outline: none;
+    }
+
+    input:focus,
+    select:focus,
+    textarea:focus {
+      border-color: var(--green);
+      box-shadow: 0 0 0 3px rgba(8, 116, 85, .12);
+    }
+
+    textarea {
+      min-height: 90px;
+      resize: vertical;
+    }
+
+    .form-actions {
+      grid-column: 1 / -1;
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .message {
+      margin-top: 15px;
+      padding: 13px;
+      border-radius: 11px;
+      line-height: 1.4;
+    }
+
+    .message.info {
+      background: #edf7f3;
+      color: #06543e;
+    }
+
+    .message.error {
+      background: #fff0f0;
+      color: var(--danger);
+    }
+
+    .jobs-list {
       display: grid;
-      gap: 8px;
+      gap: 18px;
+    }
+
+    .job-card {
+      background: white;
+      border: 1px solid var(--line);
+      border-radius: 20px;
+      padding: 20px;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, .04);
+    }
+
+    .job-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 12px;
+      margin-bottom: 17px;
+    }
+
+    .job-number {
+      color: var(--dark-green);
+      font-size: 24px;
+      font-weight: 900;
+    }
+
+    .customer {
+      margin-top: 5px;
+      font-size: 18px;
+      font-weight: 800;
+    }
+
+    .customer-email {
+      margin-top: 4px;
+      color: var(--muted);
+      overflow-wrap: anywhere;
+    }
+
+    .status-pill {
+      border-radius: 999px;
+      padding: 8px 11px;
+      background: var(--light-green);
+      color: var(--green);
+      font-size: 12px;
+      font-weight: 900;
+      text-transform: capitalize;
+      white-space: nowrap;
+    }
+
+    .route {
+      border-radius: 15px;
+      padding: 16px;
+      background: #f7faf9;
+      line-height: 1.45;
+      margin-bottom: 17px;
+    }
+
+    .route-arrow {
+      margin: 8px 0;
+      color: var(--green);
+      font-size: 23px;
+      font-weight: 900;
+    }
+
+    .job-details {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 12px;
+      margin-bottom: 17px;
+    }
+
+    .detail-box {
+      background: #f7faf9;
+      border-radius: 13px;
+      padding: 13px;
+    }
+
+    .detail-label {
+      color: var(--muted);
+      font-size: 11px;
+      font-weight: 900;
+      text-transform: uppercase;
+    }
+
+    .detail-value {
+      margin-top: 5px;
+      line-height: 1.35;
+      overflow-wrap: anywhere;
+    }
+
+    .instructions {
+      margin-bottom: 17px;
+      padding: 15px;
+      border-radius: 14px;
+      background: #fff8ed;
+      line-height: 1.45;
+      white-space: pre-wrap;
+    }
+
+    .job-controls {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 12px;
+      align-items: end;
+    }
+
+    .save-job,
+    .photo-link {
+      min-height: 49px;
+      border: 0;
+      border-radius: 12px;
+      padding: 13px;
+      background: var(--green);
+      color: white;
+      text-align: center;
+      text-decoration: none;
+      font-weight: 900;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .photo-link {
+      background: #eaf3ef;
+      color: var(--dark-green);
+    }
+
+    .photo-link.disabled {
+      opacity: .5;
       pointer-events: none;
     }
 
-    .toast {
-      min-width: 260px;
-      max-width: min(92vw, 360px);
-      padding: 12px 14px;
-      border-radius: 14px;
-      color: #fff;
-      box-shadow: 0 16px 34px rgba(0, 0, 0, .18);
-      pointer-events: auto;
-      font-weight: 700;
-    }
-
-    .toast.error { background: #9b2929; }
-    .toast.info { background: #374151; }
-    .toast.success { background: #0a7a57; }
-
-    .modal-backdrop {
-      position: fixed;
-      inset: 0;
-      z-index: 260;
-      background: rgba(0, 0, 0, .56);
-      display: none;
-      align-items: flex-end;
-      justify-content: center;
-      padding: 0;
-    }
-
-    .modal-backdrop.open { display: flex; }
-
-    .modal-panel {
-      width: min(760px, 100%);
-      max-height: 92vh;
-      overflow: hidden;
-      background: #fff;
-      border-radius: 26px 26px 0 0;
-      box-shadow: 0 -18px 40px rgba(0, 0, 0, .24);
-      transform: translateY(102%);
-      transition: transform .24s ease;
-      display: grid;
-      grid-template-rows: auto 1fr;
-    }
-
-    .modal-backdrop.open .modal-panel { transform: translateY(0); }
-
-    .modal-head {
-      padding: 16px;
-      border-bottom: 1px solid var(--line);
-      display: flex;
-      justify-content: space-between;
-      gap: 10px;
-      align-items: flex-start;
-      background: #fff;
-    }
-
-    .modal-title {
-      margin: 0;
-      color: var(--ink);
-      font-size: 22px;
-      font-weight: 900;
-    }
-
-    .modal-body {
-      overflow: auto;
-      padding: 16px;
-      display: grid;
-      gap: 12px;
-      align-content: start;
-      background: #fff;
-    }
-
-    .icon-btn {
-      min-width: 40px;
-      min-height: 40px;
-      border: 1px solid var(--line);
-      border-radius: 14px;
-      background: #fff;
-      color: var(--dark-green);
-      font-size: 20px;
-      font-weight: 900;
-      cursor: pointer;
+    .empty {
+      padding: 28px;
+      text-align: center;
+      color: var(--muted);
+      background: #fafdfb;
+      border-radius: 17px;
     }
 
     @media (max-width: 900px) {
-      .ops-grid {
+      .stats {
         grid-template-columns: repeat(2, minmax(0, 1fr));
       }
 
-      .support-grid {
-        grid-template-columns: 1fr;
+      .job-controls {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
       }
     }
 
     @media (max-width: 650px) {
-      .page-heading,
-      .panel-heading,
-      .jobs-heading {
+      .page-heading {
         align-items: stretch;
         flex-direction: column;
       }
 
-      .topbar-inner {
-        align-items: flex-start;
-        flex-direction: column;
-      }
-
-      .topbar-actions {
-        width: 100%;
-        justify-content: stretch;
-      }
-
-      .topbar-actions .action-btn,
-      .topbar-actions .mini-btn {
+      .page-heading .primary-button {
         width: 100%;
       }
 
-      .ops-grid,
-      .revenue-grid,
-      .snapshot-grid,
-      .driver-status-grid,
-      .support-grid {
+      .quote-form,
+      .job-controls,
+      .job-details {
         grid-template-columns: 1fr;
       }
 
-      h1 { font-size: 40px; }
+      .stats {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
 
-      .panel,
-      .compact-card,
-      .ai-card,
-      .summary-link {
+      h1 {
+        font-size: 40px;
+      }
+
+      .panel {
         padding: 18px;
       }
     }
   </style>
 </head>
+
 <body>
   <header class="topbar">
-    <div class="container">
-      <div class="topbar-inner">
-        <div class="topbar-main">
-          <div class="brand">MG <span>EXPRESS</span> DISPATCH</div>
-          <div class="staff-email" id="staffEmail"></div>
+    <div class="topbar-inner">
+      <div>
+        <div class="brand">
+          MG <span>EXPRESS</span> DISPATCH
         </div>
-        <div class="topbar-actions">
-          <button class="mini-btn" id="refreshDashboardBtn" type="button">Refresh</button>
-          <button class="action-btn" id="openNewDeliveryBtn" type="button">+ New Delivery</button>
-        </div>
+
+        <div class="staff-email" id="staffEmail"></div>
       </div>
 
-      <div class="staff-email" id="staffEmail"></div>
+      <button
+        class="signout"
+        id="signOutButton"
+        type="button"
+      >
+        Sign Out
+      </button>
     </div>
   </header>
 
@@ -617,1457 +483,980 @@
     <div class="page-heading">
       <div>
         <div class="eyebrow">Dispatch control center</div>
-        <h1 id="opsGreeting">Good Morning, Dispatch</h1>
-        <div class="section-copy" id="opsDate">Loading date...</div>
+        <h1>Dashboard</h1>
       </div>
 
-      <section class="status-card" id="operationsStatusCard" data-accent="general">
-        <div class="card-label"><span class="category-accent general"></span>OPERATIONS STATUS</div>
-        <div class="status-line" id="needsAttentionCaption">Checking active alerts...</div>
-        <div class="status-subline">Based on live production data only.</div>
-      </section>
+      <button
+        class="primary-button"
+        id="newQuoteButton"
+        type="button"
+      >
+        + New Job
+      </button>
     </div>
 
-    <section class="panel">
-      <div class="panel-heading">
-        <div>
-          <h2>Operations</h2>
-          <div class="section-copy">Live dispatch counts.</div>
-        </div>
+    <nav class="navigation">
+      <a
+        class="secondary-button"
+        href="/history.html"
+      >
+        Job History
+      </a>
+
+      <a
+        class="secondary-button"
+        href="/customer.html"
+      >
+        Customers
+      </a>
+
+      <a
+        class="secondary-button"
+        href="https://drivers.migenteexpress.com"
+        target="_blank"
+        rel="noopener"
+      >
+        Driver Portal
+      </a>
+    </nav>
+
+    <section class="stats">
+      <div class="stat-card">
+        <div class="stat-number" id="countNew">0</div>
+        <div class="stat-label">New</div>
       </div>
 
-      <div class="ops-grid">
-        <button class="ops-card" id="cardPendingApproval" type="button" data-accent="medical">
-          <div class="card-top">
-            <div class="card-icon">⌁</div>
-            <div class="card-label"><span class="category-accent medical"></span>PENDING APPROVAL</div>
-          </div>
-          <div class="card-value" id="countPendingApproval">--</div>
-          <div class="card-meta" id="pendingCaption">Waiting Approval</div>
-        </button>
+      <div class="stat-card">
+        <div class="stat-number" id="countWaiting">0</div>
+        <div class="stat-label">Waiting Payment</div>
+      </div>
 
-        <button class="ops-card" id="cardReadyDispatch" type="button" data-accent="special">
-          <div class="card-top">
-            <div class="card-icon">↗</div>
-            <div class="card-label"><span class="category-accent special"></span>READY TO DISPATCH</div>
-          </div>
-          <div class="card-value" id="countReadyDispatch">--</div>
-          <div class="card-meta" id="readyCaption">Awaiting Driver</div>
-        </button>
+      <div class="stat-card">
+        <div class="stat-number" id="countReady">0</div>
+        <div class="stat-label">Paid / Ready</div>
+      </div>
 
-        <button class="ops-card" id="cardAssigned" type="button" data-accent="general">
-          <div class="card-top">
-            <div class="card-icon">➜</div>
-            <div class="card-label"><span class="category-accent general"></span>ASSIGNED</div>
-          </div>
-          <div class="card-value" id="countAssigned">--</div>
-          <div class="card-meta" id="assignedCaption">Drivers En Route</div>
-        </button>
+      <div class="stat-card">
+        <div class="stat-number" id="countTransit">0</div>
+        <div class="stat-label">In Transit</div>
+      </div>
 
-        <button class="ops-card" id="cardCompletedToday" type="button" data-accent="legal">
-          <div class="card-top">
-            <div class="card-icon">✓</div>
-            <div class="card-label"><span class="category-accent legal"></span>COMPLETED TODAY</div>
-          </div>
-          <div class="card-value" id="countCompletedToday">--</div>
-          <div class="card-meta" id="completedCaption">Finished Today</div>
-        </button>
-
-        <button class="ops-card" id="cardAvailableDrivers" type="button" data-accent="pallet">
-          <div class="card-top">
-            <div class="card-icon">⟡</div>
-            <div class="card-label"><span class="category-accent pallet"></span>AVAILABLE DRIVERS</div>
-          </div>
-          <div class="card-value" id="countAvailableDrivers">--</div>
-          <div class="card-meta" id="availableDriversCaption">Ready to Accept</div>
-        </button>
-
-        <button class="ops-card" id="cardNeedsAttention" type="button" data-accent="medical">
-          <div class="card-top">
-            <div class="card-icon">!</div>
-            <div class="card-label"><span class="category-accent medical"></span>NEEDS ATTENTION</div>
-          </div>
-          <div class="card-value" id="countNeedsAttention">--</div>
-          <div class="card-meta">Requires Review</div>
-        </button>
+      <div class="stat-card">
+        <div class="stat-number" id="countDelivered">0</div>
+        <div class="stat-label">Delivered</div>
       </div>
     </section>
 
-    <section class="support-grid">
-      <section class="panel compact-card" id="todaySnapshotCard">
-        <div class="panel-heading" style="margin-bottom: 12px;">
-          <div>
-            <h2>Today Snapshot</h2>
-            <div class="section-copy">Compact category mix.</div>
-          </div>
-        </div>
-        <div class="snapshot-grid">
-          <div class="snapshot-item">
-            <strong>Medical</strong>
-            <div class="snapshot-number" id="snapshotMedical">--</div>
-          </div>
-          <div class="snapshot-item">
-            <strong>Legal</strong>
-            <div class="snapshot-number" id="snapshotLegal">--</div>
-          </div>
-          <div class="snapshot-item">
-            <strong>General</strong>
-            <div class="snapshot-number" id="snapshotDeliveriesToday">--</div>
-          </div>
-          <div class="snapshot-item">
-            <strong>Pallet</strong>
-            <div class="snapshot-number" id="snapshotPallet">--</div>
-          </div>
-          <div class="snapshot-item">
-            <strong>Special</strong>
-            <div class="snapshot-number" id="snapshotSpecial">--</div>
-          </div>
-          <div class="snapshot-item">
-            <strong>Returns</strong>
-            <div class="snapshot-number" id="snapshotReturn">--</div>
-          </div>
-          <div class="snapshot-item hidden">
-            <strong>Completed Today</strong>
-            <div class="snapshot-number" id="snapshotCompletedToday">--</div>
-          </div>
-        </div>
-      </section>
+    <section
+      id="quotePanel"
+      class="panel hidden"
+    >
+      <div class="panel-heading">
+        <h2>Create New Job</h2>
 
-      <section class="panel compact-card" id="revenueCard">
-        <div class="panel-heading" style="margin-bottom: 12px;">
-          <div>
-            <h2>Revenue Snapshot</h2>
-            <div class="section-copy" id="revenueSectionCopy">Dispatch-only daily estimate.</div>
-          </div>
-        </div>
-        <div class="revenue-grid">
-          <div class="revenue-item">
-            <strong>Today’s Revenue</strong>
-            <div class="revenue-value" id="revenueToday">--</div>
-          </div>
-          <div class="revenue-item">
-            <strong>Driver Pay</strong>
-            <div class="revenue-value" id="driverPayToday">--</div>
-          </div>
-          <div class="revenue-item">
-            <strong>Estimated Gross</strong>
-            <div class="revenue-value" id="grossMarginToday">--</div>
-          </div>
-        </div>
-      </section>
+        <button
+          class="secondary-button"
+          id="closeQuoteButton"
+          type="button"
+        >
+          Close
+        </button>
+      </div>
 
-      <section class="panel compact-card hidden" id="activitySection">
-        <div class="panel-heading" style="margin-bottom: 12px;">
-          <div>
-            <h2>Recent Activity</h2>
-            <div class="section-copy" id="activitySectionCopy">Latest 5 operational events.</div>
-          </div>
-        </div>
-        <div class="activity-list" id="activityList"></div>
-      </section>
+      <form id="quoteForm" class="quote-form">
+        <label>
+          Job Number
 
-      <section class="panel ai-card" id="aiCardCompact" role="button" tabindex="0">
-        <div class="ai-headline">
-          <div class="card-label"><span class="category-accent general"></span>MG EXPRESS AI</div>
-          <div class="card-value" style="font-size: 20px; line-height: 1.15;" id="aiSummaryText">0 suggestions • No urgent issues</div>
-          <div class="card-meta">Recommendations only</div>
-        </div>
-        <div class="ai-action" id="openAiSuggestionsBtn">View Suggestions</div>
-      </section>
+          <input
+            name="job_number"
+            type="text"
+            placeholder="MGE-00002"
+            required
+          >
+        </label>
 
-      <button class="panel summary-link driver-status-card hidden" id="driverStatusCard" type="button">
-        <div>
-          <div class="card-label"><span class="category-accent general"></span>DRIVER STATUS</div>
-          <div class="card-meta">Open drivers workspace</div>
+        <label>
+          Customer Name
+
+          <input
+            name="customer_name"
+            type="text"
+            required
+          >
+        </label>
+
+        <label>
+          Customer Email
+
+          <input
+            name="customer_email"
+            type="email"
+          >
+        </label>
+
+        <label>
+          Assigned Driver
+
+          <select name="assigned_driver_id" id="newJobDriver">
+            <option value="">Unassigned</option>
+          </select>
+        </label>
+
+        <label class="full">
+          Pickup Address
+
+          <textarea
+            name="pickup_address"
+            required
+          ></textarea>
+        </label>
+
+        <label class="full">
+          Delivery Address
+
+          <textarea
+            name="delivery_address"
+            required
+          ></textarea>
+        </label>
+
+        <label>
+          Vehicle Type
+
+          <select name="vehicle_type">
+            <option value="">Choose vehicle</option>
+            <option value="Car">Car</option>
+            <option value="SUV">SUV</option>
+            <option value="Cargo Van">Cargo Van</option>
+            <option value="Sprinter Van">Sprinter Van</option>
+            <option value="Box Truck">Box Truck</option>
+          </select>
+        </label>
+
+        <label>
+          Delivery Speed
+
+          <select name="delivery_speed">
+            <option value="">Choose speed</option>
+            <option value="Standard">Standard</option>
+            <option value="Same Day">Same Day</option>
+            <option value="Rush">Rush</option>
+            <option value="Scheduled Route">Scheduled Route</option>
+          </select>
+        </label>
+
+        <label>
+          Package Type
+
+          <input
+            name="package_type"
+            type="text"
+            placeholder="Documents, medical supplies, box..."
+          >
+        </label>
+
+        <label>
+          Driver Pay
+
+          <input
+            name="driver_pay"
+            type="number"
+            min="0"
+            step="0.01"
+            value="0.00"
+          >
+        </label>
+
+        <label>
+          Status
+
+          <select name="status">
+            <option value="new">New</option>
+            <option value="waiting_payment">Waiting Payment</option>
+            <option value="paid">Paid / Ready</option>
+            <option value="in_transit">In Transit</option>
+            <option value="delivered">Delivered</option>
+            <option value="cancelled">Cancelled</option>
+          </select>
+        </label>
+
+        <label class="full">
+          Special Instructions
+
+          <textarea
+            name="special_instructions"
+            placeholder="Pickup details, gate code, contact information..."
+          ></textarea>
+        </label>
+
+        <div class="form-actions">
+          <button
+            class="primary-button"
+            id="saveQuoteButton"
+            type="submit"
+          >
+            Save Job
+          </button>
+
+          <button
+            class="secondary-button"
+            id="cancelQuoteButton"
+            type="button"
+          >
+            Cancel
+          </button>
         </div>
-        <div class="driver-status-grid">
-          <div class="driver-status-item">
-            <strong>Available</strong>
-            <div class="driver-status-number" id="driverStatusAvailable">--</div>
-          </div>
-          <div class="driver-status-item">
-            <strong>Busy</strong>
-            <div class="driver-status-number" id="driverStatusBusy">--</div>
-          </div>
-          <div class="driver-status-item">
-            <strong>Offline</strong>
-            <div class="driver-status-number" id="driverStatusOffline">--</div>
-          </div>
-        </div>
-      </button>
+      </form>
+
+      <div id="quoteMessage"></div>
+    </section>
+
+    <section class="panel">
+      <div class="jobs-heading">
+        <h2>Quotes &amp; Jobs</h2>
+
+        <button
+          class="secondary-button"
+          id="refreshButton"
+          type="button"
+        >
+          Refresh
+        </button>
+      </div>
+
+      <div id="jobsBox" class="jobs-list">
+        <div class="empty">Loading quotes and jobs…</div>
+      </div>
     </section>
   </main>
 
-  <div class="modal-backdrop" id="attentionModal">
-    <section class="modal-panel" role="dialog" aria-modal="true" aria-labelledby="attentionTitle">
-      <div class="modal-head">
-        <div>
-          <h3 class="modal-title" id="attentionTitle">Needs Attention</h3>
-          <div class="modal-subtitle" id="attentionSubtitle">Live issues pulled from existing delivery data.</div>
-        </div>
-        <button class="icon-btn" type="button" data-close-modal="attentionModal">×</button>
-      </div>
-      <div class="modal-body">
-        <div class="sheet-list" id="attentionList"></div>
-      </div>
-    </section>
-  </div>
-
-  <div class="modal-backdrop" id="aiSuggestionsModal">
-    <section class="modal-panel" role="dialog" aria-modal="true" aria-labelledby="aiSuggestionsTitle">
-      <div class="modal-head">
-        <div>
-          <h3 class="modal-title" id="aiSuggestionsTitle">MG Express AI</h3>
-          <div class="modal-subtitle">Recommendation-only summary. No delivery changes are written automatically.</div>
-        </div>
-        <button class="icon-btn" type="button" data-close-modal="aiSuggestionsModal">×</button>
-      </div>
-      <div class="modal-body">
-        <section class="compact-card">
-          <div class="card-label"><span class="category-accent general"></span>Morning Briefing</div>
-          <div class="sheet-list" id="aiBriefingSection"></div>
-        </section>
-        <section class="compact-card">
-          <div class="card-label"><span class="category-accent general"></span>Route Suggestions</div>
-          <div class="sheet-list" id="aiRoutesSection"></div>
-        </section>
-        <section class="compact-card">
-          <div class="card-label"><span class="category-accent general"></span>Driver Alerts</div>
-          <div class="sheet-list" id="aiWorkloadSection"></div>
-        </section>
-        <section class="compact-card">
-          <div class="card-label"><span class="category-accent general"></span>Payment Reminders</div>
-          <div class="sheet-list" id="aiPaymentsSection"></div>
-        </section>
-      </div>
-    </section>
-  </div>
-
-  <div class="toast-wrap" id="toastWrap"></div>
-
   <script>
-    const client = window.mgSupabase || (window.supabase && window.supabase.createClient
-      ? window.supabase.createClient(
-        "https://dczlucwfjayymlwbzzdi.supabase.co",
-        "sb_publishable_kcv_a78ZyUxMo2neKUANdw_XN7eAMpI"
-      )
-      : null);
-
-    if (!client) {
-      throw new Error("Supabase client unavailable.");
-    }
-
+    const client = supabase.createClient(
+      "https://dczlucwfjayymlwbzzdi.supabase.co",
+      "sb_publishable_kcv_a78ZyUxMo2neKUANdw_XN7eAMpI"
+    );
+    
     window.mgDispatchClient = client;
 
-    const CLOSED_STATUSES = new Set(["completed", "delivered", "closed", "cancelled", "canceled"]);
-    const PICKUP_REMAINING_STATUSES = new Set(["assigned", "en_route_pickup", "arrived_pickup"]);
-    const DELIVERY_REMAINING_STATUSES = new Set(["picked_up", "en_route_delivery", "arrived_delivery"]);
+    const jobsBox =
+      document.getElementById("jobsBox");
 
-    const state = {
-      session: null,
-      profile: null,
-      greetingFirstName: "Dispatch",
-      greetingTimerId: null,
-      isLoading: false,
-      pendingRefresh: false,
-      deliveries: [],
-      activeRows: [],
-      createdTodayRows: [],
-      completedTodayRows: [],
-      recentRows: [],
-      drivers: [],
-      driverQuotes: [],
-      driverSchema: {
-        drivers: new Set(),
-        quotes: new Set(),
-        driverOrderColumn: "",
-        quoteOrderColumn: ""
-      },
-      driverSummaries: [],
-      aiSuggestions: { briefing: [], routes: [], workload: [], payments: [], attention: [] },
-      attentionSummary: { total: 0, buckets: [] },
-      diagnostics: {
-        revenueHiddenReason: "",
-        activityHiddenReason: ""
-      }
-    };
+    const quotePanel =
+      document.getElementById("quotePanel");
 
-    const elements = {
-      staffEmail: document.getElementById("staffEmail"),
-      opsGreeting: document.getElementById("opsGreeting"),
-      opsDate: document.getElementById("opsDate"),
-      openNewDeliveryBtn: document.getElementById("openNewDeliveryBtn"),
-      refreshDashboardBtn: document.getElementById("refreshDashboardBtn"),
-      toastWrap: document.getElementById("toastWrap"),
-      countPendingApproval: document.getElementById("countPendingApproval"),
-      countReadyDispatch: document.getElementById("countReadyDispatch"),
-      countAssigned: document.getElementById("countAssigned"),
-      countCompletedToday: document.getElementById("countCompletedToday"),
-      countAvailableDrivers: document.getElementById("countAvailableDrivers"),
-      countNeedsAttention: document.getElementById("countNeedsAttention"),
-      pendingCaption: document.getElementById("pendingCaption"),
-      readyCaption: document.getElementById("readyCaption"),
-      assignedCaption: document.getElementById("assignedCaption"),
-      completedCaption: document.getElementById("completedCaption"),
-      availableDriversCaption: document.getElementById("availableDriversCaption"),
-      needsAttentionCaption: document.getElementById("needsAttentionCaption"),
-      cardPendingApproval: document.getElementById("cardPendingApproval"),
-      cardReadyDispatch: document.getElementById("cardReadyDispatch"),
-      cardAssigned: document.getElementById("cardAssigned"),
-      cardCompletedToday: document.getElementById("cardCompletedToday"),
-      cardAvailableDrivers: document.getElementById("cardAvailableDrivers"),
-      cardNeedsAttention: document.getElementById("cardNeedsAttention"),
-      aiCardCompact: document.getElementById("aiCardCompact"),
-      aiSummaryText: document.getElementById("aiSummaryText"),
-      snapshotDeliveriesToday: document.getElementById("snapshotDeliveriesToday"),
-      snapshotCompletedToday: document.getElementById("snapshotCompletedToday"),
-      snapshotMedical: document.getElementById("snapshotMedical"),
-      snapshotLegal: document.getElementById("snapshotLegal"),
-      snapshotPallet: document.getElementById("snapshotPallet"),
-      snapshotSpecial: document.getElementById("snapshotSpecial"),
-      snapshotReturn: document.getElementById("snapshotReturn"),
-      revenueSectionCopy: document.getElementById("revenueSectionCopy"),
-      revenueCard: document.getElementById("revenueCard"),
-      revenueToday: document.getElementById("revenueToday"),
-      driverPayToday: document.getElementById("driverPayToday"),
-      grossMarginToday: document.getElementById("grossMarginToday"),
-      driverStatusCard: document.getElementById("driverStatusCard"),
-      driverStatusAvailable: document.getElementById("driverStatusAvailable"),
-      driverStatusBusy: document.getElementById("driverStatusBusy"),
-      driverStatusOffline: document.getElementById("driverStatusOffline"),
-      activitySection: document.getElementById("activitySection"),
-      activitySectionCopy: document.getElementById("activitySectionCopy"),
-      activityList: document.getElementById("activityList"),
-      attentionModal: document.getElementById("attentionModal"),
-      attentionSubtitle: document.getElementById("attentionSubtitle"),
-      attentionList: document.getElementById("attentionList"),
-      aiSuggestionsModal: document.getElementById("aiSuggestionsModal"),
-      aiBriefingSection: document.getElementById("aiBriefingSection"),
-      aiRoutesSection: document.getElementById("aiRoutesSection"),
-      aiWorkloadSection: document.getElementById("aiWorkloadSection"),
-      aiPaymentsSection: document.getElementById("aiPaymentsSection")
-    };
+    const quoteForm =
+      document.getElementById("quoteForm");
+
+    const quoteMessage =
+      document.getElementById("quoteMessage");
+
+    const saveQuoteButton =
+      document.getElementById("saveQuoteButton");
+
+    let drivers = [];
+    let quotes = [];
 
     function escapeHtml(value) {
-      const div = document.createElement("div");
-      div.textContent = value == null ? "" : String(value);
-      return div.innerHTML;
-    }
-
-    function clean(value) {
-      return String(value || "").trim().toLowerCase();
-    }
-
-    function parseDate(value) {
-      if (!value) {
-        return null;
-      }
-
-      const date = new Date(value);
-      return Number.isNaN(date.getTime()) ? null : date;
-    }
-
-    function missingColumnError(error) {
-      const message = String(error?.message || "").toLowerCase();
-      return message.includes("column") && (message.includes("does not exist") || message.includes("not found"));
-    }
-
-    function startOfToday() {
-      const date = new Date();
-      date.setHours(0, 0, 0, 0);
-      return date;
+      const element = document.createElement("div");
+      element.textContent = value ?? "";
+      return element.innerHTML;
     }
 
     function money(value) {
-      const amount = Number(value || 0);
-      return amount.toLocaleString("en-US", {
-        style: "currency",
-        currency: "USD"
+      return Number(value || 0).toLocaleString(
+        "en-US",
+        {
+          style: "currency",
+          currency: "USD"
+        }
+      );
+    }
+
+    function statusLabel(status) {
+      const labels = {
+        new: "New",
+        waiting_payment: "Waiting Payment",
+        paid: "Paid / Ready",
+        ready: "Paid / Ready",
+        in_transit: "In Transit",
+        delivered: "Delivered",
+        cancelled: "Cancelled"
+      };
+
+      return labels[status] ||
+        String(status || "").replaceAll("_", " ");
+    }
+
+    function openQuotePanel() {
+      quotePanel.classList.remove("hidden");
+      quotePanel.scrollIntoView({
+        behavior: "smooth",
+        block: "start"
       });
     }
 
-    function showToast(message, type = "info") {
-      if (!elements.toastWrap) {
+    function closeQuotePanel() {
+      quotePanel.classList.add("hidden");
+      quoteForm.reset();
+      quoteMessage.className = "";
+      quoteMessage.textContent = "";
+    }
+
+    function setQuoteMessage(text, type) {
+      quoteMessage.className = "message " + type;
+      quoteMessage.textContent = text;
+    }
+
+    function populateNewJobDrivers() {
+      const select =
+        document.getElementById("newJobDriver");
+
+      select.innerHTML =
+        '<option value="">Unassigned</option>' +
+        drivers.map(driver => `
+          <option value="${escapeHtml(driver.id)}">
+            ${escapeHtml(
+              driver.full_name ||
+              driver.email ||
+              "Driver"
+            )}
+          </option>
+        `).join("");
+    }
+
+    function updateCounts() {
+      const count = status =>
+        quotes.filter(
+          quote => quote.status === status
+        ).length;
+
+      document.getElementById("countNew").textContent =
+        count("new");
+
+      document.getElementById("countWaiting").textContent =
+        count("waiting_payment");
+
+      document.getElementById("countReady").textContent =
+        count("paid") + count("ready");
+
+      document.getElementById("countTransit").textContent =
+        count("in_transit");
+
+      document.getElementById("countDelivered").textContent =
+        count("delivered");
+    }
+
+    function driverOptions(quote) {
+      const unassignedSelected =
+        quote.assigned_driver_id ? "" : "selected";
+
+      return `
+        <option value="" ${unassignedSelected}>
+          Unassigned
+        </option>
+
+        ${drivers.map(driver => {
+          const selected =
+            driver.id === quote.assigned_driver_id
+              ? "selected"
+              : "";
+
+          return `
+            <option
+              value="${escapeHtml(driver.id)}"
+              ${selected}
+            >
+              ${escapeHtml(
+                driver.full_name ||
+                driver.email ||
+                "Driver"
+              )}
+            </option>
+          `;
+        }).join("")}
+      `;
+    }
+
+    function statusOptions(quote) {
+      const statuses = [
+        "new",
+        "waiting_payment",
+        "paid",
+        "in_transit",
+        "delivered",
+        "cancelled"
+      ];
+
+      return statuses.map(status => `
+        <option
+          value="${status}"
+          ${status === quote.status ? "selected" : ""}
+        >
+          ${escapeHtml(statusLabel(status))}
+        </option>
+      `).join("");
+    }
+
+    function photoLink(url, label) {
+      if (!url) {
+        return `
+          <div class="photo-link disabled">
+            ${escapeHtml(label)} Not Available
+          </div>
+        `;
+      }
+
+      return `
+        <a
+          class="photo-link"
+          href="${escapeHtml(url)}"
+          target="_blank"
+          rel="noopener"
+        >
+          ${escapeHtml(label)}
+        </a>
+      `;
+    }
+
+    function renderJobs() {
+      updateCounts();
+
+      if (!quotes.length) {
+        jobsBox.innerHTML =
+          '<div class="empty">No quotes or jobs found.</div>';
+
         return;
       }
 
-      const toast = document.createElement("div");
-      toast.className = "toast " + type;
-      toast.textContent = message;
-      elements.toastWrap.appendChild(toast);
+      jobsBox.innerHTML = quotes.map(quote => `
+        <article class="job-card">
+          <div class="job-top">
+            <div>
+              <div class="job-number">
+                ${escapeHtml(quote.job_number)}
+              </div>
 
-      window.setTimeout(() => {
-        toast.remove();
-      }, 3200);
-    }
+              <div class="customer">
+                ${escapeHtml(
+                  quote.customer_name || "Customer"
+                )}
+              </div>
 
-    function openModal(modalId) {
-      const modal = document.getElementById(modalId);
-      if (!modal) {
-        return;
-      }
+              <div class="customer-email">
+                ${escapeHtml(quote.customer_email || "")}
+              </div>
+            </div>
 
-      modal.classList.add("open");
-      document.body.style.overflow = "hidden";
-    }
+            <div class="status-pill">
+              ${escapeHtml(statusLabel(quote.status))}
+            </div>
+          </div>
 
-    function closeModal(modalId) {
-      const modal = document.getElementById(modalId);
-      if (!modal) {
-        return;
-      }
+          <div class="route">
+            <strong>Pickup:</strong><br>
+            ${escapeHtml(quote.pickup_address || "")}
 
-      modal.classList.remove("open");
-      if (!document.querySelector(".modal-backdrop.open")) {
-        document.body.style.overflow = "";
-      }
-    }
+            <div class="route-arrow">↓</div>
 
-    function firstNameFromFullText(value) {
-      const text = String(value || "").trim();
-      if (!text) {
-        return "";
-      }
+            <strong>Delivery:</strong><br>
+            ${escapeHtml(quote.delivery_address || "")}
+          </div>
 
-      return text.split(/\s+/)[0] || "";
-    }
+          <div class="job-details">
+            <div class="detail-box">
+              <div class="detail-label">Vehicle</div>
+              <div class="detail-value">
+                ${escapeHtml(quote.vehicle_type || "Not set")}
+              </div>
+            </div>
 
-    function fallbackNameFromEmail(email) {
-      const text = String(email || "").trim();
-      if (!text.includes("@")) {
-        return "Dispatch";
-      }
+            <div class="detail-box">
+              <div class="detail-label">Delivery Speed</div>
+              <div class="detail-value">
+                ${escapeHtml(quote.delivery_speed || "Not set")}
+              </div>
+            </div>
 
-      const local = text.split("@")[0].replace(/[._-]+/g, " ").trim();
-      return firstNameFromFullText(local) || "Dispatch";
-    }
+            <div class="detail-box">
+              <div class="detail-label">Package</div>
+              <div class="detail-value">
+                ${escapeHtml(quote.package_type || "Not set")}
+              </div>
+            </div>
+          </div>
 
-    function hasPaymentReceived(job) {
-      return ["paid", "received", "completed"].includes(clean(job.payment_status));
-    }
-
-    function isCancelled(job) {
-      return ["cancelled", "canceled"].includes(clean(job?.status));
-    }
-
-    function isRejected(job) {
-      return clean(job?.driver_acceptance_status) === "rejected";
-    }
-
-    function isComplete(job) {
-      const status = clean(job?.status);
-      const workflow = clean(job?.driver_workflow_status);
-      return ["completed", "delivered", "closed"].includes(status) || workflow === "delivered";
-    }
-
-    function isAssigned(job) {
-      return Boolean(String(job?.assigned_driver_id || "").trim()) && !isComplete(job) && !isCancelled(job);
-    }
-
-    function isReady(job) {
-      const status = clean(job?.status);
-      return status === "ready" || status === "ready_to_dispatch";
-    }
-
-    function isDeliveryCompleted(job) {
-      const status = clean(job.status);
-      const flow = clean(job.driver_workflow_status);
-      return ["completed", "delivered"].includes(status) || ["complete_delivery", "delivered"].includes(flow);
-    }
-
-    function isClosedStatus(job) {
-      return CLOSED_STATUSES.has(clean(job.status));
-    }
-
-    function isRejectedAssignment(job) {
-      return clean(job.driver_acceptance_status) === "rejected";
-    }
-
-    function getWorkflowStage(job) {
-      if (isClosedStatus(job) || isDeliveryCompleted(job)) {
-        return "closed";
-      }
-
-      const status = clean(job.status);
-      const flow = clean(job.driver_workflow_status);
-
-      if (["assigned", "in_progress"].includes(status) || flow) {
-        return "assigned";
-      }
-
-      if (["ready", "ready_to_dispatch", "paid"].includes(status) || hasPaymentReceived(job)) {
-        return "ready_to_dispatch";
-      }
-
-      return "pending_approval";
-    }
-
-    function isClosedToday(job) {
-      if (!isComplete(job)) {
-        return false;
-      }
-
-      const completed = parseDate(job.completed_at || job.updated_at || job.created_at);
-      if (!completed) {
-        return false;
-      }
-
-      const start = startOfToday().getTime();
-      const end = start + (24 * 60 * 60 * 1000);
-      const value = completed.getTime();
-      return value >= start && value < end;
-    }
-
-    function returnRequiredFlag(value) {
-      if (value === true) {
-        return true;
-      }
-      return ["true", "yes", "1", "return_required"].includes(clean(value));
-    }
-
-    function normalizeCategory(value) {
-      const category = clean(value);
-      if (["medical", "legal", "pallet", "special"].includes(category)) {
-        return category;
-      }
-      return "general";
-    }
-
-    function hasDriverColumn(columnName) {
-      return state.driverSchema.drivers.has(columnName);
-    }
-
-    function hasQuoteColumn(columnName) {
-      return state.driverSchema.quotes.has(columnName);
-    }
-
-    async function detectExistingColumns(tableName, candidateColumns) {
-      const existing = [];
-
-      for (const column of candidateColumns) {
-        const probe = await client
-          .from(tableName)
-          .select(column)
-          .limit(1);
-
-        if (!probe.error) {
-          existing.push(column);
-          continue;
-        }
-
-        if (missingColumnError(probe.error)) {
-          continue;
-        }
-
-        throw probe.error;
-      }
-
-      return existing;
-    }
-
-    async function inspectDriverWorkspaceSchema() {
-      const driverColumns = await detectExistingColumns("drivers", [
-        "id",
-        "full_name",
-        "display_name",
-        "name",
-        "email",
-        "active",
-        "is_active",
-        "enabled",
-        "status",
-        "availability_status",
-        "current_area",
-        "area",
-        "city",
-        "vehicle_type",
-        "vehicle",
-        "vehicle_year",
-        "vehicle_make",
-        "vehicle_model",
-        "plate",
-        "license_plate",
-        "vehicle_color",
-        "phone",
-        "mobile_phone",
-        "notes",
-        "internal_notes",
-        "dispatch_notes",
-        "last_active_at",
-        "last_seen_at",
-        "created_at"
-      ]);
-
-      const quoteColumns = await detectExistingColumns("quotes", [
-        "id",
-        "job_number",
-        "assigned_driver_id",
-        "status",
-        "customer_name",
-        "pickup_address",
-        "delivery_address",
-        "driver_pay",
-        "driver_acceptance_status",
-        "driver_workflow_status",
-        "driver_accepted_at",
-        "driver_rejected_at",
-        "completed_at",
-        "created_at",
-        "scheduled_at",
-        "pickup_time",
-        "delivery_time"
-      ]);
-
-      state.driverSchema.drivers = new Set(driverColumns);
-      state.driverSchema.quotes = new Set(quoteColumns);
-      state.driverSchema.driverOrderColumn = ["full_name", "email", "created_at"].find(hasDriverColumn) || "";
-      state.driverSchema.quoteOrderColumn = [
-        "created_at",
-        "scheduled_at",
-        "pickup_time",
-        "delivery_time",
-        "completed_at",
-        "driver_rejected_at",
-        "driver_accepted_at"
-      ].find(hasQuoteColumn) || "";
-    }
-
-    function getTimeBasedGreeting() {
-      const hour = new Date().getHours();
-      if (hour >= 5 && hour <= 11) {
-        return "Good Morning";
-      }
-      if (hour >= 12 && hour <= 16) {
-        return "Good Afternoon";
-      }
-      return "Good Evening";
-    }
-
-    function updateGreetingText() {
-      elements.opsGreeting.textContent = `${getTimeBasedGreeting()}, ${state.greetingFirstName || "Dispatch"}`;
-    }
-
-    function updateHeaderDate() {
-      elements.opsDate.textContent = new Intl.DateTimeFormat("en-US", {
-        weekday: "long",
-        month: "long",
-        day: "numeric",
-        year: "numeric"
-      }).format(new Date());
-    }
-
-    function startGreetingRefresh() {
-      if (state.greetingTimerId) {
-        clearInterval(state.greetingTimerId);
-      }
-
-      state.greetingTimerId = setInterval(updateGreetingText, 60 * 1000);
-    }
-
-    async function resolveProfileName(userId) {
-      const fields = ["full_name", "display_name"];
-
-      for (const field of fields) {
-        const result = await client
-          .from("profiles")
-          .select(field)
-          .eq("id", userId)
-          .maybeSingle();
-
-        if (!result.error) {
-          const value = String(result.data?.[field] || "").trim();
-          if (value) {
-            return value;
+          ${
+            quote.special_instructions
+              ? `
+                <div class="instructions">
+                  <strong>Instructions:</strong><br>
+                  ${escapeHtml(quote.special_instructions)}
+                </div>
+              `
+              : ""
           }
-          continue;
-        }
 
-        const message = String(result.error.message || "").toLowerCase();
-        if (message.includes("column") && message.includes(field.toLowerCase())) {
-          continue;
-        }
+          <div class="job-controls">
+            <label>
+              Assigned Driver
 
-        console.error("Unable to resolve profile name", result.error);
-      }
+              <select id="driver-${quote.id}">
+                ${driverOptions(quote)}
+              </select>
+            </label>
 
-      return "";
+            <label>
+              Driver Pay
+
+              <input
+                id="driverPay-${quote.id}"
+                type="number"
+                min="0"
+                step="0.01"
+                value="${Number(
+                  quote.driver_pay || 0
+                ).toFixed(2)}"
+              >
+            </label>
+
+            <label>
+              Status
+
+              <select id="status-${quote.id}">
+                ${statusOptions(quote)}
+              </select>
+            </label>
+
+            <button
+              class="save-job"
+              type="button"
+              onclick="saveJob('${quote.id}')"
+            >
+              Save Changes
+            </button>
+
+            ${photoLink(
+              quote.pickup_photo_url,
+              "View Pickup Photo"
+            )}
+
+            ${photoLink(
+              quote.delivery_photo_url,
+              "View Delivery Photo"
+            )}
+          </div>
+
+          <div id="jobMessage-${quote.id}"></div>
+        </article>
+      `).join("");
+    }
+
+    function showJobMessage(quoteId, text, type) {
+      const box =
+        document.getElementById(
+          "jobMessage-" + quoteId
+        );
+
+      if (!box) return;
+
+      box.className = "message " + type;
+      box.textContent = text;
     }
 
     async function requireDispatchAccess() {
-      const sessionResult = await client.auth.getSession();
-      const session = sessionResult.data?.session || null;
-      if (!session?.user) {
-        window.location.href = "/index.html";
+      const sessionResult =
+        await client.auth.getSession();
+
+      const session =
+        sessionResult.data.session;
+
+      if (!session) {
+        location.replace("/index.html");
         return null;
       }
 
-      state.session = session;
-      if (elements.staffEmail) {
-        elements.staffEmail.textContent = session.user.email || "";
-      }
+      document.getElementById("staffEmail").textContent =
+        session.user.email || "";
 
-      let profile = null;
-      try {
-        const profileResult = await client
-          .from("profiles")
-          .select("*")
-          .eq("id", session.user.id)
-          .maybeSingle();
+      const profileResult = await client
+        .from("profiles")
+        .select("role")
+        .eq("id", session.user.id)
+        .maybeSingle();
 
-        if (!profileResult.error) {
-          profile = profileResult.data || null;
-        }
-      } catch (error) {
-        console.error("Unable to load profile", error);
-      }
+      if (
+        profileResult.error ||
+        !profileResult.data
+      ) {
+        alert(
+          profileResult.error?.message ||
+          "No MG Express profile was found."
+        );
 
-      const role = clean(profile?.role);
-      if (role && !["admin", "staff", "dispatcher"].includes(role)) {
-        window.location.href = "/index.html";
+        await client.auth.signOut();
+        location.replace("/index.html");
         return null;
       }
 
-      const profileName = await resolveProfileName(session.user.id);
-      if (profileName) {
-        state.greetingFirstName = firstNameFromFullText(profileName) || "Dispatch";
-      } else {
-        const meta = session.user.user_metadata || {};
-        state.greetingFirstName =
-          firstNameFromFullText(meta.full_name) ||
-          firstNameFromFullText(meta.name) ||
-          firstNameFromFullText(meta.display_name) ||
-          fallbackNameFromEmail(session.user.email || "");
+      const role = String(
+        profileResult.data.role || ""
+      ).toLowerCase();
+
+      if (
+        !["admin", "staff", "dispatcher"].includes(role)
+      ) {
+        if (role === "driver") {
+          location.replace(
+            "https://drivers.migenteexpress.com"
+          );
+
+          return null;
+        }
+
+        if (role === "customer") {
+          location.replace("/customer.html");
+          return null;
+        }
+
+        await client.auth.signOut();
+        location.replace("/index.html");
+        return null;
       }
 
-      window.dispatchEvent(new CustomEvent("mg-dispatch-ready", {
-        detail: {
-          email: session.user.email || ""
-        }
-      }));
-
-      updateGreetingText();
-      updateHeaderDate();
-      startGreetingRefresh();
       return session;
     }
 
-    function driverDisplayName(driver) {
-      return String(driver?.full_name || driver?.display_name || driver?.name || driver?.email || "Driver").trim() || "Driver";
-    }
-
-    function isDriverInactive(driver) {
-      const activeFlag = driver.active ?? driver.is_active ?? driver.enabled;
-      if (activeFlag === false) {
-        return true;
-      }
-
-      const status = clean(driver.status || driver.availability_status);
-      return ["inactive", "offline", "off_duty", "disabled"].includes(status);
-    }
-
-    function quoteWorkflowStatus(quote) {
-      return clean(quote.driver_workflow_status) || "assigned";
-    }
-
-    function calculateDriverWorkload(relatedQuotes) {
-      const activeQuotes = relatedQuotes.filter(quote => !isRejectedAssignment(quote) && !isClosedStatus(quote));
-      const pickupRemaining = activeQuotes.filter(quote => PICKUP_REMAINING_STATUSES.has(quoteWorkflowStatus(quote))).length;
-      const deliveryRemaining = activeQuotes.filter(quote => DELIVERY_REMAINING_STATUSES.has(quoteWorkflowStatus(quote))).length;
-
-      return {
-        activeAssignedJobs: activeQuotes.length,
-        pickupRemaining,
-        deliveryRemaining
-      };
-    }
-
-    function getAvailabilityState(driver, workload) {
-      if (isDriverInactive(driver)) {
-        return "offline";
-      }
-      if (workload.activeAssignedJobs > 0) {
-        return "busy";
-      }
-      return "available";
-    }
-
-    function buildDriverSummaries(drivers, relatedQuotes) {
-      const summaries = (drivers || []).map(driver => {
-        const driverId = String(driver.id || "");
-        const workload = calculateDriverWorkload(relatedQuotes.filter(quote => String(quote.assigned_driver_id || "") === driverId));
-        return {
-          id: driverId,
-          name: driverDisplayName(driver),
-          availability: getAvailabilityState(driver, workload),
-          activeAssignedJobs: workload.activeAssignedJobs
-        };
-      });
-
-      const order = { available: 0, busy: 1, offline: 2 };
-      summaries.sort((left, right) => {
-        const group = (order[left.availability] || 99) - (order[right.availability] || 99);
-        if (group !== 0) {
-          return group;
-        }
-        return left.name.localeCompare(right.name);
-      });
-      return summaries;
-    }
-
-    function isActiveJob(job) {
-      return !isComplete(job) && !isCancelled(job);
-    }
-
-    function routeCity(job) {
-      const text = String(job.delivery_address || job.pickup_address || "").trim();
-      if (!text) {
-        return "current route";
-      }
-      const parts = text.split(",").map(part => part.trim()).filter(Boolean);
-      return parts.length >= 2 ? parts[parts.length - 2] : parts[0] || "current route";
-    }
-
-    function buildAiSuggestions() {
-      const routes = [];
-      const workload = [];
-      const payments = [];
-      const attention = [];
-
-      const routeBuckets = {};
-      state.activeRows.forEach(job => {
-        const key = routeCity(job);
-        routeBuckets[key] = (routeBuckets[key] || 0) + 1;
-      });
-
-      Object.keys(routeBuckets)
-        .filter(key => routeBuckets[key] > 1)
-        .slice(0, 3)
-        .forEach(key => {
-          routes.push(`Consider bundling ${key} (${routeBuckets[key]} open jobs).`);
+    async function loadDrivers() {
+      const result = await client
+        .from("drivers")
+        .select("id,full_name,email,active")
+        .eq("active", true)
+        .order("full_name", {
+          ascending: true
         });
 
-      state.driverSummaries
-        .filter(summary => summary.availability === "busy")
-        .sort((left, right) => right.activeAssignedJobs - left.activeAssignedJobs)
-        .slice(0, 3)
-        .forEach(summary => {
-          workload.push(`${summary.name} currently has ${summary.activeAssignedJobs} active assignments.`);
-        });
-
-      state.activeRows
-        .filter(job => getWorkflowStage(job) === "pending_approval")
-        .slice(0, 3)
-        .forEach(job => {
-          payments.push(`${job.job_number || "Job"} for ${job.customer_name || "customer"} is still waiting payment.`);
-        });
-
-      state.activeRows
-        .filter(job => getWorkflowStage(job) === "ready_to_dispatch" && !job.assigned_driver_id)
-        .slice(0, 3)
-        .forEach(job => {
-          attention.push(`${job.job_number || "Job"} is ready but still needs driver assignment.`);
-        });
-
-      const briefing = [];
-      if (attention.length) {
-        briefing.push(`${attention.length} active alerts need review.`);
-      }
-      if (payments.length) {
-        briefing.push(`${payments.length} payment reminders are pending.`);
-      }
-      if (!briefing.length) {
-        briefing.push("No urgent issues in current delivery data.");
+      if (result.error) {
+        throw result.error;
       }
 
-      return { briefing, routes, workload, payments, attention };
+      drivers = result.data || [];
+      populateNewJobDrivers();
     }
 
-    function buildAttentionSummary() {
-      const buckets = [];
-
-      const rejected = state.activeRows.filter(job => clean(job.driver_acceptance_status) === "rejected");
-      const unpaid = state.activeRows.filter(job => getWorkflowStage(job) === "pending_approval");
-      const readyUnassigned = state.activeRows.filter(job => getWorkflowStage(job) === "ready_to_dispatch" && !job.assigned_driver_id);
-      const waitingDriver = state.activeRows.filter(job => {
-        if (getWorkflowStage(job) !== "assigned" || !job.assigned_driver_id) {
-          return false;
-        }
-
-        const accepted = clean(job.driver_acceptance_status);
-        const flow = clean(job.driver_workflow_status);
-        return accepted === "pending" && (!flow || flow === "assigned");
-      });
-      const activeReturns = state.activeRows.filter(job => returnRequiredFlag(job.return_required));
-
-      buckets.push({ key: "rejected", label: "Rejected jobs waiting for dispatch", count: rejected.length, rows: rejected });
-      buckets.push({ key: "unpaid", label: "Unpaid deliveries", count: unpaid.length, rows: unpaid });
-      buckets.push({ key: "ready", label: "Ready but unassigned", count: readyUnassigned.length, rows: readyUnassigned });
-      buckets.push({ key: "waiting_driver", label: "Assigned jobs waiting for driver response", count: waitingDriver.length, rows: waitingDriver });
-      buckets.push({ key: "returns", label: "Return-required jobs still active", count: activeReturns.length, rows: activeReturns });
-
-      const seen = new Set();
-      buckets.forEach(bucket => {
-        bucket.rows.forEach(row => {
-          if (row?.id != null) {
-            seen.add(String(row.id));
-          }
-        });
-      });
-
-      return {
-        total: seen.size,
-        buckets
-      };
-    }
-
-    function deriveBillingAmount(row) {
-      const approved = Number(row.approved_price);
-      if (Number.isFinite(approved)) {
-        return approved;
-      }
-
-      const fallback = Number(row.customer_charge);
-      if (Number.isFinite(fallback)) {
-        return fallback;
-      }
-
-      return null;
-    }
-
-    function buildRevenueSnapshot() {
-      const completed = state.completedTodayRows.slice();
-      if (!completed.length) {
-        return { visible: true, revenue: 0, driverPay: 0, margin: 0, reason: "" };
-      }
-
-      const missingBilling = completed.filter(row => deriveBillingAmount(row) === null);
-      if (missingBilling.length) {
-        return {
-          visible: false,
-          revenue: 0,
-          driverPay: 0,
-          margin: 0,
-          reason: "One or more completed deliveries today are missing reliable billing fields."
-        };
-      }
-
-      const revenue = completed.reduce((sum, row) => sum + Number(deriveBillingAmount(row) || 0), 0);
-      const driverPay = completed.reduce((sum, row) => sum + Number(row.driver_pay || 0), 0);
-      return {
-        visible: true,
-        revenue,
-        driverPay,
-        margin: revenue - driverPay,
-        reason: ""
-      };
-    }
-
-    function buildRecentActivity() {
-      const items = [];
-
-      state.recentRows.forEach(row => {
-        const events = [
-          { time: row.completed_at, label: `${row.job_number || "Job"} delivered`, detail: row.customer_name || "Completed delivery" },
-          { time: row.driver_rejected_at, label: `${row.job_number || "Job"} rejected by driver`, detail: row.customer_name || "Driver rejection" },
-          { time: row.driver_accepted_at, label: `${row.job_number || "Job"} accepted by driver`, detail: row.customer_name || "Driver accepted assignment" },
-          { time: row.picked_up_at, label: `${row.job_number || "Job"} picked up`, detail: row.customer_name || "Pickup completed" },
-          { time: row.en_route_delivery_at, label: `${row.job_number || "Job"} en route to delivery`, detail: row.customer_name || "Driver heading to delivery" },
-          { time: row.en_route_pickup_at, label: `${row.job_number || "Job"} en route to pickup`, detail: row.customer_name || "Driver heading to pickup" }
-        ];
-
-        events.forEach(event => {
-          const when = parseDate(event.time);
-          if (!when) {
-            return;
-          }
-
-          items.push({ label: event.label, detail: event.detail, when });
-        });
-      });
-
-      items.sort((left, right) => right.when.getTime() - left.when.getTime());
-      return items.slice(0, 5);
-    }
-
-    function setCardUnavailable(element, captionElement, message = "Unavailable") {
-      if (element) {
-        element.textContent = "Unavailable";
-        element.classList.add("unavailable");
-      }
-      if (captionElement) {
-        captionElement.textContent = message;
-      }
-    }
-
-    function setCardValue(element, value) {
-      if (!element) {
-        return;
-      }
-
-      element.classList.remove("unavailable");
-      element.textContent = String(value);
-    }
-
-    function renderOpsCards() {
-      try {
-        const pending = state.deliveries.filter(row => !isAssigned(row) && !isReady(row) && !isComplete(row) && !isCancelled(row) && !isRejected(row)).length;
-        const ready = state.deliveries.filter(row => isReady(row) || clean(row.status) === "ready_to_dispatch").length;
-        const assigned = state.deliveries.filter(row => isAssigned(row)).length;
-        const completedToday = state.completedTodayRows.length;
-        const availableDrivers = state.driverSummaries.filter(item => item.availability === "available").length;
-
-        setCardValue(elements.countPendingApproval, pending);
-        setCardValue(elements.countReadyDispatch, ready);
-        setCardValue(elements.countAssigned, assigned);
-        setCardValue(elements.countCompletedToday, completedToday);
-        setCardValue(elements.countAvailableDrivers, availableDrivers);
-      } catch (error) {
-        console.error("Unable to render operations cards", error);
-        setCardUnavailable(elements.countPendingApproval, elements.pendingCaption);
-        setCardUnavailable(elements.countReadyDispatch, elements.readyCaption);
-        setCardUnavailable(elements.countAssigned, elements.assignedCaption);
-        setCardUnavailable(elements.countCompletedToday, elements.completedCaption);
-        setCardUnavailable(elements.countAvailableDrivers, elements.availableDriversCaption);
-      }
-    }
-
-    function renderAttentionCard() {
-      state.attentionSummary = buildAttentionSummary();
-      setCardValue(elements.countNeedsAttention, state.attentionSummary.total);
-
-      if (state.attentionSummary.total === 0) {
-        elements.needsAttentionCaption.textContent = "All caught up";
-      } else {
-        const activeBuckets = state.attentionSummary.buckets.filter(bucket => bucket.count > 0).slice(0, 2);
-        elements.needsAttentionCaption.textContent = activeBuckets.map(bucket => `${bucket.count} ${bucket.label.toLowerCase()}`).join(" • ") || "Open the attention panel";
-      }
-
-      elements.attentionSubtitle.textContent = state.attentionSummary.total === 0
-        ? "All caught up"
-        : `${state.attentionSummary.total} active items need dispatch review.`;
-
-      const activeBuckets = state.attentionSummary.buckets.filter(bucket => bucket.count > 0);
-      if (!activeBuckets.length) {
-        elements.attentionList.innerHTML = '<div class="sheet-item"><div class="sheet-title">All caught up</div><div class="sheet-meta">No active alerts were found in the existing delivery data.</div></div>';
-        return;
-      }
-
-      elements.attentionList.innerHTML = activeBuckets.map(bucket => {
-        const preview = bucket.rows.slice(0, 3).map(row => row.job_number || "Job").join(" • ");
-        return `
-          <div class="sheet-item">
-            <div class="sheet-title">${escapeHtml(bucket.label)}</div>
-            <div class="status-pill ${bucket.count === 0 ? "good" : bucket.count < 3 ? "warn" : "bad"}">${escapeHtml(String(bucket.count))}</div>
-            <div class="sheet-meta">${preview ? escapeHtml(preview) : "No sample jobs available."}</div>
-          </div>
-        `;
-      }).join("");
-    }
-
-    function renderSheetList(target, items) {
-      if (!target) {
-        return;
-      }
-
-      if (!items.length) {
-        target.innerHTML = '<div class="sheet-item"><div class="sheet-meta">No data signals right now.</div></div>';
-        return;
-      }
-
-      target.innerHTML = items.map(item => `
-        <div class="sheet-item">
-          <div class="sheet-meta">${escapeHtml(item)}</div>
-        </div>
-      `).join("");
-    }
-
-    function renderAiSections() {
-      state.aiSuggestions = buildAiSuggestions();
-      const totalSuggestions =
-        state.aiSuggestions.routes.length +
-        state.aiSuggestions.workload.length +
-        state.aiSuggestions.payments.length +
-        state.aiSuggestions.attention.length;
-
-      const shortMessage = state.aiSuggestions.attention.length > 0
-        ? `${state.aiSuggestions.attention.length} items need attention`
-        : "No urgent issues";
-
-      elements.aiSummaryText.classList.remove("unavailable");
-      elements.aiSummaryText.textContent = `${totalSuggestions} suggestions • ${shortMessage}`;
-
-      renderSheetList(elements.aiBriefingSection, state.aiSuggestions.briefing);
-      renderSheetList(elements.aiRoutesSection, state.aiSuggestions.routes);
-      renderSheetList(elements.aiWorkloadSection, state.aiSuggestions.workload);
-      renderSheetList(elements.aiPaymentsSection, state.aiSuggestions.payments);
-    }
-
-    function renderTodaySnapshot() {
-      const createdToday = state.createdTodayRows.slice();
-      const categories = { medical: 0, legal: 0, pallet: 0, special: 0 };
-      let returnJobs = 0;
-
-      createdToday.forEach(row => {
-        const category = normalizeCategory(row.job_category);
-        if (categories[category] != null) {
-          categories[category] += 1;
-        }
-        if (returnRequiredFlag(row.return_required)) {
-          returnJobs += 1;
-        }
-      });
-
-      elements.snapshotDeliveriesToday.textContent = String(createdToday.length);
-      elements.snapshotCompletedToday.textContent = String(state.completedTodayRows.length);
-      elements.snapshotMedical.textContent = String(categories.medical);
-      elements.snapshotLegal.textContent = String(categories.legal);
-      elements.snapshotPallet.textContent = String(categories.pallet);
-      elements.snapshotSpecial.textContent = String(categories.special);
-      elements.snapshotReturn.textContent = String(returnJobs);
-    }
-
-    function renderRevenueSnapshot() {
-      const snapshot = buildRevenueSnapshot();
-      state.diagnostics.revenueHiddenReason = snapshot.reason || "";
-
-      if (!snapshot.visible) {
-        elements.revenueCard.classList.add("hidden");
-        elements.revenueSectionCopy.textContent = snapshot.reason || "Revenue snapshot unavailable.";
-        return;
-      }
-
-      elements.revenueCard.classList.remove("hidden");
-      elements.revenueSectionCopy.textContent = "Dispatch-only daily estimate from completed deliveries.";
-      elements.revenueToday.textContent = money(snapshot.revenue);
-      elements.driverPayToday.textContent = money(snapshot.driverPay);
-      elements.grossMarginToday.textContent = money(snapshot.margin);
-    }
-
-    function renderDriverStatus() {
-      const available = state.driverSummaries.filter(item => item.availability === "available").length;
-      const busy = state.driverSummaries.filter(item => item.availability === "busy").length;
-      const offline = state.driverSummaries.filter(item => item.availability === "offline").length;
-
-      elements.driverStatusAvailable.textContent = String(available);
-      elements.driverStatusBusy.textContent = String(busy);
-      elements.driverStatusOffline.textContent = String(offline);
-    }
-
-    function renderActivity() {
-      const items = buildRecentActivity();
-      if (!items.length) {
-        state.diagnostics.activityHiddenReason = "Reliable recent activity history was unavailable from explicit event timestamps.";
-        elements.activitySection.classList.add("hidden");
-        return;
-      }
-
-      state.diagnostics.activityHiddenReason = "";
-      elements.activitySection.classList.remove("hidden");
-      elements.activityList.innerHTML = items.map(item => `
-        <div class="activity-item">
-          <div class="activity-title">${escapeHtml(item.label)}</div>
-          <div class="activity-meta">${escapeHtml(new Intl.DateTimeFormat("en-US", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" }).format(item.when))} • ${escapeHtml(item.detail || "Operational event")}</div>
-        </div>
-      `).join("");
-    }
-
-    function renderUnavailableState(sectionName, error) {
-      console.error(`${sectionName} unavailable`, error);
-    }
-
-    async function loadDeliveries() {
+    async function loadQuotes() {
       const result = await client
         .from("quotes")
-        .select("*")
-        .order("created_at", { ascending: false });
+        .select(`
+          id,
+          job_number,
+          customer_name,
+          customer_email,
+          pickup_address,
+          delivery_address,
+          vehicle_type,
+          delivery_speed,
+          package_type,
+          status,
+          special_instructions,
+          assigned_driver_id,
+          driver_pay,
+          pickup_photo_url,
+          delivery_photo_url,
+          created_at
+        `)
+        .order("created_at", {
+          ascending: false
+        });
 
       if (result.error) {
         throw result.error;
       }
 
-      return result.data || [];
+      quotes = result.data || [];
+      renderJobs();
     }
 
-    async function loadDriversWorkspaceDrivers() {
-      const selectColumns = Array.from(state.driverSchema.drivers);
-      if (!selectColumns.includes("id")) {
-        selectColumns.unshift("id");
+    async function loadDashboard() {
+      jobsBox.innerHTML =
+        '<div class="empty">Loading quotes and jobs…</div>';
+
+      try {
+        await loadDrivers();
+        await loadQuotes();
+      } catch (error) {
+        jobsBox.innerHTML = `
+          <div class="message error">
+            ${escapeHtml(error.message)}
+          </div>
+        `;
       }
-
-      let query = client
-        .from("drivers")
-        .select(selectColumns.join(","));
-
-      if (state.driverSchema.driverOrderColumn) {
-        query = query.order(state.driverSchema.driverOrderColumn, { ascending: true });
-      }
-
-      const result = await query;
-      if (result.error) {
-        throw result.error;
-      }
-
-      return result.data || [];
     }
 
-    async function loadDriversWorkspaceQuotes() {
-      const requiredColumns = [
-        "id",
-        "assigned_driver_id",
-        "job_number",
-        "status",
-        "customer_name",
-        "pickup_address",
-        "delivery_address",
-        "driver_pay",
-        "driver_acceptance_status",
-        "driver_workflow_status",
-        "driver_accepted_at",
-        "driver_rejected_at",
-        "completed_at",
-        "created_at",
-        "scheduled_at",
-        "pickup_time",
-        "delivery_time"
-      ];
+    async function saveJob(quoteId) {
+      const driverId =
+        document.getElementById(
+          "driver-" + quoteId
+        ).value || null;
 
-      const selectColumns = requiredColumns.filter(hasQuoteColumn);
-      if (!selectColumns.includes("id")) {
-        throw new Error("quotes.id is required for Driver Availability.");
-      }
+      const status =
+        document.getElementById(
+          "status-" + quoteId
+        ).value;
 
-      let query = client
-        .from("quotes")
-        .select(selectColumns.join(","));
+      const driverPayValue =
+        document.getElementById(
+          "driverPay-" + quoteId
+        ).value;
 
-      if (hasQuoteColumn("assigned_driver_id")) {
-        query = query.not("assigned_driver_id", "is", null);
-      }
+      const driverPay =
+        driverPayValue === ""
+          ? 0
+          : Number(driverPayValue);
 
-      if (state.driverSchema.quoteOrderColumn) {
-        query = query.order(state.driverSchema.quoteOrderColumn, { ascending: false });
-      }
+      if (
+        !Number.isFinite(driverPay) ||
+        driverPay < 0
+      ) {
+        showJobMessage(
+          quoteId,
+          "Enter a valid driver pay amount.",
+          "error"
+        );
 
-      const result = await query;
-      if (result.error) {
-        throw result.error;
-      }
-
-      return result.data || [];
-    }
-
-    function setLoadingState() {
-      [
-        elements.countPendingApproval,
-        elements.countReadyDispatch,
-        elements.countAssigned,
-        elements.countCompletedToday,
-        elements.countAvailableDrivers,
-        elements.countNeedsAttention,
-        elements.snapshotDeliveriesToday,
-        elements.snapshotCompletedToday,
-        elements.snapshotMedical,
-        elements.snapshotLegal,
-        elements.snapshotPallet,
-        elements.snapshotSpecial,
-        elements.snapshotReturn,
-        elements.driverStatusAvailable,
-        elements.driverStatusBusy,
-        elements.driverStatusOffline
-      ].forEach(element => {
-        if (!element) {
-          return;
-        }
-        element.classList.remove("unavailable");
-        element.textContent = "--";
-      });
-
-      elements.aiSummaryText.classList.remove("unavailable");
-      elements.aiSummaryText.textContent = "Loading suggestions...";
-      elements.revenueToday.textContent = "--";
-      elements.driverPayToday.textContent = "--";
-      elements.grossMarginToday.textContent = "--";
-      elements.activityList.innerHTML = '<div class="activity-item"><div class="activity-meta">Loading activity...</div></div>';
-    }
-
-    async function refreshDashboard() {
-      if (state.isLoading) {
-        state.pendingRefresh = true;
         return;
       }
 
-      state.isLoading = true;
-      state.pendingRefresh = false;
-      setLoadingState();
-      elements.refreshDashboardBtn.disabled = true;
-      elements.refreshDashboardBtn.textContent = "Refreshing...";
+      showJobMessage(
+        quoteId,
+        "Saving changes…",
+        "info"
+      );
 
-      try {
-        const deliveriesResult = await loadDeliveries();
-        const todayStart = startOfToday();
+      const result = await client
+        .from("quotes")
+        .update({
+          assigned_driver_id: driverId,
+          driver_pay: driverPay,
+          status: status
+        })
+        .eq("id", quoteId);
 
-        state.deliveries = deliveriesResult;
-        state.activeRows = state.deliveries.filter(isActiveJob);
-        state.createdTodayRows = state.deliveries.filter(row => {
-          const created = parseDate(row.created_at);
-          return created ? created >= todayStart : false;
-        });
-        state.completedTodayRows = state.deliveries.filter(isClosedToday);
-        state.recentRows = state.deliveries.slice(0, 80);
+      if (result.error) {
+        showJobMessage(
+          quoteId,
+          result.error.message,
+          "error"
+        );
 
-        renderOpsCards();
-        renderAttentionCard();
-        renderAiSections();
-        renderTodaySnapshot();
-        renderRevenueSnapshot();
-        renderActivity();
-
-        try {
-          await inspectDriverWorkspaceSchema();
-          const [drivers, quotes] = await Promise.all([
-            loadDriversWorkspaceDrivers(),
-            loadDriversWorkspaceQuotes()
-          ]);
-
-          state.drivers = drivers;
-          state.driverQuotes = quotes;
-          state.driverSummaries = buildDriverSummaries(state.drivers, state.driverQuotes);
-          setCardValue(elements.countAvailableDrivers, state.driverSummaries.filter(item => item.availability === "available").length);
-          renderDriverStatus();
-        } catch (driverError) {
-          state.drivers = [];
-          state.driverQuotes = [];
-          state.driverSummaries = [];
-          renderUnavailableState("Driver availability", driverError);
-          setCardUnavailable(elements.countAvailableDrivers, elements.availableDriversCaption, "Drivers workspace data could not load.");
-          elements.driverStatusAvailable.textContent = "--";
-          elements.driverStatusBusy.textContent = "--";
-          elements.driverStatusOffline.textContent = "--";
-        }
-      } catch (deliveryError) {
-        state.deliveries = [];
-        state.activeRows = [];
-        state.createdTodayRows = [];
-        state.completedTodayRows = [];
-        state.recentRows = [];
-        renderUnavailableState("Deliveries workspace", deliveryError);
-        setCardUnavailable(elements.countPendingApproval, elements.pendingCaption, "Deliveries V2 data could not load.");
-        setCardUnavailable(elements.countReadyDispatch, elements.readyCaption, "Deliveries V2 data could not load.");
-        setCardUnavailable(elements.countAssigned, elements.assignedCaption, "Deliveries V2 data could not load.");
-        setCardUnavailable(elements.countCompletedToday, elements.completedCaption, "Deliveries V2 data could not load.");
-        setCardUnavailable(elements.countNeedsAttention, elements.needsAttentionCaption, "Deliveries V2 data could not load.");
-        elements.aiSummaryText.textContent = "Unavailable";
-        elements.aiSummaryText.classList.add("unavailable");
-        [
-          elements.snapshotDeliveriesToday,
-          elements.snapshotCompletedToday,
-          elements.snapshotMedical,
-          elements.snapshotLegal,
-          elements.snapshotPallet,
-          elements.snapshotSpecial,
-          elements.snapshotReturn
-        ].forEach(element => {
-          if (element) {
-            element.textContent = "--";
-          }
-        });
-        elements.revenueCard.classList.add("hidden");
-        elements.activitySection.classList.add("hidden");
-      } finally {
-        state.isLoading = false;
-        elements.refreshDashboardBtn.disabled = false;
-        elements.refreshDashboardBtn.textContent = "Refresh";
-
-        if (state.pendingRefresh) {
-          refreshDashboard();
-        }
+        return;
       }
+
+      await loadQuotes();
     }
 
-    function openDeliveriesTab(tab) {
-      window.location.href = `deliveries.html?tab=${encodeURIComponent(String(tab || "pending"))}`;
-    }
+    window.saveJob = saveJob;
 
-    function bindEvents() {
-      elements.openNewDeliveryBtn.addEventListener("click", () => {
-        window.location.href = "request.html";
-      });
+    quoteForm.addEventListener(
+      "submit",
+      async function (event) {
+        event.preventDefault();
 
-      elements.refreshDashboardBtn.addEventListener("click", () => {
-        refreshDashboard().catch(error => {
-          console.error("Unable to refresh dashboard", error);
-          showToast(error.message || "Unable to refresh dashboard", "error");
-        });
-      });
+        saveQuoteButton.disabled = true;
+        saveQuoteButton.textContent = "Saving…";
 
-      elements.cardPendingApproval.addEventListener("click", () => openDeliveriesTab("pending"));
-      elements.cardReadyDispatch.addEventListener("click", () => openDeliveriesTab("ready"));
-      elements.cardAssigned.addEventListener("click", () => openDeliveriesTab("assigned"));
-      elements.cardCompletedToday.addEventListener("click", () => openDeliveriesTab("completed"));
-      elements.cardAvailableDrivers.addEventListener("click", () => {
-        window.location.href = "driver.html";
-      });
-      elements.driverStatusCard.addEventListener("click", () => {
-        window.location.href = "driver.html";
-      });
-      elements.cardNeedsAttention.addEventListener("click", () => openModal("attentionModal"));
+        setQuoteMessage(
+          "Saving new job…",
+          "info"
+        );
 
-      elements.aiCardCompact.addEventListener("click", () => openModal("aiSuggestionsModal"));
-      elements.aiCardCompact.addEventListener("keydown", event => {
-        if (event.key === "Enter" || event.key === " ") {
-          event.preventDefault();
-          openModal("aiSuggestionsModal");
-        }
-      });
-      document.getElementById("openAiSuggestionsBtn").addEventListener("click", event => {
-        event.stopPropagation();
-        openModal("aiSuggestionsModal");
-      });
+        const formData =
+          new FormData(quoteForm);
 
-      document.addEventListener("click", event => {
-        const closeButton = event.target.closest("[data-close-modal]");
-        if (closeButton) {
-          closeModal(closeButton.getAttribute("data-close-modal"));
+        const driverPayValue =
+          String(
+            formData.get("driver_pay") || "0"
+          );
+
+        const driverPay =
+          Number(driverPayValue);
+
+        if (
+          !Number.isFinite(driverPay) ||
+          driverPay < 0
+        ) {
+          setQuoteMessage(
+            "Enter a valid driver pay amount.",
+            "error"
+          );
+
+          saveQuoteButton.disabled = false;
+          saveQuoteButton.textContent = "Save Job";
           return;
         }
 
-        const backdrop = event.target.closest(".modal-backdrop.open");
-        if (backdrop && event.target === backdrop) {
-          closeModal(backdrop.id);
-        }
-      });
+        const assignedDriver =
+          String(
+            formData.get("assigned_driver_id") || ""
+          );
 
-      document.addEventListener("keydown", event => {
-        if (event.key === "Escape") {
-          document.querySelectorAll(".modal-backdrop.open").forEach(modal => closeModal(modal.id));
-        }
-      });
+        const payload = {
+          job_number:
+            String(
+              formData.get("job_number") || ""
+            ).trim(),
 
-      window.addEventListener("focus", () => {
-        refreshDashboard().catch(error => {
-          console.error("Unable to refresh dashboard on focus", error);
-        });
-      });
-    }
+          customer_name:
+            String(
+              formData.get("customer_name") || ""
+            ).trim(),
 
-    (async function startPage() {
-      try {
-        const session = await requireDispatchAccess();
-        if (!session) {
+          customer_email:
+            String(
+              formData.get("customer_email") || ""
+            ).trim(),
+
+          pickup_address:
+            String(
+              formData.get("pickup_address") || ""
+            ).trim(),
+
+          delivery_address:
+            String(
+              formData.get("delivery_address") || ""
+            ).trim(),
+
+          vehicle_type:
+            String(
+              formData.get("vehicle_type") || ""
+            ),
+
+          delivery_speed:
+            String(
+              formData.get("delivery_speed") || ""
+            ),
+
+          package_type:
+            String(
+              formData.get("package_type") || ""
+            ).trim(),
+
+          driver_pay: driverPay,
+
+          status:
+            String(
+              formData.get("status") || "new"
+            ),
+
+          special_instructions:
+            String(
+              formData.get(
+                "special_instructions"
+              ) || ""
+            ).trim(),
+
+          assigned_driver_id:
+            assignedDriver || null
+        };
+
+        const result = await client
+          .from("quotes")
+          .insert(payload);
+
+        if (result.error) {
+          setQuoteMessage(
+            result.error.message,
+            "error"
+          );
+
+          saveQuoteButton.disabled = false;
+          saveQuoteButton.textContent = "Save Job";
           return;
         }
 
-        bindEvents();
-        await refreshDashboard();
-      } catch (error) {
-        console.error("Unable to start dashboard", error);
-        showToast(error.message || "Unable to load dashboard", "error");
-        elements.revenueCard.classList.add("hidden");
-        elements.activitySection.classList.add("hidden");
+        setQuoteMessage(
+          "Job saved successfully.",
+          "info"
+        );
+
+        await loadQuotes();
+
+        setTimeout(
+          closeQuotePanel,
+          700
+        );
+
+        saveQuoteButton.disabled = false;
+        saveQuoteButton.textContent = "Save Job";
+      }
+    );
+
+    document
+      .getElementById("newQuoteButton")
+      .addEventListener(
+        "click",
+        openQuotePanel
+      );
+
+    document
+      .getElementById("closeQuoteButton")
+      .addEventListener(
+        "click",
+        closeQuotePanel
+      );
+
+    document
+      .getElementById("cancelQuoteButton")
+      .addEventListener(
+        "click",
+        closeQuotePanel
+      );
+
+    document
+      .getElementById("refreshButton")
+      .addEventListener(
+        "click",
+        loadDashboard
+      );
+
+    document
+      .getElementById("signOutButton")
+      .addEventListener(
+        "click",
+        async function () {
+          this.disabled = true;
+          this.textContent = "Signing Out…";
+
+          try {
+            await client.auth.signOut();
+          } finally {
+            localStorage.clear();
+            sessionStorage.clear();
+
+            location.replace(
+              "/index.html?loggedout=1"
+            );
+          }
+        }
+      );
+
+    (async function start() {
+      const session =
+        await requireDispatchAccess();
+
+      if (session) {
+
+    window.dispatchEvent(
+        new CustomEvent("mg-dispatch-ready", {
+            detail: {
+                email: session.user.email
+            }
+        })
+    );
+
+    await loadDashboard();
       }
     })();
   </script>
-
-  <script src="dispatch-menu.js"></script>
+  <script src="/dispatch-menu.js"></script>
 </body>
 </html>
