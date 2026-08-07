@@ -5,6 +5,7 @@
 
   const KNOWN_ROUTES = new Set([
     "/dashboard.html",
+    "/deliveries.html",
     "/pending-approval.html",
     "/ready-to-dispatch.html",
     "/assigned.html",
@@ -36,6 +37,12 @@
       icon: "🏠"
     },
     {
+      href: routeUrl("/deliveries.html"),
+
+      label: "Deliveries",
+      icon: "📋"
+    },
+    {
       href: routeUrl("/pending-approval.html"),
 
       label: "Pending Approval",
@@ -56,7 +63,7 @@
     {
       href: routeUrl("/closed-today.html"),
 
-      label: "Closed Today",
+      label: "Completed",
       icon: "📦"
     },
     {

@@ -1177,7 +1177,6 @@
       jobs =
         jobResult.data || [];
 
-      console.log("Assigned jobs returned:", jobs);
 
       buildDriverSummaries();
       updateStatistics();
@@ -1255,7 +1254,6 @@
       }
 
       const driver = driverResult.data || null;
-      console.log("Logged-in driver record:", driver);
       currentDriver = driver;
       return currentDriver;
     }
@@ -1336,7 +1334,6 @@
           workflowStatus
         } = normalizeWorkflowState(job);
 
-        console.log("Rendering job:", job.job_number, acceptanceStatus, workflowStatus);
 
         if (acceptanceStatus !== "accepted" && acceptanceStatus !== "rejected") {
           workflowButtons.push(`<button class="workflow-button" data-workflow-action="accept" type="button">Accept Job</button>`);

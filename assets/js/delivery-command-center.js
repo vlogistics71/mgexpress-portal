@@ -230,7 +230,7 @@
       lines.push(diagnosticsLine("missing optional elements", state.diagnosticsMissing.join(", ")));
     }
 
-    const shouldShow = debugMode || Boolean(state.lastError || state.lastSupabaseError);
+    const shouldShow = debugMode;
     elements.diagnosticsBox.style.display = shouldShow ? "block" : "none";
     if (shouldShow) {
       elements.diagnosticsBox.textContent = lines.join("\n");
