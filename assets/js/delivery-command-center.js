@@ -438,8 +438,22 @@
     }
   }
 
-  function localActionUnavailable(actionName) {
-    fallbackToast(actionName + " is not available in this view.", "info");
+  function runtimeActionUnavailable(actionName) {
+    fallbackToast(actionName + " is temporarily unavailable.", "info");
+  }
+
+  function resolveDispatchRuntime() {
+    const shared = window.MG_DISPATCH_WORKSPACE && typeof window.MG_DISPATCH_WORKSPACE === "object"
+      ? window.MG_DISPATCH_WORKSPACE
+      : null;
+
+    if (shared) {
+      dispatch = Object.assign({}, dispatch || {}, shared);
+      dispatch.state = (shared.state && typeof shared.state === "object") ? shared.state : (dispatch.state || {});
+      dispatch.client = shared.client || client;
+    }
+
+    return dispatch;
   }
 
   function initializeDispatchRuntime() {
@@ -466,13 +480,13 @@
       openModal: localOpenModal,
       closeModal: localCloseModal,
       loadDrivers: async () => {},
-      openJobDetails: () => localActionUnavailable("Delivery Details"),
-      openAssignModal: () => localActionUnavailable("Assign Driver"),
-      markPaidManually: async () => localActionUnavailable("Mark Paid"),
-      changeDispatchStatus: async () => localActionUnavailable("Status update"),
-      sendInvoiceForJob: () => localActionUnavailable("Invoice"),
-      openBolForJob: () => localActionUnavailable("BOL"),
-      openRejectedReturnConfirm: () => localActionUnavailable("Return to Ready"),
+      openJobDetails: null,
+      openAssignModal: () => runtimeActionUnavailable("Assign Driver"),
+      markPaidManually: async () => runtimeActionUnavailable("Mark Paid"),
+      changeDispatchStatus: async () => runtimeActionUnavailable("Status update"),
+      sendInvoiceForJob: () => runtimeActionUnavailable("Invoice"),
+      openBolForJob: () => runtimeActionUnavailable("BOL"),
+      openRejectedReturnConfirm: () => runtimeActionUnavailable("Return to Ready"),
       handleDocumentClick: () => {}
     };
 
@@ -483,6 +497,7 @@
     dispatch = Object.assign({}, localFacade, shared);
     dispatch.state = (shared.state && typeof shared.state === "object") ? shared.state : localFacade.state;
     dispatch.client = shared.client || client;
+    resolveDispatchRuntime();
   }
 
   async function requireDispatchSession() {
@@ -1624,6 +1639,7 @@
   }
 
   async function loadInitialData() {
+    const runtime = resolveDispatchRuntime();
     setTitle();
     if (window.location.search) {
       const params = new URLSearchParams(window.location.search);
@@ -1642,12 +1658,13 @@
     setCategory("all");
     updateHeaderCopy();
 
-    await dispatch.loadDrivers();
+    await runtime.loadDrivers();
     await loadRecurringCustomers();
     await loadDeliveriesForActiveTab();
   }
 
   function triggerQuickAction(jobId, action) {
+    const runtime = resolveDispatchRuntime();
     const row = state.visibleRows.find(item => String(item.id) === String(jobId));
     if (!row) {
       return;
@@ -1659,32 +1676,32 @@
     }
 
     if (action === "assign") {
-      dispatch.openAssignModal(jobId);
+      runtime.openAssignModal(jobId);
       return;
     }
 
     if (action === "mark-paid") {
-      dispatch.markPaidManually(jobId).then(refreshCurrentTab).catch(() => refreshCurrentTab());
+      runtime.markPaidManually(jobId).then(refreshCurrentTab).catch(() => refreshCurrentTab());
       return;
     }
 
     if (action === "cancel") {
-      dispatch.changeDispatchStatus(jobId, "cancelled", null).then(refreshCurrentTab).catch(() => refreshCurrentTab());
+      runtime.changeDispatchStatus(jobId, "cancelled", null).then(refreshCurrentTab).catch(() => refreshCurrentTab());
       return;
     }
 
     if (action === "invoice") {
-      dispatch.sendInvoiceForJob(jobId);
+      runtime.sendInvoiceForJob(jobId);
       return;
     }
 
     if (action === "bol") {
-      dispatch.openBolForJob(row);
+      runtime.openBolForJob(row);
       return;
     }
 
     if (action === "return-ready") {
-      dispatch.openRejectedReturnConfirm(jobId);
+      runtime.openRejectedReturnConfirm(jobId);
       return;
     }
   }
@@ -1696,7 +1713,13 @@
     }
 
     state.selectedDelivery = delivery;
-    dispatch.openJobDetails(delivery.id, state.activeTab === "completed");
+    const runtime = resolveDispatchRuntime();
+    if (typeof runtime?.openJobDetails !== "function") {
+      showToast("Unable to open delivery.", "error");
+      return;
+    }
+
+    runtime.openJobDetails(delivery.id, state.activeTab === "completed");
   }
 
   function handleRowsHostClick(event) {
@@ -1802,7 +1825,8 @@
       return;
     }
 
-    dispatch.handleDocumentClick(event);
+    const runtime = resolveDispatchRuntime();
+    runtime.handleDocumentClick(event);
   }
 
   function bindEvents() {
