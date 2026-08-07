@@ -108,13 +108,17 @@
 
   <div class="toast-wrap" id="toastWrap"></div>
 
-  <div class="modal-backdrop" id="jobDetailsModal">
-    <section class="modal-panel" role="dialog" aria-modal="true" aria-labelledby="jobDetailsTitle">
-      <div class="modal-head">
-        <h3 class="modal-title" id="jobDetailsTitle">Delivery Details</h3>
-        <button class="icon-btn" type="button" data-close-modal="jobDetailsModal">×</button>
+  <div class="modal-backdrop delivery-details-modal" id="deliveryDetailsModal">
+    <section class="modal-panel delivery-details-panel" role="dialog" aria-modal="true" aria-labelledby="deliveryDetailsTitle">
+      <div class="modal-head delivery-details-head">
+        <div>
+          <div class="eyebrow">Delivery Command Center</div>
+          <h3 class="modal-title" id="deliveryDetailsTitle">Delivery Details</h3>
+          <div class="page-subtitle" id="deliveryDetailsSubtitle"></div>
+        </div>
+        <button class="icon-btn" type="button" data-close-delivery-details>×</button>
       </div>
-      <div class="modal-body" id="jobDetailsBody"></div>
+      <div class="modal-body delivery-details-body" id="deliveryDetailsBody"></div>
     </section>
   </div>
 

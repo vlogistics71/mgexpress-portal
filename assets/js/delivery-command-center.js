@@ -109,6 +109,324 @@
     dispatch.state.rows = dedupeRows([delivery, ...currentRows]);
   }
 
+  function resolveDeliveryDriverName(delivery) {
+    return String(
+      delivery?.driver_name ||
+      delivery?.driver_full_name ||
+      delivery?.assigned_driver_name ||
+      delivery?.assigned_driver_full_name ||
+      delivery?.driver ||
+      delivery?.assigned_driver ||
+      delivery?.assigned_driver_id ||
+      ""
+    ).trim() || "-";
+  }
+
+  function closeDeliveryDetailsModal() {
+    if (!elements.deliveryDetailsModal) {
+      return;
+    }
+
+    elements.deliveryDetailsModal.classList.remove("open");
+    if (![...document.querySelectorAll(".modal-backdrop.open")].length) {
+      document.body.style.overflow = "";
+    }
+  }
+
+  function openDeliveryDetailsModal() {
+    if (!elements.deliveryDetailsModal) {
+      return;
+    }
+
+    elements.deliveryDetailsModal.classList.add("open");
+    document.body.style.overflow = "hidden";
+  }
+
+  function detailsValue(value) {
+    if (value === null || value === undefined || value === "") {
+      return "-";
+    }
+
+    return helpers.escapeHtml(String(value));
+  }
+
+  function detailsRow(label, value) {
+    return `<div class="details-kv"><strong>${helpers.escapeHtml(label)}</strong><span>${value}</span></div>`;
+  }
+
+  function detailsSection(title, content) {
+    return `
+      <section class="details-card">
+        <h4>${helpers.escapeHtml(title)}</h4>
+        <div class="details-card-body">${content}</div>
+      </section>
+    `;
+  }
+
+  function renderDeliveryDetails(delivery) {
+    if (!elements.deliveryDetailsBody) {
+      return;
+    }
+
+    if (!delivery) {
+      elements.deliveryDetailsBody.innerHTML = `
+        <div class="delivery-details-empty">
+          <div class="delivery-details-empty-title">Delivery record not found.</div>
+        </div>
+      `;
+      if (elements.deliveryDetailsTitle) {
+        elements.deliveryDetailsTitle.textContent = "Delivery Details";
+      }
+      if (elements.deliveryDetailsSubtitle) {
+        elements.deliveryDetailsSubtitle.textContent = "";
+      }
+      return;
+    }
+
+    const runtime = resolveDispatchRuntime();
+    const stage = runtime.getWorkflowStage(delivery);
+    const statusText = runtime.statusLabel(delivery);
+    const categoryLabel = runtime.jobCategoryLabel(delivery.job_category);
+    const typeLabel = runtime.deliveryTypeLabel(delivery.delivery_type);
+    const serviceLabel = runtime.serviceLevelLabel(delivery.service_level);
+    const speedLabel = runtime.deliverySpeedLabel(delivery.delivery_speed);
+    const hasReturn = runtime.hasReturnRequired(delivery);
+    const returnLocation = hasReturn ? runtime.returnLocationLabel(delivery.return_location_type) : "-";
+    const returnTiming = hasReturn ? runtime.returnTimingLabel(delivery.return_timing) : "-";
+    const returnDestination = runtime.returnDestinationText(delivery);
+    const driverName = resolveDeliveryDriverName(delivery);
+
+    if (elements.deliveryDetailsTitle) {
+      elements.deliveryDetailsTitle.textContent = delivery.job_number || "Delivery Details";
+    }
+    if (elements.deliveryDetailsSubtitle) {
+      elements.deliveryDetailsSubtitle.textContent = `${delivery.customer_name || "Customer"} • ${statusText}`;
+    }
+
+    elements.deliveryDetailsBody.innerHTML = `
+      <div class="details-summary">
+        <div>
+          <div class="details-eyebrow">${helpers.escapeHtml(categoryLabel)}</div>
+          <div class="details-job-number">${helpers.escapeHtml(delivery.job_number || "Delivery")}</div>
+          <div class="details-meta">${helpers.escapeHtml(statusText)} • ${helpers.escapeHtml(stage)}</div>
+        </div>
+        <div class="details-summary-badges">
+          <span class="mini-badge ${helpers.escapeHtml(stage)}">${helpers.escapeHtml(statusText)}</span>
+          ${hasReturn ? '<span class="mini-badge return">RETURN</span>' : ''}
+          ${helpers.clean(delivery.service_level) === 'stat' ? '<span class="mini-badge stat">STAT</span>' : ''}
+        </div>
+      </div>
+
+      ${detailsSection("Delivery Information", [
+        detailsRow("Job #", detailsValue(delivery.job_number)),
+        detailsRow("Status", `<span class="mini-status ${helpers.escapeHtml(stage)}">${helpers.escapeHtml(statusText)}</span>`),
+        detailsRow("Workflow", detailsValue(delivery.driver_workflow_status || stage)),
+        detailsRow("Category", detailsValue(categoryLabel)),
+        detailsRow("Delivery Speed", detailsValue(speedLabel)),
+        detailsRow("Service Level", detailsValue(serviceLabel)),
+        detailsRow("Delivery Type", detailsValue(typeLabel)),
+        detailsRow("Created", detailsValue(delivery.created_at ? helpers.localDateString(new Date(delivery.created_at)) : delivery.created_at)),
+        detailsRow("Updated", detailsValue(delivery.updated_at ? helpers.localDateString(new Date(delivery.updated_at)) : delivery.updated_at))
+      ].join(""))}
+
+      ${detailsSection("Pickup", [
+        detailsRow("Address", detailsValue(delivery.pickup_address)),
+        detailsRow("Suite / Floor", detailsValue(delivery.pickup_suite_floor)),
+        detailsRow("ZIP", detailsValue(delivery.pickup_zip)),
+        detailsRow("Contact", detailsValue(delivery.pickup_contact_name)),
+        detailsRow("Phone", detailsValue(delivery.pickup_contact_phone)),
+        detailsRow("Instructions", detailsValue(delivery.pickup_instructions))
+      ].join(""))}
+
+      ${detailsSection("Delivery", [
+        detailsRow("Address", detailsValue(delivery.delivery_address)),
+        detailsRow("Suite / Floor", detailsValue(delivery.delivery_suite_floor)),
+        detailsRow("ZIP", detailsValue(delivery.delivery_zip)),
+        detailsRow("Recipient", detailsValue(delivery.delivery_recipient_name || delivery.pod_recipient_name)),
+        detailsRow("Contact", detailsValue(delivery.delivery_contact_name)),
+        detailsRow("Phone", detailsValue(delivery.delivery_contact_phone)),
+        detailsRow("Instructions", detailsValue(delivery.delivery_instructions))
+      ].join(""))}
+
+      ${detailsSection("Package & Service", [
+        detailsRow("Package Type", detailsValue(delivery.package_type)),
+        detailsRow("Vehicle Type", detailsValue(delivery.vehicle_type)),
+        detailsRow("Weight", detailsValue(delivery.package_weight)),
+        detailsRow("Reference Number", detailsValue(delivery.reference_number)),
+        detailsRow("Service Notes", detailsValue(delivery.special_instructions))
+      ].join(""))}
+
+      ${detailsSection("Return Service", [
+        detailsRow("Return Required", detailsValue(hasReturn ? "Yes" : "No")),
+        detailsRow("Return Location", detailsValue(returnLocation)),
+        detailsRow("Return Timing", detailsValue(returnTiming)),
+        detailsRow("Return Destination", detailsValue(returnDestination))
+      ].join(""))}
+
+      ${detailsSection("Customer Information", [
+        detailsRow("Customer", detailsValue(delivery.customer_name)),
+        detailsRow("Company", detailsValue(helpers.rowCompany(delivery))),
+        detailsRow("Email", detailsValue(delivery.customer_email)),
+        detailsRow("Phone", detailsValue(delivery.customer_phone)),
+        detailsRow("Account ID", detailsValue(delivery.customer_account_id))
+      ].join(""))}
+
+      ${detailsSection("Driver Assignment", [
+        detailsRow("Driver", detailsValue(driverName)),
+        detailsRow("Assigned Status", detailsValue(delivery.assigned_driver_id ? "Assigned" : "Unassigned")),
+        detailsRow("Acceptance", detailsValue(delivery.driver_acceptance_status || "pending")),
+        detailsRow("Workflow", detailsValue(delivery.driver_workflow_status || "pending"))
+      ].join(""))}
+
+      ${detailsSection("Driver Pay", `
+        <div class="details-pay-row">
+          <div class="field full">
+            <label for="deliveryDetailsDriverPay">Driver Pay</label>
+            <input id="deliveryDetailsDriverPay" type="number" min="0" step="0.01" value="${helpers.escapeHtml(String(delivery.driver_pay ?? ""))}" placeholder="0.00">
+          </div>
+          <div class="details-pay-actions">
+            <button class="btn primary" type="button" data-details-action="save">Save</button>
+          </div>
+        </div>
+      `)}
+
+      ${detailsSection("Status / Workflow", [
+        detailsRow("Status", detailsValue(statusText)),
+        detailsRow("Workflow", detailsValue(delivery.driver_workflow_status || stage)),
+        detailsRow("Acceptance", detailsValue(delivery.driver_acceptance_status || "pending")),
+        detailsRow("Payment", detailsValue(String(delivery.payment_status || "-").toUpperCase())),
+        detailsRow("Invoice", detailsValue(String(delivery.invoice_status || "-").toUpperCase())),
+        detailsRow("BOL", detailsValue(String(delivery.bol_status || "-").toUpperCase()))
+      ].join(""))}
+
+      <section class="details-card details-card-actions">
+        <h4>Actions</h4>
+        <div class="details-action-grid">
+          <button class="btn primary" type="button" data-details-action="edit">Edit Delivery</button>
+          <button class="btn" type="button" data-details-action="assign">${helpers.escapeHtml(delivery.assigned_driver_id ? "Assign / Reassign Driver" : "Assign Driver")}</button>
+          <button class="btn" type="button" data-details-action="mark-paid">Mark Paid</button>
+          <button class="btn" type="button" data-details-action="invoice">View Invoice</button>
+          <button class="btn" type="button" data-details-action="bol">View BOL</button>
+          <button class="btn danger" type="button" data-details-action="cancel">Cancel Delivery</button>
+        </div>
+      </section>
+    `;
+  }
+
+  async function saveDeliveryDriverPayFromDetails() {
+    const delivery = state.selectedDelivery;
+    const input = document.getElementById("deliveryDetailsDriverPay");
+
+    if (!delivery || !delivery.id || !input) {
+      showToast("Unable to save delivery details.", "error");
+      return;
+    }
+
+    const nextDriverPay = String(input.value || "").trim();
+    const numericDriverPay = nextDriverPay === "" ? null : Number(nextDriverPay);
+
+    if (nextDriverPay !== "" && (!Number.isFinite(numericDriverPay) || numericDriverPay < 0)) {
+      showToast("Driver pay must be a valid number.", "error");
+      return;
+    }
+
+    try {
+      const result = await client
+        .from("quotes")
+        .update({ driver_pay: numericDriverPay })
+        .eq("id", delivery.id)
+        .select("*")
+        .maybeSingle();
+
+      if (result.error) {
+        throw result.error;
+      }
+
+      state.selectedDelivery = result.data || Object.assign({}, delivery, { driver_pay: numericDriverPay });
+      ensureSharedDeliveryRow(state.selectedDelivery);
+      await refreshCurrentTab();
+      await openDeliveryById(delivery.id, delivery.job_number || "");
+      showToast("Delivery updated successfully", "success");
+    } catch (error) {
+      console.error("Unable to save delivery details:", error);
+      showToast("Unable to save delivery details. Please refresh and try again.", "error");
+    }
+  }
+
+  async function handleDeliveryDetailsAction(action) {
+    const delivery = state.selectedDelivery;
+    const runtime = resolveDispatchRuntime();
+
+    if (!delivery || !delivery.id) {
+      showToast("Unable to open delivery details. Please refresh and try again.", "error");
+      return;
+    }
+
+    if (action === "save") {
+      await saveDeliveryDriverPayFromDetails();
+      return;
+    }
+
+    if (action === "edit") {
+      if (typeof runtime.openEditJobModal === "function") {
+        closeDeliveryDetailsModal();
+        runtime.openEditJobModal(delivery.id);
+        return;
+      }
+      showToast("Unable to open edit delivery.", "error");
+      return;
+    }
+
+    if (action === "assign") {
+      if (typeof runtime.openAssignModal === "function") {
+        runtime.openAssignModal(delivery.id);
+        return;
+      }
+      showToast("Unable to open assign driver.", "error");
+      return;
+    }
+
+    if (action === "mark-paid") {
+      if (typeof runtime.markPaidManually === "function") {
+        await runtime.markPaidManually(delivery.id);
+        await refreshCurrentTab();
+        await openDeliveryById(delivery.id, delivery.job_number || "");
+        return;
+      }
+      showToast("Unable to mark paid.", "error");
+      return;
+    }
+
+    if (action === "cancel") {
+      if (typeof runtime.changeDispatchStatus === "function") {
+        await runtime.changeDispatchStatus(delivery.id, "cancelled", null);
+        await refreshCurrentTab();
+        await openDeliveryById(delivery.id, delivery.job_number || "");
+        return;
+      }
+      showToast("Unable to cancel delivery.", "error");
+      return;
+    }
+
+    if (action === "invoice") {
+      if (typeof runtime.sendInvoiceForJob === "function") {
+        runtime.sendInvoiceForJob(delivery.id);
+        return;
+      }
+      showToast("Unable to open invoice.", "error");
+      return;
+    }
+
+    if (action === "bol") {
+      if (typeof runtime.openBolForJob === "function") {
+        runtime.openBolForJob(delivery);
+        return;
+      }
+      showToast("Unable to open BOL.", "error");
+      return;
+    }
+  }
+
   const TAB_META = {
     pending: {
       label: "Pending",
@@ -182,6 +500,10 @@
     sectionLabel: document.getElementById("workspaceSectionLabel"),
     rowsHost: document.getElementById("deliveryList"),
     diagnosticsBox: document.getElementById("commandCenterDiagnostics"),
+    deliveryDetailsModal: document.getElementById("deliveryDetailsModal"),
+    deliveryDetailsBody: document.getElementById("deliveryDetailsBody"),
+    deliveryDetailsTitle: document.getElementById("deliveryDetailsTitle"),
+    deliveryDetailsSubtitle: document.getElementById("deliveryDetailsSubtitle"),
     tabs: Array.from(document.querySelectorAll("[data-delivery-tab]")),
     categoryChips: Array.from(document.querySelectorAll("[data-delivery-category]")),
     sortSelect: document.getElementById("sortSelect"),
@@ -1701,7 +2023,7 @@
         inMemoryMatch: Boolean(delivery),
         databaseFallbackAttempted: false,
         databaseFallbackSuccess: false,
-        deliveryDetailsFunctionAvailable: typeof runtime?.openJobDetails === "function",
+        deliveryDetailsFunctionAvailable: Boolean(elements.deliveryDetailsBody),
         selectedMatchResult: delivery ? { id: String(delivery.id || ""), job_number: String(delivery.job_number || "") } : null
       });
 
@@ -1722,7 +2044,7 @@
             inMemoryMatch: false,
             databaseFallbackAttempted: true,
             databaseFallbackSuccess: false,
-            deliveryDetailsFunctionAvailable: typeof runtime?.openJobDetails === "function",
+            deliveryDetailsFunctionAvailable: Boolean(elements.deliveryDetailsBody),
             selectedMatchResult: null,
             error: result.error.message || String(result.error)
           });
@@ -1740,7 +2062,7 @@
           inMemoryMatch: false,
           databaseFallbackAttempted: true,
           databaseFallbackSuccess: Boolean(delivery),
-          deliveryDetailsFunctionAvailable: typeof runtime?.openJobDetails === "function",
+          deliveryDetailsFunctionAvailable: Boolean(elements.deliveryDetailsBody),
           selectedMatchResult: delivery ? { id: String(delivery.id || ""), job_number: String(delivery.job_number || "") } : null
         });
       }
@@ -1749,17 +2071,10 @@
         throw new Error("Delivery record not found.");
       }
 
-      const openDetails =
-        window.MGDeliveryDetails?.open ||
-        runtime?.openJobDetails;
-
-      if (typeof openDetails !== "function") {
-        throw new Error("Delivery Details component failed to load.");
-      }
-
       state.selectedDelivery = delivery;
       ensureSharedDeliveryRow(delivery);
-      await openDetails(delivery.id, state.activeTab === "completed");
+      renderDeliveryDetails(delivery);
+      openDeliveryDetailsModal();
     } catch (error) {
       console.error("Unable to open delivery:", error);
       showToast("Unable to open delivery details. Please refresh and try again.", "error");
@@ -1854,6 +2169,27 @@
   }
 
   function handleDocumentClicks(event) {
+    const closeDetails = event.target.closest("[data-close-delivery-details]");
+    if (closeDetails) {
+      event.preventDefault();
+      closeDeliveryDetailsModal();
+      return;
+    }
+
+    const detailsAction = event.target.closest("[data-details-action]");
+    if (detailsAction) {
+      event.preventDefault();
+      event.stopPropagation();
+      handleDeliveryDetailsAction(detailsAction.getAttribute("data-details-action"));
+      return;
+    }
+
+    const detailsBackdrop = event.target.closest("#deliveryDetailsModal.modal-backdrop");
+    if (detailsBackdrop && event.target === detailsBackdrop) {
+      closeDeliveryDetailsModal();
+      return;
+    }
+
     const actionButton = event.target.closest("[data-delivery-action]");
     if (actionButton) {
       event.preventDefault();
