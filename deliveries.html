@@ -4,10 +4,174 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Deliveries | MG Express Dispatch</title>
-  <script defer src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <link rel="stylesheet" href="/assets/css/dispatch-status-workspace.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="assets/js/config.js"></script>
+  <script defer src="assets/js/deliveries-v2.js"></script>
+  <style>
+    * { box-sizing: border-box; }
+    :root {
+      --dark-green: #064f3b;
+      --green: #087455;
+      --light-green: #e7f5ef;
+      --coral: #ff665c;
+      --background: #f5faf7;
+      --white: #fff;
+      --ink: #17221e;
+      --muted: #68756f;
+      --line: #dfe8e4;
+      --danger: #9b2929;
+      --warning: #986200;
+      --warning-bg: #fff5d8;
+      --blue: #245d9c;
+      --blue-bg: #eaf3ff;
+      --danger-bg: #fff0f0;
+      --sheet-radius: 20px;
+    }
+    body {
+      margin: 0;
+      font-family: "SF Pro Text", "SF Pro Display", "Helvetica Neue", Helvetica, Arial, sans-serif;
+      background: var(--background);
+      color: var(--ink);
+    }
+    button, input, select, textarea { font: inherit; }
+    .topbar {
+      position: sticky;
+      top: 0;
+      z-index: 30;
+      padding: 16px 18px;
+      background: var(--dark-green);
+      color: #fff;
+    }
+    .topbar-inner { width: min(1180px, 100%); margin: auto; }
+    .brand { font-size: 24px; font-weight: 900; line-height: 1.05; }
+    .brand span { color: var(--coral); }
+    .staff-email { margin-top: 6px; font-size: 13px; opacity: .85; overflow-wrap: anywhere; }
+    .container { width: min(1180px, 100%); margin: auto; padding: 20px 14px 96px; }
+    .page-head { display: grid; gap: 10px; margin-bottom: 16px; }
+    .page-head-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; flex-wrap: wrap; }
+    .page-copy { display: grid; gap: 8px; min-width: 0; }
+    .back-link {
+      min-height: 44px; padding: 10px 14px; border-radius: 999px; border: 1px solid var(--line);
+      background: #fff; color: var(--dark-green); text-decoration: none; display: inline-flex;
+      align-items: center; justify-content: center; font-weight: 900; width: fit-content;
+    }
+    .eyebrow { color: var(--muted); font-size: 14px; font-weight: 800; letter-spacing: .02em; }
+    .page-title { margin: 0; font-size: clamp(30px, 6vw, 46px); line-height: 1.05; }
+    .page-subtitle { color: var(--muted); font-size: 13px; font-weight: 800; }
+    .action-btn {
+      min-height: 48px; padding: 12px 16px; border: 0; border-radius: 16px; background: var(--green);
+      color: #fff; font-weight: 900; box-shadow: 0 14px 30px rgba(8, 116, 85, .22); cursor: pointer;
+    }
+    .action-btn.secondary { background: #fff; color: var(--dark-green); border: 1px solid var(--line); box-shadow: none; }
+    .toolbar { display: grid; gap: 12px; margin-bottom: 12px; }
+    .tabs { display: flex; flex-wrap: wrap; gap: 8px; }
+    .tab {
+      min-height: 44px; border: 1px solid var(--line); border-radius: 999px; background: #fff;
+      color: var(--dark-green); font-weight: 900; padding: 10px 14px; display: inline-flex;
+      align-items: center; gap: 8px; cursor: pointer; box-shadow: 0 4px 14px rgba(0,0,0,.03);
+    }
+    .tab.active { background: var(--dark-green); color: #fff; border-color: var(--dark-green); }
+    .tab-count { opacity: .8; font-size: 12px; }
+    .filters { display: flex; flex-wrap: wrap; gap: 8px; }
+    .chip {
+      min-height: 38px; padding: 9px 13px; border: 1px solid var(--line); border-radius: 999px;
+      background: #fff; color: var(--dark-green); font-weight: 900; cursor: pointer;
+    }
+    .chip.active { background: var(--light-green); border-color: #cbe7d9; }
+    .controls { display: grid; grid-template-columns: 1fr 180px 160px 120px; gap: 10px; }
+    .control label {
+      display: block; margin-bottom: 6px; color: var(--muted); font-size: 11px; font-weight: 900;
+      text-transform: uppercase; letter-spacing: .04em;
+    }
+    .control input, .control select { width: 100%; min-height: 44px; padding: 10px 12px; border: 1px solid var(--line); border-radius: 12px; background: #fff; color: var(--ink); }
+    .panel { border: 1px solid var(--line); border-radius: 20px; background: #fff; overflow: hidden; box-shadow: 0 10px 24px rgba(0, 0, 0, .04); }
+    .panel-meta {
+      padding: 10px 12px; border-bottom: 1px solid var(--line); color: var(--muted); font-size: 12px;
+      font-weight: 800; display: flex; justify-content: space-between; gap: 10px; flex-wrap: wrap;
+    }
+    .list { display: grid; gap: 10px; padding: 10px; }
+    .card {
+      display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 12px; align-items: center; width: 100%;
+      text-align: left; border: 1px solid var(--line); border-left: 6px solid #d7dde1; border-radius: 16px;
+      background: #fff; padding: 12px 14px; cursor: pointer; color: inherit; box-shadow: 0 8px 20px rgba(0,0,0,.03);
+    }
+    .card:focus, .card:hover { border-color: #c6d8cf; box-shadow: 0 10px 24px rgba(0,0,0,.06); }
+    .card-main { display: grid; gap: 8px; min-width: 0; }
+    .card-topline { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+    .category-dot { width: 10px; height: 10px; border-radius: 999px; background: #d7dde1; }
+    .category-medical { border-left-color: #c0392b; } .category-pallet { border-left-color: #8b5a2b; } .category-legal { border-left-color: #c49b00; } .category-general { border-left-color: #d7dde1; } .category-special { border-left-color: #d97706; }
+    .category-dot.category-medical { background: #c0392b; } .category-dot.category-pallet { background: #8b5a2b; } .category-dot.category-legal { background: #c49b00; } .category-dot.category-general { background: #d7dde1; } .category-dot.category-special { background: #d97706; }
+    .badge, .mini-status {
+      display: inline-flex; align-items: center; min-height: 24px; padding: 4px 8px; border-radius: 999px; background: #f4f7f9;
+      color: var(--dark-green); font-size: 10px; font-weight: 900; letter-spacing: .04em; text-transform: uppercase;
+    }
+    .badge.return { background: #fff2e8; color: #b45309; } .badge.stat { background: #ffe5e0; color: #b42318; }
+    .job-number { font-size: 15px; font-weight: 900; color: var(--dark-green); }
+    .customer { font-size: 14px; font-weight: 900; overflow-wrap: anywhere; }
+    .route { color: var(--muted); font-size: 13px; overflow-wrap: anywhere; line-height: 1.35; }
+    .meta { display: flex; flex-wrap: wrap; gap: 8px 12px; color: var(--muted); font-size: 12px; font-weight: 700; }
+    .actions { display: flex; gap: 8px; align-items: flex-start; flex-wrap: wrap; justify-content: flex-end; }
+    .action { min-height: 44px; padding: 10px 12px; border: 1px solid var(--line); border-radius: 12px; background: #fff; color: var(--dark-green); font-weight: 900; cursor: pointer; }
+    .empty { min-height: 220px; display: grid; place-items: center; text-align: center; padding: 30px 20px; }
+    .empty-title { color: var(--dark-green); font-size: 20px; font-weight: 900; }
+    .empty-copy { color: var(--muted); font-size: 14px; font-weight: 700; margin-top: 6px; }
+    .toast-wrap { position: fixed; right: 14px; bottom: 14px; z-index: 300; display: grid; gap: 8px; pointer-events: none; }
+    .toast {
+      min-width: 260px; max-width: min(92vw, 360px); padding: 12px 14px; border-radius: 14px; color: #fff; box-shadow: 0 16px 34px rgba(0,0,0,.18); pointer-events: auto; font-weight: 700;
+    }
+    .toast.error { background: #9b2929; } .toast.info { background: #374151; } .toast.success { background: #0a7a57; }
+    .modal-backdrop { position: fixed; inset: 0; background: rgba(0,0,0,.55); z-index: 260; display: none; align-items: center; justify-content: center; padding: 18px; }
+    .modal-backdrop.open { display: flex; }
+    .modal-panel {
+      width: min(850px, 100%); max-height: 92vh; overflow: hidden; background: #fff; border-radius: 20px; box-shadow: 0 22px 54px rgba(0,0,0,.28); transform: translateY(18px); transition: transform .2s ease; display: grid; grid-template-rows: auto 1fr;
+    }
+    .modal-backdrop.open .modal-panel { transform: translateY(0); }
+    .modal-head {
+      position: sticky; top: 0; z-index: 2; display: flex; justify-content: space-between; gap: 10px; align-items: flex-start; padding: 14px 16px; border-bottom: 1px solid var(--line); background: #fff;
+    }
+    .modal-title { margin: 0; color: var(--dark-green); font-size: 22px; }
+    .modal-subtitle { margin-top: 4px; color: var(--muted); font-size: 13px; font-weight: 800; }
+    .modal-body { overflow: auto; padding: 14px 16px 18px; display: grid; gap: 12px; align-content: start; }
+    .icon-btn { min-width: 44px; min-height: 44px; border: 1px solid var(--line); border-radius: 12px; background: #fff; color: var(--dark-green); font-size: 20px; font-weight: 900; cursor: pointer; }
+    .details-summary { display: flex; justify-content: space-between; gap: 14px; align-items: flex-start; padding: 16px 18px; border: 1px solid var(--line); border-radius: 18px; background: linear-gradient(180deg, #f9fcfa, #fff); }
+    .details-eyebrow { color: var(--muted); font-size: 11px; font-weight: 900; letter-spacing: .04em; text-transform: uppercase; }
+    .details-job-number { margin-top: 4px; color: var(--dark-green); font-size: 24px; font-weight: 900; line-height: 1.05; }
+    .details-meta { margin-top: 6px; color: var(--muted); font-size: 12px; font-weight: 800; }
+    .details-summary-badges { display: flex; flex-wrap: wrap; gap: 8px; justify-content: flex-end; }
+    .details-card { border: 1px solid var(--line); border-radius: 18px; background: #fff; box-shadow: 0 10px 22px rgba(0,0,0,.05); padding: 14px; }
+    .details-card h4 { margin: 0 0 12px; color: var(--dark-green); font-size: 16px; font-weight: 900; }
+    .details-card-body { display: grid; gap: 8px; }
+    .details-kv { display: grid; grid-template-columns: minmax(120px, 170px) minmax(0, 1fr); gap: 10px; align-items: baseline; font-size: 13px; line-height: 1.45; }
+    .details-kv strong { color: var(--muted); font-size: 11px; text-transform: uppercase; letter-spacing: .04em; }
+    .details-inline-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+    .details-action-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+    .details-action-grid .action-btn, .details-action-grid .action-btn.secondary, .details-action-grid .danger-btn { width: 100%; }
+    .danger-btn { border: 0; background: var(--coral); color: #fff; }
+    .sheet-note { color: var(--muted); font-size: 12px; font-weight: 700; }
+    .details-pay-row { display: grid; gap: 12px; }
+    .details-pay-actions { display: flex; justify-content: flex-end; }
+    .delivery-details-modal { align-items: stretch; justify-content: center; padding: 0; }
+    .delivery-details-panel { width: min(850px, 100%); height: 92vh; max-height: 92vh; border-radius: 0; transform: translateY(100%); }
+    .delivery-details-modal.open .delivery-details-panel { transform: translateY(0); }
+    .delivery-details-body { overflow: auto; padding: 16px 18px 24px; }
+    .assign-modal-backdrop { align-items: stretch; justify-content: center; padding: 14px; }
+    .assign-panel { width: min(980px, 100%); max-height: 94vh; overflow: hidden; background: #fff; border-radius: 20px; box-shadow: 0 22px 54px rgba(0,0,0,.28); display: grid; grid-template-rows: auto 1fr; }
+    .assign-panel-head { display: flex; justify-content: space-between; gap: 10px; align-items: flex-start; padding: 14px 16px; border-bottom: 1px solid var(--line); background: #fff; }
+    .assign-panel-title { margin: 0; color: var(--dark-green); font-size: 22px; }
+    .assign-panel-sub { margin-top: 4px; color: var(--muted); font-size: 13px; font-weight: 800; }
+    .assign-panel-body { overflow: auto; padding: 14px 16px 18px; display: grid; gap: 14px; align-content: start; }
+    .assign-job-card, .assign-recommended, .assign-list, .assign-future { border: 1px solid var(--line); border-radius: 18px; background: #fff; box-shadow: 0 10px 22px rgba(0,0,0,.04); padding: 14px; }
+    .assign-section-label { color: var(--muted); font-size: 11px; font-weight: 900; letter-spacing: .04em; text-transform: uppercase; margin-bottom: 10px; }
+    .assign-job-grid { display: grid; gap: 8px; }
+    .assign-controls { display: grid; grid-template-columns: 1fr 180px; gap: 10px; margin-bottom: 12px; }
+    .assign-driver-list { display: grid; gap: 10px; max-height: 300px; overflow: auto; }
+    .assign-future ul { margin: 0; padding-left: 18px; color: var(--muted); font-weight: 700; display: grid; gap: 6px; }
+    .assign-hidden-form { display: none; }
+    @media (max-width: 980px) { .controls { grid-template-columns: 1fr 1fr; } .delivery-details-modal { align-items: flex-end; padding: 0; } .delivery-details-panel { width: 100%; height: 100dvh; max-height: 100dvh; border-radius: 0; } .modal-backdrop { padding: 0; } .modal-panel { width: 100%; max-height: 100dvh; border-radius: 0; } .details-action-grid { grid-template-columns: 1fr 1fr; } .assign-controls { grid-template-columns: 1fr; } .assign-panel { width: 100%; max-height: 100dvh; border-radius: 0; } }
+    @media (max-width: 720px) { .page-head-top { flex-direction: column; align-items: stretch; } .controls { grid-template-columns: 1fr; } .card { grid-template-columns: 1fr; } .actions { justify-content: flex-start; } .details-summary { flex-direction: column; } .details-action-grid { grid-template-columns: 1fr; } .details-kv { grid-template-columns: 1fr; } }
+  </style>
 </head>
-<body data-workspace="deliveries_center">
+<body>
   <header class="topbar">
     <div class="topbar-inner">
       <div class="brand">MG <span>EXPRESS</span> DISPATCH</div>
@@ -15,92 +179,59 @@
     </div>
   </header>
 
-  <main class="container deliveries-center">
-    <section id="commandCenterDiagnostics" style="display:none;margin:0 0 12px 0;padding:10px 12px;border:1px solid #f0b3b3;border-left:4px solid #b42318;background:#fff1f1;color:#7a1919;border-radius:10px;font:12px/1.45 'Segoe UI',Arial,sans-serif;white-space:pre-wrap;"></section>
-
-    <section class="heading deliveries-heading">
-      <div class="heading-top deliveries-heading-top">
-        <div class="deliveries-heading-copy">
-          <a class="back-link deliveries-back-link" href="/dashboard.html">← Dashboard</a>
+  <main class="container">
+    <section class="page-head">
+      <div class="page-head-top">
+        <div class="page-copy">
+          <a class="back-link" href="dashboard.html">← Dashboard</a>
           <div class="eyebrow">Dispatch Workspace</div>
-          <h1 class="page-title" id="pageTitle">Deliveries</h1>
-          <div class="page-subtitle" id="pageSubtitle">Single command center for dispatch.</div>
+          <h1 class="page-title">Deliveries</h1>
+          <div class="page-subtitle">Use Details to open a delivery. Use tabs, filters, and search to narrow the list.</div>
         </div>
-        <button class="action-btn primary" id="newDeliveryButton" type="button">+ New Delivery</button>
+        <button class="action-btn" id="newDeliveryButton" type="button">+ New Delivery</button>
       </div>
+      <div class="page-subtitle">Use Details to open a delivery. Use tabs, filters, and search to narrow the list.</div>
+    </section>
 
-      <div class="delivery-tabs" id="deliveryTabs">
-        <button class="delivery-tab active" type="button" data-delivery-tab="pending">
-          <span>Pending</span><span class="tab-count">(0)</span>
-        </button>
-        <button class="delivery-tab" type="button" data-delivery-tab="ready">
-          <span>Ready</span><span class="tab-count">(0)</span>
-        </button>
-        <button class="delivery-tab" type="button" data-delivery-tab="assigned">
-          <span>Assigned</span><span class="tab-count">(0)</span>
-        </button>
-        <button class="delivery-tab" type="button" data-delivery-tab="rejected">
-          <span>Rejected</span><span class="tab-count">(0)</span>
-        </button>
-        <button class="delivery-tab" type="button" data-delivery-tab="completed">
-          <span>Completed</span><span class="tab-count">(0)</span>
-        </button>
-        <button class="delivery-tab" type="button" data-delivery-tab="search">
-          <span>Search</span><span class="tab-count">(0)</span>
-        </button>
+    <section class="toolbar">
+      <div class="tabs" id="tabs"></div>
+      <div class="filters" id="categoryFilters"></div>
+      <div class="controls">
+        <div class="control">
+          <label for="searchInput">Search deliveries</label>
+          <input id="searchInput" type="search" placeholder="Job number, customer, company, pickup, delivery, phone, reference number">
+        </div>
+        <div class="control">
+          <label for="sortSelect">Sort</label>
+          <select id="sortSelect">
+            <option value="newest">Newest</option>
+            <option value="oldest">Oldest</option>
+            <option value="pickup_time">Pickup Time</option>
+            <option value="delivery_time">Delivery Time</option>
+            <option value="customer">Customer</option>
+          </select>
+        </div>
+        <div class="control">
+          <label for="refreshButton">&nbsp;</label>
+          <button class="action-btn secondary" id="refreshButton" type="button">Refresh</button>
+        </div>
+        <div class="control">
+          <label for="statusSummary">&nbsp;</label>
+          <div class="sheet-note" id="statusSummary"></div>
+        </div>
       </div>
     </section>
 
-    <section class="panel command-panel">
-      <div class="panel-head command-panel-head">
-        <div class="command-controls" id="commandControls">
-          <div class="command-chips" id="commandChips">
-            <button class="command-chip active" type="button" data-delivery-category="all">All</button>
-            <button class="command-chip" type="button" data-delivery-category="medical">Medical</button>
-            <button class="command-chip" type="button" data-delivery-category="legal">Legal</button>
-            <button class="command-chip" type="button" data-delivery-category="general">General</button>
-            <button class="command-chip" type="button" data-delivery-category="pallet">Pallet</button>
-            <button class="command-chip" type="button" data-delivery-category="special">Special</button>
-            <button class="command-chip" type="button" data-delivery-category="return_jobs">Return Jobs</button>
-            <button class="command-chip" type="button" data-delivery-category="stat">STAT</button>
-          </div>
-
-          <div class="command-sort-wrap">
-            <label for="sortSelect">Sort</label>
-            <select id="sortSelect">
-              <option value="newest">Newest</option>
-              <option value="oldest">Oldest</option>
-              <option value="pickup_time">Pickup Time</option>
-              <option value="delivery_time">Delivery Time</option>
-              <option value="customer">Customer</option>
-              <option value="company">Company</option>
-            </select>
-          </div>
-
-          <div class="command-sort-wrap">
-            <label for="refreshBtn">&nbsp;</label>
-            <button class="refresh-btn" id="refreshBtn" type="button">Refresh</button>
-          </div>
-        </div>
-
-        <div class="search-panel hidden" id="searchPanel">
-          <div class="field full">
-            <label for="searchInput">Search deliveries</label>
-            <input id="searchInput" type="search" placeholder="Job number, customer, company, pickup, delivery, phone, reference number">
-          </div>
-          <div class="search-hint">
-            Search by Job Number, Customer, Company, Pickup, Delivery, Phone, Reference Number.
-          </div>
-        </div>
-      </div>
-
+    <section class="panel">
       <div class="panel-meta">
-        <span id="workspaceSectionLabel">Pending Deliveries</span> • <span id="visibleCount">0 visible</span>
+        <span id="workspaceLabel">Pending Deliveries</span>
+        <span id="visibleCount">0 visible</span>
       </div>
-
-      <div class="rows delivery-list" id="deliveryList">
-        <div class="delivery-empty">
-          <div class="delivery-empty-title">Loading deliveries...</div>
+      <div class="list" id="deliveryList">
+        <div class="empty">
+          <div>
+            <div class="empty-title">Loading deliveries...</div>
+          </div>
         </div>
       </div>
     </section>
@@ -110,11 +241,11 @@
 
   <div class="modal-backdrop delivery-details-modal" id="deliveryDetailsModal">
     <section class="modal-panel delivery-details-panel" role="dialog" aria-modal="true" aria-labelledby="deliveryDetailsTitle">
-      <div class="modal-head delivery-details-head">
+      <div class="modal-head">
         <div>
-          <div class="eyebrow">Delivery Command Center</div>
+          <div class="eyebrow">Delivery Details</div>
           <h3 class="modal-title" id="deliveryDetailsTitle">Delivery Details</h3>
-          <div class="page-subtitle" id="deliveryDetailsSubtitle"></div>
+          <div class="modal-subtitle" id="deliveryDetailsSubtitle"></div>
         </div>
         <button class="icon-btn" type="button" data-close-delivery-details>×</button>
       </div>
@@ -122,185 +253,14 @@
     </section>
   </div>
 
-  <div class="modal-backdrop" id="jobModal">
-    <section class="modal-panel command-create-modal" role="dialog" aria-modal="true" aria-labelledby="jobModalTitle">
-      <div class="modal-head">
-        <h3 class="modal-title" id="jobModalTitle">New Delivery</h3>
-        <button class="icon-btn" type="button" data-close-modal="jobModal">×</button>
-      </div>
-      <div class="modal-body">
-        <form id="jobForm" class="job-form">
-          <input type="hidden" name="record_id" id="jobRecordId">
-          <input type="hidden" name="customer_account_id" id="jobCustomerAccountId">
-
-          <section class="job-section">
-            <h4 class="job-section-title">Customer</h4>
-            <div class="job-subdivider"></div>
-            <div class="field full">
-              <label>Find Recurring Customer</label>
-              <input id="customerLookupInput" type="search" placeholder="Search recurring customers by name, company, phone, email">
-              <div class="hint">Only recurring customers are listed. If none match, continue as one-time customer.</div>
-              <div class="lookup-results" id="customerLookupResults"></div>
-            </div>
-            <div class="form-grid">
-              <div class="field"><label>Customer Name</label><input name="customer_name" required></div>
-              <div class="field"><label>Phone</label><input name="customer_phone" type="tel"></div>
-              <div class="field full"><label>Email</label><input name="customer_email" type="email"></div>
-            </div>
-          </section>
-
-          <section class="job-section">
-            <h4 class="job-section-title">Pickup</h4>
-            <div class="job-subdivider"></div>
-            <div class="form-grid">
-              <div class="field full"><label>Pickup Address</label><input name="pickup_address" required></div>
-              <div class="field full"><label>Pickup Suite / Floor</label><input name="pickup_suite_floor"></div>
-              <div class="field"><label>Pickup ZIP Code</label><input name="pickup_zip"></div>
-              <div class="field"><label>Contact Name</label><input name="pickup_contact_name"></div>
-              <div class="field"><label>Contact Phone</label><input name="pickup_contact_phone" type="tel"></div>
-              <div class="field full"><label>Pickup Instructions</label><textarea name="pickup_instructions"></textarea></div>
-            </div>
-          </section>
-
-          <section class="job-section">
-            <h4 class="job-section-title">Delivery</h4>
-            <div class="job-subdivider"></div>
-            <div class="form-grid">
-              <div class="field full"><label>Delivery Address</label><input name="delivery_address" required></div>
-              <div class="field full"><label>Delivery Suite / Floor</label><input name="delivery_suite_floor"></div>
-              <div class="field"><label>Delivery ZIP Code</label><input name="delivery_zip"></div>
-              <div class="field"><label>Contact Name</label><input name="delivery_contact_name"></div>
-              <div class="field"><label>Contact Phone</label><input name="delivery_contact_phone" type="tel"></div>
-              <div class="field full"><label>Delivery Instructions</label><textarea name="delivery_instructions"></textarea></div>
-            </div>
-          </section>
-
-          <section class="job-section">
-            <h4 class="job-section-title">Package</h4>
-            <div class="job-subdivider"></div>
-            <div class="form-grid">
-              <div class="field"><label>Vehicle Type</label>
-                <select name="vehicle_type">
-                  <option value="">Choose vehicle</option>
-                  <option value="Car">Car</option>
-                  <option value="SUV">SUV</option>
-                  <option value="Cargo Van">Cargo Van</option>
-                  <option value="Sprinter Van">Sprinter Van</option>
-                  <option value="Box Truck">Box Truck</option>
-                </select>
-              </div>
-
-              <div class="field"><label>Delivery Speed</label>
-                <select name="delivery_speed">
-                  <option value="">Choose speed</option>
-                  <option value="2_hr">2 Hour</option>
-                  <option value="3_hr">3 Hour</option>
-                  <option value="4_hr">4 Hour</option>
-                  <option value="5_hr">5 Hour</option>
-                  <option value="6_hr">6 Hour</option>
-                  <option value="next_day">Next Day</option>
-                </select>
-              </div>
-
-              <div class="field"><label>Job Category</label>
-                <select name="job_category">
-                  <option value="general">General</option>
-                  <option value="medical">Medical</option>
-                  <option value="pallet">Pallet</option>
-                  <option value="legal">Legal</option>
-                  <option value="special">Special</option>
-                </select>
-              </div>
-
-              <div class="field"><label>Delivery Type</label>
-                <select name="delivery_type">
-                  <option value="">Choose delivery type</option>
-                  <option value="business_to_business">Business to Business</option>
-                  <option value="business_to_residential">Business to Residential</option>
-                  <option value="residential_to_business">Residential to Business</option>
-                  <option value="residential_to_residential">Residential to Residential</option>
-                </select>
-              </div>
-
-              <div class="field"><label>Service Level</label>
-                <select name="service_level">
-                  <option value="">Choose service level</option>
-                  <option value="standard">Standard</option>
-                  <option value="priority">Priority</option>
-                  <option value="stat">STAT</option>
-                  <option value="scheduled">Scheduled</option>
-                  <option value="on_demand">On Demand</option>
-                </select>
-              </div>
-
-              <div class="field"><label>Return Service</label>
-                <select name="return_required" id="returnRequiredSelect">
-                  <option value="false">No Return</option>
-                  <option value="true">Return Required</option>
-                </select>
-              </div>
-
-              <div class="field full"><label>Package Description</label><input name="package_type"></div>
-              <div class="field"><label>Weight (optional)</label><input name="package_weight"></div>
-              <div class="field"><label>Reference Number (optional)</label><input name="reference_number"></div>
-            </div>
-
-            <div class="form-grid return-details" id="returnDetailsSection" hidden>
-              <div class="field"><label>Return Location</label>
-                <select name="return_location_type" id="returnLocationTypeSelect">
-                  <option value="same_as_pickup">Same as Original Pickup</option>
-                  <option value="different_location">Different Return Location</option>
-                </select>
-              </div>
-
-              <div class="field"><label>Return Timing</label>
-                <select name="return_timing">
-                  <option value="immediate">Immediately After Delivery</option>
-                  <option value="later_today">Later Today</option>
-                  <option value="another_day">Another Day</option>
-                </select>
-              </div>
-
-              <div class="field full return-readback" id="returnPickupReadback">Return destination will use the original pickup address.</div>
-
-              <div class="field full return-different-field" data-return-different><label>Return Address</label><input name="return_address"></div>
-              <div class="field return-different-field" data-return-different><label>Return Suite / Floor</label><input name="return_suite_floor"></div>
-              <div class="field return-different-field" data-return-different><label>Return ZIP</label><input name="return_zip"></div>
-            </div>
-          </section>
-
-          <section class="job-section">
-            <h4 class="job-section-title">Pricing</h4>
-            <div class="job-subdivider"></div>
-            <div class="form-grid">
-              <div class="field"><label>Customer Price</label><input name="approved_price" type="number" min="0" step="0.01" placeholder="0.00"></div>
-              <div class="field"><label>Estimated Miles (Optional)</label><input name="estimated_miles" type="number" min="0" step="0.01" placeholder="25.4"></div>
-              <div class="field full"><label>Internal Notes</label><textarea name="special_instructions"></textarea></div>
-            </div>
-          </section>
-
-          <section class="job-section">
-            <h4 class="job-section-title">Review</h4>
-            <div class="job-subdivider"></div>
-            <div class="review-list" id="newDeliveryReviewList"></div>
-            <div class="hint">Driver assignment and dispatch status are handled after approval/payment.</div>
-          </section>
-
-          <div class="job-submit-wrap">
-            <button class="btn" type="button" data-close-modal="jobModal">Cancel</button>
-            <button class="job-submit-btn" id="saveJobBtn" type="submit">Create Delivery</button>
-          </div>
-        </form>
-      </div>
-    </section>
-  </div>
+  <div class="modal-backdrop" id="newDeliveryModal"></div>
 
   <div class="modal-backdrop assign-modal-backdrop" id="assignModal">
     <section class="assign-panel" role="dialog" aria-modal="true" aria-labelledby="assignTitle">
       <div class="assign-panel-head">
         <div>
           <h3 class="assign-panel-title" id="assignTitle">Assign Driver</h3>
-          <div class="assign-panel-sub">Smart assignment with recommendation and compact driver cards</div>
+          <div class="assign-panel-sub">Pick a driver, set pay, and send the update directly.</div>
         </div>
         <button class="icon-btn" type="button" data-close-modal="assignModal">×</button>
       </div>
@@ -330,18 +290,17 @@
           </div>
 
           <div class="assign-list-head">
-            <h4 class="assign-list-title">Other Available Drivers</h4>
+            <h4 class="assign-list-title">Drivers</h4>
           </div>
           <div class="assign-driver-list" id="assignDriverCards"></div>
         </section>
 
         <section class="assign-future">
-          <div class="assign-section-label">Automation Queue</div>
+          <div class="assign-section-label">Assignment Notes</div>
           <ul>
-            <li>Fuel savings</li>
-            <li>Route grouping</li>
-            <li>Nearby pickups</li>
-            <li>Traffic impact</li>
+            <li>Matching is local and fast.</li>
+            <li>Pay is written directly to the quote.</li>
+            <li>Selected assignments reopen the delivery details view.</li>
           </ul>
         </section>
 
@@ -364,9 +323,9 @@
       </div>
       <div class="modal-body">
         <p id="assignConfirmText">Assign this delivery?</p>
-        <div class="form-actions">
-          <button class="btn" type="button" data-close-modal="assignConfirmModal">Cancel</button>
-          <button class="btn primary" id="assignConfirmBtn" type="button">Confirm Assignment</button>
+        <div class="details-inline-actions">
+          <button class="action-btn secondary" type="button" data-close-modal="assignConfirmModal">Cancel</button>
+          <button class="action-btn" id="assignConfirmBtn" type="button">Confirm Assignment</button>
         </div>
       </div>
     </section>
@@ -380,15 +339,12 @@
       </div>
       <div class="modal-body">
         <p id="rejectedReturnConfirmText">Return this rejected job to Ready?</p>
-        <div class="form-actions">
-          <button class="btn" type="button" data-close-modal="rejectedReturnConfirmModal">Cancel</button>
-          <button class="btn primary" id="rejectedReturnConfirmBtn" type="button">Return to Ready</button>
+        <div class="details-inline-actions">
+          <button class="action-btn secondary" type="button" data-close-modal="rejectedReturnConfirmModal">Cancel</button>
+          <button class="action-btn" id="rejectedReturnConfirmBtn" type="button">Return to Ready</button>
         </div>
       </div>
     </section>
   </div>
-
-  <script defer src="/assets/js/dispatch-status-workspace.js"></script>
-  <script defer src="/assets/js/delivery-command-center.js"></script>
 </body>
 </html>
