@@ -144,6 +144,7 @@
     category: "all",
     sortBy: "newest",
     searchTerm: "",
+    selectedDelivery: null,
     visibleRows: [],
     renderedRows: [],
     counts: {},
@@ -179,7 +180,6 @@
     searchInput: document.getElementById("searchInput"),
     refreshButton: document.getElementById("refreshBtn"),
     newDeliveryButton: document.getElementById("newDeliveryButton"),
-    newDeliveryButtonFab: document.getElementById("newDeliveryButtonFab"),
     toastWrap: document.getElementById("toastWrap"),
     jobModalTitle: document.getElementById("jobModalTitle"),
     jobRecordId: document.getElementById("jobRecordId"),
@@ -838,6 +838,7 @@
     return `
       <article
         class="delivery-row ${dispatch.jobCategoryClass(row.job_category)} ${quickActionClass}"
+        data-delivery-id="${helpers.escapeHtml(String(row.id))}"
         data-open-job="${helpers.escapeHtml(String(row.id))}"
         data-readonly="${stage === "closed" ? "true" : "false"}"
         data-swipe-primary="${helpers.escapeHtml(actions[0]?.action || "details")}" 
@@ -1608,7 +1609,6 @@
       ["search input", Boolean(elements.searchInput)],
       ["delivery list container", Boolean(elements.rowsHost)],
       ["top New Delivery button", Boolean(elements.newDeliveryButton)],
-      ["floating New Delivery button", Boolean(elements.newDeliveryButtonFab)],
       ["refresh button", Boolean(elements.refreshButton)]
     ];
 
@@ -1654,7 +1654,7 @@
     }
 
     if (action === "details") {
-      dispatch.openJobDetails(jobId, state.activeTab === "completed");
+      openDeliveryDetails(row);
       return;
     }
 
@@ -1687,6 +1687,68 @@
       dispatch.openRejectedReturnConfirm(jobId);
       return;
     }
+  }
+
+  function openDeliveryDetails(delivery) {
+    if (!delivery) {
+      showToast("Unable to open delivery.", "error");
+      return;
+    }
+
+    state.selectedDelivery = delivery;
+    dispatch.openJobDetails(delivery.id, state.activeTab === "completed");
+  }
+
+  function handleRowsHostClick(event) {
+    const actionButton = event.target.closest("[data-delivery-action]");
+    if (actionButton) {
+      event.preventDefault();
+      event.stopPropagation();
+      triggerQuickAction(actionButton.getAttribute("data-delivery-id"), actionButton.getAttribute("data-delivery-action"));
+      return;
+    }
+
+    if (event.target.closest("button, a, input, select, textarea, label")) {
+      return;
+    }
+
+    const row = event.target.closest("[data-delivery-id]");
+    if (!row || !elements.rowsHost || !elements.rowsHost.contains(row)) {
+      return;
+    }
+
+    const deliveryId = row.getAttribute("data-delivery-id");
+    const delivery = state.renderedRows.find(item => String(item.id) === String(deliveryId));
+    if (!delivery) {
+      showToast("Unable to open delivery.", "error");
+      return;
+    }
+
+    event.preventDefault();
+    event.stopPropagation();
+    openDeliveryDetails(delivery);
+  }
+
+  function handleRowsHostKeydown(event) {
+    if (event.key !== "Enter" && event.key !== " ") {
+      return;
+    }
+
+    const row = event.target.closest("[data-delivery-id]");
+    if (!row || !elements.rowsHost || !elements.rowsHost.contains(row)) {
+      return;
+    }
+
+    const deliveryId = row.getAttribute("data-delivery-id");
+    const delivery = state.renderedRows.find(item => String(item.id) === String(deliveryId));
+    if (!delivery) {
+      showToast("Unable to open delivery.", "error");
+      return;
+    }
+
+    event.preventDefault();
+    event.stopPropagation();
+    openDeliveryDetails(delivery);
   }
 
   function handleDocumentClicks(event) {
@@ -1772,9 +1834,6 @@
     if (elements.newDeliveryButton) {
       elements.newDeliveryButton.addEventListener("click", openCreateJobModal);
     }
-    if (elements.newDeliveryButtonFab) {
-      elements.newDeliveryButtonFab.addEventListener("click", openCreateJobModal);
-    }
     if (elements.refreshButton) {
       elements.refreshButton.addEventListener("click", () => {
         loadDeliveriesForActiveTab().catch(error => {
@@ -1782,6 +1841,10 @@
           renderDeliveryError(error.message || "Unable to load deliveries");
         });
       });
+    }
+    if (elements.rowsHost) {
+      elements.rowsHost.addEventListener("click", handleRowsHostClick);
+      elements.rowsHost.addEventListener("keydown", handleRowsHostKeydown);
     }
     if (elements.jobForm) {
       elements.jobForm.addEventListener("submit", submitJobForm);
