@@ -131,6 +131,12 @@
     if (![...document.querySelectorAll(".modal-backdrop.open")].length) {
       document.body.style.overflow = "";
     }
+
+    window.setTimeout(() => {
+      if (!elements.deliveryDetailsModal.classList.contains("open")) {
+        state.selectedDelivery = null;
+      }
+    }, 240);
   }
 
   function openDeliveryDetailsModal() {
@@ -161,6 +167,21 @@
         <div class="details-card-body">${content}</div>
       </section>
     `;
+  }
+
+  function openDeliveryDetails(delivery) {
+    if (!delivery || !delivery.id) {
+      showToast("Unable to open delivery details. Please refresh and try again.", "error");
+      return;
+    }
+
+    state.selectedDelivery = delivery;
+    if (elements.deliveryDetailsBody) {
+      elements.deliveryDetailsBody.innerHTML = "";
+    }
+
+    renderDeliveryDetails(delivery);
+    openDeliveryDetailsModal();
   }
 
   function renderDeliveryDetails(delivery) {
@@ -195,6 +216,31 @@
     const returnTiming = hasReturn ? runtime.returnTimingLabel(delivery.return_timing) : "-";
     const returnDestination = runtime.returnDestinationText(delivery);
     const driverName = resolveDeliveryDriverName(delivery);
+    const isReadyOrAssigned = stage === "ready_to_dispatch" || stage === "assigned";
+    const isPendingApproval = stage === "pending_approval";
+    const isRejected = stage === "rejected";
+    const isCompleted = stage === "closed";
+    const paymentActions = [
+      isPendingApproval ? '<button class="btn" type="button" data-details-action="mark-paid">Mark Paid</button>' : "",
+      !isCompleted ? '<button class="btn" type="button" data-details-action="invoice">View Invoice</button>' : '<button class="btn" type="button" data-details-action="invoice">View Invoice</button>',
+      isPendingApproval ? '<button class="btn danger" type="button" data-details-action="cancel">Cancel Delivery</button>' : ""
+    ].filter(Boolean).join("");
+    const dispatchActions = [
+      isReadyOrAssigned ? '<button class="btn primary" type="button" data-details-action="assign">Assign Driver</button>' : "",
+      stage === "assigned" ? '<button class="btn" type="button" data-details-action="assign">Reassign Driver</button>' : "",
+      isRejected ? '<button class="btn" type="button" data-details-action="return-ready">Unassign & Return to Ready</button>' : "",
+      isReadyOrAssigned || stage === "assigned" ? '<button class="btn" type="button" data-details-action="save">Save Driver Pay</button>' : ""
+    ].filter(Boolean).join("");
+    const documentActions = [
+      '<button class="btn" type="button" data-details-action="bol">View BOL</button>',
+      '<button class="btn" type="button" data-details-action="invoice">View Invoice</button>'
+    ].join("");
+    const notificationActions = [
+      typeof runtime.sendPaymentLinkByText === "function" ? '<button class="btn" type="button" data-details-action="send-payment-text">Text Payment Link</button>' : "",
+      typeof runtime.sendPaymentLinkByEmail === "function" ? '<button class="btn" type="button" data-details-action="send-payment-email">Email Payment Link</button>' : "",
+      typeof runtime.copyPaymentLink === "function" ? '<button class="btn" type="button" data-details-action="copy-payment-link">Copy Payment Link</button>' : "",
+      typeof runtime.resendToDriver === "function" ? '<button class="btn" type="button" data-details-action="resend-driver">Resend to Driver</button>' : ""
+    ].filter(Boolean).join("");
 
     if (elements.deliveryDetailsTitle) {
       elements.deliveryDetailsTitle.textContent = delivery.job_number || "Delivery Details";
@@ -250,8 +296,12 @@
 
       ${detailsSection("Package & Service", [
         detailsRow("Package Type", detailsValue(delivery.package_type)),
+        detailsRow("Description", detailsValue(delivery.package_type || delivery.special_instructions)),
+        detailsRow("Quantity", detailsValue(delivery.quantity || delivery.package_quantity)),
         detailsRow("Vehicle Type", detailsValue(delivery.vehicle_type)),
         detailsRow("Weight", detailsValue(delivery.package_weight)),
+        detailsRow("Estimated Miles", detailsValue(delivery.estimated_miles)),
+        detailsRow("Special Handling", detailsValue(delivery.special_handling || delivery.special_instructions)),
         detailsRow("Reference Number", detailsValue(delivery.reference_number)),
         detailsRow("Service Notes", detailsValue(delivery.special_instructions))
       ].join(""))}
@@ -271,24 +321,24 @@
         detailsRow("Account ID", detailsValue(delivery.customer_account_id))
       ].join(""))}
 
-      ${detailsSection("Driver Assignment", [
+      ${detailsSection("Driver / Dispatch", [
         detailsRow("Driver", detailsValue(driverName)),
         detailsRow("Assigned Status", detailsValue(delivery.assigned_driver_id ? "Assigned" : "Unassigned")),
         detailsRow("Acceptance", detailsValue(delivery.driver_acceptance_status || "pending")),
         detailsRow("Workflow", detailsValue(delivery.driver_workflow_status || "pending"))
       ].join(""))}
 
-      ${detailsSection("Driver Pay", `
+      ${isReadyOrAssigned ? detailsSection("Driver Pay", `
         <div class="details-pay-row">
           <div class="field full">
             <label for="deliveryDetailsDriverPay">Driver Pay</label>
             <input id="deliveryDetailsDriverPay" type="number" min="0" step="0.01" value="${helpers.escapeHtml(String(delivery.driver_pay ?? ""))}" placeholder="0.00">
           </div>
           <div class="details-pay-actions">
-            <button class="btn primary" type="button" data-details-action="save">Save</button>
+            <button class="btn primary" type="button" data-details-action="save">Save Driver Pay</button>
           </div>
         </div>
-      `)}
+      `) : ""}
 
       ${detailsSection("Status / Workflow", [
         detailsRow("Status", detailsValue(statusText)),
@@ -299,15 +349,30 @@
         detailsRow("BOL", detailsValue(String(delivery.bol_status || "-").toUpperCase()))
       ].join(""))}
 
+      ${detailsSection("Payment and Invoice", [
+        detailsRow("Payment Status", detailsValue(String(delivery.payment_status || "-").toUpperCase())),
+        detailsRow("Customer Price", detailsValue(runtime.money(delivery.approved_price ?? delivery.customer_charge))),
+        detailsRow("Invoice Status", detailsValue(String(delivery.invoice_status || "-").toUpperCase())),
+        detailsRow("Actions", `<div class="details-inline-actions">${paymentActions}</div>`)
+      ].join(""))}
+
+      ${detailsSection("Documents", [
+        detailsRow("Actions", `<div class="details-inline-actions">${documentActions}</div>`)
+      ].join(""))}
+
+      ${detailsSection("Customer Notifications", [
+        detailsRow("Actions", notificationActions ? `<div class="details-inline-actions">${notificationActions}</div>` : "-" )
+      ].join(""))}
+
       <section class="details-card details-card-actions">
         <h4>Actions</h4>
         <div class="details-action-grid">
           <button class="btn primary" type="button" data-details-action="edit">Edit Delivery</button>
-          <button class="btn" type="button" data-details-action="assign">${helpers.escapeHtml(delivery.assigned_driver_id ? "Assign / Reassign Driver" : "Assign Driver")}</button>
-          <button class="btn" type="button" data-details-action="mark-paid">Mark Paid</button>
+          ${isReadyOrAssigned || stage === "assigned" ? `<button class="btn" type="button" data-details-action="assign">${helpers.escapeHtml(delivery.assigned_driver_id ? "Assign / Reassign Driver" : "Assign Driver")}</button>` : ""}
+          ${isPendingApproval ? '<button class="btn" type="button" data-details-action="mark-paid">Mark Paid</button>' : ""}
           <button class="btn" type="button" data-details-action="invoice">View Invoice</button>
           <button class="btn" type="button" data-details-action="bol">View BOL</button>
-          <button class="btn danger" type="button" data-details-action="cancel">Cancel Delivery</button>
+          ${!isCompleted ? '<button class="btn danger" type="button" data-details-action="cancel">Cancel Delivery</button>' : ""}
         </div>
       </section>
     `;
@@ -423,6 +488,53 @@
         return;
       }
       showToast("Unable to open BOL.", "error");
+      return;
+    }
+
+    if (action === "return-ready") {
+      if (typeof runtime.openRejectedReturnConfirm === "function") {
+        runtime.openRejectedReturnConfirm(delivery.id);
+        return;
+      }
+      showToast("Unable to return delivery to Ready.", "error");
+      return;
+    }
+
+    if (action === "send-payment-text") {
+      if (typeof runtime.sendPaymentLinkByText === "function") {
+        runtime.sendPaymentLinkByText(delivery.id);
+        return;
+      }
+      showToast("Unable to text payment link.", "error");
+      return;
+    }
+
+    if (action === "send-payment-email") {
+      if (typeof runtime.sendPaymentLinkByEmail === "function") {
+        runtime.sendPaymentLinkByEmail(delivery.id);
+        return;
+      }
+      showToast("Unable to email payment link.", "error");
+      return;
+    }
+
+    if (action === "copy-payment-link") {
+      if (typeof runtime.copyPaymentLink === "function") {
+        await runtime.copyPaymentLink(delivery.id);
+        return;
+      }
+      showToast("Unable to copy payment link.", "error");
+      return;
+    }
+
+    if (action === "resend-driver") {
+      if (typeof runtime.resendToDriver === "function") {
+        await runtime.resendToDriver(delivery.id);
+        await refreshCurrentTab();
+        await openDeliveryById(delivery.id, delivery.job_number || "");
+        return;
+      }
+      showToast("Unable to resend to driver.", "error");
       return;
     }
   }
@@ -2004,7 +2116,6 @@
 
   async function openDeliveryById(deliveryId, clickedJobNumber = "") {
     const requestedId = String(deliveryId || "").trim();
-    const runtime = resolveDispatchRuntime();
     const localRows = Array.isArray(state.visibleRows) ? state.visibleRows : [];
 
     try {
@@ -2073,8 +2184,7 @@
 
       state.selectedDelivery = delivery;
       ensureSharedDeliveryRow(delivery);
-      renderDeliveryDetails(delivery);
-      openDeliveryDetailsModal();
+      openDeliveryDetails(delivery);
     } catch (error) {
       console.error("Unable to open delivery:", error);
       showToast("Unable to open delivery details. Please refresh and try again.", "error");
