@@ -1749,16 +1749,20 @@
         throw new Error("Delivery record not found.");
       }
 
-      if (typeof runtime?.openJobDetails !== "function") {
-        throw new Error("Delivery Details function is unavailable.");
+      const openDetails =
+        window.MGDeliveryDetails?.open ||
+        runtime?.openJobDetails;
+
+      if (typeof openDetails !== "function") {
+        throw new Error("Delivery Details component failed to load.");
       }
 
       state.selectedDelivery = delivery;
       ensureSharedDeliveryRow(delivery);
-      runtime.openJobDetails(delivery.id, state.activeTab === "completed");
+      await openDetails(delivery.id, state.activeTab === "completed");
     } catch (error) {
       console.error("Unable to open delivery:", error);
-      showToast(error?.message || "Unable to open delivery.", "error");
+      showToast("Unable to open delivery details. Please refresh and try again.", "error");
     }
   }
 

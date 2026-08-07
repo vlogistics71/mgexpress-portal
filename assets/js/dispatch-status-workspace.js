@@ -3434,6 +3434,11 @@ window.MG_DISPATCH_WORKSPACE = Object.freeze({
   showToast
 });
 
+window.MGDeliveryDetails = window.MGDeliveryDetails || {};
+window.MGDeliveryDetails.open = function openSharedDeliveryDetails(jobId, readOnly = false) {
+  return openJobDetails(jobId, readOnly);
+};
+
 if (workspaceMode !== "deliveries_center") {
   (async function startPage() {
     try {
