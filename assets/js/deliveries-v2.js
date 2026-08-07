@@ -16,6 +16,7 @@
     search: "",
     sort: "newest",
     selectedDelivery: null,
+    deliveryDetailsRequestToken: 0,
     assignDriverId: "",
     assignDriverPay: "",
     assignSearch: "",
@@ -135,12 +136,6 @@
     if (!document.querySelector(".modal-backdrop.open")) {
       document.body.style.overflow = "";
     }
-  }
-
-  function openDetailsModal(delivery) {
-    state.selectedDelivery = delivery;
-    renderDeliveryDetails(delivery);
-    openModal(elements.deliveryDetailsModal);
   }
 
   function isComplete(delivery) {
@@ -404,12 +399,13 @@
 
   function rowActionsHtml(delivery) {
     const id = escapeHtml(String(delivery.id || ""));
+    const details = `<button class="action" type="button" data-delivery-details="${id}">Details</button>`;
     const openJob = `<button class="action" type="button" data-open-delivery="${id}">Open</button>`;
     const assign = `<button class="action" type="button" data-assign-delivery="${id}">${delivery.assigned_driver_id ? "Reassign" : "Assign"}</button>`;
     const ready = !isReady(delivery) && !isComplete(delivery) ? `<button class="action" type="button" data-mark-ready="${id}">Ready</button>` : "";
     const paid = clean(delivery.payment_status) !== "paid" ? `<button class="action" type="button" data-mark-paid="${id}">Paid</button>` : "";
     const cancel = !isCancelled(delivery) && !isComplete(delivery) ? `<button class="action" type="button" data-cancel-delivery="${id}">Cancel</button>` : "";
-    return `${openJob}${assign}${ready}${paid}${cancel}`;
+    return `${details}${openJob}${assign}${ready}${paid}${cancel}`;
   }
 
   function renderDeliveries() {
@@ -437,7 +433,7 @@
       const pay = delivery.driver_pay != null && delivery.driver_pay !== "" ? formatMoney(delivery.driver_pay) : "-";
       const statusClass = isComplete(delivery) ? "stat" : isRejected(delivery) ? "return" : "";
       return `
-        <div class="card ${categoryClass}" data-open-delivery="${escapeHtml(String(delivery.id || ""))}" tabindex="0" role="button">
+        <div class="card ${categoryClass}" data-delivery-id="${escapeHtml(String(delivery.id || ""))}">
           <div class="card-main">
             <div class="card-topline">
               <span class="category-dot ${categoryClass}"></span>
@@ -469,101 +465,118 @@
     return `<div class="details-kv"><strong>${escapeHtml(label)}</strong><span>${value ? escapeHtml(value) : "-"}</span></div>`;
   }
 
-  function actionButton(label, action, className = "action-btn secondary") {
-    return `<button class="${className}" type="button" data-details-action="${escapeHtml(action)}">${escapeHtml(label)}</button>`;
+  function detailsBlock(label, value) {
+    return `<div class="details-kv"><strong>${escapeHtml(label)}</strong><span>${value ? escapeHtml(value) : "-"}</span></div>`;
   }
 
-  function renderDeliveryDetails(delivery) {
+  function renderDeliveryDetailsModal(delivery, message = "") {
     if (!elements.deliveryDetailsBody) {
       return;
     }
 
+    if (!delivery) {
+      elements.deliveryDetailsTitle.textContent = "Delivery Details";
+      elements.deliveryDetailsSubtitle.textContent = message || "";
+      elements.deliveryDetailsBody.innerHTML = `
+        <section class="details-card">
+          <h4>Delivery</h4>
+          <div class="details-card-body">
+            <div class="empty" style="min-height:120px;padding:0;place-items:start;text-align:left;">
+              <div>
+                <div class="empty-title">Delivery not found.</div>
+                <div class="empty-copy">${escapeHtml(message || "The selected delivery could not be loaded.")}</div>
+              </div>
+            </div>
+          </div>
+        </section>
+      `;
+      return;
+    }
+
     const route = [delivery.pickup_address, delivery.delivery_address].filter(Boolean).join(" → ");
-    const categoryLabel = getCategoryLabel(delivery.job_category);
-    const statusLabel = getStatusLabel(delivery);
-    const paymentStatus = delivery.payment_status || delivery.status || "-";
     const assignedDriver = delivery.assigned_driver_id ? String(delivery.assigned_driver_id) : "Unassigned";
+    const notes = [delivery.special_instructions, delivery.delivery_instructions, delivery.pickup_instructions, delivery.notes].filter(Boolean).join("\n\n");
 
     elements.deliveryDetailsTitle.textContent = delivery.job_number || "Delivery Details";
-    elements.deliveryDetailsSubtitle.textContent = `${delivery.customer_name || "Customer"} • ${statusLabel}`;
-
-    const actions = [];
-    actions.push(actionButton("Open Job", "open-job"));
-    actions.push(actionButton("Open Invoice", "open-invoice"));
-    actions.push(actionButton(delivery.assigned_driver_id ? "Reassign Driver" : "Assign Driver", "assign"));
-    if (!isReady(delivery) && !isComplete(delivery) && !isCancelled(delivery)) {
-      actions.push(actionButton("Mark Ready", "mark-ready"));
-    }
-    if (clean(delivery.payment_status) !== "paid") {
-      actions.push(actionButton("Mark Paid", "mark-paid"));
-    }
-    if (!isCancelled(delivery) && !isComplete(delivery)) {
-      actions.push(actionButton("Cancel Delivery", "cancel", "danger-btn"));
-    }
-
-    const notePieces = [
-      delivery.special_instructions,
-      delivery.delivery_instructions,
-      delivery.pickup_instructions,
-      delivery.notes
-    ].filter(Boolean);
-
+    elements.deliveryDetailsSubtitle.textContent = `${delivery.customer_name || delivery.company_name || "Customer"} • ${getStatusLabel(delivery)}`;
     elements.deliveryDetailsBody.innerHTML = `
-      <div class="details-summary">
-        <div>
-          <div class="details-eyebrow">${escapeHtml(categoryLabel)}</div>
-          <div class="details-job-number">${escapeHtml(delivery.job_number || "Delivery")}</div>
-          <div class="details-meta">${escapeHtml(delivery.customer_name || delivery.company_name || "Customer")}</div>
-          <div class="details-meta">${escapeHtml(route || "Route pending")}</div>
-        </div>
-        <div class="details-summary-badges">
-          <span class="badge ${isRejected(delivery) ? "return" : ""}">${escapeHtml(statusLabel)}</span>
-          ${clean(delivery.return_required) === "true" || delivery.return_required === true ? '<span class="badge return">Return Required</span>' : ""}
-          <span class="badge">${escapeHtml(String(paymentStatus))}</span>
-        </div>
-      </div>
-
       <section class="details-card">
         <h4>Delivery</h4>
         <div class="details-card-body">
-          ${detailsRow("Job Number", delivery.job_number)}
-          ${detailsRow("Status", statusLabel)}
-          ${detailsRow("Category", categoryLabel)}
-          ${detailsRow("Vehicle", delivery.vehicle_type || "-")}
-          ${detailsRow("Speed", delivery.delivery_speed || delivery.service_level || "-")}
-          ${detailsRow("Reference", delivery.reference_number || "-")}
-          ${detailsRow("Assigned Driver", assignedDriver)}
-          ${detailsRow("Driver Pay", delivery.driver_pay != null && delivery.driver_pay !== "" ? formatMoney(delivery.driver_pay) : "-")}
-          ${detailsRow("Created", formatDateTime(delivery.created_at))}
+          ${detailsBlock("Job Number", delivery.job_number)}
+          ${detailsBlock("Customer", delivery.customer_name || delivery.company_name || "-")}
+          ${detailsBlock("Status", getStatusLabel(delivery))}
+          ${detailsBlock("Category", getCategoryLabel(delivery.job_category))}
+          ${detailsBlock("Vehicle", delivery.vehicle_type || "-")}
+          ${detailsBlock("Speed", delivery.delivery_speed || delivery.service_level || "-")}
+          ${detailsBlock("Reference", delivery.reference_number || "-")}
+          ${detailsBlock("Assigned Driver", assignedDriver)}
+          ${detailsBlock("Driver Pay", delivery.driver_pay != null && delivery.driver_pay !== "" ? formatMoney(delivery.driver_pay) : "-")}
+          ${detailsBlock("Payment", delivery.payment_status || "-")}
+          ${detailsBlock("Created", formatDateTime(delivery.created_at))}
+          ${detailsBlock("Updated", formatDateTime(delivery.updated_at || delivery.modified_at || delivery.created_at))}
         </div>
       </section>
 
       <section class="details-card">
         <h4>Addresses</h4>
         <div class="details-card-body">
-          ${detailsRow("Pickup", delivery.pickup_address)}
-          ${detailsRow("Delivery", delivery.delivery_address)}
-          ${detailsRow("Pickup Contact", [delivery.pickup_contact_name, delivery.pickup_contact_phone].filter(Boolean).join(" • "))}
-          ${detailsRow("Delivery Contact", [delivery.delivery_contact_name, delivery.delivery_contact_phone].filter(Boolean).join(" • "))}
-          ${detailsRow("Return Required", clean(delivery.return_required) === "true" || delivery.return_required === true ? "Yes" : "No")}
-          ${detailsRow("Return Address", delivery.return_address || "-")}
+          ${detailsBlock("Route", route || "-")}
+          ${detailsBlock("Pickup", delivery.pickup_address)}
+          ${detailsBlock("Delivery", delivery.delivery_address)}
+          ${detailsBlock("Pickup Contact", [delivery.pickup_contact_name, delivery.pickup_contact_phone].filter(Boolean).join(" • "))}
+          ${detailsBlock("Delivery Contact", [delivery.delivery_contact_name, delivery.delivery_contact_phone].filter(Boolean).join(" • "))}
+          ${detailsBlock("Return Required", clean(delivery.return_required) === "true" || delivery.return_required === true ? "Yes" : "No")}
+          ${detailsBlock("Return Address", delivery.return_address || "-")}
         </div>
-      </section>
-
-      <section class="details-card">
-        <h4>Actions</h4>
-        <div class="details-inline-actions">${actions.join("")}</div>
       </section>
 
       <section class="details-card">
         <h4>Notes</h4>
         <div class="details-card-body">
-          ${detailsRow("Special Instructions", notePieces.join("\n\n") || "-")}
-          ${detailsRow("Created By", delivery.created_by || delivery.created_by_email || "-")}
-          ${detailsRow("Updated", formatDateTime(delivery.updated_at || delivery.modified_at || delivery.created_at))}
+          ${detailsBlock("Special Instructions", notes || "-")}
+          ${detailsBlock("Created By", delivery.created_by || delivery.created_by_email || "-")}
         </div>
       </section>
     `;
+  }
+
+  async function openDeliveryDetails(deliveryId) {
+    const requestToken = ++state.deliveryDetailsRequestToken;
+
+    elements.deliveryDetailsTitle.textContent = "Delivery Details";
+    elements.deliveryDetailsSubtitle.textContent = "Loading delivery...";
+    elements.deliveryDetailsBody.innerHTML = `
+      <section class="details-card">
+        <h4>Delivery</h4>
+        <div class="details-card-body">
+          <div class="empty" style="min-height:120px;padding:0;place-items:start;text-align:left;">
+            <div>
+              <div class="empty-title">Loading delivery...</div>
+            </div>
+          </div>
+        </div>
+      </section>
+    `;
+    openModal(elements.deliveryDetailsModal);
+
+    const result = await client
+      .from("quotes")
+      .select("*")
+      .eq("id", deliveryId)
+      .maybeSingle();
+
+    if (requestToken !== state.deliveryDetailsRequestToken) {
+      return;
+    }
+
+    if (result.error || !result.data) {
+      renderDeliveryDetailsModal(null, "Delivery not found.");
+      return;
+    }
+
+    state.selectedDelivery = result.data;
+    renderDeliveryDetailsModal(result.data);
   }
 
   async function requireDispatchAccess() {
@@ -908,47 +921,28 @@
     }
   }
 
-  async function handleDetailsAction(action) {
-    const delivery = state.selectedDelivery;
-    if (!delivery) {
+  async function handleDeliveryListClick(event) {
+    const target = event.target;
+
+    const details = target.closest("[data-delivery-details]");
+    if (details) {
+      const card = details.closest("[data-delivery-id]");
+      const deliveryId = String(card?.getAttribute("data-delivery-id") || details.getAttribute("data-delivery-details") || "").trim();
+      if (deliveryId) {
+        openDeliveryDetails(deliveryId).catch(error => {
+          renderDeliveryDetailsModal(null, error.message || "Delivery not found.");
+        });
+      }
       return;
     }
 
-    switch (action) {
-      case "open-job":
-        openJobPage(delivery);
-        return;
-      case "open-invoice":
-        openInvoicePage(delivery);
-        return;
-      case "assign":
-        await openAssignModal(delivery);
-        return;
-      case "mark-ready":
-        await markReady(delivery.id);
-        return;
-      case "mark-paid":
-        await markPaid(delivery.id);
-        return;
-      case "cancel":
-        await cancelDelivery(delivery.id);
-        return;
-      case "copy-link":
-        await copyDeliveryLink(delivery);
-        return;
-      default:
-        return;
-    }
-  }
-
-  function handleDeliveryClick(target) {
-    const card = target.closest("[data-open-delivery]");
-    if (card) {
-      const delivery = state.deliveries.find(item => String(item.id) === String(card.getAttribute("data-open-delivery")));
+    const openJob = target.closest("[data-open-delivery]");
+    if (openJob) {
+      const delivery = state.deliveries.find(item => String(item.id) === String(openJob.getAttribute("data-open-delivery")));
       if (delivery) {
-        openDetailsModal(delivery);
+        openJobPage(delivery);
       }
-      return true;
+      return;
     }
 
     const assign = target.closest("[data-assign-delivery]");
@@ -978,20 +972,18 @@
       return true;
     }
 
-    const detailsAction = target.closest("[data-details-action]");
-    if (detailsAction) {
-      handleDetailsAction(detailsAction.getAttribute("data-details-action")).catch(error => showToast(error.message || "Unable to run action.", "error"));
-      return true;
-    }
-
     const pickDriver = target.closest("[data-pick-driver]");
     if (pickDriver) {
       state.assignDriverId = String(pickDriver.getAttribute("data-pick-driver") || "");
       renderAssignModal();
-      return true;
+      return;
     }
+  }
 
-    return false;
+  function handleDeliveryDetailsModalClick(event) {
+    if (event.target === elements.deliveryDetailsModal || event.target.closest("[data-close-delivery-details]")) {
+      closeModal(elements.deliveryDetailsModal);
+    }
   }
 
   async function refreshDeliveries(options = {}) {
@@ -1012,7 +1004,7 @@
         if (selection) {
           state.selectedDelivery = selection;
           if (elements.deliveryDetailsModal.classList.contains("open")) {
-            renderDeliveryDetails(selection);
+            renderDeliveryDetailsModal(selection);
           }
         }
       }
@@ -1067,30 +1059,11 @@
       renderDeliveries();
     });
 
-    elements.deliveryList.addEventListener("click", event => {
-      handleDeliveryClick(event.target);
-    });
+    elements.deliveryList.removeEventListener("click", handleDeliveryListClick);
+    elements.deliveryList.addEventListener("click", handleDeliveryListClick);
 
-    elements.deliveryList.addEventListener("keydown", event => {
-      if (event.key !== "Enter" && event.key !== " ") {
-        return;
-      }
-      const target = event.target;
-      if (handleDeliveryClick(target)) {
-        event.preventDefault();
-      }
-    });
-
-    elements.deliveryDetailsModal.addEventListener("click", event => {
-      if (event.target === elements.deliveryDetailsModal || event.target.closest("[data-close-delivery-details]")) {
-        closeModal(elements.deliveryDetailsModal);
-      }
-
-      const action = event.target.closest("[data-details-action]");
-      if (action) {
-        handleDetailsAction(action.getAttribute("data-details-action")).catch(error => showToast(error.message || "Unable to run action.", "error"));
-      }
-    });
+    elements.deliveryDetailsModal.removeEventListener("click", handleDeliveryDetailsModalClick);
+    elements.deliveryDetailsModal.addEventListener("click", handleDeliveryDetailsModalClick);
 
     elements.newDeliveryModal.addEventListener("click", event => {
       if (event.target === elements.newDeliveryModal || event.target.closest("[data-close-modal='newDeliveryModal']")) {
