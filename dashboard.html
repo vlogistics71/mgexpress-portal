@@ -82,87 +82,6 @@
       opacity: .82;
       overflow-wrap: anywhere;
     }
-
-    .container {
-      width: min(1120px, 100%);
-      margin: auto;
-      padding: 18px 14px 84px;
-      display: grid;
-      gap: 14px;
-    }
-
-    .hero,
-    .section,
-    .compact-section {
-      border: 1px solid rgba(223, 232, 228, .9);
-      border-radius: var(--radius-xl);
-      background: rgba(255, 255, 255, .94);
-      box-shadow: var(--shadow);
-      backdrop-filter: blur(12px);
-    }
-
-    .hero {
-      padding: 18px;
-      display: grid;
-      gap: 14px;
-      background:
-        linear-gradient(145deg, rgba(255,255,255,.98), rgba(244,250,247,.96)),
-        linear-gradient(135deg, rgba(231,245,239,.7), rgba(255,255,255,0));
-    }
-
-    .eyebrow {
-      color: var(--muted);
-      font-size: 13px;
-      font-weight: 900;
-      letter-spacing: .08em;
-      text-transform: uppercase;
-    }
-
-    .hero-title {
-      margin: 4px 0 0;
-      font-size: clamp(30px, 8vw, 46px);
-      line-height: 1.02;
-    }
-
-    .hero-date {
-      color: var(--muted);
-      font-size: 14px;
-      font-weight: 800;
-      letter-spacing: .02em;
-    }
-
-    .hero-subtitle {
-      color: var(--muted);
-      font-size: 14px;
-      line-height: 1.45;
-      font-weight: 700;
-      max-width: 56ch;
-    }
-
-    .hero-actions {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 10px;
-    }
-
-    .action-btn,
-    .mini-btn,
-    .ops-card,
-    .summary-link,
-    .driver-status-card,
-    .ai-card,
-    .attention-card,
-    .sheet-link {
-      -webkit-tap-highlight-color: transparent;
-    }
-
-    .action-btn,
-    .mini-btn {
-      min-height: 50px;
-      padding: 12px 16px;
-      border-radius: 16px;
-      border: 1px solid var(--line);
-      background: #fff;
       color: var(--dark-green);
       font-weight: 900;
       cursor: pointer;
@@ -858,12 +777,19 @@
       greetingTimerId: null,
       isLoading: false,
       pendingRefresh: false,
+      deliveries: [],
       activeRows: [],
       createdTodayRows: [],
-      updatedTodayRows: [],
       completedTodayRows: [],
       recentRows: [],
       drivers: [],
+      driverQuotes: [],
+      driverSchema: {
+        drivers: new Set(),
+        quotes: new Set(),
+        driverOrderColumn: "",
+        quoteOrderColumn: ""
+      },
       driverSummaries: [],
       aiSuggestions: { briefing: [], routes: [], workload: [], payments: [], attention: [] },
       attentionSummary: { total: 0, buckets: [] },
@@ -948,6 +874,11 @@
       return Number.isNaN(date.getTime()) ? null : date;
     }
 
+    function missingColumnError(error) {
+      const message = String(error?.message || "").toLowerCase();
+      return message.includes("column") && (message.includes("does not exist") || message.includes("not found"));
+    }
+
     function startOfToday() {
       const date = new Date();
       date.setHours(0, 0, 0, 0);
@@ -1022,6 +953,29 @@
       return ["paid", "received", "completed"].includes(clean(job.payment_status));
     }
 
+    function isCancelled(job) {
+      return ["cancelled", "canceled"].includes(clean(job?.status));
+    }
+
+    function isRejected(job) {
+      return clean(job?.driver_acceptance_status) === "rejected";
+    }
+
+    function isComplete(job) {
+      const status = clean(job?.status);
+      const workflow = clean(job?.driver_workflow_status);
+      return ["completed", "delivered", "closed"].includes(status) || workflow === "delivered";
+    }
+
+    function isAssigned(job) {
+      return Boolean(String(job?.assigned_driver_id || "").trim()) && !isComplete(job) && !isCancelled(job);
+    }
+
+    function isReady(job) {
+      const status = clean(job?.status);
+      return status === "ready" || status === "ready_to_dispatch";
+    }
+
     function isDeliveryCompleted(job) {
       const status = clean(job.status);
       const flow = clean(job.driver_workflow_status);
@@ -1056,7 +1010,7 @@
     }
 
     function isClosedToday(job) {
-      if (!isDeliveryCompleted(job)) {
+      if (!isComplete(job)) {
         return false;
       }
 
@@ -1084,6 +1038,105 @@
         return category;
       }
       return "general";
+    }
+
+    function hasDriverColumn(columnName) {
+      return state.driverSchema.drivers.has(columnName);
+    }
+
+    function hasQuoteColumn(columnName) {
+      return state.driverSchema.quotes.has(columnName);
+    }
+
+    async function detectExistingColumns(tableName, candidateColumns) {
+      const existing = [];
+
+      for (const column of candidateColumns) {
+        const probe = await client
+          .from(tableName)
+          .select(column)
+          .limit(1);
+
+        if (!probe.error) {
+          existing.push(column);
+          continue;
+        }
+
+        if (missingColumnError(probe.error)) {
+          continue;
+        }
+
+        throw probe.error;
+      }
+
+      return existing;
+    }
+
+    async function inspectDriverWorkspaceSchema() {
+      const driverColumns = await detectExistingColumns("drivers", [
+        "id",
+        "full_name",
+        "display_name",
+        "name",
+        "email",
+        "active",
+        "is_active",
+        "enabled",
+        "status",
+        "availability_status",
+        "current_area",
+        "area",
+        "city",
+        "vehicle_type",
+        "vehicle",
+        "vehicle_year",
+        "vehicle_make",
+        "vehicle_model",
+        "plate",
+        "license_plate",
+        "vehicle_color",
+        "phone",
+        "mobile_phone",
+        "notes",
+        "internal_notes",
+        "dispatch_notes",
+        "last_active_at",
+        "last_seen_at",
+        "created_at"
+      ]);
+
+      const quoteColumns = await detectExistingColumns("quotes", [
+        "id",
+        "job_number",
+        "assigned_driver_id",
+        "status",
+        "customer_name",
+        "pickup_address",
+        "delivery_address",
+        "driver_pay",
+        "driver_acceptance_status",
+        "driver_workflow_status",
+        "driver_accepted_at",
+        "driver_rejected_at",
+        "completed_at",
+        "created_at",
+        "scheduled_at",
+        "pickup_time",
+        "delivery_time"
+      ]);
+
+      state.driverSchema.drivers = new Set(driverColumns);
+      state.driverSchema.quotes = new Set(quoteColumns);
+      state.driverSchema.driverOrderColumn = ["full_name", "email", "created_at"].find(hasDriverColumn) || "";
+      state.driverSchema.quoteOrderColumn = [
+        "created_at",
+        "scheduled_at",
+        "pickup_time",
+        "delivery_time",
+        "completed_at",
+        "driver_rejected_at",
+        "driver_accepted_at"
+      ].find(hasQuoteColumn) || "";
     }
 
     function getTimeBasedGreeting() {
@@ -1266,6 +1319,10 @@
         return left.name.localeCompare(right.name);
       });
       return summaries;
+    }
+
+    function isActiveJob(job) {
+      return !isComplete(job) && !isCancelled(job);
     }
 
     function routeCity(job) {
@@ -1460,9 +1517,9 @@
 
     function renderOpsCards() {
       try {
-        const pending = state.activeRows.filter(row => getWorkflowStage(row) === "pending_approval").length;
-        const ready = state.activeRows.filter(row => getWorkflowStage(row) === "ready_to_dispatch").length;
-        const assigned = state.activeRows.filter(row => getWorkflowStage(row) === "assigned" && clean(row.driver_acceptance_status) !== "rejected").length;
+        const pending = state.deliveries.filter(row => !isAssigned(row) && !isReady(row) && !isComplete(row) && !isCancelled(row) && !isRejected(row)).length;
+        const ready = state.deliveries.filter(row => isReady(row) || clean(row.status) === "ready_to_dispatch").length;
+        const assigned = state.deliveries.filter(row => isAssigned(row)).length;
         const completedToday = state.completedTodayRows.length;
         const availableDrivers = state.driverSummaries.filter(item => item.availability === "available").length;
 
@@ -1625,17 +1682,11 @@
       console.error(`${sectionName} unavailable`, error);
     }
 
-    async function loadActiveRows() {
+    async function loadDeliveries() {
       const result = await client
         .from("quotes")
         .select("*")
-        .neq("status", "cancelled")
-        .neq("status", "canceled")
-        .neq("status", "closed")
-        .neq("status", "completed")
-        .neq("status", "delivered")
-        .order("updated_at", { ascending: false })
-        .limit(250);
+        .order("created_at", { ascending: false });
 
       if (result.error) {
         throw result.error;
@@ -1644,41 +1695,21 @@
       return result.data || [];
     }
 
-    async function loadCreatedTodayRows(startIso) {
-      const result = await client
-        .from("quotes")
-        .select("*")
-        .gte("created_at", startIso)
-        .order("created_at", { ascending: false })
-        .limit(250);
-
-      if (result.error) {
-        throw result.error;
+    async function loadDriversWorkspaceDrivers() {
+      const selectColumns = Array.from(state.driverSchema.drivers);
+      if (!selectColumns.includes("id")) {
+        selectColumns.unshift("id");
       }
 
-      return result.data || [];
-    }
-
-    async function loadUpdatedTodayRows(startIso) {
-      const result = await client
-        .from("quotes")
-        .select("*")
-        .gte("updated_at", startIso)
-        .order("updated_at", { ascending: false })
-        .limit(250);
-
-      if (result.error) {
-        throw result.error;
-      }
-
-      return result.data || [];
-    }
-
-    async function loadDrivers() {
-      const result = await client
+      let query = client
         .from("drivers")
-        .select("*");
+        .select(selectColumns.join(","));
 
+      if (state.driverSchema.driverOrderColumn) {
+        query = query.order(state.driverSchema.driverOrderColumn, { ascending: true });
+      }
+
+      const result = await query;
       if (result.error) {
         throw result.error;
       }
@@ -1686,14 +1717,45 @@
       return result.data || [];
     }
 
-    async function loadRecentRows(sinceIso) {
-      const result = await client
-        .from("quotes")
-        .select("*")
-        .gte("updated_at", sinceIso)
-        .order("updated_at", { ascending: false })
-        .limit(80);
+    async function loadDriversWorkspaceQuotes() {
+      const requiredColumns = [
+        "id",
+        "assigned_driver_id",
+        "job_number",
+        "status",
+        "customer_name",
+        "pickup_address",
+        "delivery_address",
+        "driver_pay",
+        "driver_acceptance_status",
+        "driver_workflow_status",
+        "driver_accepted_at",
+        "driver_rejected_at",
+        "completed_at",
+        "created_at",
+        "scheduled_at",
+        "pickup_time",
+        "delivery_time"
+      ];
 
+      const selectColumns = requiredColumns.filter(hasQuoteColumn);
+      if (!selectColumns.includes("id")) {
+        throw new Error("quotes.id is required for Driver Availability.");
+      }
+
+      let query = client
+        .from("quotes")
+        .select(selectColumns.join(","));
+
+      if (hasQuoteColumn("assigned_driver_id")) {
+        query = query.not("assigned_driver_id", "is", null);
+      }
+
+      if (state.driverSchema.quoteOrderColumn) {
+        query = query.order(state.driverSchema.quoteOrderColumn, { ascending: false });
+      }
+
+      const result = await query;
       if (result.error) {
         throw result.error;
       }
@@ -1747,111 +1809,77 @@
       elements.refreshDashboardBtn.disabled = true;
       elements.refreshDashboardBtn.textContent = "Refreshing...";
 
-      const startIso = startOfToday().toISOString();
-      const recentIso = new Date(Date.now() - (7 * 24 * 60 * 60 * 1000)).toISOString();
-
       try {
-        const [activeRowsResult, createdTodayResult, updatedTodayResult, driversResult, recentRowsResult] = await Promise.allSettled([
-          loadActiveRows(),
-          loadCreatedTodayRows(startIso),
-          loadUpdatedTodayRows(startIso),
-          loadDrivers(),
-          loadRecentRows(recentIso)
-        ]);
+        const deliveriesResult = await loadDeliveries();
+        const todayStart = startOfToday();
 
-        if (activeRowsResult.status === "fulfilled") {
-          state.activeRows = activeRowsResult.value;
-        } else {
-          state.activeRows = [];
-          renderUnavailableState("Active rows", activeRowsResult.reason);
-        }
+        state.deliveries = deliveriesResult;
+        state.activeRows = state.deliveries.filter(isActiveJob);
+        state.createdTodayRows = state.deliveries.filter(row => {
+          const created = parseDate(row.created_at);
+          return created ? created >= todayStart : false;
+        });
+        state.completedTodayRows = state.deliveries.filter(isClosedToday);
+        state.recentRows = state.deliveries.slice(0, 80);
 
-        if (createdTodayResult.status === "fulfilled") {
-          state.createdTodayRows = createdTodayResult.value;
-        } else {
-          state.createdTodayRows = [];
-          renderUnavailableState("Created today snapshot", createdTodayResult.reason);
-        }
+        renderOpsCards();
+        renderAttentionCard();
+        renderAiSections();
+        renderTodaySnapshot();
+        renderRevenueSnapshot();
+        renderActivity();
 
-        if (updatedTodayResult.status === "fulfilled") {
-          state.updatedTodayRows = updatedTodayResult.value;
-          state.completedTodayRows = state.updatedTodayRows.filter(isClosedToday);
-        } else {
-          state.updatedTodayRows = [];
-          state.completedTodayRows = [];
-          renderUnavailableState("Completed today snapshot", updatedTodayResult.reason);
-        }
+        try {
+          await inspectDriverWorkspaceSchema();
+          const [drivers, quotes] = await Promise.all([
+            loadDriversWorkspaceDrivers(),
+            loadDriversWorkspaceQuotes()
+          ]);
 
-        if (driversResult.status === "fulfilled") {
-          state.drivers = driversResult.value;
-          state.driverSummaries = buildDriverSummaries(state.drivers, state.activeRows);
-        } else {
+          state.drivers = drivers;
+          state.driverQuotes = quotes;
+          state.driverSummaries = buildDriverSummaries(state.drivers, state.driverQuotes);
+          setCardValue(elements.countAvailableDrivers, state.driverSummaries.filter(item => item.availability === "available").length);
+          renderDriverStatus();
+        } catch (driverError) {
           state.drivers = [];
+          state.driverQuotes = [];
           state.driverSummaries = [];
-          renderUnavailableState("Driver availability", driversResult.reason);
-        }
-
-        if (recentRowsResult.status === "fulfilled") {
-          state.recentRows = recentRowsResult.value;
-        } else {
-          state.recentRows = [];
-          renderUnavailableState("Recent activity", recentRowsResult.reason);
-        }
-
-        if (activeRowsResult.status === "rejected") {
-          setCardUnavailable(elements.countPendingApproval, elements.pendingCaption);
-          setCardUnavailable(elements.countReadyDispatch, elements.readyCaption);
-          setCardUnavailable(elements.countAssigned, elements.assignedCaption);
-          setCardUnavailable(elements.countNeedsAttention, elements.needsAttentionCaption);
-          elements.aiSummaryText.textContent = "Unavailable";
-          elements.aiSummaryText.classList.add("unavailable");
-        } else {
-          renderOpsCards();
-          renderAttentionCard();
-          renderAiSections();
-        }
-
-        if (createdTodayResult.status === "rejected" || updatedTodayResult.status === "rejected") {
-          [
-            elements.snapshotDeliveriesToday,
-            elements.snapshotCompletedToday,
-            elements.snapshotMedical,
-            elements.snapshotLegal,
-            elements.snapshotPallet,
-            elements.snapshotSpecial,
-            elements.snapshotReturn
-          ].forEach(element => {
-            if (!element) {
-              return;
-            }
-            element.textContent = "--";
-          });
-        } else {
-          renderTodaySnapshot();
-        }
-
-        if (driversResult.status === "rejected" || activeRowsResult.status === "rejected") {
+          renderUnavailableState("Driver availability", driverError);
+          setCardUnavailable(elements.countAvailableDrivers, elements.availableDriversCaption, "Drivers workspace data could not load.");
           elements.driverStatusAvailable.textContent = "--";
           elements.driverStatusBusy.textContent = "--";
           elements.driverStatusOffline.textContent = "--";
-          setCardUnavailable(elements.countAvailableDrivers, elements.availableDriversCaption, "Driver availability is unavailable right now.");
-        } else {
-          renderDriverStatus();
         }
-
-        if (updatedTodayResult.status === "rejected") {
-          elements.revenueCard.classList.add("hidden");
-          elements.revenueSectionCopy.textContent = "Revenue snapshot unavailable right now.";
-        } else {
-          renderRevenueSnapshot();
-        }
-
-        if (recentRowsResult.status === "rejected") {
-          elements.activitySection.classList.add("hidden");
-          state.diagnostics.activityHiddenReason = "Reliable recent activity history was unavailable due to a query failure.";
-        } else {
-          renderActivity();
-        }
+      } catch (deliveryError) {
+        state.deliveries = [];
+        state.activeRows = [];
+        state.createdTodayRows = [];
+        state.completedTodayRows = [];
+        state.recentRows = [];
+        renderUnavailableState("Deliveries workspace", deliveryError);
+        setCardUnavailable(elements.countPendingApproval, elements.pendingCaption, "Deliveries V2 data could not load.");
+        setCardUnavailable(elements.countReadyDispatch, elements.readyCaption, "Deliveries V2 data could not load.");
+        setCardUnavailable(elements.countAssigned, elements.assignedCaption, "Deliveries V2 data could not load.");
+        setCardUnavailable(elements.countCompletedToday, elements.completedCaption, "Deliveries V2 data could not load.");
+        setCardUnavailable(elements.countNeedsAttention, elements.needsAttentionCaption, "Deliveries V2 data could not load.");
+        elements.aiSummaryText.textContent = "Unavailable";
+        elements.aiSummaryText.classList.add("unavailable");
+        [
+          elements.snapshotDeliveriesToday,
+          elements.snapshotCompletedToday,
+          elements.snapshotMedical,
+          elements.snapshotLegal,
+          elements.snapshotPallet,
+          elements.snapshotSpecial,
+          elements.snapshotReturn
+        ].forEach(element => {
+          if (element) {
+            element.textContent = "--";
+          }
+        });
+        elements.revenueCard.classList.add("hidden");
+        elements.activitySection.classList.add("hidden");
       } finally {
         state.isLoading = false;
         elements.refreshDashboardBtn.disabled = false;
