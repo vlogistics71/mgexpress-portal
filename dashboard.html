@@ -48,32 +48,124 @@
     input,
     select,
     textarea {
-      font: inherit;
-    }
+      margin-top: 4px;
+      font-size: 12px;
 
     .topbar {
       position: sticky;
-      top: 0;
-      z-index: 30;
-      padding: 16px 18px;
-      background: var(--dark-green);
-      color: #fff;
-      box-shadow: 0 12px 30px rgba(6, 79, 59, .2);
-    }
 
     .topbar-inner {
-      width: min(1120px, 100%);
-      margin: auto;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
     }
 
-    .brand {
+    .topbar-main {
+      min-width: 0;
+      flex: 1 1 auto;
+    }
+
+    .topbar-actions {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex: 0 0 auto;
+    }
+
+    .container {
+      width: min(1120px, 100%);
+      margin: auto;
+      padding: 12px 12px 52px;
+      display: grid;
+      gap: 10px;
+    }
+
+    .hero,
+    .section,
+    .compact-section {
+      border: 1px solid rgba(223, 232, 228, .92);
+      border-radius: 22px;
+      background: rgba(255, 255, 255, .95);
+      box-shadow: 0 12px 28px rgba(15, 35, 26, .06);
+      backdrop-filter: blur(12px);
+    }
+
+    .hero {
+      padding: 12px 14px;
+      display: grid;
+      gap: 8px;
+      background:
+        linear-gradient(145deg, rgba(255,255,255,.98), rgba(244,250,247,.96)),
+        linear-gradient(135deg, rgba(231,245,239,.7), rgba(255,255,255,0));
+    }
+
+    .hero-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 10px;
+    }
+
+    .hero-title {
+      margin: 2px 0 0;
+      font-size: clamp(28px, 7vw, 40px);
+      line-height: 1.02;
+    }
+
+    .hero-date {
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 800;
+      letter-spacing: .02em;
+    }
+
+    .hero-subtitle {
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.35;
+      font-weight: 700;
+      max-width: 48ch;
+      margin: 0;
+    }
+
+    .hero-actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      justify-content: flex-end;
+    }
+
+    .action-btn,
+    .mini-btn {
+      min-height: 40px;
+      padding: 9px 14px;
+      border-radius: 14px;
+      border: 1px solid rgba(255,255,255,.16);
+      color: var(--dark-green);
+      font-weight: 900;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+
+    .action-btn {
+      background: linear-gradient(180deg, #11956d 0%, #087455 100%);
+      color: #fff;
+      box-shadow: 0 12px 24px rgba(8, 116, 85, .24);
+    }
+
+    .mini-btn {
+      background: linear-gradient(180deg, #ffffff 0%, #eef7f2 100%);
+      border-color: #d3e4dc;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.8);
+    }
       font-size: 24px;
       font-weight: 900;
       line-height: 1.05;
     }
 
     .brand span {
-      color: var(--coral);
+      padding: 12px 12px 0;
     }
 
     .staff-email {
@@ -117,18 +209,18 @@
     }
 
     .section-copy {
-      margin-top: 4px;
+      margin-top: 2px;
       color: var(--muted);
-      font-size: 12px;
+      font-size: 11px;
       font-weight: 800;
-      line-height: 1.35;
+      line-height: 1.3;
     }
 
     .ops-grid {
-      padding: 16px;
+      padding: 12px;
       display: grid;
-      grid-template-columns: 1fr;
-      gap: 12px;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
     }
 
     .ops-card,
@@ -140,13 +232,13 @@
       border: 1px solid var(--line);
       border-radius: var(--radius-lg);
       background: linear-gradient(180deg, #ffffff 0%, #f9fcfa 100%);
-      padding: 16px;
-      min-height: 148px;
+      padding: 12px;
+      min-height: 84px;
       cursor: pointer;
-      box-shadow: 0 10px 24px rgba(17, 39, 29, .05);
+      box-shadow: 0 8px 18px rgba(17, 39, 29, .05);
       transition: transform .16s ease, box-shadow .16s ease, border-color .16s ease;
       display: grid;
-      gap: 10px;
+      gap: 4px;
       align-content: start;
     }
 
@@ -175,12 +267,13 @@
     .card-label {
       display: flex;
       align-items: center;
-      gap: 8px;
+      gap: 6px;
       color: var(--muted);
-      font-size: 12px;
+      font-size: 10px;
       font-weight: 900;
       letter-spacing: .06em;
       text-transform: uppercase;
+      line-height: 1.2;
     }
 
     .category-accent {
@@ -198,8 +291,8 @@
     .category-accent.special { background: #d97706; }
 
     .card-value {
-      font-size: clamp(34px, 7vw, 44px);
-      line-height: 1;
+      font-size: clamp(24px, 6vw, 34px);
+      line-height: .95;
       font-weight: 900;
       color: var(--dark-green);
     }
@@ -207,34 +300,29 @@
     .card-caption,
     .card-meta {
       color: var(--muted);
-      font-size: 13px;
-      line-height: 1.4;
+      font-size: 11px;
+      line-height: 1.25;
       font-weight: 700;
     }
 
     .card-footer {
-      margin-top: auto;
-      color: var(--green);
-      font-size: 12px;
-      font-weight: 900;
-      letter-spacing: .04em;
-      text-transform: uppercase;
+      display: none;
     }
 
     .ops-grid .wide {
-      min-height: 164px;
+      min-height: 84px;
     }
 
     .subgrid {
       display: grid;
-      gap: 14px;
+      gap: 10px;
     }
 
     .summary-grid {
-      padding: 16px;
+      padding: 12px;
       display: grid;
       grid-template-columns: 1fr;
-      gap: 12px;
+      gap: 10px;
     }
 
     .summary-link,
@@ -242,8 +330,8 @@
       border: 1px solid var(--line);
       border-radius: var(--radius-lg);
       background: #fff;
-      padding: 16px;
-      box-shadow: 0 10px 24px rgba(17, 39, 29, .04);
+      padding: 12px;
+      box-shadow: 0 8px 18px rgba(17, 39, 29, .04);
     }
 
     .summary-link {
@@ -251,38 +339,38 @@
       text-align: left;
       cursor: pointer;
       display: grid;
-      gap: 14px;
+      gap: 10px;
     }
 
     .snapshot-grid,
     .driver-status-grid {
       display: grid;
       grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: 10px;
+      gap: 8px;
     }
 
     .snapshot-item,
     .driver-status-item {
       border-radius: 16px;
       background: var(--surface-soft);
-      padding: 12px;
-      min-height: 88px;
+      padding: 10px;
+      min-height: 68px;
       display: grid;
       align-content: space-between;
-      gap: 10px;
+      gap: 6px;
     }
 
     .snapshot-item strong,
     .driver-status-item strong {
       color: var(--muted);
-      font-size: 11px;
+      font-size: 10px;
       letter-spacing: .06em;
       text-transform: uppercase;
     }
 
     .snapshot-number,
     .driver-status-number {
-      font-size: 28px;
+      font-size: 22px;
       line-height: 1;
       font-weight: 900;
       color: var(--dark-green);
@@ -291,29 +379,29 @@
     .revenue-grid {
       display: grid;
       grid-template-columns: repeat(3, minmax(0, 1fr));
-      gap: 10px;
+      gap: 8px;
     }
 
     .revenue-item {
       border-radius: 16px;
       background: var(--surface-soft);
-      padding: 12px;
+      padding: 10px;
       display: grid;
-      gap: 8px;
+      gap: 6px;
       align-content: start;
-      min-height: 100px;
+      min-height: 76px;
     }
 
     .revenue-item strong {
       color: var(--muted);
-      font-size: 11px;
+      font-size: 10px;
       text-transform: uppercase;
       letter-spacing: .06em;
     }
 
     .revenue-value {
       color: var(--dark-green);
-      font-size: 22px;
+      font-size: 18px;
       line-height: 1.2;
       font-weight: 900;
       overflow-wrap: anywhere;
@@ -322,7 +410,7 @@
     .activity-list,
     .sheet-list {
       display: grid;
-      gap: 10px;
+      gap: 8px;
     }
 
     .activity-item,
@@ -330,7 +418,7 @@
       border-radius: 16px;
       border: 1px solid var(--line);
       background: #fff;
-      padding: 12px 14px;
+      padding: 10px 12px;
       display: grid;
       gap: 4px;
     }
@@ -338,7 +426,7 @@
     .activity-title,
     .sheet-title {
       color: var(--dark-green);
-      font-size: 14px;
+      font-size: 13px;
       font-weight: 900;
     }
 
@@ -346,8 +434,8 @@
     .sheet-meta,
     .hint {
       color: var(--muted);
-      font-size: 12px;
-      line-height: 1.4;
+      font-size: 11px;
+      line-height: 1.3;
       font-weight: 700;
     }
 
@@ -470,8 +558,8 @@
     }
 
     .icon-btn {
-      min-width: 44px;
-      min-height: 44px;
+      min-width: 40px;
+      min-height: 40px;
       border: 1px solid var(--line);
       border-radius: 14px;
       background: #fff;
@@ -488,11 +576,7 @@
       }
 
       .hero-actions {
-        width: 260px;
-      }
-
-      .ops-grid {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
+        width: auto;
       }
 
       .summary-grid {
@@ -502,7 +586,7 @@
 
     @media (min-width: 980px) {
       .ops-grid {
-        grid-template-columns: repeat(3, minmax(0, 1fr));
+        grid-template-columns: repeat(2, minmax(0, 1fr));
       }
 
       .subgrid {
@@ -511,16 +595,38 @@
     }
 
     @media (max-width: 560px) {
-      .hero-actions,
       .revenue-grid,
       .snapshot-grid,
       .driver-status-grid {
         grid-template-columns: 1fr;
       }
 
+      .ops-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .hero-header {
+        flex-direction: column;
+        align-items: stretch;
+      }
+
+      .hero-actions {
+        justify-content: stretch;
+      }
+
+      .hero-actions .mini-btn {
+        width: 100%;
+      }
+
       .container {
-        padding-left: 12px;
-        padding-right: 12px;
+        padding-left: 10px;
+        padding-right: 10px;
+      }
+    }
+
+    @media (max-width: 390px) {
+      .ops-grid {
+        grid-template-columns: 1fr;
       }
     }
   </style>
@@ -528,23 +634,27 @@
 <body>
   <header class="topbar">
     <div class="topbar-inner">
-      <div>
+      <div class="topbar-main">
         <div class="brand">MG <span>EXPRESS</span> DISPATCH</div>
         <div class="staff-email" id="staffEmail"></div>
+      </div>
+      <div class="topbar-actions">
+        <button class="action-btn" id="openNewDeliveryBtn" type="button">+ New Delivery</button>
       </div>
     </div>
   </header>
 
   <main class="container">
     <section class="hero">
-      <div>
-        <div class="eyebrow">Dispatch Command Center</div>
-        <h1 class="hero-title" id="opsGreeting">Good Morning, Dispatch</h1>
-        <div class="hero-date" id="opsDate">Loading date...</div>
-        <div class="hero-subtitle">What needs dispatch attention right now? This dashboard stays compact and routes into the existing production workspaces.</div>
+      <div class="hero-header">
+        <div>
+          <div class="eyebrow">Dispatch Command Center</div>
+          <h1 class="hero-title" id="opsGreeting">Good Morning, Dispatch</h1>
+          <div class="hero-date" id="opsDate">Loading date...</div>
+          <p class="hero-subtitle">Live summary of the production dispatch system.</p>
+        </div>
       </div>
       <div class="hero-actions">
-        <button class="action-btn primary" id="openNewDeliveryBtn" type="button">+ New Delivery</button>
         <button class="mini-btn" id="refreshDashboardBtn" type="button">Refresh</button>
       </div>
     </section>
@@ -553,57 +663,50 @@
       <div class="section-head">
         <div>
           <h2 class="section-title">Operations</h2>
-          <div class="section-copy">Large touch targets for the live workspaces that need dispatch attention.</div>
+          <div class="section-copy">Production workspace counts.</div>
         </div>
       </div>
       <div class="ops-grid">
         <button class="ops-card" id="cardPendingApproval" type="button">
           <div class="card-label"><span class="category-accent general"></span>PENDING APPROVAL</div>
           <div class="card-value" id="countPendingApproval">--</div>
-          <div class="card-caption" id="pendingCaption">Deliveries waiting for payment or approval.</div>
-          <div class="card-footer">Open Deliveries</div>
+          <div class="card-meta" id="pendingCaption">Tap to open</div>
         </button>
 
         <button class="ops-card" id="cardReadyDispatch" type="button">
           <div class="card-label"><span class="category-accent general"></span>READY TO DISPATCH</div>
           <div class="card-value" id="countReadyDispatch">--</div>
-          <div class="card-caption" id="readyCaption">Paid deliveries waiting for driver assignment.</div>
-          <div class="card-footer">Open Deliveries</div>
+          <div class="card-meta" id="readyCaption">Tap to open</div>
         </button>
 
         <button class="ops-card" id="cardAssigned" type="button">
           <div class="card-label"><span class="category-accent general"></span>ASSIGNED</div>
           <div class="card-value" id="countAssigned">--</div>
-          <div class="card-caption" id="assignedCaption">Active deliveries already assigned to drivers.</div>
-          <div class="card-footer">Open Deliveries</div>
+          <div class="card-meta" id="assignedCaption">Tap to open</div>
         </button>
 
         <button class="ops-card" id="cardCompletedToday" type="button">
           <div class="card-label"><span class="category-accent general"></span>COMPLETED TODAY</div>
           <div class="card-value" id="countCompletedToday">--</div>
-          <div class="card-caption" id="completedCaption">Deliveries finished today.</div>
-          <div class="card-footer">Open Deliveries</div>
+          <div class="card-meta" id="completedCaption">Tap to open</div>
         </button>
 
         <button class="ops-card" id="cardAvailableDrivers" type="button">
           <div class="card-label"><span class="category-accent general"></span>AVAILABLE DRIVERS</div>
           <div class="card-value" id="countAvailableDrivers">--</div>
-          <div class="card-caption" id="availableDriversCaption">Drivers currently available by existing availability rules.</div>
-          <div class="card-footer">Open Drivers</div>
+          <div class="card-meta" id="availableDriversCaption">Tap to open</div>
         </button>
 
         <button class="attention-card wide" id="cardNeedsAttention" type="button">
           <div class="card-label"><span class="category-accent special"></span>NEEDS ATTENTION</div>
           <div class="card-value" id="countNeedsAttention">--</div>
-          <div class="card-caption" id="needsAttentionCaption">Checking active alerts...</div>
-          <div class="card-footer">View Attention Panel</div>
+          <div class="card-meta" id="needsAttentionCaption">Checking active alerts...</div>
         </button>
 
         <section class="ai-card wide" id="aiCardCompact" role="button" tabindex="0">
           <div class="card-label"><span class="category-accent general"></span>MG EXPRESS AI</div>
-          <div class="card-value" style="font-size:22px;line-height:1.3;" id="aiSummaryText">0 suggestions • No urgent issues</div>
-          <div class="card-caption">AI only recommends. No automatic job changes.</div>
-          <div class="card-footer" id="openAiSuggestionsBtn">View Suggestions ›</div>
+          <div class="card-value" style="font-size:20px;line-height:1.15;" id="aiSummaryText">0 suggestions • No urgent issues</div>
+          <div class="card-meta" id="openAiSuggestionsBtn">Recommendations only</div>
         </section>
       </div>
     </section>
@@ -613,7 +716,7 @@
         <div class="section-head">
           <div>
             <h2 class="section-title">Today Snapshot</h2>
-            <div class="section-copy">Compact counts built from today’s delivery data.</div>
+            <div class="section-copy">Today at a glance.</div>
           </div>
         </div>
         <div class="summary-grid">
@@ -653,7 +756,7 @@
           <button class="summary-link driver-status-card" id="driverStatusCard" type="button">
             <div>
               <div class="card-label"><span class="category-accent general"></span>DRIVER STATUS</div>
-              <div class="card-meta">Availability follows the existing Drivers workspace rules.</div>
+              <div class="card-meta">Open drivers workspace</div>
             </div>
             <div class="driver-status-grid">
               <div class="driver-status-item">
@@ -669,7 +772,6 @@
                 <div class="driver-status-number" id="driverStatusOffline">--</div>
               </div>
             </div>
-            <div class="card-footer">Open Drivers Workspace</div>
           </button>
         </div>
       </div>
@@ -678,7 +780,7 @@
         <div class="section-head">
           <div>
             <h2 class="section-title">Revenue Snapshot</h2>
-            <div class="section-copy" id="revenueSectionCopy">Dispatch-only daily estimate from completed deliveries.</div>
+            <div class="section-copy" id="revenueSectionCopy">Dispatch-only daily estimate.</div>
           </div>
         </div>
         <div class="summary-grid">
