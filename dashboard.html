@@ -1043,6 +1043,7 @@
       quotes: [],
       recurringCustomers: [],
       supportEstimatedMiles: null,
+      quoteColumnSupport: null,
       submitting: false
     };
 
@@ -1478,6 +1479,88 @@
       return Number.isNaN(localValue.getTime()) ? null : localValue;
     }
 
+    function missingColumnError(error) {
+      const message = String(error?.message || "").toLowerCase();
+      return message.includes("column") && (message.includes("does not exist") || message.includes("schema cache") || message.includes("not found"));
+    }
+
+    async function detectQuoteColumnSupport() {
+      if (state.quoteColumnSupport) {
+        return state.quoteColumnSupport;
+      }
+
+      const candidates = [
+        "company",
+        "company_name",
+        "customer_account_id",
+        "customer_name",
+        "customer_email",
+        "customer_phone",
+        "reference_number",
+        "pickup_address",
+        "pickup_suite_floor",
+        "pickup_zip",
+        "pickup_city",
+        "pickup_contact_name",
+        "pickup_contact_phone",
+        "pickup_instructions",
+        "delivery_address",
+        "delivery_suite_floor",
+        "delivery_zip",
+        "delivery_city",
+        "delivery_contact_name",
+        "delivery_contact_phone",
+        "delivery_recipient_name",
+        "delivery_instructions",
+        "vehicle_type",
+        "delivery_speed",
+        "job_category",
+        "delivery_type",
+        "service_level",
+        "package_type",
+        "package_weight",
+        "estimated_miles",
+        "special_instructions",
+        "return_required",
+        "return_location_type",
+        "return_address",
+        "return_suite_floor",
+        "return_zip",
+        "return_timing",
+        "approved_price",
+        "customer_charge",
+        "scheduled_at",
+        "billing_notes",
+        "status",
+        "assigned_driver_id",
+        "driver_pay",
+        "driver_acceptance_status",
+        "driver_workflow_status",
+        "driver_accepted_at",
+        "driver_rejected_at"
+      ];
+
+      const support = {};
+
+      for (const column of candidates) {
+        const probe = await client.from("quotes").select(column).limit(1);
+        if (!probe.error) {
+          support[column] = true;
+          continue;
+        }
+
+        if (missingColumnError(probe.error)) {
+          support[column] = false;
+          continue;
+        }
+
+        throw probe.error;
+      }
+
+      state.quoteColumnSupport = support;
+      return support;
+    }
+
     async function detectEstimatedMilesFieldSupport() {
       if (state.supportEstimatedMiles !== null) {
         return state.supportEstimatedMiles;
@@ -1552,14 +1635,18 @@
       return "";
     }
 
-    function formToPayload(form) {
+    async function buildInsertPayload(form) {
       const data = new FormData(form);
+      const columnSupport = await detectQuoteColumnSupport();
       const priceRaw = String(data.get("approved_price") || "").trim();
       const estimatedMilesRaw = String(data.get("estimated_miles") || "").trim();
       const estimatedMilesValue = estimatedMilesRaw === "" ? null : Number(estimatedMilesRaw);
       const scheduledDateValue = String(data.get("scheduled_date") || "").trim();
       const scheduledTimeValue = String(data.get("scheduled_time") || "").trim();
       const scheduledAt = buildScheduledAtValue(scheduledDateValue, scheduledTimeValue);
+      const companyValue = String(data.get("company_name") || "").trim();
+      const pickupCityValue = String(data.get("pickup_city") || "").trim();
+      const deliveryCityValue = String(data.get("delivery_city") || "").trim();
 
       if (estimatedMilesRaw !== "" && (!Number.isFinite(estimatedMilesValue) || estimatedMilesValue < 0)) {
         throw new Error("Estimated miles must be a valid number.");
@@ -1589,19 +1676,15 @@
       const payload = {
         customer_account_id: String(data.get("customer_account_id") || "").trim() || null,
         customer_name: String(data.get("customer_name") || "").trim(),
-        company_name: String(data.get("company_name") || "").trim() || null,
         customer_email: String(data.get("customer_email") || "").trim() || null,
         customer_phone: String(data.get("customer_phone") || "").trim() || null,
         reference_number: referenceNumber || null,
         pickup_address: String(data.get("pickup_address") || "").trim(),
         pickup_suite_floor: String(data.get("pickup_suite_floor") || "").trim() || null,
-        pickup_city: String(data.get("pickup_city") || "").trim() || null,
         pickup_zip: String(data.get("pickup_zip") || "").trim() || null,
         delivery_address: String(data.get("delivery_address") || "").trim(),
         delivery_suite_floor: String(data.get("delivery_suite_floor") || "").trim() || null,
-        delivery_city: String(data.get("delivery_city") || "").trim() || null,
         delivery_zip: String(data.get("delivery_zip") || "").trim() || null,
-        delivery_contact_name: deliveryContactName || null,
         delivery_recipient_name: deliveryContactName || null,
         vehicle_type: String(data.get("vehicle_type") || "").trim() || null,
         delivery_speed: String(data.get("delivery_speed") || "").trim() || null,
@@ -1646,6 +1729,68 @@
         payload.scheduled_at = null;
       }
 
+      if (companyValue) {
+        if (columnSupport.company) {
+          payload.company = companyValue;
+        } else if (columnSupport.company_name) {
+          payload.company_name = companyValue;
+        }
+      }
+
+      if (pickupCityValue && columnSupport.pickup_city) {
+        payload.pickup_city = pickupCityValue;
+      }
+
+      if (deliveryCityValue && columnSupport.delivery_city) {
+        payload.delivery_city = deliveryCityValue;
+      }
+
+      if (deliveryContactName && columnSupport.delivery_contact_name) {
+        payload.delivery_contact_name = deliveryContactName;
+      }
+
+      if (deliveryContactPhone && columnSupport.delivery_contact_phone) {
+        payload.delivery_contact_phone = deliveryContactPhone;
+      }
+
+      if (pickupContactName && columnSupport.pickup_contact_name) {
+        payload.pickup_contact_name = pickupContactName;
+      }
+
+      if (pickupContactPhone && columnSupport.pickup_contact_phone) {
+        payload.pickup_contact_phone = pickupContactPhone;
+      }
+
+      if (pickupInstructions && columnSupport.pickup_instructions) {
+        payload.pickup_instructions = pickupInstructions;
+      }
+
+      if (deliveryInstructions && columnSupport.delivery_instructions) {
+        payload.delivery_instructions = deliveryInstructions;
+      }
+
+      if (packageWeight && columnSupport.package_weight) {
+        payload.package_weight = packageWeight;
+      }
+
+      if (referenceNumber && columnSupport.reference_number) {
+        payload.reference_number = referenceNumber;
+      }
+
+      Object.keys(payload).forEach(key => {
+        if (key.startsWith("_")) {
+          return;
+        }
+
+        if (!(key in columnSupport)) {
+          return;
+        }
+
+        if (!columnSupport[key]) {
+          delete payload[key];
+        }
+      });
+
       payload._estimated_miles_value = estimatedMilesValue;
       return payload;
     }
@@ -1663,7 +1808,7 @@
       setCreateJobMessage("", "");
 
       try {
-        const payload = formToPayload(elements.createJobForm);
+        const payload = await buildInsertPayload(elements.createJobForm);
         const estimatedMilesValue = payload._estimated_miles_value;
         delete payload._estimated_miles_value;
 
@@ -1695,6 +1840,7 @@
 
         await loadQuotes();
       } catch (error) {
+        console.error("Unable to create dashboard job", error);
         setCreateJobMessage(error.message || "Unable to create job.", "error");
       } finally {
         state.submitting = false;
