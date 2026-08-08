@@ -14,12 +14,12 @@
       --green: #087455;
       --light-green: #e7f5ef;
       --coral: #ff665c;
-      --background: #f5faf7;
+      --background: #f3f8f6;
       --white: #fff;
       --ink: #17221e;
       --muted: #68756f;
       --line: #dfe8e4;
-      --danger: #9b2929;
+      --danger: #a32d2d;
       --warning: #986200;
       --warning-bg: #fff5d8;
       --blue: #245d9c;
@@ -29,7 +29,7 @@
     }
     body {
       margin: 0;
-      font-family: "SF Pro Text", "SF Pro Display", "Helvetica Neue", Helvetica, Arial, sans-serif;
+      font-family: Arial, Helvetica, sans-serif;
       background: var(--background);
       color: var(--ink);
     }
@@ -37,16 +37,16 @@
     .topbar {
       position: sticky;
       top: 0;
-      z-index: 30;
-      padding: 16px 18px;
+      z-index: 50;
+      padding: 18px 20px;
       background: var(--dark-green);
       color: #fff;
     }
-    .topbar-inner { width: min(1180px, 100%); margin: auto; }
-    .brand { font-size: 24px; font-weight: 900; line-height: 1.05; }
+    .topbar-inner { width: min(1050px, 100%); margin: auto; }
+    .brand { font-size: 24px; font-weight: 900; line-height: 1.08; }
     .brand span { color: var(--coral); }
-    .staff-email { margin-top: 6px; font-size: 13px; opacity: .85; overflow-wrap: anywhere; }
-    .container { width: min(1180px, 100%); margin: auto; padding: 20px 14px 96px; }
+    .brand-subtitle { margin-top: 4px; color: rgba(255, 255, 255, .82); font-size: 13px; font-weight: 700; line-height: 1.2; }
+    .container { width: min(1050px, 100%); margin: auto; padding: 20px 14px 96px; }
     .page-head { display: grid; gap: 10px; margin-bottom: 16px; }
     .page-head-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; flex-wrap: wrap; }
     .page-copy { display: grid; gap: 8px; min-width: 0; }
@@ -59,8 +59,8 @@
     .page-title { margin: 0; font-size: clamp(30px, 6vw, 46px); line-height: 1.05; }
     .page-subtitle { color: var(--muted); font-size: 13px; font-weight: 800; }
     .action-btn {
-      min-height: 48px; padding: 12px 16px; border: 0; border-radius: 16px; background: var(--green);
-      color: #fff; font-weight: 900; box-shadow: 0 14px 30px rgba(8, 116, 85, .22); cursor: pointer;
+      min-height: 48px; padding: 15px 20px; border: 0; border-radius: 14px; background: var(--green);
+      color: #fff; font-weight: 900; cursor: pointer;
     }
     .action-btn.secondary { background: #fff; color: var(--dark-green); border: 1px solid var(--line); box-shadow: none; }
     .toolbar { display: grid; gap: 12px; margin-bottom: 12px; }
@@ -84,7 +84,7 @@
       text-transform: uppercase; letter-spacing: .04em;
     }
     .control input, .control select { width: 100%; min-height: 44px; padding: 10px 12px; border: 1px solid var(--line); border-radius: 12px; background: #fff; color: var(--ink); }
-    .panel { border: 1px solid var(--line); border-radius: 20px; background: #fff; overflow: hidden; box-shadow: 0 10px 24px rgba(0, 0, 0, .04); }
+    .panel { border: 1px solid var(--line); border-radius: 22px; background: #fff; overflow: hidden; box-shadow: 0 9px 28px rgba(0, 0, 0, .05); }
     .panel-meta {
       padding: 10px 12px; border-bottom: 1px solid var(--line); color: var(--muted); font-size: 12px;
       font-weight: 800; display: flex; justify-content: space-between; gap: 10px; flex-wrap: wrap;
@@ -111,7 +111,7 @@
     .route { color: var(--muted); font-size: 13px; overflow-wrap: anywhere; line-height: 1.35; }
     .meta { display: flex; flex-wrap: wrap; gap: 8px 12px; color: var(--muted); font-size: 12px; font-weight: 700; }
     .actions { display: flex; gap: 8px; align-items: flex-start; flex-wrap: wrap; justify-content: flex-end; }
-    .action { min-height: 44px; padding: 10px 12px; border: 1px solid var(--line); border-radius: 12px; background: #fff; color: var(--dark-green); font-weight: 900; cursor: pointer; }
+    .card-chevron { color: var(--muted); font-size: 24px; font-weight: 900; align-self: center; }
     .empty { min-height: 220px; display: grid; place-items: center; text-align: center; padding: 30px 20px; }
     .empty-title { color: var(--dark-green); font-size: 20px; font-weight: 900; }
     .empty-copy { color: var(--muted); font-size: 14px; font-weight: 700; margin-top: 6px; }
@@ -141,11 +141,13 @@
     .details-card { border: 1px solid var(--line); border-radius: 18px; background: #fff; box-shadow: 0 10px 22px rgba(0,0,0,.05); padding: 14px; }
     .details-card h4 { margin: 0 0 12px; color: var(--dark-green); font-size: 16px; font-weight: 900; }
     .details-card-body { display: grid; gap: 8px; }
+    .details-actions-section { display: grid; gap: 10px; }
     .details-kv { display: grid; grid-template-columns: minmax(120px, 170px) minmax(0, 1fr); gap: 10px; align-items: baseline; font-size: 13px; line-height: 1.45; }
     .details-kv strong { color: var(--muted); font-size: 11px; text-transform: uppercase; letter-spacing: .04em; }
     .details-inline-actions { display: flex; flex-wrap: wrap; gap: 8px; }
     .details-action-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
     .details-action-grid .action-btn, .details-action-grid .action-btn.secondary, .details-action-grid .danger-btn { width: 100%; }
+    .action-btn.disabled { opacity: .5; pointer-events: none; }
     .danger-btn { border: 0; background: var(--coral); color: #fff; }
     .sheet-note { color: var(--muted); font-size: 12px; font-weight: 700; }
     .details-pay-row { display: grid; gap: 12px; }
@@ -171,12 +173,12 @@
     @media (max-width: 720px) { .page-head-top { flex-direction: column; align-items: stretch; } .controls { grid-template-columns: 1fr; } .card { grid-template-columns: 1fr; } .actions { justify-content: flex-start; } .details-summary { flex-direction: column; } .details-action-grid { grid-template-columns: 1fr; } .details-kv { grid-template-columns: 1fr; } }
 
     .topbar-inner {
-      width: min(1180px, 100%);
+      width: min(1050px, 100%);
       margin: auto;
       display: flex;
       align-items: center;
       justify-content: space-between;
-      gap: 12px;
+      gap: 15px;
     }
 
     .topbar-copy {
@@ -205,10 +207,10 @@
 
     .action-btn.primary-compact {
       min-height: 48px;
-      padding: 12px 18px;
-      border-radius: 16px;
-      background: linear-gradient(180deg, #129867 0%, #087455 100%);
-      box-shadow: 0 14px 30px rgba(8, 116, 85, .2);
+      padding: 15px 20px;
+      border-radius: 14px;
+      background: var(--green);
+      box-shadow: none;
     }
 
     .summary-grid {
@@ -332,8 +334,7 @@
       .page-head { align-items: stretch; }
       .page-head > * { width: 100%; }
       .summary-grid { gap: 8px; }
-      .card { grid-template-columns: 1fr; }
-      .actions { justify-content: flex-start; }
+      .card { grid-template-columns: minmax(0, 1fr) auto; }
       .details-summary { flex-direction: column; }
       .details-action-grid { grid-template-columns: 1fr; }
       .details-kv { grid-template-columns: 1fr; }
@@ -345,7 +346,7 @@
     <div class="topbar-inner">
       <div class="topbar-copy">
         <div class="brand">MG <span>EXPRESS</span> DISPATCH</div>
-        <div class="staff-email" id="staffEmail"></div>
+        <div class="brand-subtitle">Work Station Hub</div>
       </div>
     </div>
   </header>

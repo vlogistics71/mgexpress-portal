@@ -275,6 +275,16 @@
     ).trim() || "Driver";
   }
 
+  function driverNameById(driverId) {
+    const id = String(driverId || "").trim();
+    if (!id) {
+      return "";
+    }
+
+    const match = state.drivers.find(driver => String(driver.id || "") === id);
+    return match ? getDriverDisplayName(match) : "";
+  }
+
   function getDriverAvailability(driver) {
     const status = clean(driver?.availability_status || driver?.status);
     if (["off_duty", "inactive", "offline"].includes(status)) {
@@ -486,15 +496,51 @@
     }
   }
 
-  function rowActionsHtml(delivery) {
+  function canAssignDriver(delivery) {
+    return !isComplete(delivery) && !isCancelled(delivery) && (isReady(delivery) || isAssigned(delivery) || isRejected(delivery));
+  }
+
+  function canMarkReady(delivery) {
+    return !isReady(delivery) && !isAssigned(delivery) && !isComplete(delivery) && !isCancelled(delivery) && !isRejected(delivery);
+  }
+
+  function canMarkPaid(delivery) {
+    return clean(delivery.payment_status) !== "paid" && !isComplete(delivery) && !isCancelled(delivery);
+  }
+
+  function canCancelDelivery(delivery) {
+    return !isCancelled(delivery) && !isComplete(delivery);
+  }
+
+  function workflowActionButtons(delivery) {
     const id = escapeHtml(String(delivery.id || ""));
-    const details = `<button class="action" type="button" data-delivery-details="${id}">Details</button>`;
-    const openJob = `<button class="action" type="button" data-open-delivery="${id}">Open</button>`;
-    const assign = `<button class="action" type="button" data-assign-delivery="${id}">${delivery.assigned_driver_id ? "Reassign" : "Assign"}</button>`;
-    const ready = !isReady(delivery) && !isComplete(delivery) ? `<button class="action" type="button" data-mark-ready="${id}">Ready</button>` : "";
-    const paid = clean(delivery.payment_status) !== "paid" ? `<button class="action" type="button" data-mark-paid="${id}">Paid</button>` : "";
-    const cancel = !isCancelled(delivery) && !isComplete(delivery) ? `<button class="action" type="button" data-cancel-delivery="${id}">Cancel</button>` : "";
-    return `${details}${openJob}${assign}${ready}${paid}${cancel}`;
+    const buttons = [];
+
+    if (canAssignDriver(delivery)) {
+      buttons.push(`<button class="action-btn secondary" type="button" data-details-action="assign" data-delivery-id="${id}">${delivery.assigned_driver_id ? "Reassign Driver" : "Assign Driver"}</button>`);
+    }
+    if (canMarkReady(delivery)) {
+      buttons.push(`<button class="action-btn secondary" type="button" data-details-action="ready" data-delivery-id="${id}">Mark Ready</button>`);
+    }
+    if (canMarkPaid(delivery)) {
+      buttons.push(`<button class="action-btn secondary" type="button" data-details-action="paid" data-delivery-id="${id}">Mark Paid</button>`);
+    }
+    if (canCancelDelivery(delivery)) {
+      buttons.push(`<button class="action-btn danger-btn" type="button" data-details-action="cancel" data-delivery-id="${id}">Cancel Delivery</button>`);
+    }
+
+    return buttons.join("");
+  }
+
+  function documentActionButtons(delivery) {
+    const id = escapeHtml(String(delivery.id || ""));
+    const bolDisabled = delivery?.id ? "" : " disabled";
+    const invoiceDisabled = delivery?.id ? "" : " disabled";
+
+    return `
+      <button class="action-btn secondary${bolDisabled}" type="button" data-details-action="bol" data-delivery-id="${id}">View BOL</button>
+      <button class="action-btn secondary${invoiceDisabled}" type="button" data-details-action="invoice" data-delivery-id="${id}">View Invoice</button>
+    `;
   }
 
   function renderDeliveries() {
@@ -516,13 +562,16 @@
       const categoryClass = getCategoryClass(delivery.job_category);
       const categoryLabel = getCategoryLabel(delivery.job_category);
       const statusLabel = getStatusLabel(delivery);
-      const route = [delivery.pickup_address, delivery.delivery_address].filter(Boolean).join(" → ");
-      const assignedTo = delivery.assigned_driver_id ? `Driver ${escapeHtml(String(delivery.assigned_driver_id))}` : "Unassigned";
+      const pickupAddress = escapeHtml(delivery.pickup_address || "Pickup pending");
+      const deliveryAddress = escapeHtml(delivery.delivery_address || "Delivery pending");
+      const driverName = driverNameById(delivery.assigned_driver_id);
+      const assignedTo = delivery.assigned_driver_id ? `Driver: ${escapeHtml(driverName || "Driver Assigned")}` : "";
       const createdAt = formatDateTime(delivery.created_at);
       const pay = delivery.driver_pay != null && delivery.driver_pay !== "" ? formatMoney(delivery.driver_pay) : "-";
       const statusClass = isComplete(delivery) ? "stat" : isRejected(delivery) ? "return" : "";
+      const serviceLabel = [delivery.delivery_speed, delivery.service_level].filter(Boolean).join(" • ");
       return `
-        <div class="card ${categoryClass}" data-delivery-id="${escapeHtml(String(delivery.id || ""))}">
+        <div class="card ${categoryClass}" data-delivery-id="${escapeHtml(String(delivery.id || ""))}" role="button" tabindex="0" aria-label="Open ${escapeHtml(delivery.job_number || "delivery")} details">
           <div class="card-main">
             <div class="card-topline">
               <span class="category-dot ${categoryClass}"></span>
@@ -532,17 +581,17 @@
             </div>
             <div class="job-number">${escapeHtml(delivery.job_number || "Delivery")}</div>
             <div class="customer">${escapeHtml(delivery.customer_name || delivery.company_name || "Customer")}</div>
-            <div class="route">${escapeHtml(route || "Route pending")}</div>
+            <div class="route">${pickupAddress}<br>↓<br>${deliveryAddress}</div>
             <div class="meta">
               <span>Created ${escapeHtml(createdAt)}</span>
-              <span>Driver ${escapeHtml(assignedTo)}</span>
-              <span>Pay ${escapeHtml(pay)}</span>
-              <span>${escapeHtml(String(delivery.delivery_speed || delivery.service_level || ""))}</span>
+              ${serviceLabel ? `<span>${escapeHtml(serviceLabel)}</span>` : ""}
+            </div>
+            <div class="meta">
+              ${assignedTo ? `<span>${assignedTo}</span>` : ""}
+              ${pay !== "-" ? `<span>Pay: ${escapeHtml(pay)}</span>` : ""}
             </div>
           </div>
-          <div class="actions">
-            ${rowActionsHtml(delivery)}
-          </div>
+          <div class="card-chevron" aria-hidden="true">&gt;</div>
         </div>
       `;
     }).join("");
@@ -583,13 +632,16 @@
     }
 
     const route = [delivery.pickup_address, delivery.delivery_address].filter(Boolean).join(" → ");
-    const assignedDriver = delivery.assigned_driver_id ? String(delivery.assigned_driver_id) : "Unassigned";
+    const assignedDriverName = driverNameById(delivery.assigned_driver_id);
+    const assignedDriver = delivery.assigned_driver_id ? (assignedDriverName || "Driver Assigned") : "Unassigned";
     const notes = [delivery.special_instructions, delivery.delivery_instructions, delivery.pickup_instructions, delivery.notes].filter(Boolean).join("\n\n");
-        const scheduledValue = scheduledDeliveryDateTime(delivery);
-        const scheduledBlocks = clean(delivery.service_level) === "scheduled" && scheduledValue ? `
+    const scheduledValue = scheduledDeliveryDateTime(delivery);
+    const scheduledBlocks = clean(delivery.service_level) === "scheduled" && scheduledValue ? `
           ${detailsBlock("Scheduled Delivery", formatDateOnly(scheduledValue))}
           ${detailsBlock("Scheduled Time", formatTimeOnly(scheduledValue))}
-        ` : "";
+    ` : "";
+    const workflowButtons = workflowActionButtons(delivery);
+    const documentButtons = documentActionButtons(delivery);
 
     elements.deliveryDetailsTitle.textContent = delivery.job_number || "Delivery Details";
     elements.deliveryDetailsSubtitle.textContent = `${delivery.customer_name || delivery.company_name || "Customer"} • ${getStatusLabel(delivery)}`;
@@ -631,6 +683,20 @@
         <div class="details-card-body">
           ${detailsBlock("Special Instructions", notes || "-")}
           ${detailsBlock("Created By", delivery.created_by || delivery.created_by_email || "-")}
+        </div>
+      </section>
+
+      <section class="details-card">
+        <h4>Workflow Actions</h4>
+        <div class="details-actions-section">
+          ${workflowButtons ? `<div class="details-action-grid">${workflowButtons}</div>` : '<div class="sheet-note">No workflow actions available for this delivery.</div>'}
+        </div>
+      </section>
+
+      <section class="details-card">
+        <h4>Documents</h4>
+        <div class="details-actions-section">
+          <div class="details-action-grid">${documentButtons}</div>
         </div>
       </section>
     `;
@@ -1019,52 +1085,15 @@
   async function handleDeliveryListClick(event) {
     const target = event.target;
 
-    const details = target.closest("[data-delivery-details]");
-    if (details) {
-      const card = details.closest("[data-delivery-id]");
-      const deliveryId = String(card?.getAttribute("data-delivery-id") || details.getAttribute("data-delivery-details") || "").trim();
+    const card = target.closest("[data-delivery-id]");
+    if (card) {
+      const deliveryId = String(card.getAttribute("data-delivery-id") || "").trim();
       if (deliveryId) {
         openDeliveryDetails(deliveryId).catch(error => {
           renderDeliveryDetailsModal(null, error.message || "Delivery not found.");
         });
       }
       return;
-    }
-
-    const openJob = target.closest("[data-open-delivery]");
-    if (openJob) {
-      const delivery = state.deliveries.find(item => String(item.id) === String(openJob.getAttribute("data-open-delivery")));
-      if (delivery) {
-        openJobPage(delivery);
-      }
-      return;
-    }
-
-    const assign = target.closest("[data-assign-delivery]");
-    if (assign) {
-      const delivery = state.deliveries.find(item => String(item.id) === String(assign.getAttribute("data-assign-delivery")));
-      if (delivery) {
-        openAssignModal(delivery);
-      }
-      return true;
-    }
-
-    const ready = target.closest("[data-mark-ready]");
-    if (ready) {
-      markReady(ready.getAttribute("data-mark-ready")).catch(error => showToast(error.message || "Unable to mark ready.", "error"));
-      return true;
-    }
-
-    const paid = target.closest("[data-mark-paid]");
-    if (paid) {
-      markPaid(paid.getAttribute("data-mark-paid")).catch(error => showToast(error.message || "Unable to mark paid.", "error"));
-      return true;
-    }
-
-    const cancel = target.closest("[data-cancel-delivery]");
-    if (cancel) {
-      cancelDelivery(cancel.getAttribute("data-cancel-delivery")).catch(error => showToast(error.message || "Unable to cancel delivery.", "error"));
-      return true;
     }
 
     const pickDriver = target.closest("[data-pick-driver]");
@@ -1075,7 +1104,51 @@
     }
   }
 
+  function handleDeliveryDetailsAction(action, delivery) {
+    if (!delivery) {
+      return;
+    }
+
+    if (action === "assign") {
+      closeModal(elements.deliveryDetailsModal);
+      openAssignModal(delivery).catch(error => showToast(error.message || "Unable to open assign driver.", "error"));
+      return;
+    }
+
+    if (action === "ready") {
+      markReady(delivery.id).catch(error => showToast(error.message || "Unable to mark ready.", "error"));
+      return;
+    }
+
+    if (action === "paid") {
+      markPaid(delivery.id).catch(error => showToast(error.message || "Unable to mark paid.", "error"));
+      return;
+    }
+
+    if (action === "cancel") {
+      cancelDelivery(delivery.id).catch(error => showToast(error.message || "Unable to cancel delivery.", "error"));
+      return;
+    }
+
+    if (action === "bol") {
+      openJobPage(delivery);
+      return;
+    }
+
+    if (action === "invoice") {
+      openInvoicePage(delivery);
+    }
+  }
+
   function handleDeliveryDetailsModalClick(event) {
+    const actionButton = event.target.closest("[data-details-action]");
+    if (actionButton) {
+      const deliveryId = String(actionButton.getAttribute("data-delivery-id") || state.selectedDelivery?.id || "");
+      const delivery = state.deliveries.find(item => String(item.id || "") === deliveryId) || state.selectedDelivery;
+      handleDeliveryDetailsAction(String(actionButton.getAttribute("data-details-action") || ""), delivery);
+      return;
+    }
+
     if (event.target === elements.deliveryDetailsModal || event.target.closest("[data-close-delivery-details]")) {
       closeModal(elements.deliveryDetailsModal);
     }
@@ -1088,7 +1161,13 @@
     `;
 
     try {
-      state.deliveries = await loadDeliveries();
+      const deliveries = await loadDeliveries();
+      try {
+        state.drivers = await loadDrivers();
+      } catch (driverError) {
+        console.error("Unable to load drivers for delivery display", driverError);
+      }
+      state.deliveries = deliveries;
       state.loadError = "";
       renderTabs();
       renderCategories();
@@ -1163,6 +1242,18 @@
 
     elements.deliveryList.removeEventListener("click", handleDeliveryListClick);
     elements.deliveryList.addEventListener("click", handleDeliveryListClick);
+    elements.deliveryList.addEventListener("keydown", event => {
+      const card = event.target.closest("[data-delivery-id]");
+      if (!card) {
+        return;
+      }
+      if (event.key === "Enter" || event.key === " ") {
+        event.preventDefault();
+        openDeliveryDetails(card.getAttribute("data-delivery-id")).catch(error => {
+          renderDeliveryDetailsModal(null, error.message || "Delivery not found.");
+        });
+      }
+    });
 
     elements.deliveryDetailsModal.removeEventListener("click", handleDeliveryDetailsModalClick);
     elements.deliveryDetailsModal.addEventListener("click", handleDeliveryDetailsModalClick);

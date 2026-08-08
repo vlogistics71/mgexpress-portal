@@ -1,0 +1,1854 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1"
+  >
+
+  <title>MG Express Dispatch</title>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    :root {
+      --dark-green: #064f3b;
+      --green: #087455;
+      --light-green: #e7f5ef;
+      --coral: #ff665c;
+      --background: #f3f8f6;
+      --white: #ffffff;
+      --ink: #17221e;
+      --muted: #68756f;
+      --line: #dfe8e4;
+      --danger: #a32d2d;
+    }
+
+    body {
+      margin: 0;
+      font-family: Arial, Helvetica, sans-serif;
+      background: var(--background);
+      color: var(--ink);
+    }
+
+    button,
+    input,
+    select,
+    textarea {
+      font: inherit;
+    }
+
+    button,
+    a {
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .topbar {
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      background: var(--dark-green);
+      color: white;
+      padding: 18px 20px;
+    }
+
+    .topbar-inner {
+      width: min(1050px, 100%);
+      margin: auto;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 15px;
+    }
+
+    .brand {
+      font-size: 24px;
+      font-weight: 900;
+      line-height: 1.08;
+    }
+
+    .brand span {
+      color: var(--coral);
+    }
+
+    .brand-subtitle {
+      margin-top: 4px;
+      color: rgba(255, 255, 255, .82);
+      font-size: 13px;
+      font-weight: 700;
+      line-height: 1.2;
+    }
+
+    .staff-email {
+      margin-top: 7px;
+      font-size: 13px;
+      opacity: .82;
+      overflow-wrap: anywhere;
+    }
+
+    .signout {
+      border: 0;
+      border-radius: 16px;
+      padding: 15px 18px;
+      background: white;
+      color: var(--dark-green);
+      font-weight: 900;
+      cursor: pointer;
+      min-width: 112px;
+    }
+
+    .container {
+      width: min(1050px, 100%);
+      margin: auto;
+      padding: 30px 18px 60px;
+    }
+
+    .page-heading {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      gap: 18px;
+      margin-bottom: 24px;
+    }
+
+    .welcome-stack {
+      margin-bottom: 8px;
+    }
+
+    .welcome-greeting {
+      font-size: 24px;
+      line-height: 1.12;
+      font-weight: 900;
+      color: var(--dark-green);
+    }
+
+    .welcome-date {
+      margin-top: 4px;
+      color: var(--muted);
+      font-size: 14px;
+      font-weight: 700;
+      line-height: 1.3;
+    }
+
+    .eyebrow {
+      color: var(--muted);
+      font-size: 18px;
+      margin-bottom: 5px;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 44px;
+      line-height: 1.05;
+    }
+
+    h2 {
+      margin: 0;
+      font-size: 29px;
+    }
+
+    .primary-button {
+      border: 0;
+      border-radius: 14px;
+      padding: 15px 20px;
+      background: var(--green);
+      color: white;
+      font-weight: 900;
+      cursor: pointer;
+    }
+
+    .secondary-button {
+      border: 1px solid var(--line);
+      border-radius: 13px;
+      padding: 13px 16px;
+      background: white;
+      color: var(--dark-green);
+      font-weight: 900;
+      cursor: pointer;
+    }
+
+    .navigation {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-bottom: 24px;
+    }
+
+    .navigation a {
+      text-decoration: none;
+      display: inline-block;
+    }
+
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+      gap: 13px;
+      margin-bottom: 30px;
+    }
+
+    .stat-card {
+      background: white;
+      border: 1px solid var(--line);
+      border-radius: 20px;
+      padding: 20px;
+      min-height: 145px;
+      box-shadow: 0 8px 25px rgba(0, 0, 0, .04);
+    }
+
+    .stat-button {
+      width: 100%;
+      text-align: left;
+      cursor: pointer;
+      border: 1px solid var(--line);
+    }
+
+    .stat-number {
+      color: var(--green);
+      font-size: 38px;
+      font-weight: 900;
+    }
+
+    .stat-label {
+      color: var(--muted);
+      margin-top: 9px;
+      line-height: 1.3;
+    }
+
+    .stat-subtitle {
+      color: var(--muted);
+      margin-top: 4px;
+      font-size: 11px;
+      font-weight: 900;
+      text-transform: uppercase;
+      letter-spacing: .04em;
+    }
+
+    .panel {
+      background: white;
+      border: 1px solid var(--line);
+      border-radius: 22px;
+      padding: 23px;
+      margin-bottom: 26px;
+      box-shadow: 0 9px 28px rgba(0, 0, 0, .05);
+    }
+
+    .create-section {
+      display: grid;
+      gap: 14px;
+    }
+
+    .create-section-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .create-section-actions {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .create-section-body {
+      display: grid;
+      gap: 14px;
+    }
+
+    .job-form {
+      display: grid;
+      gap: 14px;
+    }
+
+    .form-group {
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      padding: 14px;
+      background: #fff;
+      display: grid;
+      gap: 12px;
+    }
+
+    .form-group h3 {
+      margin: 0;
+      color: var(--dark-green);
+      font-size: 16px;
+      font-weight: 900;
+      letter-spacing: .02em;
+    }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 12px;
+    }
+
+    .field {
+      display: grid;
+      gap: 6px;
+      min-width: 0;
+    }
+
+    .field label {
+      color: var(--muted);
+      font-size: 11px;
+      font-weight: 900;
+      letter-spacing: .04em;
+      text-transform: uppercase;
+    }
+
+    .field input,
+    .field select,
+    .field textarea {
+      width: 100%;
+      min-height: 48px;
+      padding: 12px 14px;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      background: #fff;
+      color: var(--ink);
+    }
+
+    .field textarea {
+      min-height: 108px;
+      resize: vertical;
+    }
+
+    .field.full {
+      grid-column: 1 / -1;
+    }
+
+    .lookup-results {
+      display: none;
+      gap: 8px;
+    }
+
+    .lookup-results.open {
+      display: grid;
+    }
+
+    .lookup-row {
+      text-align: left;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      background: #fff;
+      padding: 12px;
+      display: grid;
+      gap: 4px;
+      cursor: pointer;
+    }
+
+    .lookup-title {
+      color: var(--dark-green);
+      font-size: 13px;
+      font-weight: 900;
+    }
+
+    .lookup-meta {
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 700;
+      line-height: 1.3;
+    }
+
+    .hint {
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.35;
+      font-weight: 700;
+    }
+
+    .return-details[hidden] {
+      display: none !important;
+    }
+
+    .create-actions {
+      display: grid;
+      gap: 10px;
+    }
+
+    .create-job-button {
+      min-height: 50px;
+      border: 0;
+      border-radius: 16px;
+      padding: 12px 18px;
+      background: var(--green);
+      color: #fff;
+      font-weight: 900;
+      cursor: pointer;
+    }
+
+    .hidden {
+      display: none;
+    }
+
+    .panel-heading,
+    .jobs-heading {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 14px;
+      margin-bottom: 20px;
+    }
+
+    .quote-form {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 15px;
+    }
+
+    label {
+      display: block;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 900;
+      text-transform: uppercase;
+    }
+
+    label.full {
+      grid-column: 1 / -1;
+    }
+
+    input,
+    select,
+    textarea {
+      width: 100%;
+      margin-top: 7px;
+      padding: 14px;
+      border: 1px solid #ccd8d3;
+      border-radius: 12px;
+      background: white;
+      color: var(--ink);
+      outline: none;
+    }
+
+    input:focus,
+    select:focus,
+    textarea:focus {
+      border-color: var(--green);
+      box-shadow: 0 0 0 3px rgba(8, 116, 85, .12);
+    }
+
+    textarea {
+      min-height: 90px;
+      resize: vertical;
+    }
+
+    .form-actions {
+      grid-column: 1 / -1;
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .message {
+      margin-top: 15px;
+      padding: 13px;
+      border-radius: 11px;
+      line-height: 1.4;
+    }
+
+    .message.info {
+      background: #edf7f3;
+      color: #06543e;
+    }
+
+    .message.error {
+      background: #fff0f0;
+      color: var(--danger);
+    }
+
+    .jobs-list {
+      display: grid;
+      gap: 18px;
+    }
+
+    .job-card {
+      background: white;
+      border: 1px solid var(--line);
+      border-radius: 20px;
+      padding: 20px;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, .04);
+    }
+
+    .job-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 12px;
+      margin-bottom: 17px;
+    }
+
+    .job-number {
+      color: var(--dark-green);
+      font-size: 24px;
+      font-weight: 900;
+    }
+
+    .customer {
+      margin-top: 5px;
+      font-size: 18px;
+      font-weight: 800;
+    }
+
+    .customer-email {
+      margin-top: 4px;
+      color: var(--muted);
+      overflow-wrap: anywhere;
+    }
+
+    .status-pill {
+      border-radius: 999px;
+      padding: 8px 11px;
+      background: var(--light-green);
+      color: var(--green);
+      font-size: 12px;
+      font-weight: 900;
+      text-transform: capitalize;
+      white-space: nowrap;
+    }
+
+    .route {
+      border-radius: 15px;
+      padding: 16px;
+      background: #f7faf9;
+      line-height: 1.45;
+      margin-bottom: 17px;
+    }
+
+    .route-arrow {
+      margin: 8px 0;
+      color: var(--green);
+      font-size: 23px;
+      font-weight: 900;
+    }
+
+    .job-details {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 12px;
+      margin-bottom: 17px;
+    }
+
+    .detail-box {
+      background: #f7faf9;
+      border-radius: 13px;
+      padding: 13px;
+    }
+
+    .detail-label {
+      color: var(--muted);
+      font-size: 11px;
+      font-weight: 900;
+      text-transform: uppercase;
+    }
+
+    .detail-value {
+      margin-top: 5px;
+      line-height: 1.35;
+      overflow-wrap: anywhere;
+    }
+
+    .instructions {
+      margin-bottom: 17px;
+      padding: 15px;
+      border-radius: 14px;
+      background: #fff8ed;
+      line-height: 1.45;
+      white-space: pre-wrap;
+    }
+
+    .job-controls {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 12px;
+      align-items: end;
+    }
+
+    .save-job,
+    .photo-link {
+      min-height: 49px;
+      border: 0;
+      border-radius: 12px;
+      padding: 13px;
+      background: var(--green);
+      color: white;
+      text-align: center;
+      text-decoration: none;
+      font-weight: 900;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .photo-link {
+      background: #eaf3ef;
+      color: var(--dark-green);
+    }
+
+    .photo-link.disabled {
+      opacity: .5;
+      pointer-events: none;
+    }
+
+    .empty {
+      padding: 28px;
+      text-align: center;
+      color: var(--muted);
+      background: #fafdfb;
+      border-radius: 17px;
+    }
+
+    @media (max-width: 900px) {
+      .stats {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .stat-card.revenue-card {
+        grid-column: 1 / -1;
+      }
+
+      .job-controls {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+    }
+
+    @media (max-width: 650px) {
+      .page-heading {
+        align-items: stretch;
+        flex-direction: column;
+      }
+
+      .welcome-greeting {
+        font-size: 22px;
+      }
+
+      .page-heading .primary-button {
+        width: 100%;
+      }
+
+      .quote-form,
+      .job-controls,
+      .job-details {
+        grid-template-columns: 1fr;
+      }
+
+      .stats {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      h1 {
+        font-size: 40px;
+      }
+
+      .panel {
+        padding: 18px;
+      }
+
+      .create-section-head {
+        flex-direction: column;
+      }
+
+      .create-section-actions {
+        width: 100%;
+      }
+
+      .create-section-actions .secondary-button {
+        width: 100%;
+      }
+    }
+
+    @media (min-width: 760px) {
+      .form-grid.two-up {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .form-grid.three-up {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <header class="topbar">
+    <div class="topbar-inner">
+      <div>
+        <div class="brand">
+          MG <span>EXPRESS</span> DISPATCH
+        </div>
+        <div class="brand-subtitle">Work Station Hub</div>
+      </div>
+    </div>
+  </header>
+
+  <main class="container">
+    <div class="page-heading">
+      <div>
+        <div class="welcome-stack">
+          <div class="welcome-greeting" id="welcomeGreeting">Good Morning, Andre</div>
+          <div class="welcome-date" id="welcomeDate">Loading date...</div>
+        </div>
+
+        <div class="eyebrow">Dispatch control center</div>
+        <h1>Dashboard</h1>
+      </div>
+
+      <button
+        class="primary-button"
+        id="newQuoteButton"
+        type="button"
+      >
+        + Create New Job
+      </button>
+    </div>
+
+    <section class="stats">
+      <button class="stat-card stat-button" id="cardPendingPayment" type="button">
+        <div class="stat-number" id="countPendingPayment">0</div>
+        <div class="stat-label">New / Pending Payment</div>
+      </button>
+
+      <button class="stat-card stat-button" id="cardReadyDispatch" type="button">
+        <div class="stat-number" id="countReadyDispatch">0</div>
+        <div class="stat-label">Ready to Dispatch</div>
+      </button>
+
+      <button class="stat-card stat-button" id="cardLiveJobs" type="button">
+        <div class="stat-number" id="countLiveJobs">0</div>
+        <div class="stat-label">Live Jobs</div>
+      </button>
+
+      <button class="stat-card stat-button" id="cardCompletedJobs" type="button">
+        <div class="stat-number" id="countCompletedJobs">0</div>
+        <div class="stat-label">Completed Jobs</div>
+        <div class="stat-subtitle">Today</div>
+      </button>
+
+      <div class="stat-card revenue-card" id="cardRevenueToday">
+        <div class="stat-number" id="countRevenueToday">$0.00</div>
+        <div class="stat-label">Today's Revenue</div>
+      </div>
+    </section>
+
+    <section id="createJobSection" class="panel create-section">
+      <div class="create-section-head">
+        <div>
+          <h2>Create New Job</h2>
+          <div class="hint">Summary + Create Job here. Delivery management remains in Deliveries.</div>
+        </div>
+
+        <div class="create-section-actions">
+          <button class="secondary-button" id="toggleCreateJobBtn" type="button">Expand</button>
+          <button class="secondary-button" id="refreshButton" type="button">Refresh</button>
+        </div>
+      </div>
+
+      <div id="createJobBody" class="create-section-body hidden">
+        <form id="createJobForm" class="job-form">
+          <input type="hidden" id="customer_account_id" name="customer_account_id">
+
+          <section class="form-group">
+            <h3>Customer</h3>
+            <div class="form-grid two-up">
+              <div class="field full">
+                <label for="customerLookupInput">Recurring Customer Lookup</label>
+                <input id="customerLookupInput" type="search" placeholder="Search recurring customers by name, company, phone, email">
+                <div id="customerLookupResults" class="lookup-results" role="listbox" aria-label="Recurring customer matches"></div>
+              </div>
+
+              <div class="field">
+                <label for="customer_name">Customer Name</label>
+                <input id="customer_name" name="customer_name" required>
+              </div>
+
+              <div class="field">
+                <label for="company_name">Company</label>
+                <input id="company_name" name="company_name">
+              </div>
+
+              <div class="field">
+                <label for="customer_email">Email</label>
+                <input id="customer_email" name="customer_email" type="email">
+              </div>
+
+              <div class="field">
+                <label for="customer_phone">Phone</label>
+                <input id="customer_phone" name="customer_phone" type="tel">
+              </div>
+
+              <div class="field full">
+                <label for="reference_number">Reference Number (Optional)</label>
+                <input id="reference_number" name="reference_number">
+              </div>
+            </div>
+          </section>
+
+          <section class="form-group">
+            <h3>Pickup</h3>
+            <div class="form-grid two-up">
+              <div class="field full">
+                <label for="pickup_address">Pickup Address</label>
+                <textarea id="pickup_address" name="pickup_address" required></textarea>
+              </div>
+
+              <div class="field">
+                <label for="pickup_suite_floor">Suite / Floor</label>
+                <input id="pickup_suite_floor" name="pickup_suite_floor">
+              </div>
+
+              <div class="field">
+                <label for="pickup_city">Pickup City</label>
+                <input id="pickup_city" name="pickup_city">
+              </div>
+
+              <div class="field">
+                <label for="pickup_zip">Pickup ZIP</label>
+                <input id="pickup_zip" name="pickup_zip">
+              </div>
+
+              <div class="field">
+                <label for="pickup_contact_name">Pickup Contact</label>
+                <input id="pickup_contact_name" name="pickup_contact_name">
+              </div>
+
+              <div class="field">
+                <label for="pickup_contact_phone">Pickup Phone</label>
+                <input id="pickup_contact_phone" name="pickup_contact_phone" type="tel">
+              </div>
+
+              <div class="field full">
+                <label for="pickup_instructions">Pickup Instructions</label>
+                <textarea id="pickup_instructions" name="pickup_instructions"></textarea>
+              </div>
+            </div>
+          </section>
+
+          <section class="form-group">
+            <h3>Delivery</h3>
+            <div class="form-grid two-up">
+              <div class="field full">
+                <label for="delivery_address">Delivery Address</label>
+                <textarea id="delivery_address" name="delivery_address" required></textarea>
+              </div>
+
+              <div class="field">
+                <label for="delivery_suite_floor">Suite / Floor</label>
+                <input id="delivery_suite_floor" name="delivery_suite_floor">
+              </div>
+
+              <div class="field">
+                <label for="delivery_city">Delivery City</label>
+                <input id="delivery_city" name="delivery_city">
+              </div>
+
+              <div class="field">
+                <label for="delivery_zip">Delivery ZIP</label>
+                <input id="delivery_zip" name="delivery_zip">
+              </div>
+
+              <div class="field">
+                <label for="delivery_contact_name">Delivery Contact / Recipient</label>
+                <input id="delivery_contact_name" name="delivery_contact_name">
+              </div>
+
+              <div class="field">
+                <label for="delivery_contact_phone">Delivery Phone</label>
+                <input id="delivery_contact_phone" name="delivery_contact_phone" type="tel">
+              </div>
+
+              <div class="field full">
+                <label for="delivery_instructions">Delivery Instructions</label>
+                <textarea id="delivery_instructions" name="delivery_instructions"></textarea>
+              </div>
+            </div>
+          </section>
+
+          <section class="form-group">
+            <h3>Service</h3>
+            <div class="form-grid three-up">
+              <div class="field">
+                <label for="vehicle_type">Vehicle Type</label>
+                <select id="vehicle_type" name="vehicle_type">
+                  <option value="">Choose vehicle</option>
+                  <option value="Car">Car</option>
+                  <option value="SUV">SUV</option>
+                  <option value="Cargo Van">Cargo Van</option>
+                  <option value="Sprinter Van">Sprinter Van</option>
+                  <option value="Box Truck">Box Truck</option>
+                </select>
+              </div>
+
+              <div class="field">
+                <label for="delivery_speed">Delivery Speed</label>
+                <select id="delivery_speed" name="delivery_speed">
+                  <option value="">Choose speed</option>
+                  <option value="2_hr">2 Hour</option>
+                  <option value="3_hr">3 Hour</option>
+                  <option value="4_hr">4 Hour</option>
+                  <option value="5_hr">5 Hour</option>
+                  <option value="6_hr">6 Hour</option>
+                  <option value="next_day">Next Day</option>
+                </select>
+              </div>
+
+              <div class="field">
+                <label for="job_category">Job Category</label>
+                <select id="job_category" name="job_category">
+                  <option value="medical">Medical</option>
+                  <option value="legal">Legal</option>
+                  <option value="general" selected>General</option>
+                  <option value="pallet">Pallet</option>
+                  <option value="special">Special</option>
+                </select>
+              </div>
+
+              <div class="field">
+                <label for="delivery_type">Delivery Type</label>
+                <select id="delivery_type" name="delivery_type">
+                  <option value="">Choose type</option>
+                  <option value="business_to_business">Business to Business</option>
+                  <option value="business_to_residential">Business to Residential</option>
+                  <option value="residential_to_business">Residential to Business</option>
+                  <option value="residential_to_residential">Residential to Residential</option>
+                </select>
+              </div>
+
+              <div class="field">
+                <label for="service_level">Service Level</label>
+                <select id="service_level" name="service_level">
+                  <option value="">Choose service level</option>
+                  <option value="on_demand">On Demand</option>
+                  <option value="priority">Priority</option>
+                  <option value="stat">STAT</option>
+                  <option value="scheduled">Scheduled</option>
+                </select>
+              </div>
+
+              <div class="field hidden" id="scheduledDateField">
+                <label for="scheduled_date">Scheduled Date</label>
+                <input id="scheduled_date" name="scheduled_date" type="date">
+              </div>
+
+              <div class="field hidden" id="scheduledTimeField">
+                <label for="scheduled_time">Scheduled Time</label>
+                <input id="scheduled_time" name="scheduled_time" type="time">
+              </div>
+
+              <div class="field">
+                <label for="package_type">Package Type / Description</label>
+                <input id="package_type" name="package_type">
+              </div>
+
+              <div class="field">
+                <label for="package_weight">Approximate Weight</label>
+                <input id="package_weight" name="package_weight">
+              </div>
+
+              <div class="field">
+                <label for="estimated_miles">Miles (Optional)</label>
+                <input id="estimated_miles" name="estimated_miles" type="number" min="0" step="0.1">
+              </div>
+
+              <div class="field full">
+                <label for="special_instructions">Special Handling / Instructions</label>
+                <textarea id="special_instructions" name="special_instructions"></textarea>
+              </div>
+            </div>
+          </section>
+
+          <section class="form-group">
+            <h3>Return Service</h3>
+            <div class="form-grid two-up">
+              <div class="field">
+                <label for="return_required">Return Service</label>
+                <select id="return_required" name="return_required">
+                  <option value="false">No Return</option>
+                  <option value="true">Return Required</option>
+                </select>
+              </div>
+            </div>
+
+            <div id="returnDetails" class="form-grid two-up return-details" hidden>
+              <div class="field">
+                <label for="return_location_type">Return Location Type</label>
+                <select id="return_location_type" name="return_location_type">
+                  <option value="same_as_pickup">Same as Pickup</option>
+                  <option value="different_location">Different Location</option>
+                </select>
+              </div>
+
+              <div class="field">
+                <label for="return_timing">Return Timing</label>
+                <select id="return_timing" name="return_timing">
+                  <option value="immediate">Immediately After Delivery</option>
+                  <option value="later_today">Later Today</option>
+                  <option value="another_day">Another Day</option>
+                </select>
+              </div>
+
+              <div class="field full" data-return-different>
+                <label for="return_address">Return Address (when different)</label>
+                <textarea id="return_address" name="return_address"></textarea>
+              </div>
+
+              <div class="field" data-return-different>
+                <label for="return_suite_floor">Return Suite / Floor</label>
+                <input id="return_suite_floor" name="return_suite_floor">
+              </div>
+
+              <div class="field" data-return-different>
+                <label for="return_zip">Return ZIP</label>
+                <input id="return_zip" name="return_zip">
+              </div>
+            </div>
+          </section>
+
+          <section class="form-group">
+            <h3>Customer Billing</h3>
+            <div class="form-grid two-up">
+              <div class="field">
+                <label for="approved_price">Total Amount Billed to Customer</label>
+                <input id="approved_price" name="approved_price" type="number" min="0" step="0.01" inputmode="decimal" placeholder="0.00">
+              </div>
+            </div>
+          </section>
+
+          <div class="create-actions">
+            <button class="create-job-button" id="createJobSubmitBtn" type="submit">Create Job</button>
+            <div id="createJobMessage"></div>
+          </div>
+        </form>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    const client = supabase.createClient(
+      "https://dczlucwfjayymlwbzzdi.supabase.co",
+      "sb_publishable_kcv_a78ZyUxMo2neKUANdw_XN7eAMpI"
+    );
+
+    window.mgDispatchClient = client;
+
+    const state = {
+      quotes: [],
+      recurringCustomers: [],
+      supportEstimatedMiles: null,
+      submitting: false
+    };
+
+    const elements = {
+      newQuoteButton: document.getElementById("newQuoteButton"),
+      refreshButton: document.getElementById("refreshButton"),
+      toggleCreateJobBtn: document.getElementById("toggleCreateJobBtn"),
+      createJobSection: document.getElementById("createJobSection"),
+      createJobBody: document.getElementById("createJobBody"),
+      createJobForm: document.getElementById("createJobForm"),
+      createJobSubmitBtn: document.getElementById("createJobSubmitBtn"),
+      createJobMessage: document.getElementById("createJobMessage"),
+      customerLookupInput: document.getElementById("customerLookupInput"),
+      customerLookupResults: document.getElementById("customerLookupResults"),
+      customerAccountId: document.getElementById("customer_account_id"),
+      returnRequired: document.getElementById("return_required"),
+      returnLocationType: document.getElementById("return_location_type"),
+      returnDetails: document.getElementById("returnDetails"),
+      serviceLevel: document.getElementById("service_level"),
+      scheduledDateField: document.getElementById("scheduledDateField"),
+      scheduledTimeField: document.getElementById("scheduledTimeField"),
+      scheduledDate: document.getElementById("scheduled_date"),
+      scheduledTime: document.getElementById("scheduled_time"),
+      countPendingPayment: document.getElementById("countPendingPayment"),
+      countReadyDispatch: document.getElementById("countReadyDispatch"),
+      countLiveJobs: document.getElementById("countLiveJobs"),
+      countCompletedJobs: document.getElementById("countCompletedJobs"),
+      countRevenueToday: document.getElementById("countRevenueToday")
+    };
+
+    const CREATE_JOB_EXPANDED_KEY = "mgexpress.dashboard.createJobExpanded";
+
+    function escapeHtml(value) {
+      const element = document.createElement("div");
+      element.textContent = value == null ? "" : String(value);
+      return element.innerHTML;
+    }
+
+    function clean(value) {
+      return String(value || "").trim().toLowerCase();
+    }
+
+    function money(value) {
+      return Number(value || 0).toLocaleString("en-US", {
+        style: "currency",
+        currency: "USD"
+      });
+    }
+
+    function parseDate(value) {
+      if (!value) {
+        return null;
+      }
+      const date = new Date(value);
+      return Number.isNaN(date.getTime()) ? null : date;
+    }
+
+    function normalizeText(value) {
+      return String(value || "").trim().toLowerCase();
+    }
+
+    function normalizeCategory(value) {
+      const category = clean(value);
+      if (["medical", "legal", "pallet", "special"].includes(category)) {
+        return category;
+      }
+      return "general";
+    }
+
+    function firstNameFromText(value) {
+      const text = String(value || "").trim();
+      if (!text) {
+        return "";
+      }
+      return text.split(/\s+/)[0] || "";
+    }
+
+    function greetingPrefixByHour() {
+      const hour = new Date().getHours();
+      if (hour >= 5 && hour <= 11) {
+        return "Good Morning";
+      }
+      if (hour >= 12 && hour <= 16) {
+        return "Good Afternoon";
+      }
+      return "Good Evening";
+    }
+
+    function resolveGreetingName(session) {
+      const meta = session?.user?.user_metadata || {};
+      const name =
+        firstNameFromText(meta.full_name) ||
+        firstNameFromText(meta.name) ||
+        firstNameFromText(meta.display_name);
+      return name || "Andre";
+    }
+
+    function renderGreeting(session) {
+      const greetingElement = document.getElementById("welcomeGreeting");
+      const dateElement = document.getElementById("welcomeDate");
+
+      if (!greetingElement || !dateElement) {
+        return;
+      }
+
+      greetingElement.textContent = `${greetingPrefixByHour()}, ${resolveGreetingName(session)}`;
+      dateElement.textContent = new Intl.DateTimeFormat("en-US", {
+        weekday: "long",
+        month: "long",
+        day: "numeric",
+        year: "numeric"
+      }).format(new Date());
+    }
+
+    function setCreateJobMessage(text, type) {
+      if (!elements.createJobMessage) {
+        return;
+      }
+
+      elements.createJobMessage.className = text ? "message " + type : "";
+      elements.createJobMessage.textContent = text || "";
+    }
+
+    function isComplete(job) {
+      const status = clean(job?.status);
+      const workflow = clean(job?.driver_workflow_status);
+      return ["completed", "delivered", "closed"].includes(status) || workflow === "delivered";
+    }
+
+    function isCancelled(job) {
+      return ["cancelled", "canceled"].includes(clean(job?.status));
+    }
+
+    function isRejected(job) {
+      return clean(job?.driver_acceptance_status) === "rejected";
+    }
+
+    function isAssigned(job) {
+      return Boolean(String(job?.assigned_driver_id || "").trim()) && !isComplete(job) && !isCancelled(job);
+    }
+
+    function isReady(job) {
+      const status = clean(job?.status);
+      return status === "ready" || status === "ready_to_dispatch";
+    }
+
+    function isInTransit(job) {
+      const status = clean(job?.status);
+      const workflow = clean(job?.driver_workflow_status);
+      return ["assigned", "in_progress", "en_route", "en_route_pickup", "arrived_pickup", "picked_up", "en_route_delivery", "arrived_delivery"].includes(status)
+        || ["in_progress", "en_route", "en_route_pickup", "arrived_pickup", "picked_up", "en_route_delivery", "arrived_delivery"].includes(workflow);
+    }
+
+    function isPendingPayment(job) {
+      const status = clean(job?.status);
+      return !isComplete(job)
+        && !isCancelled(job)
+        && !isRejected(job)
+        && !isAssigned(job)
+        && !isReady(job)
+        && ["new", "waiting_payment", "pending_approval", "pending approval"].includes(status);
+    }
+
+    function completionDate(job) {
+      return parseDate(job.completed_at || job.updated_at || job.created_at);
+    }
+
+    function isCompletedToday(job) {
+      if (!isComplete(job)) {
+        return false;
+      }
+
+      const completed = completionDate(job);
+      if (!completed) {
+        return false;
+      }
+
+      const start = new Date();
+      start.setHours(0, 0, 0, 0);
+      const end = new Date(start);
+      end.setDate(end.getDate() + 1);
+      return completed >= start && completed < end;
+    }
+
+    function billingAmount(job) {
+      const approved = Number(job?.approved_price);
+      if (Number.isFinite(approved)) {
+        return approved;
+      }
+
+      const customerCharge = Number(job?.customer_charge);
+      if (Number.isFinite(customerCharge)) {
+        return customerCharge;
+      }
+
+      return 0;
+    }
+
+    function updateCounts() {
+      const pendingPayment = state.quotes.filter(isPendingPayment).length;
+      const readyDispatch = state.quotes.filter(isReady).length;
+      const liveJobs = state.quotes.filter(row => (isAssigned(row) || isInTransit(row)) && !isRejected(row) && !isComplete(row) && !isCancelled(row)).length;
+      const completedTodayRows = state.quotes.filter(isCompletedToday);
+      const completedJobs = completedTodayRows.length;
+      const revenueToday = completedTodayRows.reduce((sum, row) => sum + billingAmount(row), 0);
+
+      elements.countPendingPayment.textContent = String(pendingPayment);
+      elements.countReadyDispatch.textContent = String(readyDispatch);
+      elements.countLiveJobs.textContent = String(liveJobs);
+      elements.countCompletedJobs.textContent = String(completedJobs);
+      elements.countRevenueToday.textContent = money(revenueToday);
+    }
+
+    function openDeliveriesTab(tab) {
+      window.location.href = `deliveries.html?tab=${encodeURIComponent(String(tab || "all_open"))}`;
+    }
+
+    function setCreateJobExpanded(expanded, options = {}) {
+      if (!elements.createJobBody || !elements.toggleCreateJobBtn) {
+        return;
+      }
+
+      const shouldExpand = Boolean(expanded);
+      elements.createJobBody.classList.toggle("hidden", !shouldExpand);
+      elements.toggleCreateJobBtn.textContent = shouldExpand ? "Collapse" : "Expand";
+      sessionStorage.setItem(CREATE_JOB_EXPANDED_KEY, shouldExpand ? "1" : "0");
+
+      if (shouldExpand && options.scroll) {
+        elements.createJobSection.scrollIntoView({ behavior: "smooth", block: "start" });
+      }
+
+      if (shouldExpand && options.focusFirstField) {
+        window.setTimeout(() => {
+          if (elements.customerLookupInput) {
+            elements.customerLookupInput.focus();
+          } else {
+            elements.createJobForm?.querySelector("input,select,textarea")?.focus();
+          }
+        }, 180);
+      }
+    }
+
+    function restoreCreateJobExpandedState() {
+      const expanded = sessionStorage.getItem(CREATE_JOB_EXPANDED_KEY) === "1";
+      setCreateJobExpanded(expanded, { scroll: false, focusFirstField: false });
+    }
+
+    async function loadRecurringCustomers() {
+      const result = await client
+        .from("customer_portal_accounts")
+        .select("id,customer_name,company_name,email,phone,is_recurring_customer")
+        .eq("is_recurring_customer", true)
+        .order("customer_name", { ascending: true });
+
+      if (result.error) {
+        throw result.error;
+      }
+
+      state.recurringCustomers = result.data || [];
+    }
+
+    function renderCustomerLookupResults(list, showOneTime) {
+      if (!elements.customerLookupResults) {
+        return;
+      }
+
+      const rows = list.map(customer => `
+        <button class="lookup-row" type="button" data-customer-select="${escapeHtml(String(customer.id))}">
+          <div class="lookup-title">${escapeHtml(customer.customer_name || "Customer")}</div>
+          <div class="lookup-meta">${escapeHtml(customer.company_name || "No company")}</div>
+          <div class="lookup-meta">${escapeHtml(customer.phone || "No phone")} • ${escapeHtml(customer.email || "No email")}</div>
+        </button>
+      `);
+
+      if (showOneTime) {
+        rows.push(`
+          <button class="lookup-row" type="button" data-customer-one-time="true">
+            <div class="lookup-title">+ New One-Time Customer</div>
+            <div class="lookup-meta">This will not create a recurring customer profile.</div>
+          </button>
+        `);
+      }
+
+      elements.customerLookupResults.innerHTML = rows.join("");
+      elements.customerLookupResults.classList.toggle("open", rows.length > 0);
+    }
+
+    function applyRecurringCustomer(customerId) {
+      const found = state.recurringCustomers.find(item => String(item.id) === String(customerId));
+      if (!found || !elements.createJobForm) {
+        return;
+      }
+
+      elements.customerAccountId.value = String(found.id);
+      elements.createJobForm.customer_name.value = found.customer_name || "";
+      elements.createJobForm.company_name.value = found.company_name || "";
+      elements.createJobForm.customer_email.value = found.email || "";
+      elements.createJobForm.customer_phone.value = found.phone || "";
+      elements.customerLookupInput.value = found.customer_name || found.company_name || "";
+      elements.customerLookupResults.classList.remove("open");
+      setCreateJobMessage("Recurring customer selected.", "success");
+    }
+
+    function chooseOneTimeCustomer() {
+      if (elements.customerAccountId) {
+        elements.customerAccountId.value = "";
+      }
+      if (elements.customerLookupResults) {
+        elements.customerLookupResults.classList.remove("open");
+      }
+      setCreateJobMessage("Using one-time customer.", "success");
+    }
+
+    function handleCustomerLookupInput() {
+      const query = normalizeText(elements.customerLookupInput.value);
+      if (!query) {
+        elements.customerLookupResults.classList.remove("open");
+        return;
+      }
+
+      const found = state.recurringCustomers.filter(customer => {
+        return [customer.customer_name, customer.company_name, customer.phone, customer.email]
+          .filter(Boolean)
+          .join(" ")
+          .toLowerCase()
+          .includes(query);
+      }).slice(0, 8);
+
+      renderCustomerLookupResults(found, found.length === 0);
+    }
+
+    function syncReturnDetailsVisibility() {
+      if (!elements.createJobForm || !elements.returnDetails) {
+        return;
+      }
+
+      const returnRequired = clean(elements.returnRequired.value) === "true";
+      const differentLocation = clean(elements.returnLocationType.value || "same_as_pickup") === "different_location";
+
+      elements.returnDetails.hidden = !returnRequired;
+      elements.createJobForm.querySelectorAll("[data-return-different]").forEach(field => {
+        field.hidden = !returnRequired || !differentLocation;
+      });
+
+      if (!returnRequired) {
+        elements.returnLocationType.value = "same_as_pickup";
+        elements.createJobForm.return_timing.value = "immediate";
+        elements.createJobForm.return_address.value = "";
+        elements.createJobForm.return_suite_floor.value = "";
+        elements.createJobForm.return_zip.value = "";
+      }
+    }
+
+    function syncScheduledFieldsVisibility() {
+      if (!elements.serviceLevel || !elements.scheduledDateField || !elements.scheduledTimeField || !elements.scheduledDate || !elements.scheduledTime) {
+        return;
+      }
+
+      const scheduled = clean(elements.serviceLevel.value) === "scheduled";
+      elements.scheduledDateField.classList.toggle("hidden", !scheduled);
+      elements.scheduledTimeField.classList.toggle("hidden", !scheduled);
+
+      if (!scheduled) {
+        elements.scheduledDate.value = "";
+        elements.scheduledTime.value = "";
+      }
+    }
+
+    function resetCreateJobForm(options = {}) {
+      const clearMessage = options.clearMessage !== false;
+
+      if (!elements.createJobForm) {
+        return;
+      }
+
+      elements.createJobForm.reset();
+
+      if (elements.customerAccountId) {
+        elements.customerAccountId.value = "";
+      }
+
+      if (elements.customerLookupInput) {
+        elements.customerLookupInput.value = "";
+      }
+
+      if (elements.customerLookupResults) {
+        elements.customerLookupResults.innerHTML = "";
+        elements.customerLookupResults.classList.remove("open");
+      }
+
+      if (elements.createJobForm.job_category) {
+        elements.createJobForm.job_category.value = "general";
+      }
+
+      if (elements.createJobForm.return_required) {
+        elements.createJobForm.return_required.value = "false";
+      }
+
+      if (elements.createJobForm.return_location_type) {
+        elements.createJobForm.return_location_type.value = "same_as_pickup";
+      }
+
+      if (elements.createJobForm.return_timing) {
+        elements.createJobForm.return_timing.value = "immediate";
+      }
+
+      if (elements.serviceLevel) {
+        elements.serviceLevel.value = "";
+      }
+
+      if (elements.scheduledDate) {
+        elements.scheduledDate.value = "";
+      }
+
+      if (elements.scheduledTime) {
+        elements.scheduledTime.value = "";
+      }
+
+      syncReturnDetailsVisibility();
+      syncScheduledFieldsVisibility();
+
+      if (clearMessage) {
+        setCreateJobMessage("", "");
+      }
+    }
+
+    function buildScheduledAtValue(dateValue, timeValue) {
+      if (!dateValue || !timeValue) {
+        return null;
+      }
+
+      const localValue = new Date(`${dateValue}T${timeValue}`);
+      return Number.isNaN(localValue.getTime()) ? null : localValue;
+    }
+
+    async function detectEstimatedMilesFieldSupport() {
+      if (state.supportEstimatedMiles !== null) {
+        return state.supportEstimatedMiles;
+      }
+
+      const probe = await client.from("quotes").select("estimated_miles").limit(1);
+      if (!probe.error) {
+        state.supportEstimatedMiles = true;
+        return true;
+      }
+
+      const message = String(probe.error.message || "").toLowerCase();
+      if (message.includes("column") && message.includes("estimated_miles")) {
+        state.supportEstimatedMiles = false;
+        return false;
+      }
+
+      throw probe.error;
+    }
+
+    async function generateJobNumber() {
+      const result = await client
+        .from("quotes")
+        .select("job_number")
+        .order("created_at", { ascending: false })
+        .limit(250);
+
+      if (result.error) {
+        throw result.error;
+      }
+
+      let maxNumber = 0;
+      (result.data || []).forEach(row => {
+        const match = String(row.job_number || "").match(/(\d+)$/);
+        if (!match) {
+          return;
+        }
+
+        const numeric = Number(match[1]);
+        if (Number.isFinite(numeric) && numeric > maxNumber) {
+          maxNumber = numeric;
+        }
+      });
+
+      return "MGE-" + String(maxNumber + 1).padStart(5, "0");
+    }
+
+    function validatePayload(payload) {
+      if (!payload.customer_name) {
+        return "Customer name is required.";
+      }
+
+      if (!payload.pickup_address || !payload.delivery_address) {
+        return "Pickup and delivery addresses are required.";
+      }
+
+      if (payload.approved_price !== null && (!Number.isFinite(payload.approved_price) || payload.approved_price < 0)) {
+        return "Total amount billed must be a valid number.";
+      }
+
+      if (clean(payload.service_level) === "scheduled") {
+        if (!payload.scheduled_at) {
+          return "Scheduled Date and Scheduled Time are required.";
+        }
+
+        const scheduled = parseDate(payload.scheduled_at);
+        if (!scheduled || scheduled.getTime() <= Date.now()) {
+          return "Scheduled delivery must be in the future.";
+        }
+      }
+
+      return "";
+    }
+
+    function formToPayload(form) {
+      const data = new FormData(form);
+      const priceRaw = String(data.get("approved_price") || "").trim();
+      const estimatedMilesRaw = String(data.get("estimated_miles") || "").trim();
+      const estimatedMilesValue = estimatedMilesRaw === "" ? null : Number(estimatedMilesRaw);
+      const scheduledDateValue = String(data.get("scheduled_date") || "").trim();
+      const scheduledTimeValue = String(data.get("scheduled_time") || "").trim();
+      const scheduledAt = buildScheduledAtValue(scheduledDateValue, scheduledTimeValue);
+
+      if (estimatedMilesRaw !== "" && (!Number.isFinite(estimatedMilesValue) || estimatedMilesValue < 0)) {
+        throw new Error("Estimated miles must be a valid number.");
+      }
+
+      const pickupContactName = String(data.get("pickup_contact_name") || "").trim();
+      const pickupContactPhone = String(data.get("pickup_contact_phone") || "").trim();
+      const pickupInstructions = String(data.get("pickup_instructions") || "").trim();
+      const deliveryContactName = String(data.get("delivery_contact_name") || "").trim();
+      const deliveryContactPhone = String(data.get("delivery_contact_phone") || "").trim();
+      const deliveryInstructions = String(data.get("delivery_instructions") || "").trim();
+      const packageWeight = String(data.get("package_weight") || "").trim();
+      const referenceNumber = String(data.get("reference_number") || "").trim();
+      const internalNotes = String(data.get("special_instructions") || "").trim();
+
+      const instructions = [];
+      const billingMeta = [];
+
+      if (pickupContactName) billingMeta.push("Pickup Contact: " + pickupContactName);
+      if (pickupContactPhone) billingMeta.push("Pickup Contact Phone: " + pickupContactPhone);
+      if (deliveryContactPhone) billingMeta.push("Delivery Contact Phone: " + deliveryContactPhone);
+      if (packageWeight) billingMeta.push("Weight: " + packageWeight);
+      if (referenceNumber) billingMeta.push("Reference #: " + referenceNumber);
+      if (pickupInstructions) instructions.push("Pickup Instructions: " + pickupInstructions);
+      if (deliveryInstructions) instructions.push("Delivery Instructions: " + deliveryInstructions);
+
+      const payload = {
+        customer_account_id: String(data.get("customer_account_id") || "").trim() || null,
+        customer_name: String(data.get("customer_name") || "").trim(),
+        company_name: String(data.get("company_name") || "").trim() || null,
+        customer_email: String(data.get("customer_email") || "").trim() || null,
+        customer_phone: String(data.get("customer_phone") || "").trim() || null,
+        reference_number: referenceNumber || null,
+        pickup_address: String(data.get("pickup_address") || "").trim(),
+        pickup_suite_floor: String(data.get("pickup_suite_floor") || "").trim() || null,
+        pickup_city: String(data.get("pickup_city") || "").trim() || null,
+        pickup_zip: String(data.get("pickup_zip") || "").trim() || null,
+        delivery_address: String(data.get("delivery_address") || "").trim(),
+        delivery_suite_floor: String(data.get("delivery_suite_floor") || "").trim() || null,
+        delivery_city: String(data.get("delivery_city") || "").trim() || null,
+        delivery_zip: String(data.get("delivery_zip") || "").trim() || null,
+        delivery_contact_name: deliveryContactName || null,
+        delivery_recipient_name: deliveryContactName || null,
+        vehicle_type: String(data.get("vehicle_type") || "").trim() || null,
+        delivery_speed: String(data.get("delivery_speed") || "").trim() || null,
+        job_category: normalizeCategory(data.get("job_category")),
+        delivery_type: String(data.get("delivery_type") || "").trim() || null,
+        service_level: String(data.get("service_level") || "").trim() || null,
+        scheduled_at: scheduledAt ? scheduledAt.toISOString() : null,
+        return_required: clean(data.get("return_required")) === "true",
+        return_location_type: String(data.get("return_location_type") || "same_as_pickup").trim() || "same_as_pickup",
+        return_address: String(data.get("return_address") || "").trim() || null,
+        return_suite_floor: String(data.get("return_suite_floor") || "").trim() || null,
+        return_zip: String(data.get("return_zip") || "").trim() || null,
+        return_timing: String(data.get("return_timing") || "immediate").trim() || "immediate",
+        package_type: String(data.get("package_type") || "").trim() || null,
+        package_weight: packageWeight || null,
+        special_instructions: [internalNotes].concat(instructions).filter(Boolean).join("\n") || null,
+        approved_price: priceRaw === "" ? null : Number(priceRaw),
+        billing_notes: billingMeta.join("\n") || null,
+        status: "waiting_payment",
+        assigned_driver_id: null,
+        driver_pay: null,
+        driver_acceptance_status: null,
+        driver_workflow_status: null,
+        driver_accepted_at: null,
+        driver_rejected_at: null
+      };
+
+      if (!payload.return_required) {
+        payload.return_location_type = null;
+        payload.return_address = null;
+        payload.return_suite_floor = null;
+        payload.return_zip = null;
+        payload.return_timing = null;
+      } else if (clean(payload.return_location_type) !== "different_location") {
+        payload.return_location_type = "same_as_pickup";
+        payload.return_address = null;
+        payload.return_suite_floor = null;
+        payload.return_zip = null;
+      }
+
+      if (clean(payload.service_level) !== "scheduled") {
+        payload.scheduled_at = null;
+      }
+
+      payload._estimated_miles_value = estimatedMilesValue;
+      return payload;
+    }
+
+    async function createJob(event) {
+      event.preventDefault();
+
+      if (state.submitting || !elements.createJobForm || !elements.createJobSubmitBtn) {
+        return;
+      }
+
+      state.submitting = true;
+      elements.createJobSubmitBtn.disabled = true;
+      elements.createJobSubmitBtn.textContent = "Creating...";
+      setCreateJobMessage("", "");
+
+      try {
+        const payload = formToPayload(elements.createJobForm);
+        const estimatedMilesValue = payload._estimated_miles_value;
+        delete payload._estimated_miles_value;
+
+        if (await detectEstimatedMilesFieldSupport()) {
+          payload.estimated_miles = estimatedMilesValue;
+        }
+
+        const validationError = validatePayload(payload);
+        if (validationError) {
+          throw new Error(validationError);
+        }
+
+        payload.job_number = await generateJobNumber();
+
+        const insertResult = await client
+          .from("quotes")
+          .insert(payload)
+          .select("id,job_number")
+          .maybeSingle();
+
+        if (insertResult.error) {
+          throw insertResult.error;
+        }
+
+        const createdJobNumber = insertResult.data?.job_number || payload.job_number;
+        setCreateJobMessage(`Job ${createdJobNumber} created successfully.`, "success");
+
+        resetCreateJobForm({ clearMessage: false });
+
+        await loadQuotes();
+      } catch (error) {
+        setCreateJobMessage(error.message || "Unable to create job.", "error");
+      } finally {
+        state.submitting = false;
+        elements.createJobSubmitBtn.disabled = false;
+        elements.createJobSubmitBtn.textContent = "Create Job";
+      }
+    }
+
+    async function loadQuotes() {
+      const result = await client
+        .from("quotes")
+        .select("*")
+        .order("created_at", { ascending: false });
+
+      if (result.error) {
+        throw result.error;
+      }
+
+      state.quotes = result.data || [];
+      updateCounts();
+    }
+
+    async function loadDashboardData() {
+      await Promise.all([loadQuotes(), loadRecurringCustomers()]);
+    }
+
+    async function refreshDashboardData() {
+      if (!elements.refreshButton) {
+        return;
+      }
+
+      const button = elements.refreshButton;
+      button.disabled = true;
+      button.textContent = "Refreshing...";
+
+      try {
+        resetCreateJobForm({ clearMessage: true });
+        await loadDashboardData();
+      } catch (error) {
+        console.error("Unable to refresh dashboard", error);
+        setCreateJobMessage("Unable to refresh dashboard.", "error");
+      } finally {
+        button.disabled = false;
+        button.textContent = "Refresh";
+      }
+    }
+
+    async function requireDispatchAccess() {
+      const sessionResult = await client.auth.getSession();
+      const session = sessionResult.data.session;
+
+      if (!session) {
+        location.replace("/index.html");
+        return null;
+      }
+
+      const profileResult = await client
+        .from("profiles")
+        .select("role")
+        .eq("id", session.user.id)
+        .maybeSingle();
+
+      if (profileResult.error || !profileResult.data) {
+        alert(profileResult.error?.message || "No MG Express profile was found.");
+        await client.auth.signOut();
+        location.replace("/index.html");
+        return null;
+      }
+
+      const role = String(profileResult.data.role || "").toLowerCase();
+      if (!["admin", "staff", "dispatcher"].includes(role)) {
+        if (role === "driver") {
+          location.replace("https://drivers.migenteexpress.com");
+          return null;
+        }
+
+        if (role === "customer") {
+          location.replace("/customer.html");
+          return null;
+        }
+
+        await client.auth.signOut();
+        location.replace("/index.html");
+        return null;
+      }
+
+      return session;
+    }
+
+    elements.newQuoteButton.addEventListener("click", () => {
+      setCreateJobExpanded(true, { scroll: true, focusFirstField: true });
+    });
+
+    elements.toggleCreateJobBtn.addEventListener("click", () => {
+      const expanded = elements.createJobBody.classList.contains("hidden");
+      setCreateJobExpanded(expanded, { scroll: expanded, focusFirstField: expanded });
+    });
+
+    elements.refreshButton.addEventListener("click", refreshDashboardData);
+
+    elements.createJobForm.addEventListener("submit", createJob);
+    elements.returnRequired.addEventListener("change", syncReturnDetailsVisibility);
+    elements.returnLocationType.addEventListener("change", syncReturnDetailsVisibility);
+    elements.serviceLevel.addEventListener("change", syncScheduledFieldsVisibility);
+    elements.customerLookupInput.addEventListener("input", handleCustomerLookupInput);
+
+    elements.customerLookupResults.addEventListener("click", event => {
+      const selected = event.target.closest("[data-customer-select]");
+      if (selected) {
+        applyRecurringCustomer(selected.getAttribute("data-customer-select"));
+        return;
+      }
+
+      const oneTime = event.target.closest("[data-customer-one-time]");
+      if (oneTime) {
+        chooseOneTimeCustomer();
+      }
+    });
+
+    document.getElementById("cardPendingPayment").addEventListener("click", () => openDeliveriesTab("pending"));
+    document.getElementById("cardReadyDispatch").addEventListener("click", () => openDeliveriesTab("ready"));
+    document.getElementById("cardLiveJobs").addEventListener("click", () => openDeliveriesTab("assigned"));
+    document.getElementById("cardCompletedJobs").addEventListener("click", () => openDeliveriesTab("completed"));
+
+    window.addEventListener("focus", () => {
+      loadQuotes().catch(() => {
+      });
+    });
+
+    (async function start() {
+      const session = await requireDispatchAccess();
+      if (!session) {
+        return;
+      }
+
+      renderGreeting(session);
+      restoreCreateJobExpandedState();
+      syncReturnDetailsVisibility();
+      syncScheduledFieldsVisibility();
+
+      window.dispatchEvent(new CustomEvent("mg-dispatch-ready", {
+        detail: {
+          email: session.user.email || ""
+        }
+      }));
+
+      try {
+        await loadDashboardData();
+      } catch (error) {
+        console.error("Unable to load dashboard data", error);
+        setCreateJobMessage(error.message || "Unable to load dashboard data.", "error");
+      }
+    })();
+  </script>
+  <script src="/dispatch-menu.js"></script>
+</body>
+</html>
