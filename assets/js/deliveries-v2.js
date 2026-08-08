@@ -1074,8 +1074,14 @@
     window.open(`/bol.html?id=${encodeURIComponent(id)}`, "_blank");
   }
 
-  function openInvoicePage(delivery) {
-    window.location.href = `invoices.html?job=${encodeURIComponent(String(delivery.id || ""))}`;
+  function openInvoice(deliveryId) {
+    const id = String(deliveryId || "").trim();
+    if (!id) {
+      showToast("Unable to open invoice: missing delivery id.", "error");
+      return;
+    }
+
+    window.open(`/invoice.html?id=${encodeURIComponent(id)}`, "_blank");
   }
 
   async function copyDeliveryLink(delivery) {
@@ -1142,7 +1148,7 @@
     }
 
     if (action === "invoice") {
-      openInvoicePage(delivery);
+      openInvoice(delivery.id);
     }
   }
 

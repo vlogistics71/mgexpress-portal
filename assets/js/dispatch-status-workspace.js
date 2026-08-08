@@ -2862,6 +2862,22 @@ async function openInvoiceModalForJob(job) {
   }
 }
 
+function openInvoiceForJob(job) {
+  if (!job || !job.id) {
+    showToast("Unable to open invoice: selected delivery not found", "error");
+    return false;
+  }
+
+  const id = String(job.id).trim();
+  if (!id) {
+    showToast("Unable to open invoice: missing delivery id", "error");
+    return false;
+  }
+
+  window.open("/invoice.html?id=" + encodeURIComponent(id), "_blank");
+  return true;
+}
+
 async function sendInvoiceForJob(jobId) {
   const job = getRowById(jobId);
   if (!job) {
@@ -2870,7 +2886,7 @@ async function sendInvoiceForJob(jobId) {
   }
 
   try {
-    await openInvoiceModalForJob(job);
+    openInvoiceForJob(job);
   } catch (error) {
     showToast(error.message || "Unable to open invoice", "error");
   }
@@ -3430,6 +3446,7 @@ window.MG_DISPATCH_WORKSPACE = Object.freeze({
   openEditJobModal,
   openAssignModal,
   sendInvoiceForJob,
+  openInvoiceForJob,
   sendPaymentLinkByText,
   sendPaymentLinkByEmail,
   copyPaymentLink,
