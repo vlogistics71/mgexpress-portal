@@ -1411,6 +1411,64 @@
       }
     }
 
+    function resetCreateJobForm(options = {}) {
+      const clearMessage = options.clearMessage !== false;
+
+      if (!elements.createJobForm) {
+        return;
+      }
+
+      elements.createJobForm.reset();
+
+      if (elements.customerAccountId) {
+        elements.customerAccountId.value = "";
+      }
+
+      if (elements.customerLookupInput) {
+        elements.customerLookupInput.value = "";
+      }
+
+      if (elements.customerLookupResults) {
+        elements.customerLookupResults.innerHTML = "";
+        elements.customerLookupResults.classList.remove("open");
+      }
+
+      if (elements.createJobForm.job_category) {
+        elements.createJobForm.job_category.value = "general";
+      }
+
+      if (elements.createJobForm.return_required) {
+        elements.createJobForm.return_required.value = "false";
+      }
+
+      if (elements.createJobForm.return_location_type) {
+        elements.createJobForm.return_location_type.value = "same_as_pickup";
+      }
+
+      if (elements.createJobForm.return_timing) {
+        elements.createJobForm.return_timing.value = "immediate";
+      }
+
+      if (elements.serviceLevel) {
+        elements.serviceLevel.value = "";
+      }
+
+      if (elements.scheduledDate) {
+        elements.scheduledDate.value = "";
+      }
+
+      if (elements.scheduledTime) {
+        elements.scheduledTime.value = "";
+      }
+
+      syncReturnDetailsVisibility();
+      syncScheduledFieldsVisibility();
+
+      if (clearMessage) {
+        setCreateJobMessage("", "");
+      }
+    }
+
     function buildScheduledAtValue(dateValue, timeValue) {
       if (!dateValue || !timeValue) {
         return null;
@@ -1633,15 +1691,7 @@
         const createdJobNumber = insertResult.data?.job_number || payload.job_number;
         setCreateJobMessage(`Job ${createdJobNumber} created successfully.`, "success");
 
-        elements.createJobForm.reset();
-        elements.customerAccountId.value = "";
-        elements.customerLookupInput.value = "";
-        elements.customerLookupResults.classList.remove("open");
-        elements.createJobForm.job_category.value = "general";
-        elements.createJobForm.return_required.value = "false";
-        elements.createJobForm.return_location_type.value = "same_as_pickup";
-        elements.createJobForm.return_timing.value = "immediate";
-        syncReturnDetailsVisibility();
+        resetCreateJobForm({ clearMessage: false });
 
         await loadQuotes();
       } catch (error) {
@@ -1681,6 +1731,7 @@
       button.textContent = "Refreshing...";
 
       try {
+        resetCreateJobForm({ clearMessage: true });
         await loadDashboardData();
       } catch (error) {
         console.error("Unable to refresh dashboard", error);
