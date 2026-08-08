@@ -1033,6 +1033,8 @@
               <div class="field">
                 <label for="estimated_miles">Miles (Optional)</label>
                 <input id="estimated_miles" name="estimated_miles" type="number" min="0" step="0.1">
+                <div class="hint">Driving miles calculated automatically</div>
+                <div id="estimatedMilesStatus" class="address-autocomplete-message" aria-live="polite"></div>
               </div>
 
               <div class="field full">
@@ -1127,6 +1129,17 @@
         fields: [],
         initialized: false,
         requestToken: 0
+      },
+      mileageRouting: {
+        pickupCoordinates: null,
+        deliveryCoordinates: null,
+        returnCoordinates: null,
+        requestToken: 0,
+        controller: null,
+        userOverridden: false,
+        applyingAutoValue: false,
+        lastCalculatedMiles: null,
+        lastCalculatedTimeSeconds: null
       }
     };
 
@@ -1153,6 +1166,8 @@
       returnRequired: document.getElementById("return_required"),
       returnLocationType: document.getElementById("return_location_type"),
       returnDetails: document.getElementById("returnDetails"),
+      estimatedMiles: document.getElementById("estimated_miles"),
+      estimatedMilesStatus: document.getElementById("estimatedMilesStatus"),
       serviceLevel: document.getElementById("service_level"),
       scheduledDateField: document.getElementById("scheduledDateField"),
       scheduledTimeField: document.getElementById("scheduledTimeField"),
@@ -1180,6 +1195,12 @@
       maxLon: -102.04,
       minLat: 36.99,
       maxLat: 41.00
+    });
+
+    const GEOAPIFY_ROUTING_CONFIG = Object.freeze({
+      mode: "drive",
+      units: "imperial",
+      format: "json"
     });
 
     function escapeHtml(value) {
@@ -1217,6 +1238,99 @@
       }
       field.messageHost.textContent = message || "";
       field.messageHost.className = type ? `address-autocomplete-message ${type}` : "address-autocomplete-message";
+    }
+
+    function setMileageStatus(message, type = "") {
+      if (!elements.estimatedMilesStatus) {
+        return;
+      }
+
+      elements.estimatedMilesStatus.textContent = message || "";
+      elements.estimatedMilesStatus.className = type
+        ? `address-autocomplete-message ${type}`
+        : "address-autocomplete-message";
+    }
+
+    function clearMileageRoutingController() {
+      if (state.mileageRouting.controller) {
+        state.mileageRouting.controller.abort();
+        state.mileageRouting.controller = null;
+      }
+    }
+
+    function getMileageCoordinatesByKey(key) {
+      if (key === "pickup") {
+        return state.mileageRouting.pickupCoordinates;
+      }
+
+      if (key === "delivery") {
+        return state.mileageRouting.deliveryCoordinates;
+      }
+
+      if (key === "return") {
+        return state.mileageRouting.returnCoordinates;
+      }
+
+      return null;
+    }
+
+    function setMileageCoordinatesByKey(key, coordinates) {
+      const value = coordinates && Number.isFinite(coordinates.lat) && Number.isFinite(coordinates.lon)
+        ? { lat: coordinates.lat, lon: coordinates.lon }
+        : null;
+
+      if (key === "pickup") {
+        state.mileageRouting.pickupCoordinates = value;
+      }
+
+      if (key === "delivery") {
+        state.mileageRouting.deliveryCoordinates = value;
+      }
+
+      if (key === "return") {
+        state.mileageRouting.returnCoordinates = value;
+      }
+    }
+
+    function hasPickupDeliveryCoordinates() {
+      const pickup = state.mileageRouting.pickupCoordinates;
+      const delivery = state.mileageRouting.deliveryCoordinates;
+
+      return Boolean(
+        pickup && delivery
+        && Number.isFinite(pickup.lat) && Number.isFinite(pickup.lon)
+        && Number.isFinite(delivery.lat) && Number.isFinite(delivery.lon)
+      );
+    }
+
+    function applyAutoMileageValue(milesValue) {
+      if (!elements.estimatedMiles || !Number.isFinite(milesValue)) {
+        return;
+      }
+
+      state.mileageRouting.applyingAutoValue = true;
+      elements.estimatedMiles.value = milesValue.toFixed(1);
+      state.mileageRouting.applyingAutoValue = false;
+    }
+
+    function clearMileageRoutingState(options = {}) {
+      const clearInput = options.clearInput !== false;
+
+      clearMileageRoutingController();
+      state.mileageRouting.pickupCoordinates = null;
+      state.mileageRouting.deliveryCoordinates = null;
+      state.mileageRouting.returnCoordinates = null;
+      state.mileageRouting.requestToken = 0;
+      state.mileageRouting.userOverridden = false;
+      state.mileageRouting.lastCalculatedMiles = null;
+      state.mileageRouting.lastCalculatedTimeSeconds = null;
+      setMileageStatus("");
+
+      if (clearInput && elements.estimatedMiles) {
+        state.mileageRouting.applyingAutoValue = true;
+        elements.estimatedMiles.value = "";
+        state.mileageRouting.applyingAutoValue = false;
+      }
     }
 
     function hideAddressSuggestions(field) {
@@ -1362,6 +1476,7 @@
       const zip = String(result?.postcode || "").trim();
       const title = street || String(result?.formatted || "").trim() || "Address";
       const meta = buildSuggestionMeta(city, zip);
+      const coordinates = extractGeoapifyCoordinates(result);
 
       return {
         street,
@@ -1369,7 +1484,9 @@
         zip,
         title,
         meta,
-        isColorado: isColoradoGeoapifyResult(result)
+        isColorado: isColoradoGeoapifyResult(result),
+        latitude: coordinates.lat,
+        longitude: coordinates.lon
       };
     }
 
@@ -1536,6 +1653,130 @@
       }
     }
 
+    async function fetchGeoapifyDrivingRoute(pickupCoordinates, deliveryCoordinates, signal) {
+      const endpoint = "https://api.geoapify.com/v1/routing";
+      const params = new URLSearchParams({
+        waypoints: `${pickupCoordinates.lat},${pickupCoordinates.lon}|${deliveryCoordinates.lat},${deliveryCoordinates.lon}`,
+        mode: GEOAPIFY_ROUTING_CONFIG.mode,
+        units: GEOAPIFY_ROUTING_CONFIG.units,
+        format: GEOAPIFY_ROUTING_CONFIG.format,
+        apiKey: GEOAPIFY_AUTOCOMPLETE_CONFIG.apiKey
+      });
+
+      const requestUrl = `${endpoint}?${params.toString()}`;
+      const response = await fetch(requestUrl, { signal });
+
+      if (!response.ok) {
+        const body = await response.text();
+        const error = new Error(`Geoapify routing failed (${response.status} ${response.statusText}).`);
+        error.status = response.status;
+        error.statusText = response.statusText;
+        error.responseBody = body;
+        throw error;
+      }
+
+      const payload = await response.json();
+      const route = Array.isArray(payload?.results) ? payload.results[0] : null;
+      if (!route) {
+        throw new Error("Geoapify routing returned no route results.");
+      }
+
+      const distance = Number(route.distance);
+      const distanceUnits = String(route.distance_units || "").trim();
+      const timeSeconds = Number(route.time);
+
+      if (!Number.isFinite(distance) || distance < 0) {
+        throw new Error("Geoapify routing returned an invalid distance.");
+      }
+
+      const unitsToken = distanceUnits.toLowerCase();
+      if (unitsToken && unitsToken !== "mile" && unitsToken !== "miles" && unitsToken !== "mi") {
+        console.warn("[MG Mileage] Unexpected routing distance unit:", distanceUnits);
+      }
+
+      return {
+        miles: Math.round(distance * 10) / 10,
+        distanceUnits,
+        timeSeconds: Number.isFinite(timeSeconds) && timeSeconds >= 0 ? timeSeconds : null
+      };
+    }
+
+    async function calculateDrivingMileageIfReady() {
+      if (!GEOAPIFY_AUTOCOMPLETE_CONFIG.apiKey) {
+        return;
+      }
+
+      if (!hasPickupDeliveryCoordinates()) {
+        clearMileageRoutingController();
+        return;
+      }
+
+      const pickupCoordinates = state.mileageRouting.pickupCoordinates;
+      const deliveryCoordinates = state.mileageRouting.deliveryCoordinates;
+
+      clearMileageRoutingController();
+
+      const token = ++state.mileageRouting.requestToken;
+      const controller = new AbortController();
+      state.mileageRouting.controller = controller;
+      setMileageStatus("Calculating mileage...");
+
+      try {
+        const route = await fetchGeoapifyDrivingRoute(
+          pickupCoordinates,
+          deliveryCoordinates,
+          controller.signal
+        );
+
+        if (token !== state.mileageRouting.requestToken) {
+          return;
+        }
+
+        state.mileageRouting.lastCalculatedMiles = route.miles;
+        state.mileageRouting.lastCalculatedTimeSeconds = route.timeSeconds;
+
+        if (!state.mileageRouting.userOverridden) {
+          applyAutoMileageValue(route.miles);
+        }
+
+        setMileageStatus("");
+      } catch (error) {
+        if (error?.name === "AbortError") {
+          return;
+        }
+
+        console.error("[MG Mileage] Routing API error", {
+          status: error?.status,
+          statusText: error?.statusText,
+          responseBody: error?.responseBody || "",
+          message: error?.message || String(error)
+        });
+
+        if (token === state.mileageRouting.requestToken) {
+          setMileageStatus("Unable to calculate mileage. Enter miles manually.", "error");
+        }
+      }
+    }
+
+    function handleAddressFieldEdited(field) {
+      if (!field?.key) {
+        return;
+      }
+
+      const hadCoordinates = Boolean(getMileageCoordinatesByKey(field.key));
+      if (!hadCoordinates) {
+        return;
+      }
+
+      setMileageCoordinatesByKey(field.key, null);
+
+      if (field.key === "pickup" || field.key === "delivery") {
+        state.mileageRouting.userOverridden = false;
+        clearMileageRoutingController();
+        setMileageStatus("");
+      }
+    }
+
     function queueGeoapifySearch(field) {
       if (!field?.input) {
         return;
@@ -1578,6 +1819,7 @@
 
       field.input.addEventListener("input", () => {
         setAddressAutocompleteMessage(field, "");
+        handleAddressFieldEdited(field);
         queueGeoapifySearch(field);
       });
 
@@ -1615,6 +1857,16 @@
 
         setAddressAutocompleteMessage(field, "");
         applyParsedAddressToField(field, selected);
+        setMileageCoordinatesByKey(field.key, {
+          lat: Number(selected.latitude),
+          lon: Number(selected.longitude)
+        });
+
+        if (field.key === "pickup" || field.key === "delivery") {
+          state.mileageRouting.userOverridden = false;
+          calculateDrivingMileageIfReady();
+        }
+
         hideAddressSuggestions(field);
       });
     }
@@ -1994,6 +2246,8 @@
           setAddressAutocompleteMessage(returnField, "");
           hideAddressSuggestions(returnField);
         }
+
+        setMileageCoordinatesByKey("return", null);
       }
     }
 
@@ -2063,6 +2317,7 @@
       }
 
       clearAddressAutocompleteUi();
+      clearMileageRoutingState({ clearInput: false });
 
       syncReturnDetailsVisibility();
       syncScheduledFieldsVisibility();
@@ -2542,6 +2797,20 @@
     });
 
     elements.refreshButton.addEventListener("click", refreshDashboardData);
+
+    if (elements.estimatedMiles) {
+      elements.estimatedMiles.addEventListener("input", () => {
+        if (state.mileageRouting.applyingAutoValue) {
+          return;
+        }
+
+        state.mileageRouting.userOverridden = true;
+      });
+    }
+
+    elements.refreshButton.addEventListener("click", () => {
+      resetCreateJobForm({ clearMessage: true });
+    });
 
     elements.createJobForm.addEventListener("submit", createJob);
     elements.returnRequired.addEventListener("change", syncReturnDetailsVisibility);
