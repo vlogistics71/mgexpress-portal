@@ -1,6 +1,9 @@
 (function () {
   "use strict";
 
+  // Paste your real Geoapify browser API key on the next line.
+  window.MG_GEOAPIFY_API_KEY = "34d895e9c6cd4d1faf0692f758aac8ac";
+
   const SUPABASE_URL =
     "https://dczlucwfjayymlwbzzdi.supabase.co";
 
@@ -23,9 +26,6 @@
       );
   }
 
-  // Paste your Geoapify browser API key between the quotes below.
-  window.MG_GEOAPIFY_API_KEY = window.MG_GEOAPIFY_API_KEY || "";
-
   window.MG_CONFIG = Object.freeze({
     portalName: "MG Express Portal",
     companyName: "MG Express",
@@ -35,4 +35,6 @@
     geoapifyApiKey:
       String(window.MG_GEOAPIFY_API_KEY || "").trim()
   });
+
+  console.log("[MG Config] Geoapify configured:", Boolean(window.MG_CONFIG?.geoapifyApiKey));
 })();
