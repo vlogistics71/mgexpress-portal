@@ -2520,6 +2520,22 @@ function openBolModalForJob(selectedDelivery) {
   return true;
 }
 
+function openBolForJob(selectedDelivery) {
+  if (!selectedDelivery || !selectedDelivery.id) {
+    showToast("Unable to open BOL: selected delivery not found", "error");
+    return false;
+  }
+
+  const id = String(selectedDelivery.id).trim();
+  if (!id) {
+    showToast("Unable to open BOL: missing delivery id", "error");
+    return false;
+  }
+
+  window.open("/bol.html?id=" + encodeURIComponent(id), "_blank");
+  return true;
+}
+
 function printBolModal(event) {
   if (event) {
     event.preventDefault();
@@ -2552,8 +2568,7 @@ function handleViewBolClick(event, buttonElement) {
     ? state.selectedJob
     : getRowById(buttonElement?.getAttribute("data-view-bol"));
 
-  openBolModalForJob(selectedDelivery);
-  return false;
+  return openBolForJob(selectedDelivery);
 }
 
 function normalizePaymentStatusLabel(value) {

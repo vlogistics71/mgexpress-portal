@@ -1064,8 +1064,14 @@
     await refreshDeliveries({ keepSelection: deliveryId });
   }
 
-  function openJobPage(delivery) {
-    window.location.href = `job.html?id=${encodeURIComponent(String(delivery.id || ""))}`;
+  function openBol(deliveryId) {
+    const id = String(deliveryId || "").trim();
+    if (!id) {
+      showToast("Unable to open BOL: missing delivery id.", "error");
+      return;
+    }
+
+    window.open(`/bol.html?id=${encodeURIComponent(id)}`, "_blank");
   }
 
   function openInvoicePage(delivery) {
@@ -1073,7 +1079,7 @@
   }
 
   async function copyDeliveryLink(delivery) {
-    const link = new URL(`job.html?id=${encodeURIComponent(String(delivery.id || ""))}`, window.location.href).toString();
+    const link = new URL(`bol.html?id=${encodeURIComponent(String(delivery.id || ""))}`, window.location.href).toString();
     try {
       await navigator.clipboard.writeText(link);
       showToast("Job link copied.", "success");
@@ -1131,7 +1137,7 @@
     }
 
     if (action === "bol") {
-      openJobPage(delivery);
+      openBol(delivery.id);
       return;
     }
 

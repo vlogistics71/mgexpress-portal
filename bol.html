@@ -1,0 +1,842 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>MG Express Bill of Lading</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="/assets/js/config.js"></script>
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    :root {
+      --ink: #111111;
+      --line: #202020;
+      --line-soft: #6b6b6b;
+      --paper: #ffffff;
+      --ui-bg: #f2f2f2;
+      --ui-line: #cccccc;
+      --ui-text: #202020;
+    }
+
+    html,
+    body {
+      margin: 0;
+      padding: 0;
+      background: var(--ui-bg);
+      color: var(--ink);
+      font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+    .screen-shell {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      padding: 12px;
+    }
+
+    .controls {
+      width: min(100%, 980px);
+      margin: 0 auto;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      flex-wrap: wrap;
+      border: 1px solid var(--ui-line);
+      background: #ffffff;
+      padding: 10px;
+    }
+
+    .control-actions {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .btn {
+      min-height: 34px;
+      border: 1px solid #232323;
+      background: #ffffff;
+      color: #111111;
+      font-size: 13px;
+      font-weight: 700;
+      padding: 6px 10px;
+      cursor: pointer;
+    }
+
+    .btn:hover {
+      background: #f4f4f4;
+    }
+
+    .btn:disabled {
+      opacity: 0.55;
+      cursor: not-allowed;
+    }
+
+    .status-text {
+      font-size: 12px;
+      line-height: 1.3;
+      color: #303030;
+      max-width: 520px;
+    }
+
+    .bol-preview-scroll {
+      width: 100%;
+      overflow-x: auto;
+      padding: 4px;
+    }
+
+    #bolDocument {
+      width: min(100%, 8.2in);
+      min-width: 8in;
+      margin: 0 auto;
+      background: var(--paper);
+      color: var(--ink);
+      border: 1px solid var(--line);
+      padding: 0.18in;
+      box-shadow: 0 6px 16px rgba(0, 0, 0, 0.07);
+    }
+
+    .bol-header {
+      display: grid;
+      grid-template-columns: 1.3fr 1fr;
+      gap: 10px;
+      border: 1px solid var(--line);
+      padding: 8px;
+      margin-bottom: 8px;
+    }
+
+    .brand {
+      font-weight: 900;
+      letter-spacing: 0.08em;
+      font-size: 21px;
+      line-height: 1.05;
+    }
+
+    .doc-title {
+      margin-top: 2px;
+      font-size: 24px;
+      font-weight: 900;
+      letter-spacing: 0.02em;
+      line-height: 1;
+    }
+
+    .doc-subtitle {
+      margin-top: 4px;
+      font-size: 10px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: #2c2c2c;
+    }
+
+    .header-meta {
+      border: 1px solid var(--line);
+    }
+
+    .header-meta-row {
+      display: grid;
+      grid-template-columns: 112px 1fr;
+      font-size: 10px;
+      border-bottom: 1px solid var(--line-soft);
+      min-height: 22px;
+    }
+
+    .header-meta-row:last-child {
+      border-bottom: 0;
+    }
+
+    .header-meta-row span {
+      display: flex;
+      align-items: center;
+      padding: 3px 5px;
+      overflow-wrap: anywhere;
+    }
+
+    .header-meta-row .meta-label {
+      border-right: 1px solid var(--line-soft);
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.02em;
+    }
+
+    .section-title {
+      font-size: 11px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      border-bottom: 1px solid var(--line);
+      padding-bottom: 3px;
+      margin-bottom: 4px;
+    }
+
+    .route-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin-bottom: 8px;
+    }
+
+    .panel {
+      border: 1px solid var(--line);
+      padding: 6px;
+      break-inside: avoid;
+      page-break-inside: avoid;
+    }
+
+    .line {
+      display: grid;
+      grid-template-columns: 102px 1fr;
+      border-bottom: 1px solid #d9d9d9;
+      min-height: 18px;
+      font-size: 9.6px;
+      line-height: 1.2;
+    }
+
+    .line:last-child {
+      border-bottom: 0;
+    }
+
+    .line .label {
+      font-weight: 700;
+      padding: 3px 4px 3px 0;
+      color: #232323;
+      text-transform: uppercase;
+      letter-spacing: 0.02em;
+    }
+
+    .line .value {
+      padding: 3px 0;
+      overflow-wrap: anywhere;
+      white-space: pre-wrap;
+    }
+
+    .service-table,
+    .package-grid,
+    .instructions-block,
+    .footer-bar {
+      border: 1px solid var(--line);
+      padding: 6px;
+      margin-bottom: 8px;
+      break-inside: avoid;
+      page-break-inside: avoid;
+    }
+
+    .service-grid,
+    .package-lines,
+    .return-lines,
+    .footer-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 4px 8px;
+    }
+
+    .service-grid .line,
+    .package-lines .line,
+    .return-lines .line,
+    .footer-grid .line {
+      grid-template-columns: 110px 1fr;
+      border-bottom: 1px solid #d9d9d9;
+    }
+
+    .service-grid .line:nth-last-child(-n + 2),
+    .package-lines .line:nth-last-child(-n + 2),
+    .return-lines .line:nth-last-child(-n + 2),
+    .footer-grid .line:nth-last-child(-n + 2) {
+      border-bottom: 0;
+    }
+
+    .instructions-text {
+      font-size: 9.8px;
+      line-height: 1.28;
+      white-space: pre-wrap;
+      overflow-wrap: anywhere;
+    }
+
+    .footer-bar {
+      margin-bottom: 0;
+      padding-bottom: 5px;
+    }
+
+    .footer-doc {
+      font-size: 9.5px;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+    }
+
+    .error-box {
+      width: min(100%, 980px);
+      margin: 0 auto;
+      border: 1px solid #333333;
+      background: #ffffff;
+      padding: 12px;
+      font-size: 13px;
+      line-height: 1.35;
+    }
+
+    .hidden {
+      display: none !important;
+    }
+
+    @media (max-width: 900px) {
+      .bol-header {
+        grid-template-columns: 1fr;
+      }
+
+      .route-grid,
+      .service-grid,
+      .package-lines,
+      .return-lines,
+      .footer-grid {
+        grid-template-columns: 1fr;
+      }
+
+      #bolDocument {
+        min-width: 760px;
+      }
+    }
+
+    @page {
+      size: Letter;
+      margin: 0.35in;
+    }
+
+    @media print {
+      html,
+      body {
+        background: #ffffff;
+      }
+
+      .screen-shell {
+        padding: 0;
+      }
+
+      .controls,
+      .status-text,
+      .error-box {
+        display: none !important;
+      }
+
+      .bol-preview-scroll {
+        overflow: visible;
+        padding: 0;
+      }
+
+      #bolDocument {
+        width: 100%;
+        min-width: 0;
+        margin: 0;
+        box-shadow: none;
+        border: 1px solid #000000;
+      }
+
+      .panel,
+      .service-table,
+      .package-grid,
+      .instructions-block,
+      .footer-bar {
+        break-inside: avoid;
+        page-break-inside: avoid;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="screen-shell">
+    <div class="controls" id="screenControls">
+      <div class="control-actions">
+        <button class="btn" id="printBtn" type="button">Print / Save PDF</button>
+        <button class="btn" id="sendBolBtn" type="button">Send BOL</button>
+        <button class="btn" id="backBtn" type="button">Back</button>
+      </div>
+      <div class="status-text" id="statusText">Loading delivery document...</div>
+    </div>
+
+    <div class="error-box hidden" id="errorBox"></div>
+
+    <div class="bol-preview-scroll" id="previewScroll">
+      <div id="bolDocument" class="bol-document"></div>
+    </div>
+  </div>
+
+  <script>
+    (function () {
+      "use strict";
+
+      const client = window.mgSupabase;
+      const statusText = document.getElementById("statusText");
+      const errorBox = document.getElementById("errorBox");
+      const bolDocument = document.getElementById("bolDocument");
+      const printBtn = document.getElementById("printBtn");
+      const sendBolBtn = document.getElementById("sendBolBtn");
+      const backBtn = document.getElementById("backBtn");
+
+      const state = {
+        quote: null,
+        id: ""
+      };
+
+      function escapeHtml(value) {
+        const div = document.createElement("div");
+        div.textContent = value == null ? "" : String(value);
+        return div.innerHTML;
+      }
+
+      function clean(value) {
+        return String(value || "").trim().toLowerCase();
+      }
+
+      function hasValue(value) {
+        if (value === null || value === undefined) {
+          return false;
+        }
+        if (typeof value === "number") {
+          return Number.isFinite(value);
+        }
+        return String(value).trim() !== "";
+      }
+
+      function firstPresentValue(values) {
+        for (const value of values) {
+          if (hasValue(value)) {
+            return String(value).trim();
+          }
+        }
+        return "";
+      }
+
+      function formatDate(value) {
+        const date = new Date(value || Date.now());
+        if (Number.isNaN(date.getTime())) {
+          return "-";
+        }
+        return new Intl.DateTimeFormat("en-US", {
+          month: "short",
+          day: "2-digit",
+          year: "numeric"
+        }).format(date);
+      }
+
+      function formatTime(value) {
+        const date = new Date(value || Date.now());
+        if (Number.isNaN(date.getTime())) {
+          return "-";
+        }
+        return new Intl.DateTimeFormat("en-US", {
+          hour: "numeric",
+          minute: "2-digit"
+        }).format(date);
+      }
+
+      function formatDateTime(value) {
+        const date = new Date(value || Date.now());
+        if (Number.isNaN(date.getTime())) {
+          return "";
+        }
+        return formatDate(date) + " " + formatTime(date);
+      }
+
+      function deliverySpeedLabel(value) {
+        const map = {
+          "2_hr": "2 Hour",
+          "3_hr": "3 Hour",
+          "4_hr": "4 Hour",
+          "5_hr": "5 Hour",
+          "6_hr": "6 Hour",
+          "next_day": "Next Day"
+        };
+        return map[String(value || "")] || firstPresentValue([value]);
+      }
+
+      function serviceLevelLabel(value) {
+        const map = {
+          standard: "Standard",
+          priority: "Priority",
+          stat: "STAT",
+          scheduled: "Scheduled",
+          on_demand: "On Demand"
+        };
+        return map[clean(value)] || firstPresentValue([value]);
+      }
+
+      function jobCategoryLabel(value) {
+        const map = {
+          medical: "Medical",
+          pallet: "Pallet",
+          legal: "Legal",
+          general: "General",
+          special: "Special"
+        };
+        return map[clean(value)] || firstPresentValue([value]);
+      }
+
+      function deliveryTypeLabel(value) {
+        const map = {
+          business_to_business: "Business to Business",
+          business_to_residential: "Business to Residential",
+          residential_to_business: "Residential to Business",
+          residential_to_residential: "Residential to Residential"
+        };
+        return map[clean(value)] || firstPresentValue([value]);
+      }
+
+      function returnRequiredFlag(value) {
+        if (value === true) {
+          return true;
+        }
+        return ["true", "1", "yes"].includes(clean(value));
+      }
+
+      function returnTimingLabel(value) {
+        const map = {
+          immediate: "Immediately After Delivery",
+          later_today: "Later Today",
+          another_day: "Another Day"
+        };
+        return map[clean(value)] || firstPresentValue([value]);
+      }
+
+      function returnLocationLabel(value) {
+        const map = {
+          same_as_pickup: "Same as Pickup",
+          different_location: "Different Return Location"
+        };
+        return map[clean(value)] || firstPresentValue([value]);
+      }
+
+      function lineHtml(label, value) {
+        if (!hasValue(value)) {
+          return "";
+        }
+        return "<div class=\"line\"><div class=\"label\">" + escapeHtml(label) + "</div><div class=\"value\">" + escapeHtml(String(value).trim()) + "</div></div>";
+      }
+
+      function sectionHtml(title, bodyHtml, className) {
+        const body = String(bodyHtml || "").trim();
+        if (!body) {
+          return "";
+        }
+        return "<section class=\"" + escapeHtml(className || "panel") + "\"><div class=\"section-title\">" + escapeHtml(title) + "</div>" + body + "</section>";
+      }
+
+      function combineInstructions(parts) {
+        const lines = parts
+          .map(item => (item && item.label && hasValue(item.value)) ? item.label + ": " + String(item.value).trim() : "")
+          .filter(Boolean);
+        return lines.join("\n");
+      }
+
+      function resolveBackUrl() {
+        try {
+          if (!document.referrer) {
+            return "/deliveries.html";
+          }
+          const ref = new URL(document.referrer);
+          if (ref.origin !== window.location.origin) {
+            return "/deliveries.html";
+          }
+          return ref.pathname + ref.search;
+        } catch (_error) {
+          return "/deliveries.html";
+        }
+      }
+
+      async function requireDispatchAccess() {
+        if (!client) {
+          throw new Error("Supabase client is not available on this page.");
+        }
+
+        const sessionResult = await client.auth.getSession();
+        const session = sessionResult.data && sessionResult.data.session ? sessionResult.data.session : null;
+        if (!session || !session.user) {
+          window.location.href = "/index.html";
+          return null;
+        }
+
+        try {
+          const profileResult = await client
+            .from("profiles")
+            .select("id,role")
+            .eq("id", session.user.id)
+            .maybeSingle();
+
+          if (!profileResult.error) {
+            const role = clean(profileResult.data && profileResult.data.role);
+            if (role && ["admin", "staff", "dispatcher"].indexOf(role) === -1) {
+              window.location.href = "/index.html";
+              return null;
+            }
+          }
+        } catch (_error) {
+          // If profile lookup fails, keep existing auth-only behavior.
+        }
+
+        return session;
+      }
+
+      async function loadQuoteById(quoteId) {
+        const result = await client
+          .from("quotes")
+          .select("*")
+          .eq("id", quoteId)
+          .maybeSingle();
+
+        if (result.error) {
+          throw result.error;
+        }
+
+        if (!result.data) {
+          throw new Error("Delivery does not exist for the provided id.");
+        }
+
+        return result.data;
+      }
+
+      function renderBol(quote) {
+        const jobNumber = firstPresentValue([quote.job_number, "-"]);
+        const referenceNumber = firstPresentValue([quote.reference_number, quote.customer_reference_number]);
+        const bolDateValue = firstPresentValue([quote.created_at]) ? formatDate(quote.created_at) : formatDate(Date.now());
+
+        const pickupCompany = firstPresentValue([quote.pickup_company_name, quote.shipper_company_name, quote.company_name]);
+        const deliveryCompany = firstPresentValue([quote.delivery_company_name, quote.consignee_company_name, quote.company_name]);
+
+        const pickupLines = [
+          lineHtml("Company", pickupCompany),
+          lineHtml("Address", firstPresentValue([quote.pickup_address])),
+          lineHtml("Suite/Floor", firstPresentValue([quote.pickup_suite_floor])),
+          lineHtml("City", firstPresentValue([quote.pickup_city])),
+          lineHtml("ZIP", firstPresentValue([quote.pickup_zip])),
+          lineHtml("Contact", firstPresentValue([quote.pickup_contact_name])),
+          lineHtml("Phone", firstPresentValue([quote.pickup_contact_phone]))
+        ].join("");
+
+        const deliveryLines = [
+          lineHtml("Company", deliveryCompany),
+          lineHtml("Address", firstPresentValue([quote.delivery_address])),
+          lineHtml("Suite/Floor", firstPresentValue([quote.delivery_suite_floor])),
+          lineHtml("City", firstPresentValue([quote.delivery_city])),
+          lineHtml("ZIP", firstPresentValue([quote.delivery_zip])),
+          lineHtml("Recipient", firstPresentValue([quote.delivery_contact_name, quote.delivery_recipient_name, quote.pod_recipient_name])),
+          lineHtml("Phone", firstPresentValue([quote.delivery_contact_phone]))
+        ].join("");
+
+        const isScheduled = clean(quote.service_level) === "scheduled";
+        const pickupDateTime = firstPresentValue([
+          quote.pickup_scheduled_at,
+          quote.pickup_time,
+          quote.requested_pickup_time,
+          quote.created_at
+        ]);
+        const scheduledDeliveryValue = firstPresentValue([
+          quote.scheduled_at,
+          quote.delivery_scheduled_at,
+          quote.delivery_time,
+          quote.requested_delivery_time
+        ]);
+
+        const serviceRows = [
+          lineHtml("Pickup Date/Time", hasValue(pickupDateTime) ? formatDateTime(pickupDateTime) : ""),
+          isScheduled && hasValue(scheduledDeliveryValue)
+            ? lineHtml("Scheduled Delivery", formatDateTime(scheduledDeliveryValue))
+            : "",
+          lineHtml("Vehicle Type", firstPresentValue([quote.vehicle_type])),
+          lineHtml("Delivery Speed", deliverySpeedLabel(quote.delivery_speed)),
+          lineHtml("Service Level", serviceLevelLabel(quote.service_level)),
+          lineHtml("Job Category", jobCategoryLabel(quote.job_category)),
+          lineHtml("Delivery Type", deliveryTypeLabel(quote.delivery_type))
+        ].join("");
+
+        const packageRows = [
+          lineHtml("Description", firstPresentValue([quote.package_type])),
+          lineHtml("Quantity", firstPresentValue([quote.package_quantity, quote.quantity, quote.item_quantity])),
+          lineHtml("Approx Weight", firstPresentValue([quote.package_weight, quote.weight])),
+          lineHtml("Miles", firstPresentValue([quote.estimated_miles])),
+          lineHtml("Handling", firstPresentValue([quote.special_instructions]))
+        ].join("");
+
+        const hasReturn = returnRequiredFlag(quote.return_required);
+        let returnSection = "";
+        if (hasReturn) {
+          const returnRows = [
+            lineHtml("Return Timing", returnTimingLabel(quote.return_timing)),
+            lineHtml("Return Destination", returnLocationLabel(quote.return_location_type)),
+            lineHtml("Return Address", firstPresentValue([quote.return_address])),
+            lineHtml("Suite/Floor", firstPresentValue([quote.return_suite_floor])),
+            lineHtml("ZIP", firstPresentValue([quote.return_zip]))
+          ].join("");
+          returnSection = sectionHtml("Return Service", "<div class=\"return-lines\">" + returnRows + "</div>", "package-grid");
+        } else {
+          returnSection = sectionHtml("Return Service", lineHtml("Status", "No Return Required"), "package-grid");
+        }
+
+        const instructionsText = combineInstructions([
+          { label: "Pickup", value: quote.pickup_instructions },
+          { label: "Delivery", value: quote.delivery_instructions },
+          { label: "Special Handling", value: quote.special_instructions }
+        ]);
+
+        const deliveredTo = firstPresentValue([quote.pod_recipient_name, quote.delivery_recipient_name]);
+
+        const footerRows = [
+          lineHtml("Company", "MG Express"),
+          lineHtml("Document", "Delivery Documentation"),
+          lineHtml("Job", jobNumber),
+          lineHtml("Page", "1 of 1")
+        ].join("");
+
+        bolDocument.innerHTML = ""
+          + "<header class=\"bol-header\">"
+          + "  <div>"
+          + "    <div class=\"brand\">MG EXPRESS</div>"
+          + "    <div class=\"doc-title\">BILL OF LADING</div>"
+          + "    <div class=\"doc-subtitle\">Delivery Documentation</div>"
+          + "  </div>"
+          + "  <div class=\"header-meta\">"
+          + "    <div class=\"header-meta-row\"><span class=\"meta-label\">Job Number</span><span>" + escapeHtml(jobNumber) + "</span></div>"
+          + "    " + (hasValue(referenceNumber)
+            ? "<div class=\"header-meta-row\"><span class=\"meta-label\">Reference</span><span>" + escapeHtml(referenceNumber) + "</span></div>"
+            : "")
+          + "    <div class=\"header-meta-row\"><span class=\"meta-label\">BOL Date</span><span>" + escapeHtml(bolDateValue) + "</span></div>"
+          + "  </div>"
+          + "</header>"
+          + "<div class=\"route-grid\">"
+          + sectionHtml("Pickup / Shipper", pickupLines, "panel")
+          + sectionHtml("Delivery / Consignee", deliveryLines, "panel")
+          + "</div>"
+          + sectionHtml("Service Information", "<div class=\"service-grid\">" + serviceRows + "</div>", "service-table")
+          + sectionHtml("Package / Shipment", "<div class=\"package-lines\">" + packageRows + "</div>", "package-grid")
+          + returnSection
+          + sectionHtml("Special Instructions", instructionsText ? "<div class=\"instructions-text\">" + escapeHtml(instructionsText) + "</div>" : lineHtml("Instructions", "None"), "instructions-block")
+          + (hasValue(deliveredTo)
+            ? sectionHtml("Delivery Confirmation", lineHtml("Delivered To", deliveredTo), "instructions-block")
+            : "")
+          + "<footer class=\"footer-bar\">"
+          + "  <div class=\"section-title\">Footer</div>"
+          + "  <div class=\"footer-grid\">" + footerRows + "</div>"
+          + "  <div class=\"footer-doc\">MG Express Delivery Documentation</div>"
+          + "</footer>";
+
+        statusText.textContent = "BOL ready. Use Print / Save PDF for one-page Letter output.";
+      }
+
+      function showError(message) {
+        errorBox.classList.remove("hidden");
+        errorBox.textContent = message;
+        bolDocument.innerHTML = "";
+        statusText.textContent = "Unable to load BOL.";
+      }
+
+      function sendBol() {
+        if (!state.quote || !state.id) {
+          statusText.textContent = "Cannot send BOL before data loads.";
+          return;
+        }
+
+        const email = firstPresentValue([
+          state.quote.customer_email,
+          state.quote.email
+        ]);
+
+        const phone = firstPresentValue([
+          state.quote.customer_phone,
+          state.quote.delivery_contact_phone,
+          state.quote.pickup_contact_phone,
+          state.quote.phone
+        ]);
+
+        if (!email && !phone) {
+          statusText.textContent = "No customer email or phone is available for this delivery.";
+          return;
+        }
+
+        const bolUrl = window.location.origin + "/bol.html?id=" + encodeURIComponent(state.id);
+        const jobNumber = firstPresentValue([state.quote.job_number, state.id]);
+        const subject = "MG Express Bill of Lading " + jobNumber;
+        const body = [
+          "MG Express Bill of Lading",
+          "Job: " + jobNumber,
+          "Link: " + bolUrl,
+          "",
+          "Note: Automatic PDF attachment is not yet implemented. Use Print / Save PDF first."
+        ].join("\n");
+
+        if (email && phone) {
+          const useEmail = window.confirm("Send BOL using email? Select Cancel to use SMS.");
+          if (useEmail) {
+            window.location.href = "mailto:" + encodeURIComponent(email) + "?subject=" + encodeURIComponent(subject) + "&body=" + encodeURIComponent(body);
+            statusText.textContent = "Email composer opened. Automatic PDF attachments are not yet implemented.";
+            return;
+          }
+
+          window.location.href = "sms:" + encodeURIComponent(phone) + "?&body=" + encodeURIComponent(body);
+          statusText.textContent = "SMS composer opened. Automatic PDF attachments are not yet implemented.";
+          return;
+        }
+
+        if (email) {
+          window.location.href = "mailto:" + encodeURIComponent(email) + "?subject=" + encodeURIComponent(subject) + "&body=" + encodeURIComponent(body);
+          statusText.textContent = "Email composer opened. Automatic PDF attachments are not yet implemented.";
+          return;
+        }
+
+        window.location.href = "sms:" + encodeURIComponent(phone) + "?&body=" + encodeURIComponent(body);
+        statusText.textContent = "SMS composer opened. Automatic PDF attachments are not yet implemented.";
+      }
+
+      function bindEvents() {
+        printBtn.addEventListener("click", function () {
+          window.print();
+        });
+
+        sendBolBtn.addEventListener("click", sendBol);
+
+        backBtn.addEventListener("click", function () {
+          const fallback = resolveBackUrl();
+          if (window.history.length > 1) {
+            window.history.back();
+            return;
+          }
+
+          if (window.opener && !window.opener.closed) {
+            try {
+              window.close();
+              return;
+            } catch (_error) {
+              // Ignore and continue to fallback.
+            }
+          }
+
+          window.location.href = fallback;
+        });
+      }
+
+      async function start() {
+        bindEvents();
+
+        try {
+          const params = new URLSearchParams(window.location.search || "");
+          state.id = String(params.get("id") || "").trim();
+          if (!state.id) {
+            throw new Error("Missing delivery id. Open this page using /bol.html?id=<quotes.id>.");
+          }
+
+          const session = await requireDispatchAccess();
+          if (!session) {
+            return;
+          }
+
+          state.quote = await loadQuoteById(state.id);
+          renderBol(state.quote);
+        } catch (error) {
+          showError(error && error.message ? error.message : "Unable to load this bill of lading.");
+        }
+      }
+
+      start();
+    })();
+  </script>
+</body>
+</html>
