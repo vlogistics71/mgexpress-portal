@@ -29,9 +29,7 @@
     portalBaseUrl:
       "https://portal.migenteexpress.com",
     supabaseUrl: SUPABASE_URL,
-    addressProvider:
-      String(window.MG_ADDRESS_PROVIDER || "mapbox").trim().toLowerCase(),
-    mapboxPublicToken:
-      String(window.MG_MAPBOX_PUBLIC_TOKEN || "").trim()
+    googleMapsApiKey:
+      String(window.MG_GOOGLE_MAPS_API_KEY || "").trim()
   });
 })();
