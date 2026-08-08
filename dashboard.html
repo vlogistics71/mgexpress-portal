@@ -109,6 +109,25 @@
       margin-bottom: 24px;
     }
 
+    .welcome-stack {
+      margin-bottom: 8px;
+    }
+
+    .welcome-greeting {
+      font-size: 24px;
+      line-height: 1.12;
+      font-weight: 900;
+      color: var(--dark-green);
+    }
+
+    .welcome-date {
+      margin-top: 4px;
+      color: var(--muted);
+      font-size: 14px;
+      font-weight: 700;
+      line-height: 1.3;
+    }
+
     .eyebrow {
       color: var(--muted);
       font-size: 18px;
@@ -433,6 +452,10 @@
         flex-direction: column;
       }
 
+      .welcome-greeting {
+        font-size: 22px;
+      }
+
       .page-heading .primary-button {
         width: 100%;
       }
@@ -465,23 +488,18 @@
         <div class="brand">
           MG <span>EXPRESS</span> DISPATCH
         </div>
-
-        <div class="staff-email" id="staffEmail"></div>
       </div>
-
-      <button
-        class="signout"
-        id="signOutButton"
-        type="button"
-      >
-        Sign Out
-      </button>
     </div>
   </header>
 
   <main class="container">
     <div class="page-heading">
       <div>
+        <div class="welcome-stack">
+          <div class="welcome-greeting" id="welcomeGreeting">Good Morning, Andre</div>
+          <div class="welcome-date" id="welcomeDate">Loading date...</div>
+        </div>
+
         <div class="eyebrow">Dispatch control center</div>
         <h1>Dashboard</h1>
       </div>
@@ -494,31 +512,6 @@
         + New Job
       </button>
     </div>
-
-    <nav class="navigation">
-      <a
-        class="secondary-button"
-        href="/history.html"
-      >
-        Job History
-      </a>
-
-      <a
-        class="secondary-button"
-        href="/customer.html"
-      >
-        Customers
-      </a>
-
-      <a
-        class="secondary-button"
-        href="https://drivers.migenteexpress.com"
-        target="_blank"
-        rel="noopener"
-      >
-        Driver Portal
-      </a>
-    </nav>
 
     <section class="stats">
       <div class="stat-card">
@@ -1063,6 +1056,54 @@
       box.textContent = text;
     }
 
+    function firstNameFromText(value) {
+      const text = String(value || "").trim();
+      if (!text) {
+        return "";
+      }
+
+      return text.split(/\s+/)[0] || "";
+    }
+
+    function greetingPrefixByHour() {
+      const hour = new Date().getHours();
+      if (hour >= 5 && hour <= 11) {
+        return "Good Morning";
+      }
+      if (hour >= 12 && hour <= 16) {
+        return "Good Afternoon";
+      }
+      return "Good Evening";
+    }
+
+    function resolveGreetingName(session) {
+      const meta = session?.user?.user_metadata || {};
+      const name =
+        firstNameFromText(meta.full_name) ||
+        firstNameFromText(meta.name) ||
+        firstNameFromText(meta.display_name);
+
+      return name || "Andre";
+    }
+
+    function renderGreeting(session) {
+      const greetingElement = document.getElementById("welcomeGreeting");
+      const dateElement = document.getElementById("welcomeDate");
+
+      if (!greetingElement || !dateElement) {
+        return;
+      }
+
+      const firstName = resolveGreetingName(session);
+      greetingElement.textContent = `${greetingPrefixByHour()}, ${firstName}`;
+      dateElement.textContent = new Intl.DateTimeFormat("en-US", {
+        weekday: "long",
+        month: "long",
+        day: "numeric",
+        year: "numeric"
+      }).format(new Date());
+    }
+
     async function requireDispatchAccess() {
       const sessionResult =
         await client.auth.getSession();
@@ -1074,9 +1115,6 @@
         location.replace("/index.html");
         return null;
       }
-
-      document.getElementById("staffEmail").textContent =
-        session.user.email || "";
 
       const profileResult = await client
         .from("profiles")
@@ -1418,32 +1456,12 @@
         loadDashboard
       );
 
-    document
-      .getElementById("signOutButton")
-      .addEventListener(
-        "click",
-        async function () {
-          this.disabled = true;
-          this.textContent = "Signing Out…";
-
-          try {
-            await client.auth.signOut();
-          } finally {
-            localStorage.clear();
-            sessionStorage.clear();
-
-            location.replace(
-              "/index.html?loggedout=1"
-            );
-          }
-        }
-      );
-
     (async function start() {
       const session =
         await requireDispatchAccess();
 
       if (session) {
+        renderGreeting(session);
 
     window.dispatchEvent(
         new CustomEvent("mg-dispatch-ready", {
