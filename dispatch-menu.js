@@ -43,30 +43,6 @@
       icon: "📋"
     },
     {
-      href: routeUrl("/pending-approval.html"),
-
-      label: "Pending Approval",
-      icon: "⏳"
-    },
-    {
-      href: routeUrl("/ready-to-dispatch.html"),
-
-      label: "Ready to Dispatch",
-      icon: "✅"
-    },
-    {
-      href: routeUrl("/assigned.html"),
-
-      label: "Assigned",
-      icon: "🚚"
-    },
-    {
-      href: routeUrl("/closed-today.html"),
-
-      label: "Completed",
-      icon: "📦"
-    },
-    {
       href: routeUrl("/customer.html"),
 
       label: "Customers",
