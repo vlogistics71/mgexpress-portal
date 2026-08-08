@@ -926,12 +926,21 @@
                 <label for="service_level">Service Level</label>
                 <select id="service_level" name="service_level">
                   <option value="">Choose service level</option>
-                  <option value="standard">Standard</option>
+                  <option value="on_demand">On Demand</option>
                   <option value="priority">Priority</option>
                   <option value="stat">STAT</option>
                   <option value="scheduled">Scheduled</option>
-                  <option value="on_demand">On Demand</option>
                 </select>
+              </div>
+
+              <div class="field hidden" id="scheduledDateField">
+                <label for="scheduled_date">Scheduled Date</label>
+                <input id="scheduled_date" name="scheduled_date" type="date">
+              </div>
+
+              <div class="field hidden" id="scheduledTimeField">
+                <label for="scheduled_time">Scheduled Time</label>
+                <input id="scheduled_time" name="scheduled_time" type="time">
               </div>
 
               <div class="field">
@@ -1052,6 +1061,11 @@
       returnRequired: document.getElementById("return_required"),
       returnLocationType: document.getElementById("return_location_type"),
       returnDetails: document.getElementById("returnDetails"),
+      serviceLevel: document.getElementById("service_level"),
+      scheduledDateField: document.getElementById("scheduledDateField"),
+      scheduledTimeField: document.getElementById("scheduledTimeField"),
+      scheduledDate: document.getElementById("scheduled_date"),
+      scheduledTime: document.getElementById("scheduled_time"),
       countPendingPayment: document.getElementById("countPendingPayment"),
       countReadyDispatch: document.getElementById("countReadyDispatch"),
       countLiveJobs: document.getElementById("countLiveJobs"),
@@ -1382,6 +1396,30 @@
       }
     }
 
+    function syncScheduledFieldsVisibility() {
+      if (!elements.serviceLevel || !elements.scheduledDateField || !elements.scheduledTimeField || !elements.scheduledDate || !elements.scheduledTime) {
+        return;
+      }
+
+      const scheduled = clean(elements.serviceLevel.value) === "scheduled";
+      elements.scheduledDateField.classList.toggle("hidden", !scheduled);
+      elements.scheduledTimeField.classList.toggle("hidden", !scheduled);
+
+      if (!scheduled) {
+        elements.scheduledDate.value = "";
+        elements.scheduledTime.value = "";
+      }
+    }
+
+    function buildScheduledAtValue(dateValue, timeValue) {
+      if (!dateValue || !timeValue) {
+        return null;
+      }
+
+      const localValue = new Date(`${dateValue}T${timeValue}`);
+      return Number.isNaN(localValue.getTime()) ? null : localValue;
+    }
+
     async function detectEstimatedMilesFieldSupport() {
       if (state.supportEstimatedMiles !== null) {
         return state.supportEstimatedMiles;
@@ -1442,6 +1480,17 @@
         return "Total amount billed must be a valid number.";
       }
 
+      if (clean(payload.service_level) === "scheduled") {
+        if (!payload.scheduled_at) {
+          return "Scheduled Date and Scheduled Time are required.";
+        }
+
+        const scheduled = parseDate(payload.scheduled_at);
+        if (!scheduled || scheduled.getTime() <= Date.now()) {
+          return "Scheduled delivery must be in the future.";
+        }
+      }
+
       return "";
     }
 
@@ -1450,6 +1499,9 @@
       const priceRaw = String(data.get("approved_price") || "").trim();
       const estimatedMilesRaw = String(data.get("estimated_miles") || "").trim();
       const estimatedMilesValue = estimatedMilesRaw === "" ? null : Number(estimatedMilesRaw);
+      const scheduledDateValue = String(data.get("scheduled_date") || "").trim();
+      const scheduledTimeValue = String(data.get("scheduled_time") || "").trim();
+      const scheduledAt = buildScheduledAtValue(scheduledDateValue, scheduledTimeValue);
 
       if (estimatedMilesRaw !== "" && (!Number.isFinite(estimatedMilesValue) || estimatedMilesValue < 0)) {
         throw new Error("Estimated miles must be a valid number.");
@@ -1498,6 +1550,7 @@
         job_category: normalizeCategory(data.get("job_category")),
         delivery_type: String(data.get("delivery_type") || "").trim() || null,
         service_level: String(data.get("service_level") || "").trim() || null,
+        scheduled_at: scheduledAt ? scheduledAt.toISOString() : null,
         return_required: clean(data.get("return_required")) === "true",
         return_location_type: String(data.get("return_location_type") || "same_as_pickup").trim() || "same_as_pickup",
         return_address: String(data.get("return_address") || "").trim() || null,
@@ -1529,6 +1582,10 @@
         payload.return_address = null;
         payload.return_suite_floor = null;
         payload.return_zip = null;
+      }
+
+      if (clean(payload.service_level) !== "scheduled") {
+        payload.scheduled_at = null;
       }
 
       payload._estimated_miles_value = estimatedMilesValue;
@@ -1611,10 +1668,26 @@
     }
 
     async function loadDashboardData() {
+      await Promise.all([loadQuotes(), loadRecurringCustomers()]);
+    }
+
+    async function refreshDashboardData() {
+      if (!elements.refreshButton) {
+        return;
+      }
+
+      const button = elements.refreshButton;
+      button.disabled = true;
+      button.textContent = "Refreshing...";
+
       try {
-        await Promise.all([loadQuotes(), loadRecurringCustomers()]);
+        await loadDashboardData();
       } catch (error) {
-        setCreateJobMessage(error.message || "Unable to load dashboard data.", "error");
+        console.error("Unable to refresh dashboard", error);
+        setCreateJobMessage("Unable to refresh dashboard.", "error");
+      } finally {
+        button.disabled = false;
+        button.textContent = "Refresh";
       }
     }
 
@@ -1669,13 +1742,12 @@
       setCreateJobExpanded(expanded, { scroll: expanded, focusFirstField: expanded });
     });
 
-    elements.refreshButton.addEventListener("click", () => {
-      loadDashboardData();
-    });
+    elements.refreshButton.addEventListener("click", refreshDashboardData);
 
     elements.createJobForm.addEventListener("submit", createJob);
     elements.returnRequired.addEventListener("change", syncReturnDetailsVisibility);
     elements.returnLocationType.addEventListener("change", syncReturnDetailsVisibility);
+    elements.serviceLevel.addEventListener("change", syncScheduledFieldsVisibility);
     elements.customerLookupInput.addEventListener("input", handleCustomerLookupInput);
 
     elements.customerLookupResults.addEventListener("click", event => {
@@ -1710,6 +1782,7 @@
       renderGreeting(session);
       restoreCreateJobExpandedState();
       syncReturnDetailsVisibility();
+      syncScheduledFieldsVisibility();
 
       window.dispatchEvent(new CustomEvent("mg-dispatch-ready", {
         detail: {
@@ -1717,7 +1790,12 @@
         }
       }));
 
-      await loadDashboardData();
+      try {
+        await loadDashboardData();
+      } catch (error) {
+        console.error("Unable to load dashboard data", error);
+        setCreateJobMessage(error.message || "Unable to load dashboard data.", "error");
+      }
     })();
   </script>
   <script src="/dispatch-menu.js"></script>

@@ -110,6 +110,35 @@
     }).format(date);
   }
 
+  function formatDateOnly(value) {
+    const date = parseDate(value);
+    if (!date) {
+      return "-";
+    }
+
+    return new Intl.DateTimeFormat("en-US", {
+      month: "long",
+      day: "numeric",
+      year: "numeric"
+    }).format(date);
+  }
+
+  function formatTimeOnly(value) {
+    const date = parseDate(value);
+    if (!date) {
+      return "-";
+    }
+
+    return new Intl.DateTimeFormat("en-US", {
+      hour: "numeric",
+      minute: "2-digit"
+    }).format(date);
+  }
+
+  function scheduledDeliveryDateTime(delivery) {
+    return delivery?.scheduled_at || delivery?.pickup_time || delivery?.delivery_time || null;
+  }
+
   function formatMoney(value) {
     const amount = Number(value || 0);
     return amount.toLocaleString("en-US", {
@@ -556,6 +585,11 @@
     const route = [delivery.pickup_address, delivery.delivery_address].filter(Boolean).join(" → ");
     const assignedDriver = delivery.assigned_driver_id ? String(delivery.assigned_driver_id) : "Unassigned";
     const notes = [delivery.special_instructions, delivery.delivery_instructions, delivery.pickup_instructions, delivery.notes].filter(Boolean).join("\n\n");
+        const scheduledValue = scheduledDeliveryDateTime(delivery);
+        const scheduledBlocks = clean(delivery.service_level) === "scheduled" && scheduledValue ? `
+          ${detailsBlock("Scheduled Delivery", formatDateOnly(scheduledValue))}
+          ${detailsBlock("Scheduled Time", formatTimeOnly(scheduledValue))}
+        ` : "";
 
     elements.deliveryDetailsTitle.textContent = delivery.job_number || "Delivery Details";
     elements.deliveryDetailsSubtitle.textContent = `${delivery.customer_name || delivery.company_name || "Customer"} • ${getStatusLabel(delivery)}`;
@@ -569,6 +603,7 @@
           ${detailsBlock("Category", getCategoryLabel(delivery.job_category))}
           ${detailsBlock("Vehicle", delivery.vehicle_type || "-")}
           ${detailsBlock("Speed", delivery.delivery_speed || delivery.service_level || "-")}
+          ${scheduledBlocks}
           ${detailsBlock("Reference", delivery.reference_number || "-")}
           ${detailsBlock("Assigned Driver", assignedDriver)}
           ${detailsBlock("Driver Pay", delivery.driver_pay != null && delivery.driver_pay !== "" ? formatMoney(delivery.driver_pay) : "-")}
