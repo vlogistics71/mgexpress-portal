@@ -294,6 +294,7 @@
       display: grid;
       gap: 6px;
       min-width: 0;
+      position: relative;
     }
 
     .field label {
@@ -323,6 +324,79 @@
 
     .field.full {
       grid-column: 1 / -1;
+    }
+
+    .address-suggestions {
+      position: absolute;
+      left: 0;
+      right: 0;
+      top: calc(100% + 4px);
+      z-index: 35;
+      display: none;
+      max-height: 220px;
+      overflow-y: auto;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      background: #fff;
+      box-shadow: 0 8px 18px rgba(0, 0, 0, .08);
+    }
+
+    .address-suggestions.open {
+      display: block;
+    }
+
+    .address-suggestion-row,
+    .address-suggestion-btn {
+      width: 100%;
+      min-height: 44px;
+      border: 0;
+      border-bottom: 1px solid #edf1ef;
+      background: #fff;
+      text-align: left;
+      padding: 10px 12px;
+      display: grid;
+      gap: 3px;
+      cursor: pointer;
+      color: var(--ink);
+    }
+
+    .address-suggestion-btn:hover,
+    .address-suggestion-btn:focus-visible {
+      background: #f4faf7;
+      outline: none;
+    }
+
+    .address-suggestion-row:last-child,
+    .address-suggestion-btn:last-child {
+      border-bottom: 0;
+    }
+
+    .address-suggestion-title {
+      font-size: 13px;
+      font-weight: 900;
+      color: var(--dark-green);
+      line-height: 1.3;
+      overflow-wrap: anywhere;
+    }
+
+    .address-suggestion-meta {
+      font-size: 12px;
+      color: var(--muted);
+      font-weight: 700;
+      line-height: 1.3;
+      overflow-wrap: anywhere;
+    }
+
+    .address-autocomplete-message {
+      margin-top: 4px;
+      font-size: 12px;
+      color: var(--muted);
+      line-height: 1.3;
+    }
+
+    .address-autocomplete-message.error {
+      color: var(--danger);
+      font-weight: 700;
     }
 
     .lookup-results {
@@ -797,7 +871,7 @@
             <div class="form-grid two-up">
               <div class="field full">
                 <label for="pickup_address">Pickup Address</label>
-                <textarea id="pickup_address" name="pickup_address" required></textarea>
+                <input id="pickup_address" name="pickup_address" type="text" autocomplete="street-address" required>
               </div>
 
               <div class="field">
@@ -837,7 +911,7 @@
             <div class="form-grid two-up">
               <div class="field full">
                 <label for="delivery_address">Delivery Address</label>
-                <textarea id="delivery_address" name="delivery_address" required></textarea>
+                <input id="delivery_address" name="delivery_address" type="text" autocomplete="street-address" required>
               </div>
 
               <div class="field">
@@ -997,7 +1071,7 @@
 
               <div class="field full" data-return-different>
                 <label for="return_address">Return Address (when different)</label>
-                <textarea id="return_address" name="return_address"></textarea>
+                <input id="return_address" name="return_address" type="text" autocomplete="street-address">
               </div>
 
               <div class="field" data-return-different>
@@ -1031,6 +1105,7 @@
     </section>
   </main>
 
+  <script src="/assets/js/config.js"></script>
   <script>
     const client = supabase.createClient(
       "https://dczlucwfjayymlwbzzdi.supabase.co",
@@ -1044,7 +1119,12 @@
       recurringCustomers: [],
       supportEstimatedMiles: null,
       quoteColumnSupport: null,
-      submitting: false
+      submitting: false,
+      addressAutocomplete: {
+        fields: [],
+        requestToken: 0,
+        providerSetupLogged: false
+      }
     };
 
     const elements = {
@@ -1059,6 +1139,14 @@
       customerLookupInput: document.getElementById("customerLookupInput"),
       customerLookupResults: document.getElementById("customerLookupResults"),
       customerAccountId: document.getElementById("customer_account_id"),
+      pickupAddress: document.getElementById("pickup_address"),
+      pickupCity: document.getElementById("pickup_city"),
+      pickupZip: document.getElementById("pickup_zip"),
+      deliveryAddress: document.getElementById("delivery_address"),
+      deliveryCity: document.getElementById("delivery_city"),
+      deliveryZip: document.getElementById("delivery_zip"),
+      returnAddress: document.getElementById("return_address"),
+      returnZip: document.getElementById("return_zip"),
       returnRequired: document.getElementById("return_required"),
       returnLocationType: document.getElementById("return_location_type"),
       returnDetails: document.getElementById("returnDetails"),
@@ -1075,6 +1163,15 @@
     };
 
     const CREATE_JOB_EXPANDED_KEY = "mgexpress.dashboard.createJobExpanded";
+    const ADDRESS_AUTOCOMPLETE_CONFIG = Object.freeze({
+      provider: clean(window.MG_CONFIG?.addressProvider || "mapbox"),
+      mapboxPublicToken: String(window.MG_CONFIG?.mapboxPublicToken || window.MG_MAPBOX_PUBLIC_TOKEN || "").trim(),
+      debounceMs: 300,
+      minChars: 3,
+      maxResults: 6,
+      mapboxBbox: "-109.0603,36.9924,-102.0416,41.0034",
+      mapboxProximity: "-104.9903,39.7392"
+    });
 
     function escapeHtml(value) {
       const element = document.createElement("div");
@@ -1103,6 +1200,362 @@
 
     function normalizeText(value) {
       return String(value || "").trim().toLowerCase();
+    }
+
+    function getAddressContextValue(feature, prefixList = []) {
+      const context = Array.isArray(feature?.context) ? feature.context : [];
+      for (const prefix of prefixList) {
+        const match = context.find(item => String(item?.id || "").startsWith(prefix));
+        if (match?.text) {
+          return String(match.text).trim();
+        }
+      }
+      return "";
+    }
+
+    function getAddressContextShortCode(feature, prefix) {
+      const context = Array.isArray(feature?.context) ? feature.context : [];
+      const match = context.find(item => String(item?.id || "").startsWith(prefix));
+      return clean(match?.short_code || "");
+    }
+
+    function isColoradoAddressFeature(feature) {
+      if (!feature || typeof feature !== "object") {
+        return false;
+      }
+
+      const regionShortCode = getAddressContextShortCode(feature, "region");
+      if (regionShortCode === "us-co") {
+        return true;
+      }
+
+      const regionName = clean(getAddressContextValue(feature, ["region"]));
+      if (regionName === "colorado") {
+        return true;
+      }
+
+      const placeName = String(feature.place_name || "");
+      return /,\s*(co|colorado)\b/i.test(placeName);
+    }
+
+    function parseMapboxAddressFeature(feature) {
+      const streetName = String(feature?.text || "").trim();
+      const houseNumber = String(feature?.address || "").trim();
+      const street = [houseNumber, streetName].filter(Boolean).join(" ").trim() || String(feature?.place_name || "").split(",")[0].trim();
+      const city = getAddressContextValue(feature, ["place", "locality", "district"]);
+      const zip = getAddressContextValue(feature, ["postcode"]);
+      const region = getAddressContextValue(feature, ["region"]);
+      return {
+        street,
+        city,
+        zip,
+        region,
+        displayTitle: street || String(feature?.place_name || "").trim(),
+        displayMeta: [city, region, zip].filter(Boolean).join(", "),
+        isColorado: isColoradoAddressFeature(feature)
+      };
+    }
+
+    function hideAddressSuggestions(field) {
+      if (!field?.suggestionsHost) {
+        return;
+      }
+      field.suggestionsHost.innerHTML = "";
+      field.suggestionsHost.classList.remove("open");
+      if (field.input) {
+        field.input.setAttribute("aria-expanded", "false");
+      }
+    }
+
+    function setAddressAutocompleteMessage(field, message, type = "") {
+      if (!field?.messageHost) {
+        return;
+      }
+      field.messageHost.textContent = message || "";
+      field.messageHost.className = type ? `address-autocomplete-message ${type}` : "address-autocomplete-message";
+    }
+
+    function showAddressSuggestionsLoading(field) {
+      if (!field?.suggestionsHost) {
+        return;
+      }
+
+      field.suggestionsHost.innerHTML = '<div class="address-suggestion-row">Searching addresses...</div>';
+      field.suggestionsHost.classList.add("open");
+      if (field.input) {
+        field.input.setAttribute("aria-expanded", "true");
+      }
+    }
+
+    function renderAddressSuggestions(field, suggestions) {
+      if (!field?.suggestionsHost) {
+        return;
+      }
+
+      if (!Array.isArray(suggestions) || suggestions.length === 0) {
+        field.suggestionsHost.innerHTML = '<div class="address-suggestion-row">No Colorado address matches found.</div>';
+        field.suggestionsHost.classList.add("open");
+        return;
+      }
+
+      field.suggestionsHost.innerHTML = suggestions.map((item, index) => {
+        const meta = item.displayMeta || "Colorado, USA";
+        return `
+          <button class="address-suggestion-btn" type="button" data-address-option="${index}">
+            <span class="address-suggestion-title">${escapeHtml(item.displayTitle || item.street || "Address")}</span>
+            <span class="address-suggestion-meta">${escapeHtml(meta)}</span>
+          </button>
+        `;
+      }).join("");
+
+      field.suggestionsHost.classList.add("open");
+      if (field.input) {
+        field.input.setAttribute("aria-expanded", "true");
+      }
+    }
+
+    async function fetchMapboxColoradoSuggestions(query, signal) {
+      const endpoint = `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(query)}.json`;
+      const params = new URLSearchParams({
+        autocomplete: "true",
+        country: "US",
+        types: "address",
+        language: "en",
+        limit: String(ADDRESS_AUTOCOMPLETE_CONFIG.maxResults),
+        bbox: ADDRESS_AUTOCOMPLETE_CONFIG.mapboxBbox,
+        proximity: ADDRESS_AUTOCOMPLETE_CONFIG.mapboxProximity,
+        access_token: ADDRESS_AUTOCOMPLETE_CONFIG.mapboxPublicToken
+      });
+
+      const response = await fetch(`${endpoint}?${params.toString()}`, { signal });
+      if (!response.ok) {
+        throw new Error(`Address provider request failed (${response.status}).`);
+      }
+
+      const payload = await response.json();
+      const features = Array.isArray(payload?.features) ? payload.features : [];
+      return features
+        .map(parseMapboxAddressFeature)
+        .filter(item => item.isColorado)
+        .slice(0, ADDRESS_AUTOCOMPLETE_CONFIG.maxResults);
+    }
+
+    function closeAllAddressSuggestions() {
+      state.addressAutocomplete.fields.forEach(field => hideAddressSuggestions(field));
+    }
+
+    function clearAddressAutocompleteUi() {
+      state.addressAutocomplete.fields.forEach(field => {
+        if (field.timerId) {
+          window.clearTimeout(field.timerId);
+          field.timerId = null;
+        }
+        if (field.controller) {
+          field.controller.abort();
+          field.controller = null;
+        }
+        field.options = [];
+        hideAddressSuggestions(field);
+        setAddressAutocompleteMessage(field, "");
+      });
+    }
+
+    function applyAddressSuggestion(field, suggestion) {
+      if (!field?.input || !suggestion) {
+        return;
+      }
+
+      if (!suggestion.isColorado) {
+        setAddressAutocompleteMessage(field, "Please select a Colorado address.", "error");
+        return;
+      }
+
+      field.input.value = suggestion.street || suggestion.displayTitle || field.input.value;
+
+      if (field.cityInput && suggestion.city) {
+        field.cityInput.value = suggestion.city;
+      }
+
+      if (field.zipInput && suggestion.zip) {
+        field.zipInput.value = suggestion.zip;
+      }
+
+      setAddressAutocompleteMessage(field, "");
+      hideAddressSuggestions(field);
+    }
+
+    async function runAddressSearch(field, query) {
+      if (!field?.input) {
+        return;
+      }
+
+      const trimmed = String(query || "").trim();
+      if (trimmed.length < ADDRESS_AUTOCOMPLETE_CONFIG.minChars) {
+        hideAddressSuggestions(field);
+        return;
+      }
+
+      if (!ADDRESS_AUTOCOMPLETE_CONFIG.mapboxPublicToken) {
+        if (!state.addressAutocomplete.providerSetupLogged) {
+          console.error("Address autocomplete is not configured: missing MG_CONFIG.mapboxPublicToken or MG_MAPBOX_PUBLIC_TOKEN.");
+          state.addressAutocomplete.providerSetupLogged = true;
+        }
+        hideAddressSuggestions(field);
+        return;
+      }
+
+      if (field.controller) {
+        field.controller.abort();
+      }
+
+      field.controller = new AbortController();
+      const requestToken = ++state.addressAutocomplete.requestToken;
+      field.requestToken = requestToken;
+
+      showAddressSuggestionsLoading(field);
+
+      try {
+        const results = await fetchMapboxColoradoSuggestions(trimmed, field.controller.signal);
+        if (field.requestToken !== requestToken) {
+          return;
+        }
+
+        field.options = results;
+        renderAddressSuggestions(field, results);
+      } catch (error) {
+        if (error?.name === "AbortError") {
+          return;
+        }
+        console.error("Address autocomplete lookup failed", error);
+        hideAddressSuggestions(field);
+        setAddressAutocompleteMessage(field, "Address lookup is unavailable. You can enter the address manually.");
+      }
+    }
+
+    function queueAddressSearch(field) {
+      if (!field?.input) {
+        return;
+      }
+
+      if (field.timerId) {
+        window.clearTimeout(field.timerId);
+      }
+
+      const query = field.input.value;
+      field.timerId = window.setTimeout(() => {
+        runAddressSearch(field, query);
+      }, ADDRESS_AUTOCOMPLETE_CONFIG.debounceMs);
+    }
+
+    function ensureAddressAutocompleteUi(field) {
+      if (!field?.input) {
+        return;
+      }
+
+      const hostField = field.input.closest(".field");
+      if (!hostField) {
+        return;
+      }
+
+      const suggestionsHost = document.createElement("div");
+      suggestionsHost.className = "address-suggestions";
+      suggestionsHost.id = `${field.input.id}Suggestions`;
+      suggestionsHost.setAttribute("role", "listbox");
+      suggestionsHost.setAttribute("aria-label", `${field.label} suggestions`);
+
+      const messageHost = document.createElement("div");
+      messageHost.className = "address-autocomplete-message";
+
+      hostField.appendChild(suggestionsHost);
+      hostField.appendChild(messageHost);
+
+      field.suggestionsHost = suggestionsHost;
+      field.messageHost = messageHost;
+      field.options = [];
+
+      field.input.setAttribute("aria-controls", suggestionsHost.id);
+      field.input.setAttribute("aria-expanded", "false");
+
+      field.input.addEventListener("input", () => {
+        setAddressAutocompleteMessage(field, "");
+        queueAddressSearch(field);
+      });
+
+      field.input.addEventListener("focus", () => {
+        if (String(field.input.value || "").trim().length >= ADDRESS_AUTOCOMPLETE_CONFIG.minChars) {
+          queueAddressSearch(field);
+        }
+      });
+
+      field.input.addEventListener("keydown", event => {
+        if (event.key === "Escape") {
+          hideAddressSuggestions(field);
+        }
+      });
+
+      field.input.addEventListener("blur", () => {
+        window.setTimeout(() => {
+          hideAddressSuggestions(field);
+        }, 140);
+      });
+
+      suggestionsHost.addEventListener("mousedown", event => {
+        const option = event.target.closest("[data-address-option]");
+        if (!option) {
+          return;
+        }
+
+        const index = Number(option.getAttribute("data-address-option"));
+        if (!Number.isInteger(index) || !field.options[index]) {
+          return;
+        }
+
+        event.preventDefault();
+        applyAddressSuggestion(field, field.options[index]);
+      });
+    }
+
+    function setupAddressAutocomplete() {
+      const fieldConfigs = [
+        {
+          key: "pickup",
+          label: "Pickup Address",
+          input: elements.pickupAddress,
+          cityInput: elements.pickupCity,
+          zipInput: elements.pickupZip
+        },
+        {
+          key: "delivery",
+          label: "Delivery Address",
+          input: elements.deliveryAddress,
+          cityInput: elements.deliveryCity,
+          zipInput: elements.deliveryZip
+        },
+        {
+          key: "return",
+          label: "Return Address",
+          input: elements.returnAddress,
+          cityInput: null,
+          zipInput: elements.returnZip
+        }
+      ];
+
+      state.addressAutocomplete.fields = fieldConfigs.filter(field => field.input);
+      state.addressAutocomplete.fields.forEach(field => ensureAddressAutocompleteUi(field));
+
+      document.addEventListener("click", event => {
+        const clickedInsideAutocomplete = state.addressAutocomplete.fields.some(field => {
+          if (!field?.input) {
+            return false;
+          }
+          const hostField = field.input.closest(".field");
+          return hostField ? hostField.contains(event.target) : false;
+        });
+
+        if (!clickedInsideAutocomplete) {
+          closeAllAddressSuggestions();
+        }
+      });
     }
 
     function normalizeCategory(value) {
@@ -1394,6 +1847,12 @@
         elements.createJobForm.return_address.value = "";
         elements.createJobForm.return_suite_floor.value = "";
         elements.createJobForm.return_zip.value = "";
+
+        const returnField = state.addressAutocomplete.fields.find(field => field.key === "return");
+        if (returnField) {
+          hideAddressSuggestions(returnField);
+          setAddressAutocompleteMessage(returnField, "");
+        }
       }
     }
 
@@ -1461,6 +1920,8 @@
       if (elements.scheduledTime) {
         elements.scheduledTime.value = "";
       }
+
+      clearAddressAutocompleteUi();
 
       syncReturnDetailsVisibility();
       syncScheduledFieldsVisibility();
@@ -1978,6 +2439,7 @@
 
       renderGreeting(session);
       restoreCreateJobExpandedState();
+      setupAddressAutocomplete();
       syncReturnDetailsVisibility();
       syncScheduledFieldsVisibility();
 
