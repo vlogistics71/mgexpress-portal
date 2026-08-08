@@ -1972,30 +1972,17 @@
 
   async function startPage() {
     try {
-      if (
-        !window.MG_MENU
-      ) {
-        throw new Error(
-          "The shared menu module did not load."
-        );
+      if (!window.MG_AUTH || typeof window.MG_AUTH.requireDispatch !== "function") {
+        throw new Error("Dispatch authentication is unavailable.");
       }
 
-      const menuResult =
-        await window
-          .MG_MENU
-          .initialize({
-            buttonContainerSelector:
-              ".topbar-inner"
-          });
-
-      if (!menuResult) {
+      const authData = await window.MG_AUTH.requireDispatch();
+      if (!authData) {
         return;
       }
 
       const email =
-        menuResult.authData
-          ?.user
-          ?.email || "";
+        authData.user?.email || "";
 
       document
         .getElementById(
@@ -2003,6 +1990,14 @@
         )
         .textContent =
           email;
+
+      window.dispatchEvent(
+        new CustomEvent("mg-dispatch-ready", {
+          detail: {
+            email
+          }
+        })
+      );
 
       await loadCustomerData();
     } catch (error) {
