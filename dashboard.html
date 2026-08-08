@@ -343,8 +343,10 @@
       left: 0;
       right: 0;
       top: calc(100% + 4px);
-      z-index: 60;
+      z-index: 9999;
       display: none;
+      visibility: hidden;
+      opacity: 0;
       max-height: 240px;
       overflow-y: auto;
       border: 1px solid var(--line);
@@ -355,6 +357,8 @@
 
     .address-suggestions.open {
       display: block;
+      visibility: visible;
+      opacity: 1;
     }
 
     .address-suggestion-btn,
@@ -1168,7 +1172,14 @@
       debounceMs: 300,
       limit: 6,
       lang: "en",
-      filter: "countrycode:us|rect:-109.06,36.99,-102.04,41.00"
+      filter: "rect:-109.06,36.99,-102.04,41.00|countrycode:us"
+    });
+
+    const COLORADO_RECT = Object.freeze({
+      minLon: -109.06,
+      maxLon: -102.04,
+      minLat: 36.99,
+      maxLat: 41.00
     });
 
     function escapeHtml(value) {
@@ -1265,7 +1276,47 @@
         String(result?.city || "").trim() ||
         String(result?.town || "").trim() ||
         String(result?.village || "").trim() ||
+        String(result?.municipality || "").trim() ||
         String(result?.county || "").trim()
+      );
+    }
+
+    function toNumberOrNull(value) {
+      const number = Number(value);
+      return Number.isFinite(number) ? number : null;
+    }
+
+    function extractGeoapifyCoordinates(result) {
+      const directLon = toNumberOrNull(result?.lon ?? result?.longitude);
+      const directLat = toNumberOrNull(result?.lat ?? result?.latitude);
+
+      if (directLon !== null && directLat !== null) {
+        return { lon: directLon, lat: directLat };
+      }
+
+      const coordinates = result?.geometry?.coordinates;
+      if (Array.isArray(coordinates) && coordinates.length >= 2) {
+        const geometryLon = toNumberOrNull(coordinates[0]);
+        const geometryLat = toNumberOrNull(coordinates[1]);
+        if (geometryLon !== null && geometryLat !== null) {
+          return { lon: geometryLon, lat: geometryLat };
+        }
+      }
+
+      return { lon: null, lat: null };
+    }
+
+    function isWithinColoradoRect(result) {
+      const coords = extractGeoapifyCoordinates(result);
+      if (coords.lon === null || coords.lat === null) {
+        return false;
+      }
+
+      return (
+        coords.lon >= COLORADO_RECT.minLon &&
+        coords.lon <= COLORADO_RECT.maxLon &&
+        coords.lat >= COLORADO_RECT.minLat &&
+        coords.lat <= COLORADO_RECT.maxLat
       );
     }
 
@@ -1279,17 +1330,38 @@
         return false;
       }
 
-      return normalizeColoradoState(result.state_code) || normalizeColoradoState(result.state);
+      if (normalizeColoradoState(result.state) || normalizeColoradoState(result.state_code)) {
+        return true;
+      }
+
+      return isWithinColoradoRect(result);
+    }
+
+    function buildSuggestionMeta(city, zip) {
+      const safeCity = String(city || "").trim();
+      const safeZip = String(zip || "").trim();
+
+      if (safeCity && safeZip) {
+        return `${safeCity}, CO ${safeZip}`;
+      }
+
+      if (safeCity) {
+        return `${safeCity}, CO`;
+      }
+
+      if (safeZip) {
+        return `CO ${safeZip}`;
+      }
+
+      return "Colorado, USA";
     }
 
     function parseGeoapifyResult(result) {
       const street = buildStreetAddress(result);
       const city = resolveGeoapifyCity(result);
       const zip = String(result?.postcode || "").trim();
-      const stateCode = String(result?.state_code || "").trim();
-      const stateName = String(result?.state || "").trim();
       const title = street || String(result?.formatted || "").trim() || "Address";
-      const meta = [city, stateCode || stateName, zip].filter(Boolean).join(", ");
+      const meta = buildSuggestionMeta(city, zip);
 
       return {
         street,
@@ -1299,6 +1371,24 @@
         meta,
         isColorado: isColoradoGeoapifyResult(result)
       };
+    }
+
+    function normalizeGeoapifyResult(result) {
+      if (!result || typeof result !== "object") {
+        return null;
+      }
+
+      if (result.properties && typeof result.properties === "object") {
+        const merged = {
+          ...result.properties,
+          lon: result.properties.lon,
+          lat: result.properties.lat,
+          geometry: result.geometry
+        };
+        return merged;
+      }
+
+      return result;
     }
 
     function applyParsedAddressToField(field, parsedAddress) {
@@ -1349,21 +1439,64 @@
         apiKey: GEOAPIFY_AUTOCOMPLETE_CONFIG.apiKey
       });
 
-      const response = await fetch(`${endpoint}?${params.toString()}`, { signal });
+      const requestUrl = `${endpoint}?${params.toString()}`;
+      const safeRequestUrl = requestUrl.replace(/apiKey=[^&]*/i, "apiKey=REDACTED");
+      console.log("[MG Address] request started", safeRequestUrl);
+
+      const response = await fetch(requestUrl, { signal });
+      console.log("[MG Address] status:", response.status, response.statusText, "ok:", response.ok);
+
       if (!response.ok) {
-        throw new Error(`Geoapify autocomplete failed (${response.status}).`);
+        const responseBody = await response.text();
+        console.error("[MG Address] error response body:", responseBody);
+        const error = new Error(`Geoapify autocomplete failed (${response.status} ${response.statusText}).`);
+        error.status = response.status;
+        error.statusText = response.statusText;
+        error.responseBody = responseBody;
+        throw error;
       }
 
       const payload = await response.json();
-      const results = Array.isArray(payload?.results) ? payload.results : [];
-      return results
+      console.log("[MG Address] full parsed JSON:", payload);
+
+      const sourceKey = Array.isArray(payload?.results)
+        ? "results"
+        : (Array.isArray(payload?.features) ? "features" : "none");
+
+      const rawResults = sourceKey === "results"
+        ? payload.results
+        : (sourceKey === "features" ? payload.features : []);
+
+      const normalizedResults = rawResults
+        .map(normalizeGeoapifyResult)
+        .filter(Boolean);
+
+      const parsedSuggestions = normalizedResults
         .map(parseGeoapifyResult)
+        .filter(item => item && String(item.title || "").trim());
+
+      const suggestions = parsedSuggestions
         .filter(item => item.isColorado)
         .slice(0, GEOAPIFY_AUTOCOMPLETE_CONFIG.limit);
+
+      const discardedCount = parsedSuggestions.length - suggestions.length;
+      console.log("[MG Address] source property:", sourceKey);
+      console.log("[MG Address] result count:", normalizedResults.length);
+      console.log("[MG Address] first result:", normalizedResults[0] || null);
+      console.log("[MG Address] discarded by Colorado validation:", Math.max(0, discardedCount));
+
+      return {
+        suggestions,
+        sourceKey,
+        rawCount: normalizedResults.length,
+        discardedCount: Math.max(0, discardedCount)
+      };
     }
 
     async function runGeoapifySearch(field, query) {
       const trimmed = String(query || "").trim();
+      console.log("[MG Address] input:", trimmed);
+
       if (!field?.input || trimmed.length < GEOAPIFY_AUTOCOMPLETE_CONFIG.minChars) {
         hideAddressSuggestions(field);
         return;
@@ -1381,20 +1514,25 @@
       field.suggestionsHost.classList.add("open");
 
       try {
-        const suggestions = await fetchGeoapifySuggestions(trimmed, field.controller.signal);
+        const result = await fetchGeoapifySuggestions(trimmed, field.controller.signal);
         if (field.requestToken !== token) {
           return;
         }
 
-        field.options = suggestions;
-        renderGeoapifySuggestions(field, suggestions);
+        field.options = result.suggestions;
+        renderGeoapifySuggestions(field, result.suggestions);
       } catch (error) {
         if (error?.name === "AbortError") {
           return;
         }
-        console.error("Geoapify address autocomplete failed", error);
+        console.error("Geoapify address autocomplete failed", {
+          status: error?.status,
+          statusText: error?.statusText,
+          responseBody: error?.responseBody || "",
+          message: error?.message || String(error)
+        });
         hideAddressSuggestions(field);
-        setAddressAutocompleteMessage(field, "Address suggestions unavailable. Enter address manually.");
+        setAddressAutocompleteMessage(field, "Address search unavailable. You can still type the address manually.");
       }
     }
 
@@ -1409,6 +1547,7 @@
 
       const query = String(field.input.value || "");
       field.timerId = window.setTimeout(() => {
+        console.log("[MG Address] debounce fired:", field.key || field.label || "address");
         runGeoapifySearch(field, query);
       }, GEOAPIFY_AUTOCOMPLETE_CONFIG.debounceMs);
     }
@@ -1516,7 +1655,18 @@
       ];
 
       state.addressAutocomplete.fields = fieldConfigs.filter(field => field.input);
-      state.addressAutocomplete.fields.forEach(field => ensureAddressAutocompleteUi(field));
+      state.addressAutocomplete.fields.forEach(field => {
+        ensureAddressAutocompleteUi(field);
+        if (field.key === "pickup") {
+          console.log("[MG Address] Pickup listener attached");
+        }
+        if (field.key === "delivery") {
+          console.log("[MG Address] Delivery listener attached");
+        }
+        if (field.key === "return") {
+          console.log("[MG Address] Return listener attached");
+        }
+      });
 
       document.addEventListener("click", event => {
         const withinField = state.addressAutocomplete.fields.some(field => {
@@ -1530,9 +1680,9 @@
       });
 
       if (!GEOAPIFY_AUTOCOMPLETE_CONFIG.apiKey) {
-        console.error("Geoapify autocomplete is not configured: missing MG_CONFIG.geoapifyApiKey / MG_GEOAPIFY_API_KEY.");
+        console.error("Geoapify API key is not configured.");
         state.addressAutocomplete.fields.forEach(field => {
-          setAddressAutocompleteMessage(field, "Address suggestions unavailable. Enter address manually.");
+          setAddressAutocompleteMessage(field, "Geoapify API key is not configured.", "error");
         });
         state.addressAutocomplete.initialized = true;
         return;
