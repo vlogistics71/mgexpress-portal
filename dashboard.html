@@ -338,29 +338,64 @@
       font-weight: 700;
     }
 
-    .pac-container {
-      z-index: 9999 !important;
+    .address-suggestions {
+      position: absolute;
+      left: 0;
+      right: 0;
+      top: calc(100% + 4px);
+      z-index: 60;
+      display: none;
+      max-height: 240px;
+      overflow-y: auto;
       border: 1px solid var(--line);
       border-radius: 12px;
-      margin-top: 4px;
+      background: #fff;
       box-shadow: 0 8px 18px rgba(0, 0, 0, .12);
-      font-family: Arial, Helvetica, sans-serif;
     }
 
-    .pac-item {
+    .address-suggestions.open {
+      display: block;
+    }
+
+    .address-suggestion-btn,
+    .address-suggestion-row {
+      width: 100%;
       min-height: 44px;
+      border: 0;
+      border-bottom: 1px solid #edf1ef;
+      background: #fff;
+      text-align: left;
       padding: 10px 12px;
-      display: flex;
-      align-items: center;
+      display: grid;
+      gap: 3px;
+      color: var(--ink);
+      cursor: pointer;
       white-space: normal;
       line-height: 1.3;
       overflow-wrap: anywhere;
     }
 
-    .pac-item-query {
+    .address-suggestion-btn:hover,
+    .address-suggestion-btn:focus-visible {
+      background: #f4faf7;
+      outline: none;
+    }
+
+    .address-suggestion-btn:last-child,
+    .address-suggestion-row:last-child {
+      border-bottom: 0;
+    }
+
+    .address-suggestion-title {
       font-size: 13px;
       color: var(--dark-green);
       font-weight: 900;
+    }
+
+    .address-suggestion-meta {
+      font-size: 12px;
+      color: var(--muted);
+      font-weight: 700;
     }
 
     .lookup-results {
@@ -1086,7 +1121,8 @@
       submitting: false,
       addressAutocomplete: {
         fields: [],
-        initialized: false
+        initialized: false,
+        requestToken: 0
       }
     };
 
@@ -1126,17 +1162,13 @@
     };
 
     const CREATE_JOB_EXPANDED_KEY = "mgexpress.dashboard.createJobExpanded";
-    const GOOGLE_MAPS_CONFIG = Object.freeze({
-      apiKey: String(window.MG_CONFIG?.googleMapsApiKey || window.MG_GOOGLE_MAPS_API_KEY || "").trim(),
-      language: "en",
-      region: "US"
-    });
-
-    const COLORADO_BOUNDS = Object.freeze({
-      north: 41.0034,
-      south: 36.9924,
-      east: -102.0416,
-      west: -109.0603
+    const GEOAPIFY_AUTOCOMPLETE_CONFIG = Object.freeze({
+      apiKey: String(window.MG_CONFIG?.geoapifyApiKey || window.MG_GEOAPIFY_API_KEY || "").trim(),
+      minChars: 3,
+      debounceMs: 300,
+      limit: 6,
+      lang: "en",
+      filter: "countrycode:us|rect:-109.06,36.99,-102.04,41.00"
     });
 
     function escapeHtml(value) {
@@ -1176,56 +1208,96 @@
       field.messageHost.className = type ? `address-autocomplete-message ${type}` : "address-autocomplete-message";
     }
 
+    function hideAddressSuggestions(field) {
+      if (!field?.suggestionsHost) {
+        return;
+      }
+
+      field.suggestionsHost.innerHTML = "";
+      field.suggestionsHost.classList.remove("open");
+      field.options = [];
+    }
+
     function clearAddressAutocompleteUi() {
       state.addressAutocomplete.fields.forEach(field => {
+        if (field.timerId) {
+          window.clearTimeout(field.timerId);
+          field.timerId = null;
+        }
+
+        if (field.controller) {
+          field.controller.abort();
+          field.controller = null;
+        }
+
         setAddressAutocompleteMessage(field, "");
+        hideAddressSuggestions(field);
       });
     }
 
-    function ensureAddressAutocompleteUi(field) {
-      if (!field?.input) {
-        return;
+    function normalizeColoradoState(value) {
+      const token = clean(value);
+      if (token === "co" || token === "colorado") {
+        return true;
       }
-
-      const hostField = field.input.closest(".field");
-      if (!hostField) {
-        return;
-      }
-
-      const messageHost = document.createElement("div");
-      messageHost.className = "address-autocomplete-message";
-
-      hostField.appendChild(messageHost);
-      field.messageHost = messageHost;
+      return false;
     }
 
-    function getGoogleAddressComponent(components, type) {
-      return (components || []).find(component => Array.isArray(component.types) && component.types.includes(type)) || null;
+    function buildStreetAddress(result) {
+      const addressLine1 = String(result?.address_line1 || "").trim();
+      if (addressLine1) {
+        return addressLine1;
+      }
+
+      const housenumber = String(result?.housenumber || "").trim();
+      const street = String(result?.street || "").trim();
+      const combined = [housenumber, street].filter(Boolean).join(" ").trim();
+      if (combined) {
+        return combined;
+      }
+
+      const formatted = String(result?.formatted || "").trim();
+      return formatted ? formatted.split(",")[0].trim() : "";
     }
 
-    function parseGoogleAddress(place) {
-      const components = Array.isArray(place?.address_components) ? place.address_components : [];
-      const streetNumber = getGoogleAddressComponent(components, "street_number")?.long_name || "";
-      const route = getGoogleAddressComponent(components, "route")?.long_name || "";
-      const stateShort = getGoogleAddressComponent(components, "administrative_area_level_1")?.short_name || "";
-      const zip = getGoogleAddressComponent(components, "postal_code")?.long_name || "";
+    function resolveGeoapifyCity(result) {
+      return (
+        String(result?.city || "").trim() ||
+        String(result?.town || "").trim() ||
+        String(result?.village || "").trim() ||
+        String(result?.county || "").trim()
+      );
+    }
 
-      const city =
-        getGoogleAddressComponent(components, "locality")?.long_name ||
-        getGoogleAddressComponent(components, "postal_town")?.long_name ||
-        getGoogleAddressComponent(components, "sublocality_level_1")?.long_name ||
-        getGoogleAddressComponent(components, "administrative_area_level_2")?.long_name ||
-        "";
+    function isColoradoGeoapifyResult(result) {
+      if (!result || typeof result !== "object") {
+        return false;
+      }
 
-      const formatted = String(place?.formatted_address || "").trim();
-      const fallbackStreet = formatted ? formatted.split(",")[0].trim() : "";
-      const street = [streetNumber, route].filter(Boolean).join(" ").trim() || fallbackStreet;
+      const countryCode = clean(result.country_code || "");
+      if (countryCode && countryCode !== "us") {
+        return false;
+      }
+
+      return normalizeColoradoState(result.state_code) || normalizeColoradoState(result.state);
+    }
+
+    function parseGeoapifyResult(result) {
+      const street = buildStreetAddress(result);
+      const city = resolveGeoapifyCity(result);
+      const zip = String(result?.postcode || "").trim();
+      const stateCode = String(result?.state_code || "").trim();
+      const stateName = String(result?.state || "").trim();
+      const title = street || String(result?.formatted || "").trim() || "Address";
+      const meta = [city, stateCode || stateName, zip].filter(Boolean).join(", ");
 
       return {
         street,
         city,
         zip,
-        stateShort
+        title,
+        meta,
+        isColorado: isColoradoGeoapifyResult(result)
       };
     }
 
@@ -1245,101 +1317,176 @@
       }
     }
 
-    async function loadGoogleMapsPlacesLibrary() {
-      if (window.google?.maps?.places && typeof window.google.maps.importLibrary === "function") {
-        await window.google.maps.importLibrary("places");
+    function renderGeoapifySuggestions(field, suggestions) {
+      if (!field?.suggestionsHost) {
         return;
       }
 
-      if (window.__mgGoogleMapsPlacesPromise) {
-        await window.__mgGoogleMapsPlacesPromise;
-        await window.google.maps.importLibrary("places");
+      if (!Array.isArray(suggestions) || suggestions.length === 0) {
+        field.suggestionsHost.innerHTML = '<div class="address-suggestion-row">No Colorado address matches found.</div>';
+        field.suggestionsHost.classList.add("open");
         return;
       }
 
-      window.__mgGoogleMapsPlacesPromise = new Promise((resolve, reject) => {
-        const existingScript = document.getElementById("mgGoogleMapsScript");
-        if (existingScript) {
-          existingScript.addEventListener("load", resolve, { once: true });
-          existingScript.addEventListener("error", () => reject(new Error("Google Maps failed to load.")), { once: true });
+      field.suggestionsHost.innerHTML = suggestions.map((item, index) => `
+        <button class="address-suggestion-btn" type="button" data-address-option="${index}">
+          <span class="address-suggestion-title">${escapeHtml(item.title)}</span>
+          <span class="address-suggestion-meta">${escapeHtml(item.meta || "Colorado, USA")}</span>
+        </button>
+      `).join("");
+
+      field.suggestionsHost.classList.add("open");
+    }
+
+    async function fetchGeoapifySuggestions(query, signal) {
+      const endpoint = "https://api.geoapify.com/v1/geocode/autocomplete";
+      const params = new URLSearchParams({
+        text: String(query || ""),
+        format: "json",
+        limit: String(GEOAPIFY_AUTOCOMPLETE_CONFIG.limit),
+        lang: GEOAPIFY_AUTOCOMPLETE_CONFIG.lang,
+        filter: GEOAPIFY_AUTOCOMPLETE_CONFIG.filter,
+        apiKey: GEOAPIFY_AUTOCOMPLETE_CONFIG.apiKey
+      });
+
+      const response = await fetch(`${endpoint}?${params.toString()}`, { signal });
+      if (!response.ok) {
+        throw new Error(`Geoapify autocomplete failed (${response.status}).`);
+      }
+
+      const payload = await response.json();
+      const results = Array.isArray(payload?.results) ? payload.results : [];
+      return results
+        .map(parseGeoapifyResult)
+        .filter(item => item.isColorado)
+        .slice(0, GEOAPIFY_AUTOCOMPLETE_CONFIG.limit);
+    }
+
+    async function runGeoapifySearch(field, query) {
+      const trimmed = String(query || "").trim();
+      if (!field?.input || trimmed.length < GEOAPIFY_AUTOCOMPLETE_CONFIG.minChars) {
+        hideAddressSuggestions(field);
+        return;
+      }
+
+      if (field.controller) {
+        field.controller.abort();
+      }
+
+      const token = ++state.addressAutocomplete.requestToken;
+      field.requestToken = token;
+      field.controller = new AbortController();
+
+      field.suggestionsHost.innerHTML = '<div class="address-suggestion-row">Searching addresses...</div>';
+      field.suggestionsHost.classList.add("open");
+
+      try {
+        const suggestions = await fetchGeoapifySuggestions(trimmed, field.controller.signal);
+        if (field.requestToken !== token) {
           return;
         }
 
-        const callbackName = "mgGoogleMapsInit";
-        window[callbackName] = () => {
-          resolve();
-          try {
-            delete window[callbackName];
-          } catch (_error) {
-            window[callbackName] = undefined;
-          }
-        };
-
-        const script = document.createElement("script");
-        script.id = "mgGoogleMapsScript";
-        script.async = true;
-        script.defer = true;
-        script.src = `https://maps.googleapis.com/maps/api/js?key=${encodeURIComponent(GOOGLE_MAPS_CONFIG.apiKey)}&libraries=places&loading=async&callback=${callbackName}`;
-        script.addEventListener("error", () => reject(new Error("Google Maps failed to load.")), { once: true });
-        document.head.appendChild(script);
-      });
-
-      await window.__mgGoogleMapsPlacesPromise;
-      if (window.google?.maps?.importLibrary) {
-        await window.google.maps.importLibrary("places");
+        field.options = suggestions;
+        renderGeoapifySuggestions(field, suggestions);
+      } catch (error) {
+        if (error?.name === "AbortError") {
+          return;
+        }
+        console.error("Geoapify address autocomplete failed", error);
+        hideAddressSuggestions(field);
+        setAddressAutocompleteMessage(field, "Address suggestions unavailable. Enter address manually.");
       }
     }
 
-    function buildColoradoAutocompleteOptions() {
-      return {
-        fields: ["address_components", "formatted_address", "geometry"],
-        types: ["address"],
-        componentRestrictions: { country: "us" },
-        bounds: COLORADO_BOUNDS,
-        strictBounds: true,
-        locationRestriction: COLORADO_BOUNDS
-      };
-    }
-
-    function createGoogleAutocompleteForField(field) {
-      if (!field?.input || !window.google?.maps?.places?.Autocomplete) {
+    function queueGeoapifySearch(field) {
+      if (!field?.input) {
         return;
       }
 
-      const autocomplete = new window.google.maps.places.Autocomplete(
-        field.input,
-        buildColoradoAutocompleteOptions()
-      );
-
-      if (typeof autocomplete.setBounds === "function") {
-        autocomplete.setBounds(COLORADO_BOUNDS);
+      if (field.timerId) {
+        window.clearTimeout(field.timerId);
       }
 
-      autocomplete.addListener("place_changed", () => {
-        const place = autocomplete.getPlace();
-        const parsedAddress = parseGoogleAddress(place);
-        const isColorado = clean(parsedAddress.stateShort) === "co";
+      const query = String(field.input.value || "");
+      field.timerId = window.setTimeout(() => {
+        runGeoapifySearch(field, query);
+      }, GEOAPIFY_AUTOCOMPLETE_CONFIG.debounceMs);
+    }
 
-        if (!isColorado) {
-          field.input.value = "";
-          if (field.cityInput) {
-            field.cityInput.value = "";
-          }
-          if (field.zipInput) {
-            field.zipInput.value = "";
-          }
+    function ensureAddressAutocompleteUi(field) {
+      if (!field?.input) {
+        return;
+      }
+
+      const hostField = field.input.closest(".field");
+      if (!hostField) {
+        return;
+      }
+
+      const suggestionsHost = document.createElement("div");
+      suggestionsHost.className = "address-suggestions";
+      suggestionsHost.setAttribute("role", "listbox");
+
+      const messageHost = document.createElement("div");
+      messageHost.className = "address-autocomplete-message";
+
+      hostField.appendChild(suggestionsHost);
+      hostField.appendChild(messageHost);
+
+      field.suggestionsHost = suggestionsHost;
+      field.messageHost = messageHost;
+      field.options = [];
+
+      field.input.addEventListener("input", () => {
+        setAddressAutocompleteMessage(field, "");
+        queueGeoapifySearch(field);
+      });
+
+      field.input.addEventListener("focus", () => {
+        if (String(field.input.value || "").trim().length >= GEOAPIFY_AUTOCOMPLETE_CONFIG.minChars) {
+          queueGeoapifySearch(field);
+        }
+      });
+
+      field.input.addEventListener("blur", () => {
+        window.setTimeout(() => {
+          hideAddressSuggestions(field);
+        }, 140);
+      });
+
+      suggestionsHost.addEventListener("mousedown", event => {
+        const option = event.target.closest("[data-address-option]");
+        if (!option) {
+          return;
+        }
+
+        const index = Number(option.getAttribute("data-address-option"));
+        const selected = Number.isInteger(index) ? field.options[index] : null;
+        if (!selected) {
+          return;
+        }
+
+        event.preventDefault();
+
+        if (!selected.isColorado) {
           setAddressAutocompleteMessage(field, "Please select a Colorado address.", "error");
+          hideAddressSuggestions(field);
           return;
         }
 
         setAddressAutocompleteMessage(field, "");
-        applyParsedAddressToField(field, parsedAddress);
+        applyParsedAddressToField(field, selected);
+        hideAddressSuggestions(field);
       });
-
-      field.autocomplete = autocomplete;
     }
 
-    async function setupAddressAutocomplete() {
+    function closeAllAddressSuggestions() {
+      state.addressAutocomplete.fields.forEach(field => {
+        hideAddressSuggestions(field);
+      });
+    }
+
+    function setupAddressAutocomplete() {
       if (state.addressAutocomplete.initialized) {
         return;
       }
@@ -1371,23 +1518,24 @@
       state.addressAutocomplete.fields = fieldConfigs.filter(field => field.input);
       state.addressAutocomplete.fields.forEach(field => ensureAddressAutocompleteUi(field));
 
-      if (!GOOGLE_MAPS_CONFIG.apiKey) {
-        console.error("Google Maps Places autocomplete is not configured: missing MG_CONFIG.googleMapsApiKey or MG_GOOGLE_MAPS_API_KEY.");
+      document.addEventListener("click", event => {
+        const withinField = state.addressAutocomplete.fields.some(field => {
+          const hostField = field.input?.closest(".field");
+          return hostField ? hostField.contains(event.target) : false;
+        });
+
+        if (!withinField) {
+          closeAllAddressSuggestions();
+        }
+      });
+
+      if (!GEOAPIFY_AUTOCOMPLETE_CONFIG.apiKey) {
+        console.error("Geoapify autocomplete is not configured: missing MG_CONFIG.geoapifyApiKey / MG_GEOAPIFY_API_KEY.");
         state.addressAutocomplete.fields.forEach(field => {
           setAddressAutocompleteMessage(field, "Address suggestions unavailable. Enter address manually.");
         });
         state.addressAutocomplete.initialized = true;
         return;
-      }
-
-      try {
-        await loadGoogleMapsPlacesLibrary();
-        state.addressAutocomplete.fields.forEach(field => createGoogleAutocompleteForField(field));
-      } catch (error) {
-        console.error("Unable to initialize Google Places autocomplete", error);
-        state.addressAutocomplete.fields.forEach(field => {
-          setAddressAutocompleteMessage(field, "Address suggestions unavailable. Enter address manually.");
-        });
       }
 
       state.addressAutocomplete.initialized = true;
@@ -1685,7 +1833,16 @@
 
         const returnField = state.addressAutocomplete.fields.find(field => field.key === "return");
         if (returnField) {
+          if (returnField.timerId) {
+            window.clearTimeout(returnField.timerId);
+            returnField.timerId = null;
+          }
+          if (returnField.controller) {
+            returnField.controller.abort();
+            returnField.controller = null;
+          }
           setAddressAutocompleteMessage(returnField, "");
+          hideAddressSuggestions(returnField);
         }
       }
     }

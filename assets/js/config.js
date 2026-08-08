@@ -23,13 +23,16 @@
       );
   }
 
+  // Paste your Geoapify browser API key between the quotes below.
+  window.MG_GEOAPIFY_API_KEY = window.MG_GEOAPIFY_API_KEY || "";
+
   window.MG_CONFIG = Object.freeze({
     portalName: "MG Express Portal",
     companyName: "MG Express",
     portalBaseUrl:
       "https://portal.migenteexpress.com",
     supabaseUrl: SUPABASE_URL,
-    googleMapsApiKey:
-      String(window.MG_GOOGLE_MAPS_API_KEY || "").trim()
+    geoapifyApiKey:
+      String(window.MG_GEOAPIFY_API_KEY || "").trim()
   });
 })();
