@@ -193,6 +193,13 @@
       box-shadow: 0 8px 25px rgba(0, 0, 0, .04);
     }
 
+    .stat-button {
+      width: 100%;
+      text-align: left;
+      cursor: pointer;
+      border: 1px solid var(--line);
+    }
+
     .stat-number {
       color: var(--green);
       font-size: 38px;
@@ -203,6 +210,15 @@
       color: var(--muted);
       margin-top: 9px;
       line-height: 1.3;
+    }
+
+    .stat-subtitle {
+      color: var(--muted);
+      margin-top: 4px;
+      font-size: 11px;
+      font-weight: 900;
+      text-transform: uppercase;
+      letter-spacing: .04em;
     }
 
     .panel {
@@ -441,6 +457,10 @@
         grid-template-columns: repeat(2, minmax(0, 1fr));
       }
 
+      .stat-card.revenue-card {
+        grid-column: 1 / -1;
+      }
+
       .job-controls {
         grid-template-columns: repeat(2, minmax(0, 1fr));
       }
@@ -514,29 +534,30 @@
     </div>
 
     <section class="stats">
-      <div class="stat-card">
-        <div class="stat-number" id="countNew">0</div>
-        <div class="stat-label">New</div>
-      </div>
+      <button class="stat-card stat-button" id="cardPendingPayment" type="button">
+        <div class="stat-number" id="countPendingPayment">0</div>
+        <div class="stat-label">New / Pending Payment</div>
+      </button>
 
-      <div class="stat-card">
-        <div class="stat-number" id="countWaiting">0</div>
-        <div class="stat-label">Waiting Payment</div>
-      </div>
+      <button class="stat-card stat-button" id="cardReadyDispatch" type="button">
+        <div class="stat-number" id="countReadyDispatch">0</div>
+        <div class="stat-label">Ready to Dispatch</div>
+      </button>
 
-      <div class="stat-card">
-        <div class="stat-number" id="countReady">0</div>
-        <div class="stat-label">Paid / Ready</div>
-      </div>
+      <button class="stat-card stat-button" id="cardLiveJobs" type="button">
+        <div class="stat-number" id="countLiveJobs">0</div>
+        <div class="stat-label">Live Jobs</div>
+      </button>
 
-      <div class="stat-card">
-        <div class="stat-number" id="countTransit">0</div>
-        <div class="stat-label">In Transit</div>
-      </div>
+      <button class="stat-card stat-button" id="cardCompletedJobs" type="button">
+        <div class="stat-number" id="countCompletedJobs">0</div>
+        <div class="stat-label">Completed Jobs</div>
+        <div class="stat-subtitle">Today</div>
+      </button>
 
-      <div class="stat-card">
-        <div class="stat-number" id="countDelivered">0</div>
-        <div class="stat-label">Delivered</div>
+      <div class="stat-card revenue-card" id="cardRevenueToday">
+        <div class="stat-number" id="countRevenueToday">$0.00</div>
+        <div class="stat-label">Today's Revenue</div>
       </div>
     </section>
 
@@ -780,6 +801,98 @@
         String(status || "").replaceAll("_", " ");
     }
 
+    function clean(value) {
+      return String(value || "").trim().toLowerCase();
+    }
+
+    function parseDate(value) {
+      if (!value) {
+        return null;
+      }
+
+      const date = new Date(value);
+      return Number.isNaN(date.getTime()) ? null : date;
+    }
+
+    function isComplete(job) {
+      const status = clean(job?.status);
+      const workflow = clean(job?.driver_workflow_status);
+      return ["completed", "delivered", "closed"].includes(status) || workflow === "delivered";
+    }
+
+    function isCancelled(job) {
+      return ["cancelled", "canceled"].includes(clean(job?.status));
+    }
+
+    function isRejected(job) {
+      return clean(job?.driver_acceptance_status) === "rejected";
+    }
+
+    function isAssigned(job) {
+      return Boolean(String(job?.assigned_driver_id || "").trim()) && !isComplete(job) && !isCancelled(job);
+    }
+
+    function isReady(job) {
+      const status = clean(job?.status);
+      return status === "ready" || status === "ready_to_dispatch";
+    }
+
+    function isInTransit(job) {
+      const status = clean(job?.status);
+      const workflow = clean(job?.driver_workflow_status);
+      return ["assigned", "in_progress", "en_route", "en_route_pickup", "arrived_pickup", "picked_up", "en_route_delivery", "arrived_delivery"].includes(status)
+        || ["in_progress", "en_route", "en_route_pickup", "arrived_pickup", "picked_up", "en_route_delivery", "arrived_delivery"].includes(workflow);
+    }
+
+    function isPendingPayment(job) {
+      const status = clean(job?.status);
+      return !isComplete(job)
+        && !isCancelled(job)
+        && !isRejected(job)
+        && !isAssigned(job)
+        && !isReady(job)
+        && ["new", "waiting_payment", "pending_approval", "pending approval"].includes(status);
+    }
+
+    function completionDate(job) {
+      return parseDate(job.completed_at || job.updated_at || job.created_at);
+    }
+
+    function isCompletedToday(job) {
+      if (!isComplete(job)) {
+        return false;
+      }
+
+      const completed = completionDate(job);
+      if (!completed) {
+        return false;
+      }
+
+      const start = new Date();
+      start.setHours(0, 0, 0, 0);
+      const end = new Date(start);
+      end.setDate(end.getDate() + 1);
+      return completed >= start && completed < end;
+    }
+
+    function billingAmount(job) {
+      const approved = Number(job?.approved_price);
+      if (Number.isFinite(approved)) {
+        return approved;
+      }
+
+      const customerCharge = Number(job?.customer_charge);
+      if (Number.isFinite(customerCharge)) {
+        return customerCharge;
+      }
+
+      return 0;
+    }
+
+    function openDeliveriesTab(tab) {
+      window.location.href = `deliveries.html?tab=${encodeURIComponent(String(tab || "all_open"))}`;
+    }
+
     function openQuotePanel() {
       quotePanel.classList.remove("hidden");
       quotePanel.scrollIntoView({
@@ -818,25 +931,18 @@
     }
 
     function updateCounts() {
-      const count = status =>
-        quotes.filter(
-          quote => quote.status === status
-        ).length;
+      const pendingPayment = quotes.filter(isPendingPayment).length;
+      const readyDispatch = quotes.filter(isReady).length;
+      const liveJobs = quotes.filter(quote => (isAssigned(quote) || isInTransit(quote)) && !isRejected(quote) && !isComplete(quote) && !isCancelled(quote)).length;
+      const completedTodayRows = quotes.filter(isCompletedToday);
+      const completedJobs = completedTodayRows.length;
+      const revenueToday = completedTodayRows.reduce((sum, quote) => sum + billingAmount(quote), 0);
 
-      document.getElementById("countNew").textContent =
-        count("new");
-
-      document.getElementById("countWaiting").textContent =
-        count("waiting_payment");
-
-      document.getElementById("countReady").textContent =
-        count("paid") + count("ready");
-
-      document.getElementById("countTransit").textContent =
-        count("in_transit");
-
-      document.getElementById("countDelivered").textContent =
-        count("delivered");
+      document.getElementById("countPendingPayment").textContent = String(pendingPayment);
+      document.getElementById("countReadyDispatch").textContent = String(readyDispatch);
+      document.getElementById("countLiveJobs").textContent = String(liveJobs);
+      document.getElementById("countCompletedJobs").textContent = String(completedJobs);
+      document.getElementById("countRevenueToday").textContent = money(revenueToday);
     }
 
     function driverOptions(quote) {
@@ -1185,22 +1291,7 @@
       const result = await client
         .from("quotes")
         .select(`
-          id,
-          job_number,
-          customer_name,
-          customer_email,
-          pickup_address,
-          delivery_address,
-          vehicle_type,
-          delivery_speed,
-          package_type,
-          status,
-          special_instructions,
-          assigned_driver_id,
-          driver_pay,
-          pickup_photo_url,
-          delivery_photo_url,
-          created_at
+          *
         `)
         .order("created_at", {
           ascending: false
@@ -1455,6 +1546,22 @@
         "click",
         loadDashboard
       );
+
+    document
+      .getElementById("cardPendingPayment")
+      .addEventListener("click", () => openDeliveriesTab("pending"));
+
+    document
+      .getElementById("cardReadyDispatch")
+      .addEventListener("click", () => openDeliveriesTab("ready"));
+
+    document
+      .getElementById("cardLiveJobs")
+      .addEventListener("click", () => openDeliveriesTab("assigned"));
+
+    document
+      .getElementById("cardCompletedJobs")
+      .addEventListener("click", () => openDeliveriesTab("completed"));
 
     (async function start() {
       const session =
