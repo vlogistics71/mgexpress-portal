@@ -19,40 +19,43 @@
     deliveryDetailsRequestToken: 0,
     assignDriverId: "",
     assignDriverPay: "",
-    assignSearch: "",
-    assignFilter: "all",
-    loadError: "",
-    isAssigning: false
-  };
 
-  const elements = {
-    staffEmail: document.getElementById("staffEmail"),
-    newDeliveryButton: document.getElementById("newDeliveryButton"),
-    statusFilter: document.getElementById("statusFilter"),
+    function isActiveJob(delivery) {
+      return !isCancelled(delivery);
+    }
+    assignSearch: "",
+      const rows = state.deliveries.filter(delivery => isActiveJob(delivery) && matchesTab(delivery) && matchesCategory(delivery) && matchesSearch(delivery));
+    loadError: "",
+      return state.deliveries.filter(delivery => isActiveJob(delivery)).filter(delivery => {
+        const previousTab = state.activeTab;
+        state.activeTab = tab;
+        const result = matchesTab(delivery);
+        state.activeTab = previousTab;
+        return result;
+      }).length;
     tabs: document.getElementById("tabs"),
-    categoryFilters: document.getElementById("categoryFilters"),
-    searchInput: document.getElementById("searchInput"),
-    sortSelect: document.getElementById("sortSelect"),
-    refreshButton: document.getElementById("refreshButton"),
-    statusSummary: document.getElementById("statusSummary"),
+      const previousCategory = state.activeCategory;
+      state.activeCategory = category;
+      const result = state.deliveries.filter(delivery => isActiveJob(delivery) && matchesCategory(delivery)).length;
+      state.activeCategory = previousCategory;
+      return result;
     summaryTotalOpen: document.getElementById("summaryTotalOpen"),
     summaryUnassigned: document.getElementById("summaryUnassigned"),
     summaryInTransit: document.getElementById("summaryInTransit"),
     summaryWaitingPayment: document.getElementById("summaryWaitingPayment"),
     workspaceLabel: document.getElementById("workspaceLabel"),
     visibleCount: document.getElementById("visibleCount"),
-    deliveryList: document.getElementById("deliveryList"),
-    toastWrap: document.getElementById("toastWrap"),
-    deliveryDetailsModal: document.getElementById("deliveryDetailsModal"),
-    deliveryDetailsBody: document.getElementById("deliveryDetailsBody"),
+        ["pallet", "Pallet"],
+        ["special", "Special"]
     deliveryDetailsSubtitle: document.getElementById("deliveryDetailsSubtitle"),
     deliveryDetailsTitle: document.getElementById("deliveryDetailsTitle"),
-    newDeliveryModal: document.getElementById("newDeliveryModal"),
-    assignModal: document.getElementById("assignModal"),
-    assignJobSummary: document.getElementById("assignJobSummary"),
-    assignRecommendedCard: document.getElementById("assignRecommendedCard"),
+      const activeRows = state.deliveries.filter(isActiveJob);
+      const total = activeRows.length;
+      const assigned = activeRows.filter(isAssigned).length;
+      const ready = activeRows.filter(isReady).length;
+      const openRows = activeRows.filter(delivery => !isComplete(delivery) && !isCancelled(delivery));
     assignDriverSearch: document.getElementById("assignDriverSearch"),
-    assignDriverFilter: document.getElementById("assignDriverFilter"),
+      const inTransit = activeRows.filter(isInTransit).length;
     assignDriverCards: document.getElementById("assignDriverCards"),
     assignForm: document.getElementById("assignForm"),
     assignJobId: document.getElementById("assignJobId"),
@@ -63,34 +66,14 @@
     assignConfirmModal: document.getElementById("assignConfirmModal"),
     assignConfirmText: document.getElementById("assignConfirmText"),
     assignConfirmBtn: document.getElementById("assignConfirmBtn"),
-    rejectedReturnConfirmModal: document.getElementById("rejectedReturnConfirmModal"),
     rejectedReturnConfirmText: document.getElementById("rejectedReturnConfirmText"),
     rejectedReturnConfirmBtn: document.getElementById("rejectedReturnConfirmBtn")
   };
 
   function clean(value) {
-    return String(value || "").trim().toLowerCase();
   }
 
   function readInitialTabFromUrl() {
-    const params = new URLSearchParams(window.location.search || "");
-    const requested = clean(params.get("tab"));
-    const allowed = new Set(["all_open", "waiting_payment", "ready", "assigned", "in_transit", "rejected", "completed", "search", "pending"]);
-    if (requested === "pending") {
-      return "all_open";
-    }
-    return allowed.has(requested) ? requested : "all_open";
-  }
-
-  function escapeHtml(value) {
-    const div = document.createElement("div");
-    div.textContent = value == null ? "" : String(value);
-    return div.innerHTML;
-  }
-
-  function parseDate(value) {
-    if (!value) {
-      return null;
     }
 
     const date = new Date(value);
@@ -102,7 +85,6 @@
     if (!date) {
       return "-";
     }
-
     return new Intl.DateTimeFormat("en-US", {
       month: "short",
       day: "numeric",
@@ -375,7 +357,7 @@
   }
 
   function visibleDeliveries() {
-    const rows = state.deliveries.filter(delivery => matchesTab(delivery) && matchesCategory(delivery) && matchesSearch(delivery));
+    const rows = state.deliveries.filter(delivery => isActiveJob(delivery) && matchesCategory(delivery) && matchesSearch(delivery));
 
     const sorted = rows.slice();
     sorted.sort((left, right) => {
@@ -454,24 +436,14 @@
 
   function renderWorkspaceSummary() {
     const visible = visibleDeliveries();
-    const total = state.deliveries.length;
-    const assigned = state.deliveries.filter(isAssigned).length;
-    const ready = state.deliveries.filter(isReady).length;
-    const openRows = state.deliveries.filter(delivery => !isComplete(delivery) && !isCancelled(delivery));
+    const activeRows = state.deliveries.filter(isActiveJob);
+    const total = activeRows.length;
+    const assigned = activeRows.filter(isAssigned).length;
+    const ready = activeRows.filter(isReady).length;
+    const openRows = activeRows.filter(delivery => !isComplete(delivery) && !isCancelled(delivery));
     const unassigned = openRows.filter(delivery => !isAssigned(delivery)).length;
-    const inTransit = state.deliveries.filter(isInTransit).length;
+    const inTransit = activeRows.filter(isInTransit).length;
     const waitingPayment = openRows.filter(delivery => clean(delivery.payment_status) !== "paid").length;
-
-    const labelMap = {
-      all_open: "All Open Jobs",
-      waiting_payment: "Waiting Payment",
-      ready: "Ready to Dispatch",
-      assigned: "Assigned",
-      in_transit: "In Transit",
-      rejected: "Rejected",
-      completed: "Completed",
-      search: "Search Results"
-    };
 
     if (elements.summaryTotalOpen) {
       elements.summaryTotalOpen.textContent = String(openRows.length);
@@ -487,7 +459,7 @@
     }
 
     if (elements.workspaceLabel) {
-      elements.workspaceLabel.textContent = labelMap[state.activeTab] || "All Open Jobs";
+      elements.workspaceLabel.textContent = "Active Jobs";
     }
     if (elements.visibleCount) {
       elements.visibleCount.textContent = `${visible.length} visible of ${total}`;
@@ -1245,7 +1217,6 @@
       }
       state.deliveries = deliveries;
       state.loadError = "";
-      renderTabs();
       renderCategories();
       renderDeliveries();
 
@@ -1271,7 +1242,6 @@
   function bindEvents() {
     elements.searchInput.addEventListener("input", () => {
       state.search = elements.searchInput.value || "";
-      renderTabs();
       renderCategories();
       renderDeliveries();
     });
@@ -1294,16 +1264,6 @@
 
     elements.newDeliveryButton.addEventListener("click", () => {
       window.location.href = "request.html";
-    });
-
-    elements.tabs.addEventListener("click", event => {
-      const button = event.target.closest("[data-tab]");
-      if (!button) {
-        return;
-      }
-      state.activeTab = button.getAttribute("data-tab") || "pending";
-      renderTabs();
-      renderDeliveries();
     });
 
     elements.categoryFilters.addEventListener("click", event => {
@@ -1408,7 +1368,6 @@
       elements.statusFilter.value = state.activeTab;
     }
     bindEvents();
-    renderTabs();
     renderCategories();
     await refreshDeliveries();
   }
