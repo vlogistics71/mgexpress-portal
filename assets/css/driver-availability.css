@@ -595,12 +595,12 @@ h1 {
 .add-driver-form {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 10px;
+  gap: 8px;
 }
 
 .add-driver-field {
   display: grid;
-  gap: 4px;
+  gap: 3px;
 }
 
 .add-driver-field label {
@@ -614,10 +614,14 @@ h1 {
 .add-driver-field input,
 .add-driver-field select {
   width: 100%;
-  min-height: 42px;
+  min-height: 40px;
   border-radius: 10px;
   border: 1px solid var(--line);
-  padding: 10px 12px;
+  padding: 9px 11px;
+}
+
+#addDriverLicensePlate {
+  text-transform: uppercase;
 }
 
 .add-driver-field.full {

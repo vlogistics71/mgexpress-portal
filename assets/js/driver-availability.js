@@ -177,11 +177,13 @@ async function inspectWorkspaceSchema() {
     "city",
     "vehicle_type",
     "vehicle",
+    "vehicle_make_model",
     "vehicle_year",
     "vehicle_make",
     "vehicle_model",
     "plate",
     "license_plate",
+    "service_area",
     "vehicle_color",
     "phone",
     "mobile_phone",
@@ -420,11 +422,20 @@ function deriveVehicleText(driver) {
     (hasDriverColumn("vehicle_type") ? driver.vehicle_type : "") ||
     (hasDriverColumn("vehicle") ? driver.vehicle : "");
 
+  const makeModel =
+    (hasDriverColumn("vehicle_make_model") ? driver.vehicle_make_model : "") ||
+    "";
+
   const parts = [
     hasDriverColumn("vehicle_year") ? driver.vehicle_year : "",
+    makeModel,
     hasDriverColumn("vehicle_make") ? driver.vehicle_make : "",
     hasDriverColumn("vehicle_model") ? driver.vehicle_model : ""
   ].filter(Boolean);
+
+  if (directType && parts.length) {
+    return [directType, parts.join(" ")].join(" ").trim();
+  }
 
   return directType || parts.join(" ") || "";
 }
@@ -888,9 +899,16 @@ function renderDriverDetails(summary) {
 
   const driver = summary.driver;
   const vehicleText = deriveVehicleText(driver) || "-";
+  const plateText =
+    (hasDriverColumn("license_plate") ? driver.license_plate : "") ||
+    (hasDriverColumn("plate") ? driver.plate : "") ||
+    "-";
+  const serviceAreaText = driverAreaValue(driver) || "-";
   const overviewRows = [
     { key: "Current Status", value: availabilityLabel(summary.availability) },
     { key: "Vehicle", value: vehicleText },
+    { key: "License Plate", value: plateText },
+    { key: "Service Area", value: serviceAreaText },
     { key: "Last Active", value: formatDateTime(summary.lastActiveAt) },
     { key: "Active Assigned Jobs", value: String(summary.activeAssignedJobs) },
     { key: "Pickups Remaining", value: String(summary.pickupRemaining) },
@@ -926,35 +944,16 @@ function addDriverSchemaMapping() {
     email: firstAvailableDriverColumn(["email"]),
     phone: firstAvailableDriverColumn(["phone", "mobile_phone"]),
     vehicleType: firstAvailableDriverColumn(["vehicle_type", "vehicle"]),
-    vehicleMake: firstAvailableDriverColumn(["vehicle_make"]),
-    vehicleModel: firstAvailableDriverColumn(["vehicle_model"]),
+    vehicleMakeModel: firstAvailableDriverColumn(["vehicle_make_model"]),
     vehicleYear: firstAvailableDriverColumn(["vehicle_year"]),
-    licensePlate: firstAvailableDriverColumn(["license_plate", "plate"]),
-    serviceArea: firstAvailableDriverColumn(["current_area", "area", "city"]),
+    licensePlate: firstAvailableDriverColumn(["license_plate"]),
+    serviceArea: firstAvailableDriverColumn(["service_area"]),
     statusText: firstAvailableDriverColumn(["availability_status", "status"]),
     activeBool: firstAvailableDriverColumn(["active", "is_active", "enabled"])
   };
 }
 
-function unavailableAddDriverFields(mapping) {
-  const missing = [];
-  if (!mapping.fullName) missing.push("First Name / Last Name");
-  if (!mapping.phone) missing.push("Phone");
-  if (!mapping.email) missing.push("Email");
-  if (!mapping.vehicleType) missing.push("Vehicle Type");
-  if (!mapping.vehicleMake) missing.push("Vehicle Make / Model");
-  if (!mapping.vehicleModel) missing.push("Vehicle Make / Model");
-  if (!mapping.vehicleYear) missing.push("Vehicle Year");
-  if (!mapping.licensePlate) missing.push("License Plate");
-  if (!mapping.serviceArea) missing.push("Service Area");
-  if (!mapping.statusText && !mapping.activeBool) missing.push("Driver Status");
-  return Array.from(new Set(missing));
-}
-
 function renderAddDriverForm() {
-  const mapping = addDriverSchemaMapping();
-  const unavailable = unavailableAddDriverFields(mapping);
-
   elements.addDriverBody.innerHTML = `
     <form id="addDriverForm" class="add-driver-form">
       <div class="add-driver-field">
@@ -983,15 +982,25 @@ function renderAddDriverForm() {
       </div>
       <div class="add-driver-field">
         <label for="addDriverVehicleYear">Vehicle Year</label>
-        <input id="addDriverVehicleYear" name="vehicle_year" inputmode="numeric">
+        <input id="addDriverVehicleYear" name="vehicle_year" type="number" inputmode="numeric" min="1900" max="2099" step="1" placeholder="YYYY">
       </div>
       <div class="add-driver-field">
         <label for="addDriverLicensePlate">License Plate</label>
-        <input id="addDriverLicensePlate" name="license_plate">
+        <input id="addDriverLicensePlate" name="license_plate" autocapitalize="characters" spellcheck="false">
       </div>
       <div class="add-driver-field full">
         <label for="addDriverServiceArea">Service Area</label>
-        <input id="addDriverServiceArea" name="service_area">
+        <select id="addDriverServiceArea" name="service_area_select">
+          <option value="Denver Metro">Denver Metro</option>
+          <option value="Colorado Springs">Colorado Springs</option>
+          <option value="Fort Collins">Fort Collins</option>
+          <option value="Sterling">Sterling</option>
+          <option value="Other">Other</option>
+        </select>
+      </div>
+      <div class="add-driver-field full hidden" id="addDriverServiceAreaOtherWrap">
+        <label for="addDriverServiceAreaOther">Custom Service Area</label>
+        <input id="addDriverServiceAreaOther" name="service_area_other" placeholder="Enter service area">
       </div>
       <div class="add-driver-field full">
         <label for="addDriverStatus">Driver Status</label>
@@ -1002,8 +1011,36 @@ function renderAddDriverForm() {
         </select>
       </div>
     </form>
-    ${unavailable.length ? `<div class="save-limit-note">Some fields cannot currently be saved with the existing drivers table: ${escapeHtml(unavailable.join(", "))}.</div>` : ""}
   `;
+
+  const serviceAreaSelect = document.getElementById("addDriverServiceArea");
+  const serviceAreaOtherWrap = document.getElementById("addDriverServiceAreaOtherWrap");
+  const serviceAreaOtherInput = document.getElementById("addDriverServiceAreaOther");
+  const licensePlateInput = document.getElementById("addDriverLicensePlate");
+
+  if (serviceAreaSelect && serviceAreaOtherWrap) {
+    const syncServiceAreaOtherVisibility = () => {
+      const isOther = serviceAreaSelect.value === "Other";
+      serviceAreaOtherWrap.classList.toggle("hidden", !isOther);
+      if (!isOther && serviceAreaOtherInput) {
+        serviceAreaOtherInput.value = "";
+      }
+    };
+
+    serviceAreaSelect.addEventListener("change", syncServiceAreaOtherVisibility);
+    syncServiceAreaOtherVisibility();
+  }
+
+  if (licensePlateInput) {
+    licensePlateInput.addEventListener("input", () => {
+      const start = licensePlateInput.selectionStart;
+      const end = licensePlateInput.selectionEnd;
+      licensePlateInput.value = String(licensePlateInput.value || "").toUpperCase();
+      if (start !== null && end !== null) {
+        licensePlateInput.setSelectionRange(start, end);
+      }
+    });
+  }
 }
 
 function openAddDriverModal() {
@@ -1057,24 +1094,34 @@ async function saveNewDriver() {
   }
 
   const makeModel = String(data.get("vehicle_make_model") || "").trim();
-  if (mapping.vehicleMake) {
-    payload[mapping.vehicleMake] = makeModel || null;
-  }
-  if (mapping.vehicleModel) {
-    payload[mapping.vehicleModel] = makeModel || null;
+  if (mapping.vehicleMakeModel) {
+    payload[mapping.vehicleMakeModel] = makeModel || null;
   }
 
   if (mapping.vehicleYear) {
     const yearValue = String(data.get("vehicle_year") || "").trim();
-    payload[mapping.vehicleYear] = yearValue || null;
+    if (!yearValue) {
+      payload[mapping.vehicleYear] = null;
+    } else {
+      const parsedYear = Number(yearValue);
+      if (!Number.isInteger(parsedYear) || parsedYear < 1900 || parsedYear > 2099) {
+        showToast("Vehicle Year must be a valid 4-digit year.", "error");
+        return;
+      }
+
+      payload[mapping.vehicleYear] = parsedYear;
+    }
   }
 
   if (mapping.licensePlate) {
-    payload[mapping.licensePlate] = String(data.get("license_plate") || "").trim() || null;
+    payload[mapping.licensePlate] = String(data.get("license_plate") || "").trim().toUpperCase() || null;
   }
 
   if (mapping.serviceArea) {
-    payload[mapping.serviceArea] = String(data.get("service_area") || "").trim() || null;
+    const areaChoice = String(data.get("service_area_select") || "").trim();
+    const areaOther = String(data.get("service_area_other") || "").trim();
+    const areaValue = areaChoice === "Other" ? areaOther : areaChoice;
+    payload[mapping.serviceArea] = areaValue || null;
   }
 
   const statusChoice = clean(data.get("driver_status") || "available");
@@ -1150,6 +1197,7 @@ function availabilityEditorFieldDescriptor(driver) {
 
 function driverAreaValue(driver) {
   return (
+    (hasDriverColumn("service_area") ? driver.service_area : "") ||
     (hasDriverColumn("current_area") ? driver.current_area : "") ||
     (hasDriverColumn("area") ? driver.area : "") ||
     (hasDriverColumn("city") ? driver.city : "") ||
