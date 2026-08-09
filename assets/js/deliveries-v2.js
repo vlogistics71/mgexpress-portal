@@ -21,7 +21,8 @@
     assignDriverPay: "",
     assignSearch: "",
     assignFilter: "all",
-    loadError: ""
+    loadError: "",
+    isAssigning: false
   };
 
   const elements = {
@@ -932,28 +933,69 @@
   }
 
   async function saveAssignment() {
-    if (!state.selectedDelivery) {
+    const driverId = String(state.assignDriverId || elements.assignDriverSelect.value || "").trim();
+    await assignDriverToDelivery(driverId, null);
+  }
+
+  function resolveSelectedDeliveryForAssignment() {
+    const selectedId = String(state.selectedDelivery?.id || elements.assignJobId?.value || "").trim();
+    if (!selectedId) {
+      return null;
+    }
+
+    return state.deliveries.find(item => String(item.id || "") === selectedId)
+      || state.selectedDelivery
+      || null;
+  }
+
+  function setAssignButtonsState(assigning, triggerButton) {
+    const assignButtons = elements.assignModal.querySelectorAll("[data-pick-driver]");
+    assignButtons.forEach(button => {
+      button.disabled = assigning;
+    });
+
+    if (elements.assignSubmitBtn) {
+      elements.assignSubmitBtn.disabled = assigning;
+      elements.assignSubmitBtn.textContent = assigning ? "Assigning..." : "Assign Driver";
+    }
+
+    if (elements.assignConfirmBtn) {
+      elements.assignConfirmBtn.disabled = assigning;
+      elements.assignConfirmBtn.textContent = assigning ? "Assigning..." : "Confirm Assignment";
+    }
+
+    if (triggerButton) {
+      triggerButton.textContent = assigning ? "Assigning..." : (triggerButton.dataset.originalLabel || triggerButton.textContent);
+    }
+  }
+
+  async function assignDriverToDelivery(driverId, triggerButton) {
+    if (state.isAssigning) {
       return;
     }
 
-    const delivery = state.selectedDelivery;
-    const driverId = String(state.assignDriverId || elements.assignDriverSelect.value || "").trim();
+    const delivery = resolveSelectedDeliveryForAssignment();
+    const selectedDriverId = String(driverId || "").trim();
     const payInput = document.getElementById("assignDriverPayInput");
     const payValue = String(payInput?.value || state.assignDriverPay || elements.assignDriverPay.value || "").trim();
 
-    if (!driverId) {
+    console.log("[MG Assign] delivery id:", String(delivery?.id || ""));
+    console.log("[MG Assign] driver clicked:", selectedDriverId);
+    console.log("[MG Assign] driver pay:", payValue);
+
+    if (!delivery?.id) {
+      showToast("Unable to assign driver.", "error");
+      return;
+    }
+
+    if (!selectedDriverId) {
       showToast("Select a driver first.", "error");
       return;
     }
 
-    if (payValue === "") {
-      showToast("Enter driver pay before assigning.", "error");
-      return;
-    }
-
     const driverPay = Number(payValue);
-    if (!Number.isFinite(driverPay) || driverPay <= 0) {
-      showToast("Driver pay must be greater than 0.", "error");
+    if (payValue === "" || !Number.isFinite(driverPay) || driverPay < 0) {
+      showToast("Enter a valid driver pay amount.", "error");
       return;
     }
 
@@ -962,28 +1004,47 @@
       return;
     }
 
-    const result = await client
-      .from("quotes")
-      .update({
-        assigned_driver_id: driverId,
-        driver_pay: driverPay,
-        status: "assigned",
-        driver_acceptance_status: "pending",
-        driver_workflow_status: "assigned",
-        driver_accepted_at: null,
-        driver_rejected_at: null
-      })
-      .eq("id", delivery.id)
-      .select("*")
-      .maybeSingle();
+    state.isAssigning = true;
+    state.assignDriverId = selectedDriverId;
+    state.assignDriverPay = payValue;
 
-    if (result.error) {
-      throw result.error;
+    if (triggerButton) {
+      triggerButton.dataset.originalLabel = triggerButton.dataset.originalLabel || triggerButton.textContent;
     }
 
-    closeModal(elements.assignModal);
-    showToast("Driver assigned successfully.", "success");
-    await refreshDeliveries({ keepSelection: delivery.id });
+    setAssignButtonsState(true, triggerButton);
+
+    try {
+      const result = await client
+        .from("quotes")
+        .update({
+          assigned_driver_id: selectedDriverId,
+          driver_pay: driverPay,
+          status: "assigned",
+          driver_acceptance_status: "pending",
+          driver_workflow_status: "assigned",
+          driver_accepted_at: null,
+          driver_rejected_at: null
+        })
+        .eq("id", delivery.id)
+        .select("*")
+        .maybeSingle();
+
+      if (result.error) {
+        throw result.error;
+      }
+
+      closeModal(elements.assignModal);
+      showToast("Driver assigned successfully.", "success");
+      await refreshDeliveries({ keepSelection: delivery.id });
+      await openDeliveryDetails(delivery.id);
+    } catch (error) {
+      console.error("[MG Assign] assignment update failed", error);
+      showToast("Unable to assign driver.", "error");
+    } finally {
+      state.isAssigning = false;
+      setAssignButtonsState(false, triggerButton);
+    }
   }
 
   async function markReady(deliveryId) {
@@ -1110,8 +1171,11 @@
 
     const pickDriver = target.closest("[data-pick-driver]");
     if (pickDriver) {
-      state.assignDriverId = String(pickDriver.getAttribute("data-pick-driver") || "");
-      renderAssignModal();
+      const selectedDriverId = String(pickDriver.getAttribute("data-pick-driver") || "").trim();
+      if (selectedDriverId) {
+        state.assignDriverId = selectedDriverId;
+        renderAssignModal();
+      }
       return;
     }
   }
@@ -1284,9 +1348,18 @@
 
       const pickDriver = event.target.closest("[data-pick-driver]");
       if (pickDriver) {
-        state.assignDriverId = String(pickDriver.getAttribute("data-pick-driver") || "");
+        const selectedDriverId = String(pickDriver.getAttribute("data-pick-driver") || "").trim();
+        const buttonLabel = clean(pickDriver.textContent || "");
+        if (buttonLabel.includes("recommended")) {
+          console.log("[MG Assign] recommended clicked");
+        }
+
+        state.assignDriverId = selectedDriverId;
         state.assignDriverPay = String(document.getElementById("assignDriverPayInput")?.value || state.assignDriverPay || "");
-        renderAssignModal();
+        assignDriverToDelivery(selectedDriverId, pickDriver).catch(error => {
+          console.error("[MG Assign] assign click handler failed", error);
+          showToast("Unable to assign driver.", "error");
+        });
       }
     });
 
