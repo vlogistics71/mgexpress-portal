@@ -20,10 +20,11 @@
       <div>
         <div class="eyebrow">Dispatch Workspace</div>
         <h1>Driver Availability</h1>
-        <p class="subhead">Compact live view of available, busy, offline drivers and recent assignment rejection warnings.</p>
+        <p class="subhead">Live driver status and workload.</p>
       </div>
-      <a class="back-link" href="/dashboard.html">Home</a>
     </section>
+
+    <button class="primary-cta" id="addDriverBtn" type="button">+ Add Driver</button>
 
     <section class="toolbar">
       <label class="search-wrap" for="driverSearchInput">
@@ -38,7 +39,7 @@
         <button class="chip" type="button" data-filter="offline">Offline</button>
       </div>
 
-      <button class="refresh-btn" id="refreshDriversBtn" type="button">Refresh</button>
+      <button class="refresh-btn" id="refreshDriversBtn" type="button">↻ Refresh</button>
     </section>
 
     <section class="summary-grid" aria-label="Availability summary">
@@ -106,6 +107,22 @@
       <div class="modal-foot">
         <button class="btn" type="button" data-close-route-preview-modal>Close</button>
         <button class="btn" type="button" id="routePreviewNavigateBtn">Navigate Route</button>
+      </div>
+    </section>
+  </div>
+
+  <div class="modal-backdrop" id="addDriverModal" aria-hidden="true">
+    <section class="driver-modal" role="dialog" aria-modal="true" aria-labelledby="addDriverTitle">
+      <div class="modal-head">
+        <h3 id="addDriverTitle">Add Driver</h3>
+        <button class="icon-btn" type="button" data-close-add-driver-modal>Close</button>
+      </div>
+
+      <div class="modal-body" id="addDriverBody"></div>
+
+      <div class="modal-foot">
+        <button class="btn" type="button" data-close-add-driver-modal>Cancel</button>
+        <button class="btn primary" type="button" id="saveDriverBtn">Save Driver</button>
       </div>
     </section>
   </div>

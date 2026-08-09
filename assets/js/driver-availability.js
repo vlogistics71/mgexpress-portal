@@ -21,6 +21,7 @@ const state = {
   routePreviewContext: null,
   isEditMode: false,
   savingDriver: false,
+  savingNewDriver: false,
   isLoading: false,
   schema: {
     drivers: new Set(),
@@ -36,6 +37,7 @@ const elements = {
   staffEmail: document.getElementById("staffEmail"),
   driverSearchInput: document.getElementById("driverSearchInput"),
   refreshDriversBtn: document.getElementById("refreshDriversBtn"),
+  addDriverBtn: document.getElementById("addDriverBtn"),
   driversGrid: document.getElementById("driversGrid"),
   visibleDriversMeta: document.getElementById("visibleDriversMeta"),
   summaryTotal: document.getElementById("summaryTotal"),
@@ -52,6 +54,9 @@ const elements = {
   editDriverBtn: document.getElementById("editDriverBtn"),
   viewDriverRouteBtn: document.getElementById("viewDriverRouteBtn"),
   assignDeliveryBtn: document.getElementById("assignDeliveryBtn"),
+  addDriverModal: document.getElementById("addDriverModal"),
+  addDriverBody: document.getElementById("addDriverBody"),
+  saveDriverBtn: document.getElementById("saveDriverBtn"),
   toastWrap: document.getElementById("toastWrap")
 };
 
@@ -104,6 +109,10 @@ function hasQuoteColumn(columnName) {
 
 function hasProfileColumn(columnName) {
   return state.schema.profiles.has(columnName);
+}
+
+function firstAvailableDriverColumn(columnNames) {
+  return columnNames.find(hasDriverColumn) || "";
 }
 
 function emailUsernameFallback(email) {
@@ -717,13 +726,7 @@ function renderDriversGrid() {
   }
 
   elements.driversGrid.innerHTML = list.map(summary => {
-    const areaMetric = summary.availability === "available" && summary.areaWhenAvailable
-      ? `<div class="metric"><div class="metric-label">Current Area</div><div class="metric-value">${escapeHtml(summary.areaWhenAvailable)}</div></div>`
-      : "";
-
-    const vehicleMetric = summary.availability === "available" && summary.vehicleTypeWhenAvailable
-      ? `<div class="metric"><div class="metric-label">Vehicle</div><div class="metric-value">${escapeHtml(summary.vehicleTypeWhenAvailable)}</div></div>`
-      : "";
+    const vehicleText = deriveVehicleText(summary.driver) || "-";
 
     const rejectedWarning = summary.rejectedLastJob
       ? '<span class="warning-badge">Rejected last job</span>'
@@ -737,17 +740,15 @@ function renderDriversGrid() {
         </div>
         ${rejectedWarning}
         <div class="card-grid">
-          ${areaMetric}
           <div class="metric"><div class="metric-label">Active Assigned</div><div class="metric-value">${escapeHtml(String(summary.activeAssignedJobs))}</div></div>
           <div class="metric"><div class="metric-label">Pickups Remaining</div><div class="metric-value">${escapeHtml(String(summary.pickupRemaining))}</div></div>
           <div class="metric"><div class="metric-label">Deliveries Remaining</div><div class="metric-value">${escapeHtml(String(summary.deliveryRemaining))}</div></div>
           <div class="metric"><div class="metric-label">Completed Today</div><div class="metric-value">${escapeHtml(String(summary.completedToday))}</div></div>
           <div class="metric"><div class="metric-label">Last Active</div><div class="metric-value">${escapeHtml(formatDateTime(summary.lastActiveAt))}</div></div>
-          ${vehicleMetric}
+          <div class="metric"><div class="metric-label">Vehicle</div><div class="metric-value">${escapeHtml(vehicleText)}</div></div>
         </div>
         <div class="card-foot">
-          <span>View</span>
-          <span class="chevron">></span>
+          <span>View ></span>
         </div>
       </button>
     `;
@@ -772,6 +773,35 @@ function jobStatusText(quote) {
     return workflow.replaceAll("_", " ");
   }
   return clean(quote.status).replaceAll("_", " ") || "assigned";
+}
+
+function renderCurrentAssignments(summary) {
+  const activeJobs = summary.relatedQuotes.filter(quote => {
+    if (isRejectedAssignment(quote)) {
+      return false;
+    }
+    return !isQuoteClosed(quote);
+  });
+
+  if (!activeJobs.length) {
+    return '<div class="empty">No current assignments.</div>';
+  }
+
+  return `
+    <div class="assignment-list">
+      ${activeJobs.map(job => `
+        <button class="assignment-row" type="button" data-driver-job-open="${escapeHtml(String(job.id))}">
+          <div class="assignment-title">
+            <span>${escapeHtml(job.job_number || "Job")}</span>
+            <span>${escapeHtml(jobStatusText(job))}</span>
+          </div>
+          <div class="assignment-meta">Customer: ${escapeHtml(job.customer_name || "-")}</div>
+          <div class="assignment-meta">Pickup: ${escapeHtml(job.pickup_address || "-")}</div>
+          <div class="assignment-meta">Delivery: ${escapeHtml(job.delivery_address || "-")}</div>
+        </button>
+      `).join("")}
+    </div>
+  `;
 }
 
 function renderCurrentJobsSection(summary) {
@@ -857,91 +887,234 @@ function renderDriverDetails(summary) {
   updateDriverModalActions();
 
   const driver = summary.driver;
-  const notes =
-    (hasDriverColumn("notes") ? driver.notes : "") ||
-    (hasDriverColumn("internal_notes") ? driver.internal_notes : "") ||
-    (hasDriverColumn("dispatch_notes") ? driver.dispatch_notes : "") ||
-    "";
-
-  const summaryRows = nonEmptyRows([
-    { key: "Name", value: summary.name },
-    { key: "Availability", value: availabilityLabel(summary.availability) },
-    { key: "Current Area", value: summary.areaWhenAvailable },
+  const vehicleText = deriveVehicleText(driver) || "-";
+  const overviewRows = [
+    { key: "Current Status", value: availabilityLabel(summary.availability) },
+    { key: "Vehicle", value: vehicleText },
+    { key: "Last Active", value: formatDateTime(summary.lastActiveAt) },
     { key: "Active Assigned Jobs", value: String(summary.activeAssignedJobs) },
     { key: "Pickups Remaining", value: String(summary.pickupRemaining) },
     { key: "Deliveries Remaining", value: String(summary.deliveryRemaining) },
-    { key: "Completed Today", value: String(summary.completedToday) },
-    { key: "Last Active", value: formatDateTime(summary.lastActiveAt) }
-  ]);
-
-  const vehicleRows = nonEmptyRows([
-    { key: "Vehicle Type", value: deriveVehicleText(driver) },
-    {
-      key: "Plate",
-      value:
-        (hasDriverColumn("plate") ? driver.plate : "") ||
-        (hasDriverColumn("license_plate") ? driver.license_plate : "") ||
-        ""
-    },
-    { key: "Color", value: hasDriverColumn("vehicle_color") ? driver.vehicle_color : "" }
-  ]);
-
-  const contactRows = nonEmptyRows([
-    { key: "Email", value: hasDriverColumn("email") ? driver.email : "" },
-    {
-      key: "Phone",
-      value:
-        (hasDriverColumn("phone") ? driver.phone : "") ||
-        (hasDriverColumn("mobile_phone") ? driver.mobile_phone : "") ||
-        ""
-    }
-  ]);
-
-  const earningsRows = nonEmptyRows([
-    { key: "Today", value: money(summary.earningsToday) },
-    { key: "Last 7 Days", value: money(summary.earningsWeek) }
-  ]);
-
-  const notesRows = nonEmptyRows([
-    { key: "Driver Notes", value: notes }
-  ]);
+    { key: "Completed Today", value: String(summary.completedToday) }
+  ];
 
   elements.driverDetailsBody.innerHTML = `
-    <details class="detail-section" open>
-      <summary>1. Driver Summary</summary>
-      <div class="detail-body">${summaryRows || '<div class="empty">No summary fields available.</div>'}</div>
-    </details>
+    <section class="detail-section" style="padding:12px;">
+      <h4 style="margin:0 0 10px;font-size:20px;color:#064f3b;">${escapeHtml(summary.name)}</h4>
+      <div class="driver-overview-grid">
+        ${overviewRows.map(row => `
+          <div class="metric">
+            <div class="metric-label">${escapeHtml(row.key)}</div>
+            <div class="metric-value">${escapeHtml(row.value)}</div>
+          </div>
+        `).join("")}
+      </div>
+    </section>
 
-    <details class="detail-section">
-      <summary>2. Current Jobs</summary>
-      <div class="detail-body">${renderCurrentJobsSection(summary)}</div>
-    </details>
-
-    <details class="detail-section">
-      <summary>3. Today's Completed Jobs</summary>
-      <div class="detail-body">${renderCompletedTodaySection(summary)}</div>
-    </details>
-
-    <details class="detail-section">
-      <summary>4. Vehicle</summary>
-      <div class="detail-body">${vehicleRows || '<div class="empty">No vehicle fields available.</div>'}</div>
-    </details>
-
-    <details class="detail-section">
-      <summary>5. Contact</summary>
-      <div class="detail-body">${contactRows || '<div class="empty">No contact fields available.</div>'}</div>
-    </details>
-
-    <details class="detail-section">
-      <summary>6. Earnings Summary</summary>
-      <div class="detail-body">${earningsRows || '<div class="empty">No earnings fields available.</div>'}</div>
-    </details>
-
-    <details class="detail-section">
-      <summary>7. Notes</summary>
-      <div class="detail-body">${notesRows || '<div class="empty">No notes available.</div>'}</div>
-    </details>
+    <section class="detail-section">
+      <div class="detail-body">
+        <div class="metric-label" style="font-size:12px;margin-bottom:10px;">CURRENT ASSIGNMENTS</div>
+        ${renderCurrentAssignments(summary)}
+      </div>
+    </section>
   `;
+}
+
+function addDriverSchemaMapping() {
+  return {
+    fullName: firstAvailableDriverColumn(["full_name", "display_name", "name"]),
+    email: firstAvailableDriverColumn(["email"]),
+    phone: firstAvailableDriverColumn(["phone", "mobile_phone"]),
+    vehicleType: firstAvailableDriverColumn(["vehicle_type", "vehicle"]),
+    vehicleMake: firstAvailableDriverColumn(["vehicle_make"]),
+    vehicleModel: firstAvailableDriverColumn(["vehicle_model"]),
+    vehicleYear: firstAvailableDriverColumn(["vehicle_year"]),
+    licensePlate: firstAvailableDriverColumn(["license_plate", "plate"]),
+    serviceArea: firstAvailableDriverColumn(["current_area", "area", "city"]),
+    statusText: firstAvailableDriverColumn(["availability_status", "status"]),
+    activeBool: firstAvailableDriverColumn(["active", "is_active", "enabled"])
+  };
+}
+
+function unavailableAddDriverFields(mapping) {
+  const missing = [];
+  if (!mapping.fullName) missing.push("First Name / Last Name");
+  if (!mapping.phone) missing.push("Phone");
+  if (!mapping.email) missing.push("Email");
+  if (!mapping.vehicleType) missing.push("Vehicle Type");
+  if (!mapping.vehicleMake) missing.push("Vehicle Make / Model");
+  if (!mapping.vehicleModel) missing.push("Vehicle Make / Model");
+  if (!mapping.vehicleYear) missing.push("Vehicle Year");
+  if (!mapping.licensePlate) missing.push("License Plate");
+  if (!mapping.serviceArea) missing.push("Service Area");
+  if (!mapping.statusText && !mapping.activeBool) missing.push("Driver Status");
+  return Array.from(new Set(missing));
+}
+
+function renderAddDriverForm() {
+  const mapping = addDriverSchemaMapping();
+  const unavailable = unavailableAddDriverFields(mapping);
+
+  elements.addDriverBody.innerHTML = `
+    <form id="addDriverForm" class="add-driver-form">
+      <div class="add-driver-field">
+        <label for="addDriverFirstName">First Name</label>
+        <input id="addDriverFirstName" name="first_name" autocomplete="given-name">
+      </div>
+      <div class="add-driver-field">
+        <label for="addDriverLastName">Last Name</label>
+        <input id="addDriverLastName" name="last_name" autocomplete="family-name">
+      </div>
+      <div class="add-driver-field">
+        <label for="addDriverPhone">Phone</label>
+        <input id="addDriverPhone" name="phone" autocomplete="tel">
+      </div>
+      <div class="add-driver-field">
+        <label for="addDriverEmail">Email</label>
+        <input id="addDriverEmail" name="email" type="email" autocomplete="email">
+      </div>
+      <div class="add-driver-field">
+        <label for="addDriverVehicleType">Vehicle Type</label>
+        <input id="addDriverVehicleType" name="vehicle_type">
+      </div>
+      <div class="add-driver-field">
+        <label for="addDriverVehicleMakeModel">Vehicle Make / Model</label>
+        <input id="addDriverVehicleMakeModel" name="vehicle_make_model">
+      </div>
+      <div class="add-driver-field">
+        <label for="addDriverVehicleYear">Vehicle Year</label>
+        <input id="addDriverVehicleYear" name="vehicle_year" inputmode="numeric">
+      </div>
+      <div class="add-driver-field">
+        <label for="addDriverLicensePlate">License Plate</label>
+        <input id="addDriverLicensePlate" name="license_plate">
+      </div>
+      <div class="add-driver-field full">
+        <label for="addDriverServiceArea">Service Area</label>
+        <input id="addDriverServiceArea" name="service_area">
+      </div>
+      <div class="add-driver-field full">
+        <label for="addDriverStatus">Driver Status</label>
+        <select id="addDriverStatus" name="driver_status">
+          <option value="available">Available</option>
+          <option value="busy">Busy</option>
+          <option value="offline">Offline</option>
+        </select>
+      </div>
+    </form>
+    ${unavailable.length ? `<div class="save-limit-note">Some fields cannot currently be saved with the existing drivers table: ${escapeHtml(unavailable.join(", "))}.</div>` : ""}
+  `;
+}
+
+function openAddDriverModal() {
+  renderAddDriverForm();
+  state.savingNewDriver = false;
+  elements.saveDriverBtn.disabled = false;
+  elements.saveDriverBtn.textContent = "Save Driver";
+  elements.addDriverModal.classList.add("open");
+  elements.addDriverModal.setAttribute("aria-hidden", "false");
+}
+
+function closeAddDriverModal() {
+  state.savingNewDriver = false;
+  elements.addDriverModal.classList.remove("open");
+  elements.addDriverModal.setAttribute("aria-hidden", "true");
+}
+
+async function saveNewDriver() {
+  const form = document.getElementById("addDriverForm");
+  if (!form) {
+    return;
+  }
+
+  const data = new FormData(form);
+  const mapping = addDriverSchemaMapping();
+  const payload = {};
+
+  const firstName = String(data.get("first_name") || "").trim();
+  const lastName = String(data.get("last_name") || "").trim();
+  const fullName = [firstName, lastName].filter(Boolean).join(" ").trim();
+
+  if (!fullName) {
+    showToast("First Name and Last Name are required.", "error");
+    return;
+  }
+
+  if (mapping.fullName) {
+    payload[mapping.fullName] = fullName;
+  }
+
+  if (mapping.phone) {
+    payload[mapping.phone] = String(data.get("phone") || "").trim() || null;
+  }
+
+  if (mapping.email) {
+    payload[mapping.email] = String(data.get("email") || "").trim() || null;
+  }
+
+  if (mapping.vehicleType) {
+    payload[mapping.vehicleType] = String(data.get("vehicle_type") || "").trim() || null;
+  }
+
+  const makeModel = String(data.get("vehicle_make_model") || "").trim();
+  if (mapping.vehicleMake) {
+    payload[mapping.vehicleMake] = makeModel || null;
+  }
+  if (mapping.vehicleModel) {
+    payload[mapping.vehicleModel] = makeModel || null;
+  }
+
+  if (mapping.vehicleYear) {
+    const yearValue = String(data.get("vehicle_year") || "").trim();
+    payload[mapping.vehicleYear] = yearValue || null;
+  }
+
+  if (mapping.licensePlate) {
+    payload[mapping.licensePlate] = String(data.get("license_plate") || "").trim() || null;
+  }
+
+  if (mapping.serviceArea) {
+    payload[mapping.serviceArea] = String(data.get("service_area") || "").trim() || null;
+  }
+
+  const statusChoice = clean(data.get("driver_status") || "available");
+  if (mapping.statusText) {
+    payload[mapping.statusText] = statusChoice;
+  }
+  if (mapping.activeBool) {
+    payload[mapping.activeBool] = statusChoice !== "offline";
+  }
+
+  if (!Object.keys(payload).length) {
+    showToast("No compatible drivers table columns are available for saving.", "error");
+    return;
+  }
+
+  state.savingNewDriver = true;
+  elements.saveDriverBtn.disabled = true;
+  elements.saveDriverBtn.textContent = "Saving...";
+
+  try {
+    const result = await client
+      .from("drivers")
+      .insert(payload)
+      .select("id")
+      .maybeSingle();
+
+    if (result.error) {
+      throw result.error;
+    }
+
+    closeAddDriverModal();
+    showToast("Driver added.", "success");
+    await loadAvailabilityWorkspace();
+  } catch (error) {
+    showToast(error.message || "Unable to save driver.", "error");
+  } finally {
+    state.savingNewDriver = false;
+    elements.saveDriverBtn.disabled = false;
+    elements.saveDriverBtn.textContent = "Save Driver";
+  }
 }
 
 function availabilityEditorFieldDescriptor(driver) {
@@ -1531,7 +1704,7 @@ async function loadQuotes() {
 function setRefreshLoading(loading) {
   state.isLoading = loading;
   elements.refreshDriversBtn.disabled = loading;
-  elements.refreshDriversBtn.textContent = loading ? "Refreshing..." : "Refresh";
+  elements.refreshDriversBtn.textContent = loading ? "Refreshing..." : "↻ Refresh";
 }
 
 function renderWorkspace() {
@@ -1601,6 +1774,8 @@ function bindEvents() {
   });
 
   elements.refreshDriversBtn.addEventListener("click", loadAvailabilityWorkspace);
+  elements.addDriverBtn.addEventListener("click", openAddDriverModal);
+  elements.saveDriverBtn.addEventListener("click", saveNewDriver);
 
   document.addEventListener("click", event => {
     const openDriver = event.target.closest("[data-driver-open]");
@@ -1619,9 +1794,21 @@ function bindEvents() {
       return;
     }
 
+    if (event.target.matches("[data-close-add-driver-modal]")) {
+      closeAddDriverModal();
+      return;
+    }
+
     const routeOpenJob = event.target.closest("[data-route-open-job]");
     if (routeOpenJob) {
       const jobId = routeOpenJob.getAttribute("data-route-open-job");
+      window.location.href = "/dashboard.html?job=" + encodeURIComponent(String(jobId));
+      return;
+    }
+
+    const driverOpenJob = event.target.closest("[data-driver-job-open]");
+    if (driverOpenJob) {
+      const jobId = driverOpenJob.getAttribute("data-driver-job-open");
       window.location.href = "/dashboard.html?job=" + encodeURIComponent(String(jobId));
       return;
     }
@@ -1633,10 +1820,20 @@ function bindEvents() {
 
     if (event.target === elements.routePreviewModal) {
       closeRoutePreview();
+      return;
+    }
+
+    if (event.target === elements.addDriverModal) {
+      closeAddDriverModal();
     }
   });
 
   document.addEventListener("keydown", event => {
+    if (event.key === "Escape" && elements.addDriverModal.classList.contains("open")) {
+      closeAddDriverModal();
+      return;
+    }
+
     if (event.key === "Escape" && elements.routePreviewModal.classList.contains("open")) {
       closeRoutePreview();
       return;

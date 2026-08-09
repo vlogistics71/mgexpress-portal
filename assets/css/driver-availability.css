@@ -23,7 +23,7 @@ body {
   margin: 0;
   background: radial-gradient(circle at 10% 0%, #f7fbf9, var(--bg) 45%), var(--bg);
   color: var(--ink);
-  font-family: "SF Pro Display", "Segoe UI", "Helvetica Neue", sans-serif;
+  font-family: Arial, Helvetica, sans-serif;
 }
 
 button,
@@ -69,8 +69,8 @@ input {
 
 .heading {
   display: flex;
-  align-items: flex-end;
-  justify-content: space-between;
+  align-items: flex-start;
+  justify-content: flex-start;
   gap: 14px;
 }
 
@@ -91,33 +91,33 @@ h1 {
 .subhead {
   margin: 9px 0 0;
   color: var(--muted);
-  max-width: 690px;
+  max-width: 520px;
+  font-size: 14px;
 }
 
-.back-link {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-height: 48px;
-  padding: 10px 16px;
-  border-radius: 14px;
-  border: 1px solid var(--line);
-  background: var(--paper);
-  color: #064f3b;
-  text-decoration: none;
-  font-weight: 700;
+.primary-cta {
+  width: 100%;
+  min-height: 50px;
+  margin-top: 14px;
+  border: 0;
+  border-radius: 16px;
+  padding: 12px 18px;
+  background: #087455;
+  color: #fff;
+  font-weight: 900;
+  cursor: pointer;
 }
 
 .toolbar {
-  margin-top: 20px;
-  padding: 14px;
+  margin-top: 12px;
+  padding: 10px;
   border: 1px solid var(--line);
-  border-radius: 20px;
+  border-radius: 18px;
   background: var(--paper);
   box-shadow: var(--shadow);
   display: grid;
   grid-template-columns: minmax(220px, 1fr) auto auto;
-  gap: 10px;
+  gap: 8px;
   align-items: end;
 }
 
@@ -127,9 +127,9 @@ h1 {
 
 .search-wrap span {
   display: block;
-  margin: 0 0 6px;
+  margin: 0 0 4px;
   color: var(--muted);
-  font-size: 12px;
+  font-size: 11px;
   letter-spacing: 0.06em;
   text-transform: uppercase;
   font-weight: 700;
@@ -137,7 +137,7 @@ h1 {
 
 .search-wrap input {
   width: 100%;
-  min-height: 46px;
+  min-height: 42px;
   border-radius: 12px;
   border: 1px solid var(--line);
   padding: 10px 12px;
@@ -150,8 +150,8 @@ h1 {
 }
 
 .chip {
-  min-height: 44px;
-  padding: 10px 14px;
+  min-height: 38px;
+  padding: 8px 12px;
   border-radius: 999px;
   border: 1px solid var(--line);
   background: #f8fbfa;
@@ -167,8 +167,8 @@ h1 {
 }
 
 .refresh-btn {
-  min-height: 44px;
-  padding: 10px 16px;
+  min-height: 38px;
+  padding: 8px 12px;
   border-radius: 12px;
   border: 1px solid var(--line);
   background: var(--paper);
@@ -181,26 +181,26 @@ h1 {
   margin-top: 16px;
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 10px;
+  gap: 12px;
 }
 
 .summary-card {
   border: 1px solid var(--line);
-  border-radius: 18px;
+  border-radius: 20px;
   background: var(--paper);
-  box-shadow: var(--shadow);
-  padding: 14px;
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.04);
+  padding: 20px;
 }
 
 .summary-label {
   color: var(--muted);
-  font-size: 13px;
+  font-size: 14px;
 }
 
 .summary-value {
-  margin-top: 6px;
-  font-size: 30px;
-  font-weight: 800;
+  margin-top: 8px;
+  font-size: 38px;
+  font-weight: 900;
 }
 
 .summary-value.success {
@@ -255,20 +255,20 @@ h1 {
   margin-top: 10px;
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 10px;
+  gap: 12px;
 }
 
 .driver-card {
   border: 1px solid var(--line);
-  border-radius: 18px;
+  border-radius: 16px;
   background: var(--paper);
-  box-shadow: var(--shadow);
-  padding: 14px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.04);
+  padding: 12px;
   cursor: pointer;
   text-align: left;
-  min-height: 208px;
+  min-height: 188px;
   display: grid;
-  gap: 8px;
+  gap: 6px;
 }
 
 .driver-card:focus-visible {
@@ -285,7 +285,7 @@ h1 {
 
 .driver-name {
   margin: 0;
-  font-size: 18px;
+  font-size: 17px;
   line-height: 1.2;
 }
 
@@ -328,7 +328,7 @@ h1 {
 }
 
 .metric {
-  padding: 8px;
+  padding: 7px;
   border-radius: 12px;
   background: #f8fbf9;
 }
@@ -344,7 +344,8 @@ h1 {
 .metric-value {
   margin-top: 3px;
   font-weight: 800;
-  font-size: 15px;
+  font-size: 14px;
+  overflow-wrap: anywhere;
 }
 
 .card-foot {
@@ -352,7 +353,8 @@ h1 {
   align-items: center;
   justify-content: space-between;
   color: var(--muted);
-  font-size: 13px;
+  font-size: 12px;
+  font-weight: 700;
 }
 
 .chevron {
@@ -549,6 +551,90 @@ h1 {
   padding: 10px 12px;
 }
 
+.driver-overview-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.assignment-list {
+  display: grid;
+  gap: 8px;
+}
+
+.assignment-row {
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: #fff;
+  padding: 10px;
+  display: grid;
+  gap: 4px;
+  cursor: pointer;
+  text-align: left;
+}
+
+.assignment-row:hover,
+.assignment-row:focus-visible {
+  background: #f4faf7;
+  outline: none;
+}
+
+.assignment-title {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  font-weight: 800;
+}
+
+.assignment-meta {
+  color: var(--muted);
+  font-size: 13px;
+  overflow-wrap: anywhere;
+}
+
+.add-driver-form {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.add-driver-field {
+  display: grid;
+  gap: 4px;
+}
+
+.add-driver-field label {
+  color: var(--muted);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  font-weight: 800;
+}
+
+.add-driver-field input,
+.add-driver-field select {
+  width: 100%;
+  min-height: 42px;
+  border-radius: 10px;
+  border: 1px solid var(--line);
+  padding: 10px 12px;
+}
+
+.add-driver-field.full {
+  grid-column: 1 / -1;
+}
+
+.save-limit-note {
+  margin-top: 10px;
+  border: 1px solid #edd8ab;
+  border-radius: 10px;
+  background: #fff8ea;
+  color: #5c4a17;
+  font-size: 12px;
+  padding: 9px 10px;
+  line-height: 1.4;
+}
+
 .kv-row {
   display: flex;
   justify-content: space-between;
@@ -650,6 +736,56 @@ h1 {
   }
 
   .toolbar {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 430px) {
+  .container {
+    padding: 20px 12px 44px;
+  }
+
+  .topbar {
+    padding: 14px 12px;
+  }
+
+  .brand {
+    font-size: 20px;
+  }
+
+  .staff-email {
+    font-size: 12px;
+    line-height: 1.3;
+  }
+
+  .chip {
+    min-height: 34px;
+    padding: 7px 10px;
+    font-size: 13px;
+  }
+
+  .summary-value {
+    font-size: 32px;
+  }
+
+  .driver-card {
+    min-height: 176px;
+  }
+
+  .card-grid {
+    gap: 6px;
+  }
+
+  .metric-label {
+    font-size: 10px;
+  }
+
+  .metric-value {
+    font-size: 13px;
+  }
+
+  .driver-overview-grid,
+  .add-driver-form {
     grid-template-columns: 1fr;
   }
 }
