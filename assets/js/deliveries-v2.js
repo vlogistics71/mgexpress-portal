@@ -1,10 +1,12 @@
-(function () {
+ (function () {
   "use strict";
 
   const client = window.mgSupabase || window.supabase.createClient(
     "https://dczlucwfjayymlwbzzdi.supabase.co",
     "sb_publishable_kcv_a78ZyUxMo2neKUANdw_XN7eAMpI"
   );
+
+  window.mgDispatchClient = client;
 
   const state = {
     session: null,
@@ -19,43 +21,40 @@
     deliveryDetailsRequestToken: 0,
     assignDriverId: "",
     assignDriverPay: "",
-
-    function isActiveJob(delivery) {
-      return !isCancelled(delivery);
-    }
     assignSearch: "",
-      const rows = state.deliveries.filter(delivery => isActiveJob(delivery) && matchesTab(delivery) && matchesCategory(delivery) && matchesSearch(delivery));
+    assignFilter: "all",
     loadError: "",
-      return state.deliveries.filter(delivery => isActiveJob(delivery)).filter(delivery => {
-        const previousTab = state.activeTab;
-        state.activeTab = tab;
-        const result = matchesTab(delivery);
-        state.activeTab = previousTab;
-        return result;
-      }).length;
+    isAssigning: false
+  };
+
+  const elements = {
+    staffEmail: document.getElementById("staffEmail"),
+    newDeliveryButton: document.getElementById("newDeliveryButton"),
+    statusFilter: document.getElementById("statusFilter"),
     tabs: document.getElementById("tabs"),
-      const previousCategory = state.activeCategory;
-      state.activeCategory = category;
-      const result = state.deliveries.filter(delivery => isActiveJob(delivery) && matchesCategory(delivery)).length;
-      state.activeCategory = previousCategory;
-      return result;
+    categoryFilters: document.getElementById("categoryFilters"),
+    searchInput: document.getElementById("searchInput"),
+    sortSelect: document.getElementById("sortSelect"),
+    refreshButton: document.getElementById("refreshButton"),
+    statusSummary: document.getElementById("statusSummary"),
     summaryTotalOpen: document.getElementById("summaryTotalOpen"),
     summaryUnassigned: document.getElementById("summaryUnassigned"),
     summaryInTransit: document.getElementById("summaryInTransit"),
     summaryWaitingPayment: document.getElementById("summaryWaitingPayment"),
     workspaceLabel: document.getElementById("workspaceLabel"),
     visibleCount: document.getElementById("visibleCount"),
-        ["pallet", "Pallet"],
-        ["special", "Special"]
+    deliveryList: document.getElementById("deliveryList"),
+    toastWrap: document.getElementById("toastWrap"),
+    deliveryDetailsModal: document.getElementById("deliveryDetailsModal"),
+    deliveryDetailsBody: document.getElementById("deliveryDetailsBody"),
     deliveryDetailsSubtitle: document.getElementById("deliveryDetailsSubtitle"),
     deliveryDetailsTitle: document.getElementById("deliveryDetailsTitle"),
-      const activeRows = state.deliveries.filter(isActiveJob);
-      const total = activeRows.length;
-      const assigned = activeRows.filter(isAssigned).length;
-      const ready = activeRows.filter(isReady).length;
-      const openRows = activeRows.filter(delivery => !isComplete(delivery) && !isCancelled(delivery));
+    newDeliveryModal: document.getElementById("newDeliveryModal"),
+    assignModal: document.getElementById("assignModal"),
+    assignJobSummary: document.getElementById("assignJobSummary"),
+    assignRecommendedCard: document.getElementById("assignRecommendedCard"),
     assignDriverSearch: document.getElementById("assignDriverSearch"),
-      const inTransit = activeRows.filter(isInTransit).length;
+    assignDriverFilter: document.getElementById("assignDriverFilter"),
     assignDriverCards: document.getElementById("assignDriverCards"),
     assignForm: document.getElementById("assignForm"),
     assignJobId: document.getElementById("assignJobId"),
@@ -66,14 +65,34 @@
     assignConfirmModal: document.getElementById("assignConfirmModal"),
     assignConfirmText: document.getElementById("assignConfirmText"),
     assignConfirmBtn: document.getElementById("assignConfirmBtn"),
+    rejectedReturnConfirmModal: document.getElementById("rejectedReturnConfirmModal"),
     rejectedReturnConfirmText: document.getElementById("rejectedReturnConfirmText"),
     rejectedReturnConfirmBtn: document.getElementById("rejectedReturnConfirmBtn")
   };
 
   function clean(value) {
+    return String(value || "").trim().toLowerCase();
   }
 
   function readInitialTabFromUrl() {
+    const params = new URLSearchParams(window.location.search || "");
+    const requested = clean(params.get("tab"));
+    const allowed = new Set(["all_open", "waiting_payment", "ready", "assigned", "in_transit", "rejected", "completed", "search", "pending"]);
+    if (requested === "pending") {
+      return "all_open";
+    }
+    return allowed.has(requested) ? requested : "all_open";
+  }
+
+  function escapeHtml(value) {
+    const div = document.createElement("div");
+    div.textContent = value == null ? "" : String(value);
+    return div.innerHTML;
+  }
+
+  function parseDate(value) {
+    if (!value) {
+      return null;
     }
 
     const date = new Date(value);
@@ -85,6 +104,7 @@
     if (!date) {
       return "-";
     }
+
     return new Intl.DateTimeFormat("en-US", {
       month: "short",
       day: "numeric",
