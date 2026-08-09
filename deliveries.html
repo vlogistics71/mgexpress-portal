@@ -46,6 +46,32 @@
     .brand { font-size: 24px; font-weight: 900; line-height: 1.08; }
     .brand span { color: var(--coral); }
     .brand-subtitle { margin-top: 4px; color: rgba(255, 255, 255, .82); font-size: 13px; font-weight: 700; line-height: 1.2; }
+    .debug-panel {
+      width: min(1050px, calc(100% - 28px));
+      margin: 12px auto 0;
+      padding: 12px 14px;
+      border: 1px solid #d3e3db;
+      border-radius: 16px;
+      background: #f8fffc;
+      color: #173128;
+      box-shadow: 0 8px 22px rgba(0,0,0,.04);
+    }
+    .debug-title { font-size: 14px; font-weight: 900; margin-bottom: 10px; }
+    .debug-grid { display: grid; gap: 6px; font-size: 12px; font-weight: 700; }
+    .debug-row { display: flex; flex-wrap: wrap; gap: 8px; justify-content: space-between; }
+    .debug-label { color: #4b6359; }
+    .debug-value { font-weight: 900; }
+    .debug-error {
+      margin-top: 10px;
+      padding-top: 10px;
+      border-top: 1px solid #d7e8df;
+      display: grid;
+      gap: 6px;
+      font-size: 12px;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+    .debug-error strong { display: block; margin-bottom: 2px; }
     .container { width: min(1050px, 100%); margin: auto; padding: 20px 14px 96px; }
     .page-head { display: grid; gap: 10px; margin-bottom: 16px; }
     .page-head-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; flex-wrap: wrap; }
@@ -342,6 +368,32 @@
   </style>
 </head>
 <body>
+  <div class="debug-panel" id="deliveriesDebugPanel" role="status" aria-live="polite">
+    <div class="debug-title">Deliveries Debug</div>
+    <div class="debug-grid">
+      <div class="debug-row"><span class="debug-label">Page script loaded:</span><span class="debug-value" data-debug-step="scriptLoaded">NO</span></div>
+      <div class="debug-row"><span class="debug-label">DOMContentLoaded fired:</span><span class="debug-value" data-debug-step="domLoaded">NO</span></div>
+      <div class="debug-row"><span class="debug-label">Supabase client available:</span><span class="debug-value" data-debug-step="supabaseClient">NO</span></div>
+      <div class="debug-row"><span class="debug-label">Session found:</span><span class="debug-value" data-debug-step="sessionFound">NO</span></div>
+      <div class="debug-row"><span class="debug-label">Profile loaded:</span><span class="debug-value" data-debug-step="profileLoaded">NO</span></div>
+      <div class="debug-row"><span class="debug-label">Delivery query started:</span><span class="debug-value" data-debug-step="queryStarted">NO</span></div>
+      <div class="debug-row"><span class="debug-label">Delivery query completed:</span><span class="debug-value" data-debug-step="queryCompleted">NO</span></div>
+      <div class="debug-row"><span class="debug-label">Rows returned:</span><span class="debug-value" data-debug-step="rowsReturned">0</span></div>
+      <div class="debug-row"><span class="debug-label">Active filtering started:</span><span class="debug-value" data-debug-step="filteringStarted">NO</span></div>
+      <div class="debug-row"><span class="debug-label">Active filtering completed:</span><span class="debug-value" data-debug-step="filteringCompleted">NO</span></div>
+      <div class="debug-row"><span class="debug-label">Counts calculated:</span><span class="debug-value" data-debug-step="countsCalculated">NO</span></div>
+      <div class="debug-row"><span class="debug-label">Render started:</span><span class="debug-value" data-debug-step="renderStarted">NO</span></div>
+      <div class="debug-row"><span class="debug-label">Render completed:</span><span class="debug-value" data-debug-step="renderCompleted">NO</span></div>
+      <div class="debug-row"><span class="debug-label">Last successful step:</span><span class="debug-value" data-debug-step="lastStep">none</span></div>
+    </div>
+    <div class="debug-error">
+      <div><strong>Exact JS error:</strong><span data-debug-js-error>none</span></div>
+      <div><strong>Stack:</strong><span data-debug-stack>none</span></div>
+      <div><strong>Exact Supabase error:</strong><span data-debug-supabase-error>none</span></div>
+      <div><strong>Timeout:</strong><span data-debug-timeout>none</span></div>
+    </div>
+  </div>
+
   <header class="topbar">
     <div class="topbar-inner">
       <div class="topbar-copy">

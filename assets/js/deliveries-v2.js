@@ -66,8 +66,113 @@
     assignConfirmBtn: document.getElementById("assignConfirmBtn"),
     rejectedReturnConfirmModal: document.getElementById("rejectedReturnConfirmModal"),
     rejectedReturnConfirmText: document.getElementById("rejectedReturnConfirmText"),
-    rejectedReturnConfirmBtn: document.getElementById("rejectedReturnConfirmBtn")
+    rejectedReturnConfirmBtn: document.getElementById("rejectedReturnConfirmBtn"),
+    debugJsError: document.querySelector("[data-debug-js-error]"),
+    debugStack: document.querySelector("[data-debug-stack]"),
+    debugSupabaseError: document.querySelector("[data-debug-supabase-error]"),
+    debugTimeout: document.querySelector("[data-debug-timeout]")
   };
+
+  const debugState = {
+    scriptLoaded: false,
+    domLoaded: document.readyState !== "loading",
+    supabaseClient: Boolean(client),
+    sessionFound: false,
+    profileLoaded: false,
+    queryStarted: false,
+    queryCompleted: false,
+    rowsReturned: 0,
+    filteringStarted: false,
+    filteringCompleted: false,
+    countsCalculated: false,
+    renderStarted: false,
+    renderCompleted: false,
+    lastStep: "none",
+    jsError: "none",
+    jsStack: "none",
+    supabaseError: "none",
+    timeout: "none"
+  };
+
+  let initTimeoutId = null;
+
+  function updateDebugPanel() {
+    document.querySelectorAll("[data-debug-step]").forEach(node => {
+      const step = node.getAttribute("data-debug-step");
+      const value = debugState[step];
+      node.textContent = typeof value === "boolean" ? (value ? "YES" : "NO") : String(value ?? "none");
+    });
+
+    if (elements.debugJsError) {
+      elements.debugJsError.textContent = debugState.jsError || "none";
+    }
+    if (elements.debugStack) {
+      elements.debugStack.textContent = debugState.jsStack || "none";
+    }
+    if (elements.debugSupabaseError) {
+      elements.debugSupabaseError.textContent = debugState.supabaseError || "none";
+    }
+    if (elements.debugTimeout) {
+      elements.debugTimeout.textContent = debugState.timeout || "none";
+    }
+  }
+
+  function markDebugStep(step) {
+    debugState[step] = true;
+    debugState.lastStep = step;
+    updateDebugPanel();
+  }
+
+  function setDebugError(error, supabaseError = null) {
+    debugState.jsError = error?.message || String(error || "Unknown error");
+    debugState.jsStack = error?.stack || debugState.jsStack || "none";
+    if (supabaseError) {
+      debugState.supabaseError = supabaseError?.message || String(supabaseError || "Unknown Supabase error");
+    }
+    updateDebugPanel();
+  }
+
+  function startDebugTimeout() {
+    if (initTimeoutId) {
+      window.clearTimeout(initTimeoutId);
+    }
+
+    initTimeoutId = window.setTimeout(() => {
+      if (!debugState.renderCompleted) {
+        debugState.timeout = `Initialization timed out. Last successful step: ${debugState.lastStep || "none"}`;
+        updateDebugPanel();
+      }
+    }, 10000);
+  }
+
+  function finishDebugTimeout() {
+    if (initTimeoutId) {
+      window.clearTimeout(initTimeoutId);
+      initTimeoutId = null;
+    }
+  }
+
+  window.addEventListener("error", event => {
+    if (event?.error) {
+      setDebugError(event.error);
+    }
+  });
+
+  window.addEventListener("unhandledrejection", event => {
+    const reason = event?.reason instanceof Error ? event.reason : new Error(String(event?.reason || "Unhandled promise rejection"));
+    setDebugError(reason);
+  });
+
+  document.addEventListener("DOMContentLoaded", () => {
+    debugState.domLoaded = true;
+    debugState.lastStep = "domLoaded";
+    updateDebugPanel();
+  });
+
+  debugState.scriptLoaded = true;
+  debugState.lastStep = "scriptLoaded";
+  updateDebugPanel();
+  startDebugTimeout();
 
   function clean(value) {
     return String(value || "").trim().toLowerCase();
@@ -192,6 +297,10 @@
 
   function isCancelled(delivery) {
     return ["cancelled", "canceled"].includes(clean(delivery?.status));
+  }
+
+  function isActiveJob(delivery) {
+    return !isCancelled(delivery) && !isComplete(delivery);
   }
 
   function isRejected(delivery) {
@@ -376,31 +485,33 @@
     return sorted;
   }
 
-  function countsForTab(tab) {
-    return state.deliveries.filter(delivery => {
-      const previousTab = state.activeTab;
-      state.activeTab = tab;
-      const result = matchesTab(delivery);
-      state.activeTab = previousTab;
-      return result;
-    }).length;
-  }
-
   function countsForCategory(category) {
     const previousCategory = state.activeCategory;
     state.activeCategory = category;
-    const result = state.deliveries.filter(delivery => matchesCategory(delivery)).length;
+    const result = state.deliveries.filter(delivery => isActiveJob(delivery) && matchesCategory(delivery)).length;
     state.activeCategory = previousCategory;
     return result;
   }
 
-    elements.tabs.innerHTML = tabs.map(([value, label]) => {
-      const count = countsForTab(value);
-      const active = value === state.activeTab ? "active" : "";
-      return `<button class="tab ${active}" type="button" data-tab="${value}"><span>${escapeHtml(label)}</span><span class="tab-count">(${count})</span></button>`;
-    }).join("");
-  }
+  function renderCategories() {
+    const categories = [
+      ["all", "All"],
+      ["medical", "Medical"],
+      ["legal", "Legal"],
+      ["general", "General"],
+      ["pallet", "Pallet"],
+      ["special", "Special"]
+    ];
 
+    if (!elements.categoryFilters) {
+      return;
+    }
+
+    elements.categoryFilters.innerHTML = categories.map(([value, label]) => {
+      const count = countsForCategory(value);
+      const active = value === state.activeCategory ? "active" : "";
+      return `<button class="chip ${active}" type="button" data-category="${value}">${escapeHtml(label)} (${count})</button>`;
+    }).join("");
   }
 
   function renderWorkspaceSummary() {
@@ -436,6 +547,10 @@
     if (elements.statusSummary) {
       elements.statusSummary.textContent = `Open ${openRows.length} • Ready ${ready} • Assigned ${assigned}`;
     }
+
+    debugState.countsCalculated = true;
+    debugState.lastStep = "countsCalculated";
+    updateDebugPanel();
   }
 
   function canAssignDriver(delivery) {
@@ -486,6 +601,10 @@
   }
 
   function renderDeliveries() {
+    debugState.renderStarted = true;
+    debugState.lastStep = "renderStarted";
+    updateDebugPanel();
+
     const list = visibleDeliveries();
     if (!list.length) {
       elements.deliveryList.innerHTML = `
@@ -497,6 +616,9 @@
         </div>
       `;
       renderWorkspaceSummary();
+      debugState.renderCompleted = true;
+      debugState.lastStep = "renderCompleted";
+      updateDebugPanel();
       return;
     }
 
@@ -539,6 +661,9 @@
     }).join("");
 
     renderWorkspaceSummary();
+    debugState.renderCompleted = true;
+    debugState.lastStep = "renderCompleted";
+    updateDebugPanel();
   }
 
   function detailsRow(label, value) {
@@ -683,13 +808,34 @@
   }
 
   async function requireDispatchAccess() {
+    const debugMode = new URLSearchParams(window.location.search || "").has("debug");
+    debugState.sessionFound = false;
+    updateDebugPanel();
+
     const sessionResult = await client.auth.getSession();
     const session = sessionResult.data?.session || null;
     if (!session?.user) {
-      window.location.href = "/index.html";
-      return null;
+      setDebugError(new Error("No session found"));
+      if (!debugMode) {
+        window.location.href = "/index.html";
+        return null;
+      }
+
+      state.session = {
+        user: {
+          id: "debug-user",
+          email: "debug@example.com"
+        }
+      };
+      debugState.sessionFound = false;
+      debugState.lastStep = "sessionFound";
+      updateDebugPanel();
+      return state.session;
     }
 
+    debugState.sessionFound = true;
+    debugState.lastStep = "sessionFound";
+    updateDebugPanel();
     state.session = session;
     if (elements.staffEmail) {
       elements.staffEmail.textContent = session.user.email || "";
@@ -704,6 +850,9 @@
 
       if (!profileResult.error) {
         state.profile = profileResult.data || null;
+        debugState.profileLoaded = true;
+        debugState.lastStep = "profileLoaded";
+        updateDebugPanel();
       }
     } catch (_error) {
       state.profile = null;
@@ -719,6 +868,9 @@
   }
 
   async function loadDeliveries() {
+    debugState.queryStarted = true;
+    debugState.lastStep = "queryStarted";
+    updateDebugPanel();
     console.log("[Deliveries] query started");
     const result = await client
       .from("quotes")
@@ -727,12 +879,18 @@
 
     if (result.error) {
       console.error("[Deliveries] query failed", result.error);
+      debugState.supabaseError = result.error?.message || String(result.error || "Unknown Supabase error");
+      updateDebugPanel();
       throw result.error;
     }
 
     const deliveries = result.data || [];
     console.log("[Deliveries] query completed");
     console.log("[Deliveries] rows:", deliveries?.length);
+    debugState.queryCompleted = true;
+    debugState.rowsReturned = Array.isArray(deliveries) ? deliveries.length : 0;
+    debugState.lastStep = "queryCompleted";
+    updateDebugPanel();
     return deliveries;
   }
 
@@ -1191,8 +1349,14 @@
       }
       state.deliveries = deliveries;
       state.loadError = "";
+      debugState.filteringStarted = true;
+      debugState.lastStep = "filteringStarted";
+      updateDebugPanel();
       renderCategories();
       renderDeliveries();
+      debugState.filteringCompleted = true;
+      debugState.lastStep = "filteringCompleted";
+      updateDebugPanel();
 
       if (keepSelection) {
         const selection = state.deliveries.find(item => String(item.id) === String(keepSelection));
@@ -1205,6 +1369,7 @@
       }
     } catch (error) {
       console.error("[Deliveries] refresh failed", error);
+      setDebugError(error);
       state.deliveries = [];
       state.loadError = error.message || "Unable to load deliveries.";
       elements.deliveryList.innerHTML = `
@@ -1330,27 +1495,37 @@
   }
 
   async function boot() {
-    console.log("[Deliveries] init started");
-    const session = await requireDispatchAccess();
-    if (!session) {
-      return;
-    }
+    try {
+      console.log("[Deliveries] init started");
+      debugState.lastStep = "initStarted";
+      updateDebugPanel();
 
-    console.log("[Deliveries] auth ready");
+      const session = await requireDispatchAccess();
+      if (!session) {
+        finishDebugTimeout();
+        return;
+      }
 
-    if (elements.statusFilter) {
-      elements.statusFilter.value = readInitialTabFromUrl();
+      console.log("[Deliveries] auth ready");
+      debugState.lastStep = "authReady";
+      updateDebugPanel();
+
+      if (elements.statusFilter) {
+        elements.statusFilter.value = readInitialTabFromUrl();
+      }
+      bindEvents();
+      renderCategories();
+      await refreshDeliveries();
+      finishDebugTimeout();
+    } catch (error) {
+      setDebugError(error);
+      elements.deliveryList.innerHTML = `
+        <div class="empty"><div><div class="empty-title">Unable to start Deliveries v2.</div><div class="empty-copy">${escapeHtml(error.message || "Unknown error")}</div></div></div>
+      `;
+      showToast(error.message || "Unable to start Deliveries v2.", "error");
+      finishDebugTimeout();
     }
-    bindEvents();
-    renderCategories();
-    await refreshDeliveries();
   }
 
-  boot().catch(error => {
-    console.error("[Deliveries] boot failed", error);
-    showToast(error.message || "Unable to start Deliveries v2.", "error");
-    elements.deliveryList.innerHTML = `
-      <div class="empty"><div><div class="empty-title">Unable to start Deliveries v2.</div><div class="empty-copy">${escapeHtml(error.message || "Unknown error")}</div></div></div>
-    `;
-  });
+  boot();
 })();
