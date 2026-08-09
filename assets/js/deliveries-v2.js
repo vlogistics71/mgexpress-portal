@@ -13,7 +13,6 @@
     profile: null,
     deliveries: [],
     drivers: [],
-    activeTab: "all_open",
     activeCategory: "all",
     search: "",
     sort: "newest",
@@ -344,29 +343,6 @@
     return clean(delivery.job_category) === state.activeCategory;
   }
 
-  function matchesTab(delivery) {
-    switch (state.activeTab) {
-      case "all_open":
-      case "pending":
-        return !isComplete(delivery) && !isCancelled(delivery);
-      case "waiting_payment":
-        return !isComplete(delivery) && !isCancelled(delivery) && clean(delivery.payment_status) !== "paid";
-      case "ready":
-        return isReady(delivery) || clean(delivery.status) === "ready_to_dispatch";
-      case "assigned":
-        return isAssigned(delivery);
-      case "in_transit":
-        return isInTransit(delivery);
-      case "completed":
-        return isComplete(delivery);
-      case "rejected":
-        return isRejected(delivery);
-      case "search":
-      default:
-        return true;
-    }
-  }
-
   function matchesSearch(delivery) {
     const query = state.search.trim().toLowerCase();
     if (!query) {
@@ -418,16 +394,6 @@
     return result;
   }
 
-  function renderTabs() {
-    const tabs = [
-      ["pending", "Pending"],
-      ["ready", "Ready"],
-      ["assigned", "Assigned"],
-      ["rejected", "Rejected"],
-      ["completed", "Completed"],
-      ["search", "Search"]
-    ];
-
     elements.tabs.innerHTML = tabs.map(([value, label]) => {
       const count = countsForTab(value);
       const active = value === state.activeTab ? "active" : "";
@@ -435,23 +401,6 @@
     }).join("");
   }
 
-  function renderCategories() {
-    const categories = [
-      ["all", "All"],
-      ["medical", "Medical"],
-      ["legal", "Legal"],
-      ["general", "General"],
-      ["pallet", "Pallet"],
-      ["special", "Special"],
-      ["return_jobs", "Return Jobs"],
-      ["stat", "STAT"]
-    ];
-
-    elements.categoryFilters.innerHTML = categories.map(([value, label]) => {
-      const count = countsForCategory(value);
-      const active = value === state.activeCategory ? "active" : "";
-      return `<button class="chip ${active}" type="button" data-category="${value}">${escapeHtml(label)} (${count})</button>`;
-    }).join("");
   }
 
   function renderWorkspaceSummary() {
@@ -770,16 +719,21 @@
   }
 
   async function loadDeliveries() {
+    console.log("[Deliveries] query started");
     const result = await client
       .from("quotes")
       .select("*")
       .order("created_at", { ascending: false });
 
     if (result.error) {
+      console.error("[Deliveries] query failed", result.error);
       throw result.error;
     }
 
-    return result.data || [];
+    const deliveries = result.data || [];
+    console.log("[Deliveries] query completed");
+    console.log("[Deliveries] rows:", deliveries?.length);
+    return deliveries;
   }
 
   async function loadDrivers() {
@@ -1250,6 +1204,7 @@
         }
       }
     } catch (error) {
+      console.error("[Deliveries] refresh failed", error);
       state.deliveries = [];
       state.loadError = error.message || "Unable to load deliveries.";
       elements.deliveryList.innerHTML = `
@@ -1267,10 +1222,7 @@
     });
 
     if (elements.statusFilter) {
-      elements.statusFilter.addEventListener("change", () => {
-        state.activeTab = elements.statusFilter.value || "all_open";
-        renderDeliveries();
-      });
+      elements.statusFilter.addEventListener("change", renderDeliveries);
     }
 
     elements.sortSelect.addEventListener("change", () => {
@@ -1378,14 +1330,16 @@
   }
 
   async function boot() {
+    console.log("[Deliveries] init started");
     const session = await requireDispatchAccess();
     if (!session) {
       return;
     }
 
-    state.activeTab = readInitialTabFromUrl();
+    console.log("[Deliveries] auth ready");
+
     if (elements.statusFilter) {
-      elements.statusFilter.value = state.activeTab;
+      elements.statusFilter.value = readInitialTabFromUrl();
     }
     bindEvents();
     renderCategories();
@@ -1393,6 +1347,7 @@
   }
 
   boot().catch(error => {
+    console.error("[Deliveries] boot failed", error);
     showToast(error.message || "Unable to start Deliveries v2.", "error");
     elements.deliveryList.innerHTML = `
       <div class="empty"><div><div class="empty-title">Unable to start Deliveries v2.</div><div class="empty-copy">${escapeHtml(error.message || "Unknown error")}</div></div></div>
