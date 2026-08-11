@@ -665,6 +665,10 @@
     return roundMoney(customerCharge * 0.4);
   }
 
+  function hasReturnService(delivery) {
+    return clean(delivery?.return_required) === "true" || delivery?.return_required === true;
+  }
+
   function syncEditReturnFields() {
     if (!elements.editReturnRequired || !elements.editReturnLocationType) {
       return;
@@ -811,7 +815,6 @@
 
     const payload = {
       customer_name: customerName,
-      company_name: String(elements.editCompanyName?.value || "").trim() || null,
       customer_email: String(elements.editCustomerEmail?.value || "").trim() || null,
       customer_phone: String(elements.editCustomerPhone?.value || "").trim() || null,
       pickup_address: pickupAddress,
@@ -894,6 +897,7 @@
     const assignedDriver = delivery.assigned_driver_id ? (assignedDriverName || "Driver Assigned") : "Unassigned";
     const notes = [delivery.special_instructions, delivery.delivery_instructions, delivery.pickup_instructions, delivery.notes].filter(Boolean).join("\n\n");
     const scheduledValue = scheduledDeliveryDateTime(delivery);
+        const showReturnService = hasReturnService(delivery);
     const scheduledBlocks = clean(delivery.service_level) === "scheduled" && scheduledValue ? `
           ${detailsBlock("Scheduled Delivery", formatDateOnly(scheduledValue))}
           ${detailsBlock("Scheduled Time", formatTimeOnly(scheduledValue))}
@@ -942,8 +946,7 @@
           ${detailsBlock("Delivery", delivery.delivery_address)}
           ${detailsBlock("Pickup Contact", [delivery.pickup_contact_name, delivery.pickup_contact_phone].filter(Boolean).join(" • "))}
           ${detailsBlock("Delivery Contact", [delivery.delivery_contact_name, delivery.delivery_contact_phone].filter(Boolean).join(" • "))}
-          ${detailsBlock("Return Required", clean(delivery.return_required) === "true" || delivery.return_required === true ? "Yes" : "No")}
-          ${detailsBlock("Return Address", delivery.return_address || "-")}
+          ${showReturnService ? `${detailsBlock("Return Required", "Yes")}${detailsBlock("Return Address", delivery.return_address || "-")}` : ""}
         </div>
       </section>
 
