@@ -880,8 +880,9 @@
             String(job.id || "").trim();
 
           const jobUrl =
-            "/job.html?id=" +
-            encodeURIComponent(jobId);
+            "/deliveries.html?tab=completed&id=" +
+            encodeURIComponent(jobId) +
+            "&readonly=1";
 
           return `
             <a

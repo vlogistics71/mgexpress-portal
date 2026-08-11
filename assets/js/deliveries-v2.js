@@ -13,6 +13,8 @@
     profile: null,
     deliveries: [],
     drivers: [],
+    deepLinkDeliveryId: "",
+    readOnlyDetails: false,
     activeCategory: "all",
     search: "",
     sort: "newest",
@@ -81,6 +83,21 @@
       return "all_open";
     }
     return allowed.has(requested) ? requested : "all_open";
+  }
+
+  function readInitialDeliveryIdFromUrl() {
+    const params = new URLSearchParams(window.location.search || "");
+    return String(params.get("id") || "").trim();
+  }
+
+  function readReadOnlyDetailsFromUrl() {
+    const params = new URLSearchParams(window.location.search || "");
+    const value = clean(params.get("readonly"));
+    return value === "1" || value === "true" || value === "yes";
+  }
+
+  function selectedStatusFilter() {
+    return clean(elements.statusFilter?.value || "all_open");
   }
 
   function escapeHtml(value) {
@@ -356,8 +373,38 @@
     return deliverySearchText(delivery).includes(query);
   }
 
+  function matchesStatusFilter(delivery) {
+    const filter = selectedStatusFilter();
+
+    if (filter === "completed") {
+      return isComplete(delivery);
+    }
+
+    if (filter === "waiting_payment") {
+      return isActiveJob(delivery) && clean(delivery.payment_status) !== "paid";
+    }
+
+    if (filter === "ready") {
+      return isActiveJob(delivery) && isReady(delivery);
+    }
+
+    if (filter === "assigned") {
+      return isActiveJob(delivery) && isAssigned(delivery);
+    }
+
+    if (filter === "in_transit") {
+      return isActiveJob(delivery) && isInTransit(delivery);
+    }
+
+    if (filter === "rejected") {
+      return isActiveJob(delivery) && isRejected(delivery);
+    }
+
+    return isActiveJob(delivery);
+  }
+
   function visibleDeliveries() {
-    const rows = state.deliveries.filter(delivery => isActiveJob(delivery) && matchesCategory(delivery) && matchesSearch(delivery));
+    const rows = state.deliveries.filter(delivery => matchesStatusFilter(delivery) && matchesCategory(delivery) && matchesSearch(delivery));
 
     const sorted = rows.slice();
     sorted.sort((left, right) => {
@@ -383,7 +430,7 @@
   function countsForCategory(category) {
     const previousCategory = state.activeCategory;
     state.activeCategory = category;
-    const result = state.deliveries.filter(delivery => isActiveJob(delivery) && matchesCategory(delivery)).length;
+    const result = state.deliveries.filter(delivery => matchesStatusFilter(delivery) && matchesCategory(delivery)).length;
     state.activeCategory = previousCategory;
     return result;
   }
@@ -588,7 +635,8 @@
           ${detailsBlock("Scheduled Delivery", formatDateOnly(scheduledValue))}
           ${detailsBlock("Scheduled Time", formatTimeOnly(scheduledValue))}
     ` : "";
-    const workflowButtons = workflowActionButtons(delivery);
+    const readOnlyMode = state.readOnlyDetails || isComplete(delivery);
+    const workflowButtons = readOnlyMode ? "" : workflowActionButtons(delivery);
     const documentButtons = documentActionButtons(delivery);
 
     elements.deliveryDetailsTitle.textContent = delivery.job_number || "Delivery Details";
@@ -610,6 +658,16 @@
           ${detailsBlock("Payment", delivery.payment_status || "-")}
           ${detailsBlock("Created", formatDateTime(delivery.created_at))}
           ${detailsBlock("Updated", formatDateTime(delivery.updated_at || delivery.modified_at || delivery.created_at))}
+        </div>
+      </section>
+
+      <section class="details-card">
+        <h4>Completion</h4>
+        <div class="details-card-body">
+          ${detailsBlock("Completed", formatDateTime(delivery.completed_at || delivery.delivery_photo_uploaded_at))}
+          ${detailsBlock("POD Recipient", delivery.pod_recipient_name || "-")}
+          ${detailsBlock("Driver Workflow", delivery.driver_workflow_status || "-")}
+          ${detailsBlock("Driver Acceptance", delivery.driver_acceptance_status || "-")}
         </div>
       </section>
 
@@ -637,7 +695,7 @@
       <section class="details-card">
         <h4>Workflow Actions</h4>
         <div class="details-actions-section">
-          ${workflowButtons ? `<div class="details-action-grid">${workflowButtons}</div>` : '<div class="sheet-note">No workflow actions available for this delivery.</div>'}
+          ${workflowButtons ? `<div class="details-action-grid">${workflowButtons}</div>` : `<div class="sheet-note">${readOnlyMode ? "Read-only completed record." : "No workflow actions available for this delivery."}</div>`}
         </div>
       </section>
 
@@ -1338,12 +1396,23 @@
       return;
     }
 
+    state.deepLinkDeliveryId = readInitialDeliveryIdFromUrl();
+    state.readOnlyDetails = readReadOnlyDetailsFromUrl();
+
     if (elements.statusFilter) {
       elements.statusFilter.value = readInitialTabFromUrl();
     }
     bindEvents();
     renderCategories();
     await refreshDeliveries();
+
+    if (state.deepLinkDeliveryId) {
+      try {
+        await openDeliveryDetails(state.deepLinkDeliveryId);
+      } catch (error) {
+        renderDeliveryDetailsModal(null, error.message || "Delivery not found.");
+      }
+    }
   }
 
   boot().catch(error => {
