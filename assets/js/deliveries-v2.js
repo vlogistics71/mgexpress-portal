@@ -648,6 +648,23 @@
     return Number.isFinite(amount) ? amount : 0;
   }
 
+  function roundMoney(value) {
+    return Math.round((Number(value) || 0) * 100) / 100;
+  }
+
+  function formatPercent(value) {
+    if (!Number.isFinite(value)) {
+      return "-";
+    }
+
+    const rounded = Math.round(value * 10) / 10;
+    return `${rounded % 1 === 0 ? String(Math.round(rounded)) : String(rounded)}%`;
+  }
+
+  function getSuggestedDriverPay(customerCharge) {
+    return roundMoney(customerCharge * 0.4);
+  }
+
   function syncEditReturnFields() {
     if (!elements.editReturnRequired || !elements.editReturnLocationType) {
       return;
@@ -718,6 +735,8 @@
     const payInput = document.getElementById("assignDriverPayInput");
     const customerChargeEl = document.getElementById("assignCustomerCharge");
     const marginEl = document.getElementById("assignEstimatedMargin");
+    const driverPercentEl = document.getElementById("assignDriverPercent");
+    const marginPercentEl = document.getElementById("assignMarginPercent");
     const delivery = state.selectedDelivery;
     if (!delivery) {
       return;
@@ -728,13 +747,22 @@
     const payText = String(payInput?.value ?? state.assignDriverPay ?? delivery.driver_pay ?? "").trim();
     const hasPay = payText !== "";
     const payValue = hasPay ? Number(payText) : null;
-    const margin = hasCustomerCharge && hasPay && Number.isFinite(payValue) ? customerCharge - payValue : null;
+    const validPay = hasPay && Number.isFinite(payValue) ? roundMoney(payValue) : null;
+    const margin = hasCustomerCharge && validPay !== null ? roundMoney(customerCharge - validPay) : null;
+    const driverPercent = hasCustomerCharge && validPay !== null && customerCharge > 0 ? (validPay / customerCharge) * 100 : null;
+    const marginPercent = hasCustomerCharge && margin !== null && customerCharge > 0 ? (margin / customerCharge) * 100 : null;
 
     if (customerChargeEl) {
       customerChargeEl.textContent = hasCustomerCharge ? formatMoney(customerCharge) : "-";
     }
     if (marginEl) {
       marginEl.textContent = margin === null ? "-" : formatMoney(margin);
+    }
+    if (driverPercentEl) {
+      driverPercentEl.textContent = formatPercent(driverPercent);
+    }
+    if (marginPercentEl) {
+      marginPercentEl.textContent = formatPercent(marginPercent);
     }
   }
 
@@ -1102,7 +1130,10 @@
         <div class="assign-summary-row"><strong>Route</strong><span class="assign-summary-value">${escapeHtml([summary.pickup_address, summary.delivery_address].filter(Boolean).join(" → ") || "-")}</span></div>
         <div class="assign-summary-row"><strong>Customer Charge</strong><span class="assign-summary-value" id="assignCustomerCharge">${escapeHtml(formatMoney(getCustomerCharge(summary)))}</span></div>
         <div class="assign-summary-row"><strong>Driver Pay</strong><span class="assign-summary-value"><input id="assignDriverPayInput" type="number" min="0" step="0.01" value="${escapeHtml(String(state.assignDriverPay || summary.driver_pay || ""))}" placeholder="0.00"></span></div>
+        <div class="assign-summary-row"><strong>Driver %</strong><span class="assign-summary-value" id="assignDriverPercent">-</span></div>
+        <div class="assign-summary-row"><strong>Suggested</strong><span class="assign-summary-value"><button class="action-btn secondary" id="assignResetSuggestedPay" type="button">Use 40% Suggested Pay</button></span></div>
         <div class="assign-summary-row total"><strong>Estimated Margin</strong><span class="assign-summary-value" id="assignEstimatedMargin">-</span></div>
+        <div class="assign-summary-row"><strong>Company %</strong><span class="assign-summary-value" id="assignMarginPercent">-</span></div>
       </div>
     `;
 
@@ -1160,12 +1191,29 @@
         updateAssignBillingPreview();
       });
     }
+
+    const resetSuggestedPayButton = document.getElementById("assignResetSuggestedPay");
+    if (resetSuggestedPayButton) {
+      resetSuggestedPayButton.addEventListener("click", () => {
+        const customerCharge = getCustomerCharge(summary);
+        const suggestedDriverPay = getSuggestedDriverPay(customerCharge);
+        state.assignDriverPay = String(suggestedDriverPay);
+        if (payInput) {
+          payInput.value = String(suggestedDriverPay);
+        }
+        updateAssignBillingPreview();
+      });
+    }
   }
 
   async function openAssignModal(delivery) {
     state.selectedDelivery = delivery;
     state.assignDriverId = String(delivery.assigned_driver_id || "");
-    state.assignDriverPay = String(delivery.driver_pay ?? "");
+    const savedDriverPay = Number(delivery.driver_pay ?? "");
+    const suggestedDriverPay = getSuggestedDriverPay(getCustomerCharge(delivery));
+    state.assignDriverPay = delivery.driver_pay != null && String(delivery.driver_pay).trim() !== "" && Number.isFinite(savedDriverPay) && savedDriverPay > 0
+      ? String(roundMoney(savedDriverPay))
+      : String(suggestedDriverPay);
     state.assignSearch = "";
     state.assignFilter = "all";
 
