@@ -676,6 +676,11 @@
 
     const returnRequired = clean(elements.editReturnRequired.value) === "true";
     const differentLocation = clean(elements.editReturnLocationType.value) === "different_location";
+    const locationField = elements.editReturnLocationType.closest(".edit-field");
+    const timingField = elements.editReturnTiming?.closest(".edit-field");
+    const addressField = elements.editReturnAddressWrap;
+    const suiteField = elements.editReturnSuiteWrap;
+    const zipField = elements.editReturnZipWrap;
 
     if (elements.editReturnLocationType) {
       elements.editReturnLocationType.disabled = !returnRequired;
@@ -684,14 +689,20 @@
       elements.editReturnTiming.disabled = !returnRequired;
     }
 
-    if (elements.editReturnAddressWrap) {
-      elements.editReturnAddressWrap.style.display = returnRequired && differentLocation ? "" : "none";
+    if (locationField) {
+      locationField.style.display = returnRequired ? "" : "none";
     }
-    if (elements.editReturnSuiteWrap) {
-      elements.editReturnSuiteWrap.style.display = returnRequired && differentLocation ? "" : "none";
+    if (timingField) {
+      timingField.style.display = returnRequired ? "" : "none";
     }
-    if (elements.editReturnZipWrap) {
-      elements.editReturnZipWrap.style.display = returnRequired && differentLocation ? "" : "none";
+    if (addressField) {
+      addressField.style.display = returnRequired && differentLocation ? "" : "none";
+    }
+    if (suiteField) {
+      suiteField.style.display = returnRequired && differentLocation ? "" : "none";
+    }
+    if (zipField) {
+      zipField.style.display = returnRequired && differentLocation ? "" : "none";
     }
   }
 
@@ -820,23 +831,16 @@
       pickup_address: pickupAddress,
       pickup_suite_floor: String(elements.editPickupSuiteFloor?.value || "").trim() || null,
       pickup_zip: String(elements.editPickupZip?.value || "").trim() || null,
-      pickup_contact_name: String(elements.editPickupContactName?.value || "").trim() || null,
-      pickup_contact_phone: String(elements.editPickupContactPhone?.value || "").trim() || null,
-      pickup_instructions: String(elements.editPickupInstructions?.value || "").trim() || null,
       delivery_address: deliveryAddress,
       delivery_suite_floor: String(elements.editDeliverySuiteFloor?.value || "").trim() || null,
       delivery_zip: String(elements.editDeliveryZip?.value || "").trim() || null,
-      delivery_contact_name: String(elements.editDeliveryContactName?.value || "").trim() || null,
       delivery_recipient_name: String(elements.editDeliveryContactName?.value || "").trim() || null,
-      delivery_contact_phone: String(elements.editDeliveryContactPhone?.value || "").trim() || null,
-      delivery_instructions: String(elements.editDeliveryInstructions?.value || "").trim() || null,
       job_category: String(elements.editJobCategory?.value || "general").trim() || "general",
       vehicle_type: String(elements.editVehicleType?.value || "").trim() || null,
       delivery_speed: String(elements.editDeliverySpeed?.value || "").trim() || null,
       delivery_type: String(elements.editDeliveryType?.value || "").trim() || null,
       service_level: String(elements.editServiceLevel?.value || "").trim() || null,
       package_type: String(elements.editPackageType?.value || "").trim() || null,
-      package_weight: String(elements.editPackageWeight?.value || "").trim() || null,
       special_instructions: String(elements.editSpecialInstructions?.value || "").trim() || null,
       return_required: returnRequired,
       return_location_type: returnRequired ? returnLocationType : null,
