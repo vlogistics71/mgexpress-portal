@@ -50,6 +50,43 @@
     deliveryDetailsBody: document.getElementById("deliveryDetailsBody"),
     deliveryDetailsSubtitle: document.getElementById("deliveryDetailsSubtitle"),
     deliveryDetailsTitle: document.getElementById("deliveryDetailsTitle"),
+    editJobModal: document.getElementById("editJobModal"),
+    editJobForm: document.getElementById("editJobForm"),
+    editJobId: document.getElementById("editJobId"),
+    editCustomerName: document.getElementById("editCustomerName"),
+    editCompanyName: document.getElementById("editCompanyName"),
+    editCustomerEmail: document.getElementById("editCustomerEmail"),
+    editCustomerPhone: document.getElementById("editCustomerPhone"),
+    editPickupAddress: document.getElementById("editPickupAddress"),
+    editPickupSuiteFloor: document.getElementById("editPickupSuiteFloor"),
+    editPickupZip: document.getElementById("editPickupZip"),
+    editPickupContactName: document.getElementById("editPickupContactName"),
+    editPickupContactPhone: document.getElementById("editPickupContactPhone"),
+    editPickupInstructions: document.getElementById("editPickupInstructions"),
+    editDeliveryAddress: document.getElementById("editDeliveryAddress"),
+    editDeliverySuiteFloor: document.getElementById("editDeliverySuiteFloor"),
+    editDeliveryZip: document.getElementById("editDeliveryZip"),
+    editDeliveryContactName: document.getElementById("editDeliveryContactName"),
+    editDeliveryContactPhone: document.getElementById("editDeliveryContactPhone"),
+    editDeliveryInstructions: document.getElementById("editDeliveryInstructions"),
+    editJobCategory: document.getElementById("editJobCategory"),
+    editVehicleType: document.getElementById("editVehicleType"),
+    editDeliverySpeed: document.getElementById("editDeliverySpeed"),
+    editDeliveryType: document.getElementById("editDeliveryType"),
+    editServiceLevel: document.getElementById("editServiceLevel"),
+    editPackageType: document.getElementById("editPackageType"),
+    editPackageWeight: document.getElementById("editPackageWeight"),
+    editSpecialInstructions: document.getElementById("editSpecialInstructions"),
+    editReturnRequired: document.getElementById("editReturnRequired"),
+    editReturnLocationType: document.getElementById("editReturnLocationType"),
+    editReturnTiming: document.getElementById("editReturnTiming"),
+    editReturnAddressWrap: document.getElementById("editReturnAddressWrap"),
+    editReturnSuiteWrap: document.getElementById("editReturnSuiteWrap"),
+    editReturnZipWrap: document.getElementById("editReturnZipWrap"),
+    editReturnAddress: document.getElementById("editReturnAddress"),
+    editReturnSuiteFloor: document.getElementById("editReturnSuiteFloor"),
+    editReturnZip: document.getElementById("editReturnZip"),
+    editApprovedPrice: document.getElementById("editApprovedPrice"),
     newDeliveryModal: document.getElementById("newDeliveryModal"),
     assignModal: document.getElementById("assignModal"),
     assignJobSummary: document.getElementById("assignJobSummary"),
@@ -511,6 +548,10 @@
     const id = escapeHtml(String(delivery.id || ""));
     const buttons = [];
 
+    if (isActiveJob(delivery)) {
+      buttons.push(`<button class="action-btn secondary" type="button" data-details-action="edit" data-delivery-id="${id}">Edit Job</button>`);
+    }
+
     if (canAssignDriver(delivery)) {
       buttons.push(`<button class="action-btn secondary" type="button" data-details-action="assign" data-delivery-id="${id}">${delivery.assigned_driver_id ? "Reassign Driver" : "Assign Driver"}</button>`);
     }
@@ -600,6 +641,200 @@
 
   function detailsBlock(label, value) {
     return `<div class="details-kv"><strong>${escapeHtml(label)}</strong><span>${value ? escapeHtml(value) : "-"}</span></div>`;
+  }
+
+  function getCustomerCharge(delivery) {
+    const amount = Number(delivery?.approved_price ?? delivery?.customer_charge ?? 0);
+    return Number.isFinite(amount) ? amount : 0;
+  }
+
+  function syncEditReturnFields() {
+    if (!elements.editReturnRequired || !elements.editReturnLocationType) {
+      return;
+    }
+
+    const returnRequired = clean(elements.editReturnRequired.value) === "true";
+    const differentLocation = clean(elements.editReturnLocationType.value) === "different_location";
+
+    if (elements.editReturnLocationType) {
+      elements.editReturnLocationType.disabled = !returnRequired;
+    }
+    if (elements.editReturnTiming) {
+      elements.editReturnTiming.disabled = !returnRequired;
+    }
+
+    if (elements.editReturnAddressWrap) {
+      elements.editReturnAddressWrap.style.display = returnRequired && differentLocation ? "" : "none";
+    }
+    if (elements.editReturnSuiteWrap) {
+      elements.editReturnSuiteWrap.style.display = returnRequired && differentLocation ? "" : "none";
+    }
+    if (elements.editReturnZipWrap) {
+      elements.editReturnZipWrap.style.display = returnRequired && differentLocation ? "" : "none";
+    }
+  }
+
+  function populateEditJobForm(delivery) {
+    if (!elements.editJobForm || !delivery) {
+      return;
+    }
+
+    elements.editJobId.value = String(delivery.id || "");
+    elements.editCustomerName.value = delivery.customer_name || "";
+    elements.editCompanyName.value = delivery.company_name || delivery.customer_company || delivery.customer_business || "";
+    elements.editCustomerEmail.value = delivery.customer_email || "";
+    elements.editCustomerPhone.value = delivery.customer_phone || "";
+    elements.editPickupAddress.value = delivery.pickup_address || "";
+    elements.editPickupSuiteFloor.value = delivery.pickup_suite_floor || "";
+    elements.editPickupZip.value = delivery.pickup_zip || "";
+    elements.editPickupContactName.value = delivery.pickup_contact_name || "";
+    elements.editPickupContactPhone.value = delivery.pickup_contact_phone || "";
+    elements.editPickupInstructions.value = delivery.pickup_instructions || "";
+    elements.editDeliveryAddress.value = delivery.delivery_address || "";
+    elements.editDeliverySuiteFloor.value = delivery.delivery_suite_floor || "";
+    elements.editDeliveryZip.value = delivery.delivery_zip || "";
+    elements.editDeliveryContactName.value = delivery.delivery_contact_name || delivery.delivery_recipient_name || delivery.pod_recipient_name || "";
+    elements.editDeliveryContactPhone.value = delivery.delivery_contact_phone || "";
+    elements.editDeliveryInstructions.value = delivery.delivery_instructions || "";
+    elements.editJobCategory.value = clean(delivery.job_category) || "general";
+    elements.editVehicleType.value = delivery.vehicle_type || "";
+    elements.editDeliverySpeed.value = delivery.delivery_speed || "";
+    elements.editDeliveryType.value = delivery.delivery_type || "";
+    elements.editServiceLevel.value = delivery.service_level || "";
+    elements.editPackageType.value = delivery.package_type || "";
+    elements.editPackageWeight.value = delivery.package_weight || delivery.weight || "";
+    elements.editSpecialInstructions.value = delivery.special_instructions || "";
+    elements.editReturnRequired.value = clean(delivery.return_required) === "true" || delivery.return_required === true ? "true" : "false";
+    elements.editReturnLocationType.value = delivery.return_location_type || "same_as_pickup";
+    elements.editReturnTiming.value = delivery.return_timing || "immediate";
+    elements.editReturnAddress.value = delivery.return_address || "";
+    elements.editReturnSuiteFloor.value = delivery.return_suite_floor || "";
+    elements.editReturnZip.value = delivery.return_zip || "";
+    elements.editApprovedPrice.value = delivery.approved_price ?? delivery.customer_charge ?? "";
+    syncEditReturnFields();
+  }
+
+  function updateAssignBillingPreview() {
+    const payInput = document.getElementById("assignDriverPayInput");
+    const customerChargeEl = document.getElementById("assignCustomerCharge");
+    const marginEl = document.getElementById("assignEstimatedMargin");
+    const delivery = state.selectedDelivery;
+    if (!delivery) {
+      return;
+    }
+
+    const hasCustomerCharge = delivery?.approved_price != null || delivery?.customer_charge != null;
+    const customerCharge = getCustomerCharge(delivery);
+    const payText = String(payInput?.value ?? state.assignDriverPay ?? delivery.driver_pay ?? "").trim();
+    const hasPay = payText !== "";
+    const payValue = hasPay ? Number(payText) : null;
+    const margin = hasCustomerCharge && hasPay && Number.isFinite(payValue) ? customerCharge - payValue : null;
+
+    if (customerChargeEl) {
+      customerChargeEl.textContent = hasCustomerCharge ? formatMoney(customerCharge) : "-";
+    }
+    if (marginEl) {
+      marginEl.textContent = margin === null ? "-" : formatMoney(margin);
+    }
+  }
+
+  function openEditJobModal(delivery) {
+    if (!delivery || !elements.editJobModal) {
+      return;
+    }
+
+    state.selectedDelivery = delivery;
+    populateEditJobForm(delivery);
+    elements.deliveryDetailsModal?.classList.remove("open");
+    openModal(elements.editJobModal);
+  }
+
+  async function saveEditedJob(event) {
+    event.preventDefault();
+
+    const deliveryId = String(elements.editJobId?.value || state.selectedDelivery?.id || "").trim();
+    if (!deliveryId) {
+      showToast("Unable to save job changes.", "error");
+      return;
+    }
+
+    const approvedPriceRaw = String(elements.editApprovedPrice?.value || "").trim();
+    const approvedPrice = approvedPriceRaw === "" ? null : Number(approvedPriceRaw);
+    if (approvedPriceRaw !== "" && (!Number.isFinite(approvedPrice) || approvedPrice < 0)) {
+      showToast("Enter a valid customer charge.", "error");
+      return;
+    }
+
+    const customerName = String(elements.editCustomerName?.value || "").trim();
+    const pickupAddress = String(elements.editPickupAddress?.value || "").trim();
+    const deliveryAddress = String(elements.editDeliveryAddress?.value || "").trim();
+
+    if (!customerName) {
+      showToast("Customer name is required.", "error");
+      return;
+    }
+    if (!pickupAddress || !deliveryAddress) {
+      showToast("Pickup and delivery addresses are required.", "error");
+      return;
+    }
+
+    const returnRequired = clean(elements.editReturnRequired?.value || "false") === "true";
+    const returnLocationType = String(elements.editReturnLocationType?.value || "same_as_pickup").trim() || "same_as_pickup";
+
+    const payload = {
+      customer_name: customerName,
+      company_name: String(elements.editCompanyName?.value || "").trim() || null,
+      customer_email: String(elements.editCustomerEmail?.value || "").trim() || null,
+      customer_phone: String(elements.editCustomerPhone?.value || "").trim() || null,
+      pickup_address: pickupAddress,
+      pickup_suite_floor: String(elements.editPickupSuiteFloor?.value || "").trim() || null,
+      pickup_zip: String(elements.editPickupZip?.value || "").trim() || null,
+      pickup_contact_name: String(elements.editPickupContactName?.value || "").trim() || null,
+      pickup_contact_phone: String(elements.editPickupContactPhone?.value || "").trim() || null,
+      pickup_instructions: String(elements.editPickupInstructions?.value || "").trim() || null,
+      delivery_address: deliveryAddress,
+      delivery_suite_floor: String(elements.editDeliverySuiteFloor?.value || "").trim() || null,
+      delivery_zip: String(elements.editDeliveryZip?.value || "").trim() || null,
+      delivery_contact_name: String(elements.editDeliveryContactName?.value || "").trim() || null,
+      delivery_recipient_name: String(elements.editDeliveryContactName?.value || "").trim() || null,
+      delivery_contact_phone: String(elements.editDeliveryContactPhone?.value || "").trim() || null,
+      delivery_instructions: String(elements.editDeliveryInstructions?.value || "").trim() || null,
+      job_category: String(elements.editJobCategory?.value || "general").trim() || "general",
+      vehicle_type: String(elements.editVehicleType?.value || "").trim() || null,
+      delivery_speed: String(elements.editDeliverySpeed?.value || "").trim() || null,
+      delivery_type: String(elements.editDeliveryType?.value || "").trim() || null,
+      service_level: String(elements.editServiceLevel?.value || "").trim() || null,
+      package_type: String(elements.editPackageType?.value || "").trim() || null,
+      package_weight: String(elements.editPackageWeight?.value || "").trim() || null,
+      special_instructions: String(elements.editSpecialInstructions?.value || "").trim() || null,
+      return_required: returnRequired,
+      return_location_type: returnRequired ? returnLocationType : null,
+      return_timing: returnRequired ? String(elements.editReturnTiming?.value || "immediate").trim() || "immediate" : null,
+      return_address: returnRequired && returnLocationType === "different_location" ? String(elements.editReturnAddress?.value || "").trim() || null : null,
+      return_suite_floor: returnRequired && returnLocationType === "different_location" ? String(elements.editReturnSuiteFloor?.value || "").trim() || null : null,
+      return_zip: returnRequired && returnLocationType === "different_location" ? String(elements.editReturnZip?.value || "").trim() || null : null,
+      approved_price: approvedPrice
+    };
+
+    try {
+      const result = await client
+        .from("quotes")
+        .update(payload)
+        .eq("id", deliveryId)
+        .select("*")
+        .maybeSingle();
+
+      if (result.error) {
+        throw result.error;
+      }
+
+      closeModal(elements.editJobModal);
+      showToast("Job updated successfully.", "success");
+      await refreshDeliveries({ keepSelection: deliveryId });
+      await openDeliveryDetails(deliveryId);
+    } catch (error) {
+      showToast(error.message || "Unable to save job changes.", "error");
+    }
   }
 
   function renderDeliveryDetailsModal(delivery, message = "") {
@@ -861,10 +1096,14 @@
     elements.assignDriverPay.value = state.assignDriverPay;
 
     elements.assignJobSummary.innerHTML = `
-      <div class="details-kv"><strong>Job Number</strong><span>${escapeHtml(summary.job_number || "-")}</span></div>
-      <div class="details-kv"><strong>Customer</strong><span>${escapeHtml(summary.customer_name || summary.company_name || "-")}</span></div>
-      <div class="details-kv"><strong>Route</strong><span>${escapeHtml([summary.pickup_address, summary.delivery_address].filter(Boolean).join(" → ") || "-")}</span></div>
-      <div class="details-kv"><strong>Driver Pay</strong><span><input id="assignDriverPayInput" type="number" min="0" step="0.01" value="${escapeHtml(String(state.assignDriverPay || summary.driver_pay || ""))}" placeholder="0.00"></span></div>
+      <div class="assign-summary-grid">
+        <div class="assign-summary-row"><strong>Job Number</strong><span class="assign-summary-value">${escapeHtml(summary.job_number || "-")}</span></div>
+        <div class="assign-summary-row"><strong>Customer</strong><span class="assign-summary-value">${escapeHtml(summary.customer_name || summary.company_name || "-")}</span></div>
+        <div class="assign-summary-row"><strong>Route</strong><span class="assign-summary-value">${escapeHtml([summary.pickup_address, summary.delivery_address].filter(Boolean).join(" → ") || "-")}</span></div>
+        <div class="assign-summary-row"><strong>Customer Charge</strong><span class="assign-summary-value" id="assignCustomerCharge">${escapeHtml(formatMoney(getCustomerCharge(summary)))}</span></div>
+        <div class="assign-summary-row"><strong>Driver Pay</strong><span class="assign-summary-value"><input id="assignDriverPayInput" type="number" min="0" step="0.01" value="${escapeHtml(String(state.assignDriverPay || summary.driver_pay || ""))}" placeholder="0.00"></span></div>
+        <div class="assign-summary-row total"><strong>Estimated Margin</strong><span class="assign-summary-value" id="assignEstimatedMargin">-</span></div>
+      </div>
     `;
 
     const recommended = drivers.find(driver => driver.id === String(summary.assigned_driver_id || "")) || drivers.find(driver => driver.availability === "available") || drivers[0] || null;
@@ -890,6 +1129,7 @@
 
     if (!drivers.length) {
       elements.assignDriverCards.innerHTML = '<div class="empty"><div><div class="empty-title">No drivers found.</div></div></div>';
+      updateAssignBillingPreview();
       return;
     }
 
@@ -910,6 +1150,16 @@
         </button>
       `;
     }).join("");
+
+    updateAssignBillingPreview();
+
+    const payInput = document.getElementById("assignDriverPayInput");
+    if (payInput) {
+      payInput.addEventListener("input", () => {
+        state.assignDriverPay = String(payInput.value || "");
+        updateAssignBillingPreview();
+      });
+    }
   }
 
   async function openAssignModal(delivery) {
@@ -1198,6 +1448,11 @@
       return;
     }
 
+    if (action === "edit") {
+      openEditJobModal(delivery);
+      return;
+    }
+
     if (action === "ready") {
       markReady(delivery.id).catch(error => showToast(error.message || "Unable to mark ready.", "error"));
       return;
@@ -1356,6 +1611,22 @@
       }
     });
 
+    elements.editJobModal.addEventListener("click", event => {
+      if (event.target === elements.editJobModal || event.target.closest("[data-close-modal='editJobModal']")) {
+        closeModal(elements.editJobModal);
+      }
+    });
+
+    elements.editJobForm.addEventListener("submit", saveEditedJob);
+
+    if (elements.editReturnRequired) {
+      elements.editReturnRequired.addEventListener("change", syncEditReturnFields);
+    }
+
+    if (elements.editReturnLocationType) {
+      elements.editReturnLocationType.addEventListener("change", syncEditReturnFields);
+    }
+
     elements.assignDriverSearch.addEventListener("input", () => {
       state.assignSearch = elements.assignDriverSearch.value || "";
       renderAssignModal();
@@ -1382,6 +1653,7 @@
     document.addEventListener("keydown", event => {
       if (event.key === "Escape") {
         closeModal(elements.deliveryDetailsModal);
+        closeModal(elements.editJobModal);
         closeModal(elements.assignModal);
         closeModal(elements.newDeliveryModal);
         closeModal(elements.assignConfirmModal);

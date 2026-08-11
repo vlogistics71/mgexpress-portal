@@ -165,12 +165,35 @@
     .assign-job-card, .assign-recommended, .assign-list, .assign-future { border: 1px solid var(--line); border-radius: 18px; background: #fff; box-shadow: 0 10px 22px rgba(0,0,0,.04); padding: 14px; }
     .assign-section-label { color: var(--muted); font-size: 11px; font-weight: 900; letter-spacing: .04em; text-transform: uppercase; margin-bottom: 10px; }
     .assign-job-grid { display: grid; gap: 8px; }
+    .assign-summary-grid { display: grid; gap: 8px; margin-top: 6px; }
+    .assign-summary-row { display: flex; justify-content: space-between; gap: 12px; align-items: baseline; color: var(--ink); font-size: 13px; line-height: 1.4; }
+    .assign-summary-row strong { color: var(--muted); font-size: 11px; font-weight: 900; letter-spacing: .04em; text-transform: uppercase; }
+    .assign-summary-row.total { padding-top: 8px; border-top: 1px solid var(--line); }
+    .assign-summary-value { font-weight: 900; text-align: right; }
     .assign-controls { display: grid; grid-template-columns: 1fr 180px; gap: 10px; margin-bottom: 12px; }
     .assign-driver-list { display: grid; gap: 10px; max-height: 300px; overflow: auto; }
     .assign-future ul { margin: 0; padding-left: 18px; color: var(--muted); font-weight: 700; display: grid; gap: 6px; }
     .assign-hidden-form { display: none; }
+    .edit-modal-backdrop { align-items: stretch; justify-content: center; padding: 14px; }
+    .edit-panel { width: min(980px, 100%); max-height: 94vh; overflow: hidden; background: #fff; border-radius: 20px; box-shadow: 0 22px 54px rgba(0,0,0,.28); display: grid; grid-template-rows: auto 1fr; }
+    .edit-panel-head { display: flex; justify-content: space-between; gap: 10px; align-items: flex-start; padding: 14px 16px; border-bottom: 1px solid var(--line); background: #fff; }
+    .edit-panel-title { margin: 0; color: var(--dark-green); font-size: 22px; }
+    .edit-panel-sub { margin-top: 4px; color: var(--muted); font-size: 13px; font-weight: 800; }
+    .edit-panel-body { overflow: auto; padding: 14px 16px 18px; }
+    .edit-form { display: grid; gap: 14px; }
+    .edit-section { border: 1px solid var(--line); border-radius: 18px; background: #fff; box-shadow: 0 10px 22px rgba(0,0,0,.04); padding: 14px; display: grid; gap: 12px; }
+    .edit-section-title { margin: 0; color: var(--dark-green); font-size: 16px; font-weight: 900; }
+    .edit-grid { display: grid; grid-template-columns: 1fr; gap: 12px; }
+    .edit-field { display: grid; gap: 6px; min-width: 0; }
+    .edit-field label { color: var(--muted); font-size: 11px; font-weight: 900; letter-spacing: .04em; text-transform: uppercase; }
+    .edit-field input, .edit-field select, .edit-field textarea { width: 100%; min-height: 48px; padding: 12px 14px; border: 1px solid var(--line); border-radius: 14px; background: #fff; color: var(--ink); }
+    .edit-field textarea { min-height: 96px; resize: vertical; }
+    .edit-field.full { grid-column: 1 / -1; }
+    .edit-actions { display: flex; flex-wrap: wrap; gap: 10px; justify-content: flex-end; padding-top: 2px; }
+    .edit-actions .action-btn.secondary { min-width: 120px; }
     @media (max-width: 980px) { .controls { grid-template-columns: 1fr 1fr; } .delivery-details-modal { align-items: flex-end; padding: 0; } .delivery-details-panel { width: 100%; height: 100dvh; max-height: 100dvh; border-radius: 0; } .modal-backdrop { padding: 0; } .modal-panel { width: 100%; max-height: 100dvh; border-radius: 0; } .details-action-grid { grid-template-columns: 1fr 1fr; } .assign-controls { grid-template-columns: 1fr; } .assign-panel { width: 100%; max-height: 100dvh; border-radius: 0; } }
-    @media (max-width: 720px) { .page-head-top { flex-direction: column; align-items: stretch; } .controls { grid-template-columns: 1fr; } .card { grid-template-columns: 1fr; } .actions { justify-content: flex-start; } .details-summary { flex-direction: column; } .details-action-grid { grid-template-columns: 1fr; } .details-kv { grid-template-columns: 1fr; } }
+    @media (max-width: 720px) { .page-head-top { flex-direction: column; align-items: stretch; } .controls { grid-template-columns: 1fr; } .card { grid-template-columns: 1fr; } .actions { justify-content: flex-start; } .details-summary { flex-direction: column; } .details-action-grid { grid-template-columns: 1fr; } .details-kv { grid-template-columns: 1fr; } .edit-actions .action-btn.secondary { width: 100%; } }
+    @media (min-width: 760px) { .edit-grid.two-up { grid-template-columns: repeat(2, minmax(0, 1fr)); } .edit-grid.three-up { grid-template-columns: repeat(3, minmax(0, 1fr)); } .edit-grid.four-up { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
 
     .topbar-inner {
       width: min(1050px, 100%);
@@ -432,6 +455,95 @@
         <button class="icon-btn" type="button" data-close-delivery-details>×</button>
       </div>
       <div class="modal-body delivery-details-body" id="deliveryDetailsBody"></div>
+    </section>
+  </div>
+
+  <div class="modal-backdrop edit-modal-backdrop" id="editJobModal">
+    <section class="edit-panel" role="dialog" aria-modal="true" aria-labelledby="editJobTitle">
+      <div class="edit-panel-head">
+        <div>
+          <h3 class="edit-panel-title" id="editJobTitle">Edit Job</h3>
+          <div class="edit-panel-sub">Update the existing quote record and save changes back to the same job.</div>
+        </div>
+        <button class="icon-btn" type="button" data-close-modal="editJobModal">×</button>
+      </div>
+      <div class="edit-panel-body">
+        <form id="editJobForm" class="edit-form">
+          <input type="hidden" id="editJobId" name="id">
+
+          <section class="edit-section">
+            <h4 class="edit-section-title">Customer</h4>
+            <div class="edit-grid two-up">
+              <div class="edit-field"><label for="editCustomerName">Customer Name</label><input id="editCustomerName" name="customer_name" required></div>
+              <div class="edit-field"><label for="editCompanyName">Company Name</label><input id="editCompanyName" name="company_name"></div>
+              <div class="edit-field"><label for="editCustomerEmail">Customer Email</label><input id="editCustomerEmail" name="customer_email" type="email"></div>
+              <div class="edit-field"><label for="editCustomerPhone">Customer Phone</label><input id="editCustomerPhone" name="customer_phone" type="tel"></div>
+            </div>
+          </section>
+
+          <section class="edit-section">
+            <h4 class="edit-section-title">Pickup</h4>
+            <div class="edit-grid two-up">
+              <div class="edit-field full"><label for="editPickupAddress">Pickup Address</label><textarea id="editPickupAddress" name="pickup_address" required rows="2"></textarea></div>
+              <div class="edit-field"><label for="editPickupSuiteFloor">Pickup Suite / Floor</label><input id="editPickupSuiteFloor" name="pickup_suite_floor"></div>
+              <div class="edit-field"><label for="editPickupZip">Pickup ZIP</label><input id="editPickupZip" name="pickup_zip" inputmode="numeric"></div>
+              <div class="edit-field"><label for="editPickupContactName">Pickup Contact</label><input id="editPickupContactName" name="pickup_contact_name"></div>
+              <div class="edit-field"><label for="editPickupContactPhone">Pickup Phone</label><input id="editPickupContactPhone" name="pickup_contact_phone" type="tel"></div>
+              <div class="edit-field full"><label for="editPickupInstructions">Pickup Instructions</label><textarea id="editPickupInstructions" name="pickup_instructions" rows="3"></textarea></div>
+            </div>
+          </section>
+
+          <section class="edit-section">
+            <h4 class="edit-section-title">Delivery</h4>
+            <div class="edit-grid two-up">
+              <div class="edit-field full"><label for="editDeliveryAddress">Delivery Address</label><textarea id="editDeliveryAddress" name="delivery_address" required rows="2"></textarea></div>
+              <div class="edit-field"><label for="editDeliverySuiteFloor">Delivery Suite / Floor</label><input id="editDeliverySuiteFloor" name="delivery_suite_floor"></div>
+              <div class="edit-field"><label for="editDeliveryZip">Delivery ZIP</label><input id="editDeliveryZip" name="delivery_zip" inputmode="numeric"></div>
+              <div class="edit-field"><label for="editDeliveryContactName">Delivery Contact / Recipient</label><input id="editDeliveryContactName" name="delivery_contact_name"></div>
+              <div class="edit-field"><label for="editDeliveryContactPhone">Delivery Phone</label><input id="editDeliveryContactPhone" name="delivery_contact_phone" type="tel"></div>
+              <div class="edit-field full"><label for="editDeliveryInstructions">Delivery Instructions</label><textarea id="editDeliveryInstructions" name="delivery_instructions" rows="3"></textarea></div>
+            </div>
+          </section>
+
+          <section class="edit-section">
+            <h4 class="edit-section-title">Service</h4>
+            <div class="edit-grid three-up">
+              <div class="edit-field"><label for="editJobCategory">Job Category</label><select id="editJobCategory" name="job_category"><option value="general">General</option><option value="medical">Medical</option><option value="legal">Legal</option><option value="pallet">Pallet</option><option value="special">Special</option></select></div>
+              <div class="edit-field"><label for="editVehicleType">Vehicle Type</label><select id="editVehicleType" name="vehicle_type"><option value="">Choose vehicle</option><option value="Car">Car</option><option value="SUV">SUV</option><option value="Cargo Van">Cargo Van</option><option value="Sprinter Van">Sprinter Van</option><option value="Box Truck">Box Truck</option></select></div>
+              <div class="edit-field"><label for="editDeliverySpeed">Delivery Speed</label><select id="editDeliverySpeed" name="delivery_speed"><option value="">Choose speed</option><option value="2_hr">2 Hour</option><option value="3_hr">3 Hour</option><option value="4_hr">4 Hour</option><option value="5_hr">5 Hour</option><option value="6_hr">6 Hour</option><option value="next_day">Next Day</option></select></div>
+              <div class="edit-field"><label for="editDeliveryType">Delivery Type</label><select id="editDeliveryType" name="delivery_type"><option value="">Choose type</option><option value="business_to_business">Business to Business</option><option value="business_to_residential">Business to Residential</option><option value="residential_to_business">Residential to Business</option><option value="residential_to_residential">Residential to Residential</option></select></div>
+              <div class="edit-field"><label for="editServiceLevel">Service Level</label><select id="editServiceLevel" name="service_level"><option value="">Choose level</option><option value="standard">Standard</option><option value="priority">Priority</option><option value="stat">STAT</option><option value="scheduled">Scheduled</option><option value="on_demand">On Demand</option></select></div>
+              <div class="edit-field"><label for="editPackageType">Package Type</label><select id="editPackageType" name="package_type"><option value="">Choose package</option><option value="Documents">Documents</option><option value="Medical Supplies">Medical Supplies</option><option value="Auto Parts">Auto Parts</option><option value="Small Package">Small Package</option><option value="Medium Package">Medium Package</option><option value="Large Package">Large Package</option><option value="Other">Other</option></select></div>
+              <div class="edit-field"><label for="editPackageWeight">Approximate Weight</label><select id="editPackageWeight" name="package_weight"><option value="">Choose weight</option><option value="Under 10 lbs">Under 10 lbs</option><option value="10-25 lbs">10-25 lbs</option><option value="25-50 lbs">25-50 lbs</option><option value="50-100 lbs">50-100 lbs</option><option value="Over 100 lbs">Over 100 lbs</option></select></div>
+              <div class="edit-field full"><label for="editSpecialInstructions">Special Instructions</label><textarea id="editSpecialInstructions" name="special_instructions" rows="4"></textarea></div>
+            </div>
+          </section>
+
+          <section class="edit-section">
+            <h4 class="edit-section-title">Return Service</h4>
+            <div class="edit-grid two-up">
+              <div class="edit-field"><label for="editReturnRequired">Return Required</label><select id="editReturnRequired" name="return_required"><option value="false">No</option><option value="true">Yes</option></select></div>
+              <div class="edit-field"><label for="editReturnLocationType">Return Location Type</label><select id="editReturnLocationType" name="return_location_type"><option value="same_as_pickup">Same as Pickup</option><option value="different_location">Different Location</option></select></div>
+              <div class="edit-field"><label for="editReturnTiming">Return Timing</label><select id="editReturnTiming" name="return_timing"><option value="immediate">Immediately After Delivery</option><option value="later_today">Later Today</option><option value="another_day">Another Day</option></select></div>
+              <div class="edit-field full" id="editReturnAddressWrap"><label for="editReturnAddress">Return Address</label><textarea id="editReturnAddress" name="return_address" rows="2"></textarea></div>
+              <div class="edit-field" id="editReturnSuiteWrap"><label for="editReturnSuiteFloor">Return Suite / Floor</label><input id="editReturnSuiteFloor" name="return_suite_floor"></div>
+              <div class="edit-field" id="editReturnZipWrap"><label for="editReturnZip">Return ZIP</label><input id="editReturnZip" name="return_zip" inputmode="numeric"></div>
+            </div>
+          </section>
+
+          <section class="edit-section">
+            <h4 class="edit-section-title">Billing</h4>
+            <div class="edit-grid two-up">
+              <div class="edit-field"><label for="editApprovedPrice">Total Amount Billed to Customer</label><input id="editApprovedPrice" name="approved_price" type="number" min="0" step="0.01" inputmode="decimal" placeholder="0.00"></div>
+            </div>
+          </section>
+
+          <div class="edit-actions">
+            <button class="action-btn secondary" type="button" data-close-modal="editJobModal">Cancel</button>
+            <button class="action-btn" id="saveEditJobButton" type="submit">Save Changes</button>
+          </div>
+        </form>
+      </div>
     </section>
   </div>
 
