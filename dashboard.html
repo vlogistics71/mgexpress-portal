@@ -3144,9 +3144,9 @@
         return "Pickup and delivery addresses are required.";
       }
 
-      const billedAmount = Number(payload.approved_price ?? payload.customer_charge);
+      const billedAmount = Number(payload.customer_charge);
       if (!Number.isFinite(billedAmount) || billedAmount <= 0) {
-        return "Total amount billed must be greater than $0.00.";
+        return "Please enter a valid customer billing amount.";
       }
 
       if (clean(payload.service_level) === "scheduled") {
@@ -3166,8 +3166,8 @@
     async function buildInsertPayload(form) {
       const data = new FormData(form);
       const columnSupport = await detectQuoteColumnSupport();
-      const priceRaw = String(data.get("approved_price") || "").trim();
-      const approvedPrice = parseCurrencyAmount(priceRaw);
+      const rawInputValue = String(form?.elements?.approved_price?.value ?? data.get("approved_price") ?? "").trim();
+      const parsedCustomerCharge = parseCurrencyAmount(rawInputValue);
       const estimatedMilesRaw = String(data.get("estimated_miles") || "").trim();
       const estimatedMilesValue = estimatedMilesRaw === "" ? null : Number(estimatedMilesRaw);
       const scheduledDateValue = String(data.get("scheduled_date") || "").trim();
@@ -3230,8 +3230,8 @@
         package_type: String(data.get("package_type") || "").trim() || null,
         package_weight: packageWeight || null,
         special_instructions: [internalNotes].concat(instructions).filter(Boolean).join("\n") || null,
-        approved_price: priceRaw === "" ? null : approvedPrice,
-        customer_charge: priceRaw === "" ? null : approvedPrice,
+        approved_price: rawInputValue === "" ? null : parsedCustomerCharge,
+        customer_charge: rawInputValue === "" ? null : parsedCustomerCharge,
         billing_notes: billingMeta.join("\n") || null,
         status: "waiting_payment",
         assigned_driver_id: null,
@@ -3239,7 +3239,9 @@
         driver_acceptance_status: null,
         driver_workflow_status: null,
         driver_accepted_at: null,
-        driver_rejected_at: null
+        driver_rejected_at: null,
+        _raw_billing_input_value: rawInputValue,
+        _parsed_customer_charge: parsedCustomerCharge
       };
 
       if (!payload.return_required) {
@@ -3255,12 +3257,8 @@
         payload.return_zip = null;
       }
 
-      if (priceRaw === "") {
-        throw new Error("Total amount billed is required.");
-      }
-
-      if (approvedPrice === null || approvedPrice <= 0) {
-        throw new Error("Total amount billed must be greater than $0.00.");
+      if (rawInputValue === "" || parsedCustomerCharge === null || parsedCustomerCharge <= 0) {
+        throw new Error("Please enter a valid customer billing amount.");
       }
 
       if (clean(payload.service_level) !== "scheduled") {
@@ -3348,7 +3346,11 @@
       try {
         const payload = await buildInsertPayload(elements.createJobForm);
         const estimatedMilesValue = payload._estimated_miles_value;
+        const rawInputValue = payload._raw_billing_input_value;
+        const parsedCustomerCharge = payload._parsed_customer_charge;
         delete payload._estimated_miles_value;
+        delete payload._raw_billing_input_value;
+        delete payload._parsed_customer_charge;
 
         if (await detectEstimatedMilesFieldSupport()) {
           payload.estimated_miles = estimatedMilesValue;
@@ -3361,6 +3363,13 @@
 
         payload.job_number = await generateJobNumber();
 
+        console.log("BILLING DEBUG", {
+          rawInputValue,
+          parsedCustomerCharge,
+          insertCustomerCharge: payload.customer_charge
+        });
+        console.log("CREATE JOB PAYLOAD", payload);
+
         const insertResult = await client
           .from("quotes")
           .insert(payload)
@@ -3371,14 +3380,20 @@
           throw insertResult.error;
         }
 
-        const createdJobNumber = insertResult.data?.job_number || payload.job_number;
-        const savedAmountNumber = Number(insertResult.data?.customer_charge ?? insertResult.data?.approved_price ?? payload.customer_charge ?? payload.approved_price ?? 0);
-        const savedAmountLabel = Number.isFinite(savedAmountNumber)
-          ? new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(savedAmountNumber)
-          : "$0.00";
+        const savedJob = insertResult.data || null;
+        console.log("SAVED JOB", savedJob);
+        console.log("SAVED CUSTOMER CHARGE", savedJob?.customer_charge);
+
+        const savedCustomerCharge = Number(savedJob?.customer_charge);
+        if (!Number.isFinite(savedCustomerCharge) || savedCustomerCharge <= 0) {
+          throw new Error("Please enter a valid customer billing amount.");
+        }
+
+        const createdJobNumber = savedJob?.job_number || payload.job_number;
+        const savedAmountLabel = new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(savedCustomerCharge);
 
         let paymentContext = {
-          quote_id: insertResult.data?.id,
+          quote_id: savedJob?.id,
           job_number: createdJobNumber,
           amount_label: savedAmountLabel,
           payment_status_label: "Waiting Payment",
@@ -3387,13 +3402,13 @@
           customer_phone: String(elements.createJobForm.customer_phone?.value || "").trim()
         };
 
-        if (insertResult.data?.id) {
+        if (savedJob?.id) {
           try {
-            const checkoutResult = await createStripeCheckoutForJob(insertResult.data.id);
+            const checkoutResult = await createStripeCheckoutForJob(savedJob.id);
             paymentContext = {
               ...paymentContext,
               ...checkoutResult,
-              quote_id: checkoutResult.quote_id || insertResult.data.id,
+              quote_id: checkoutResult.quote_id || savedJob.id,
               job_number: checkoutResult.job_number || createdJobNumber,
               payment_status_label: "Waiting Payment"
             };
