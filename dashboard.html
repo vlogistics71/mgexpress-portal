@@ -435,6 +435,39 @@
       line-height: 1.3;
     }
 
+    .lookup-confirm {
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      background: #f7fbf9;
+      padding: 12px;
+      display: grid;
+      gap: 10px;
+    }
+
+    .lookup-confirm-title {
+      color: var(--dark-green);
+      font-size: 13px;
+      font-weight: 900;
+    }
+
+    .lookup-confirm-copy {
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 700;
+      line-height: 1.35;
+    }
+
+    .lookup-confirm-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .lookup-confirm-actions .button,
+    .lookup-confirm-actions button {
+      min-height: 40px;
+    }
+
     .hint {
       color: var(--muted);
       font-size: 12px;
@@ -840,6 +873,7 @@
                 <label for="customerLookupInput">Recurring Customer Lookup</label>
                 <input id="customerLookupInput" type="search" placeholder="Search recurring customers by name, company, phone, email">
                 <div id="customerLookupResults" class="lookup-results" role="listbox" aria-label="Recurring customer matches"></div>
+                <div id="customerAutofillPrompt" class="lookup-confirm hidden" hidden></div>
               </div>
 
               <div class="field">
@@ -1122,8 +1156,10 @@
     const state = {
       quotes: [],
       recurringCustomers: [],
+      recurringCustomerLocations: [],
       supportEstimatedMiles: null,
       quoteColumnSupport: null,
+      pendingCustomerAutofill: null,
       submitting: false,
       addressAutocomplete: {
         fields: [],
@@ -1154,6 +1190,7 @@
       createJobMessage: document.getElementById("createJobMessage"),
       customerLookupInput: document.getElementById("customerLookupInput"),
       customerLookupResults: document.getElementById("customerLookupResults"),
+      customerAutofillPrompt: document.getElementById("customerAutofillPrompt"),
       customerAccountId: document.getElementById("customer_account_id"),
       pickupAddress: document.getElementById("pickup_address"),
       pickupCity: document.getElementById("pickup_city"),
@@ -2174,17 +2211,30 @@
     }
 
     async function loadRecurringCustomers() {
-      const result = await client
-        .from("customer_portal_accounts")
-        .select("id,customer_name,company_name,email,phone,is_recurring_customer")
-        .eq("is_recurring_customer", true)
-        .order("customer_name", { ascending: true });
+      const [customerResult, locationResult] = await Promise.all([
+        client
+          .from("customer_portal_accounts")
+          .select("*")
+          .eq("is_recurring_customer", true)
+          .order("customer_name", { ascending: true }),
 
-      if (result.error) {
-        throw result.error;
+        client
+          .from("customer_saved_locations")
+          .select("*")
+          .eq("is_active", true)
+          .order("created_at", { ascending: false })
+      ]);
+
+      if (customerResult.error) {
+        throw customerResult.error;
       }
 
-      state.recurringCustomers = result.data || [];
+      if (locationResult.error) {
+        throw locationResult.error;
+      }
+
+      state.recurringCustomers = customerResult.data || [];
+      state.recurringCustomerLocations = locationResult.data || [];
     }
 
     function renderCustomerLookupResults(list, showOneTime) {
@@ -2213,26 +2263,309 @@
       elements.customerLookupResults.classList.toggle("open", rows.length > 0);
     }
 
-    function applyRecurringCustomer(customerId) {
+    function getRecurringCustomerLocations(customerId) {
+      return state.recurringCustomerLocations.filter(location => String(location.customer_account_id || "") === String(customerId));
+    }
+
+    function getRecurringCustomerLastJob(customerId) {
+      return state.quotes
+        .filter(job => String(job.customer_account_id || "") === String(customerId))
+        .filter(job => ["completed", "delivered", "closed"].includes(clean(job.status)) || clean(job.driver_workflow_status) === "delivered")
+        .sort((left, right) => {
+          const leftDate = new Date(left.completed_at || left.updated_at || left.created_at || 0).getTime();
+          const rightDate = new Date(right.completed_at || right.updated_at || right.created_at || 0).getTime();
+          return rightDate - leftDate;
+        })[0] || null;
+    }
+
+    function firstLocationByType(customerId, typeKey) {
+      return getRecurringCustomerLocations(customerId).find(location => location[typeKey] === true) || null;
+    }
+
+    function hasAnyFilledAutofillField(form) {
+      const fields = [
+        "customer_name",
+        "company_name",
+        "customer_email",
+        "customer_phone",
+        "reference_number",
+        "pickup_contact_name",
+        "pickup_address",
+        "pickup_suite_floor",
+        "pickup_city",
+        "pickup_zip",
+        "pickup_contact_phone",
+        "pickup_instructions",
+        "delivery_contact_name",
+        "delivery_address",
+        "delivery_suite_floor",
+        "delivery_city",
+        "delivery_zip",
+        "delivery_contact_phone",
+        "delivery_instructions",
+        "vehicle_type",
+        "delivery_speed",
+        "delivery_type",
+        "service_level",
+        "package_type",
+        "package_weight",
+        "estimated_miles",
+        "special_instructions",
+        "approved_price"
+      ];
+
+      return fields.some(fieldName => {
+        const field = form?.elements?.[fieldName];
+        return Boolean(String(field?.value || "").trim());
+      });
+    }
+
+    function applyFieldValue(field, value, type = "input") {
+      if (!field) {
+        return;
+      }
+
+      field.value = value == null ? "" : String(value);
+      field.dispatchEvent(new Event(type, { bubbles: true }));
+    }
+
+    function buildRecurringCustomerAutofill(customer) {
+      const pickupLocation = firstLocationByType(customer.id, "is_pickup_location");
+      const deliveryLocation = firstLocationByType(customer.id, "is_delivery_location");
+      const lastJob = getRecurringCustomerLastJob(customer.id);
+
+      const profileDefaults = {
+        customer_name: customer.customer_name || "",
+        company_name: customer.company_name || "",
+        customer_email: customer.email || "",
+        customer_phone: customer.phone || ""
+      };
+
+      const locationDefaults = {
+        pickup_contact_name: pickupLocation?.location_name || "",
+        pickup_address: pickupLocation?.address || "",
+        pickup_contact_phone: pickupLocation?.contact_phone || "",
+        pickup_instructions: pickupLocation?.delivery_instructions || "",
+        delivery_contact_name: deliveryLocation?.location_name || "",
+        delivery_address: deliveryLocation?.address || "",
+        delivery_contact_phone: deliveryLocation?.contact_phone || "",
+        delivery_instructions: deliveryLocation?.delivery_instructions || ""
+      };
+
+      return {
+        customer,
+        pickupLocation,
+        deliveryLocation,
+        lastJob,
+        hasRouteDefaults: Boolean(pickupLocation || deliveryLocation),
+        values: {
+          ...profileDefaults,
+          ...locationDefaults
+        }
+      };
+    }
+
+    function clearCustomerAutofillPrompt() {
+      state.pendingCustomerAutofill = null;
+
+      if (!elements.customerAutofillPrompt) {
+        return;
+      }
+
+      elements.customerAutofillPrompt.innerHTML = "";
+      elements.customerAutofillPrompt.hidden = true;
+      elements.customerAutofillPrompt.classList.add("hidden");
+    }
+
+    function showCustomerAutofillPrompt(autofill) {
+      if (!elements.customerAutofillPrompt) {
+        return;
+      }
+
+      state.pendingCustomerAutofill = autofill;
+
+      const customerLabel = escapeHtml(autofill.customer.customer_name || autofill.customer.company_name || "Customer");
+      const hasRouteDefaults = autofill.hasRouteDefaults;
+      const hasLastJob = Boolean(autofill.lastJob);
+
+      elements.customerAutofillPrompt.innerHTML = `
+        <div class="lookup-confirm-title">Fill this form with ${customerLabel}'s saved defaults?</div>
+        <div class="lookup-confirm-copy">
+          Existing entries will be kept only if you choose Keep Current Entries. Customer details always stay editable after autofill.
+        </div>
+        <div class="lookup-confirm-actions">
+          <button class="button primary" type="button" id="customerAutofillAcceptBtn">Autofill</button>
+          <button class="button secondary" type="button" id="customerAutofillKeepBtn">Keep Current Entries</button>
+          ${!hasRouteDefaults && hasLastJob ? '<button class="button secondary" type="button" id="customerLastJobBtn">Use Last Job Details</button>' : ''}
+        </div>
+      `;
+
+      elements.customerAutofillPrompt.hidden = false;
+      elements.customerAutofillPrompt.classList.remove("hidden");
+
+      elements.customerAutofillPrompt.querySelector("#customerAutofillAcceptBtn")?.addEventListener("click", () => {
+        applyRecurringCustomerAutofill(autofill);
+      });
+
+      elements.customerAutofillPrompt.querySelector("#customerAutofillKeepBtn")?.addEventListener("click", () => {
+        const committedCustomer = Boolean(String(elements.customerAccountId?.value || "").trim());
+        clearCustomerAutofillPrompt();
+        if (!committedCustomer) {
+          if (elements.customerAccountId) {
+            elements.customerAccountId.value = "";
+          }
+          if (elements.customerLookupInput) {
+            elements.customerLookupInput.value = "";
+          }
+        }
+        setCreateJobMessage("Keeping current entries.", "success");
+      });
+
+      elements.customerAutofillPrompt.querySelector("#customerLastJobBtn")?.addEventListener("click", () => {
+        applyLastJobDetails(autofill);
+      });
+    }
+
+    function setAutofillFields(values, options = {}) {
+      const form = elements.createJobForm;
+      if (!form) {
+        return;
+      }
+
+      const textFields = [
+        "customer_name",
+        "company_name",
+        "customer_email",
+        "customer_phone",
+        "reference_number",
+        "pickup_contact_name",
+        "pickup_address",
+        "pickup_suite_floor",
+        "pickup_city",
+        "pickup_zip",
+        "pickup_contact_phone",
+        "pickup_instructions",
+        "delivery_contact_name",
+        "delivery_address",
+        "delivery_suite_floor",
+        "delivery_city",
+        "delivery_zip",
+        "delivery_contact_phone",
+        "delivery_instructions",
+        "package_type",
+        "package_weight",
+        "estimated_miles",
+        "special_instructions",
+        "approved_price"
+      ];
+
+      const selectFields = [
+        "vehicle_type",
+        "delivery_speed",
+        "job_category",
+        "delivery_type",
+        "service_level",
+        "return_required"
+      ];
+
+      textFields.forEach(fieldName => {
+        if (Object.prototype.hasOwnProperty.call(values, fieldName)) {
+          applyFieldValue(form.elements[fieldName], values[fieldName], "input");
+        }
+      });
+
+      selectFields.forEach(fieldName => {
+        if (Object.prototype.hasOwnProperty.call(values, fieldName)) {
+          applyFieldValue(form.elements[fieldName], values[fieldName], "change");
+        }
+      });
+
+      if (options.resetScheduling !== false) {
+        if (elements.serviceLevel) {
+          elements.serviceLevel.dispatchEvent(new Event("change", { bubbles: true }));
+        }
+      }
+
+      closeAllAddressSuggestions();
+      clearMileageRoutingState({ clearInput: false });
+    }
+
+    function applyRecurringCustomerAutofill(autofill) {
+      if (!autofill || !elements.createJobForm) {
+        return;
+      }
+
+      elements.customerAccountId.value = String(autofill.customer.id);
+      elements.customerLookupInput.value = autofill.customer.customer_name || autofill.customer.company_name || "";
+
+      setAutofillFields({
+        ...autofill.values
+      });
+
+      clearCustomerAutofillPrompt();
+      setCreateJobMessage(`✓ ${autofill.customer.customer_name || autofill.customer.company_name || "Customer"} details filled`, "success");
+    }
+
+    function applyLastJobDetails(autofill) {
+      if (!autofill?.lastJob || !elements.createJobForm) {
+        return;
+      }
+
+      const job = autofill.lastJob;
+      setAutofillFields({
+        pickup_contact_name: job.pickup_contact_name || job.pickup_business_name || "",
+        pickup_address: job.pickup_address || "",
+        pickup_suite_floor: job.pickup_suite_floor || "",
+        pickup_city: job.pickup_city || "",
+        pickup_zip: job.pickup_zip || "",
+        pickup_contact_phone: job.pickup_contact_phone || "",
+        pickup_instructions: job.pickup_instructions || "",
+        delivery_contact_name: job.delivery_contact_name || job.delivery_business_name || "",
+        delivery_address: job.delivery_address || "",
+        delivery_suite_floor: job.delivery_suite_floor || "",
+        delivery_city: job.delivery_city || "",
+        delivery_zip: job.delivery_zip || "",
+        delivery_contact_phone: job.delivery_contact_phone || "",
+        delivery_instructions: job.delivery_instructions || "",
+        special_instructions: job.special_instructions || ""
+      });
+
+      clearCustomerAutofillPrompt();
+      setCreateJobMessage(`✓ Last job details loaded for ${autofill.customer.customer_name || autofill.customer.company_name || "Customer"}`, "success");
+    }
+
+    function triggerRecurringCustomerAutofill(customerId) {
       const found = state.recurringCustomers.find(item => String(item.id) === String(customerId));
       if (!found || !elements.createJobForm) {
         return;
       }
 
-      elements.customerAccountId.value = String(found.id);
-      elements.createJobForm.customer_name.value = found.customer_name || "";
-      elements.createJobForm.company_name.value = found.company_name || "";
-      elements.createJobForm.customer_email.value = found.email || "";
-      elements.createJobForm.customer_phone.value = found.phone || "";
+      const autofill = buildRecurringCustomerAutofill(found);
       elements.customerLookupInput.value = found.customer_name || found.company_name || "";
       elements.customerLookupResults.classList.remove("open");
-      setCreateJobMessage("Recurring customer selected.", "success");
+
+      if (hasAnyFilledAutofillField(elements.createJobForm)) {
+        showCustomerAutofillPrompt(autofill);
+        setCreateJobMessage(`Review autofill for ${found.customer_name || found.company_name || "customer"}.`, "success");
+        return;
+      }
+
+      applyRecurringCustomerAutofill(autofill);
+
+      if (!autofill.hasRouteDefaults && autofill.lastJob) {
+        showCustomerAutofillPrompt(autofill);
+      }
+    }
+
+    function applyRecurringCustomer(customerId) {
+      triggerRecurringCustomerAutofill(customerId);
     }
 
     function chooseOneTimeCustomer() {
       if (elements.customerAccountId) {
         elements.customerAccountId.value = "";
       }
+      clearCustomerAutofillPrompt();
       if (elements.customerLookupResults) {
         elements.customerLookupResults.classList.remove("open");
       }
@@ -2240,6 +2573,7 @@
     }
 
     function handleCustomerLookupInput() {
+      clearCustomerAutofillPrompt();
       const query = normalizeText(elements.customerLookupInput.value);
       if (!query) {
         elements.customerLookupResults.classList.remove("open");
@@ -2331,6 +2665,8 @@
         elements.customerLookupResults.innerHTML = "";
         elements.customerLookupResults.classList.remove("open");
       }
+
+      clearCustomerAutofillPrompt();
 
       if (elements.createJobForm.job_category) {
         elements.createJobForm.job_category.value = "general";
