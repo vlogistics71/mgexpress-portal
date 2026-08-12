@@ -1096,7 +1096,7 @@
             <div class="form-grid two-up">
               <div class="field">
                 <label for="approved_price">Total Amount Billed to Customer</label>
-                <input id="approved_price" name="approved_price" type="number" min="0" step="0.01" inputmode="decimal" placeholder="0.00">
+                <input id="approved_price" name="approved_price" type="text" inputmode="decimal" placeholder="0.00">
               </div>
             </div>
           </section>
@@ -1218,6 +1218,41 @@
         style: "currency",
         currency: "USD"
       });
+    }
+
+    function parseCurrencyAmount(value) {
+      const raw = String(value ?? "").trim();
+      if (!raw) {
+        return null;
+      }
+
+      const normalized = raw.replace(/[^0-9.-]/g, "");
+      if (!normalized || normalized === "-" || normalized === "." || normalized === "-.") {
+        return null;
+      }
+
+      const amount = Number(normalized);
+      return Number.isFinite(amount) ? Math.round(amount * 100) / 100 : null;
+    }
+
+    function toCurrencyEditValue(input) {
+      if (!input) {
+        return null;
+      }
+
+      const amount = parseCurrencyAmount(input.value);
+      input.value = amount == null ? "" : amount.toFixed(2);
+      return amount;
+    }
+
+    function toCurrencyDisplayValue(input) {
+      if (!input) {
+        return null;
+      }
+
+      const amount = parseCurrencyAmount(input.value);
+      input.value = amount == null ? "" : money(amount);
+      return amount;
     }
 
     function parseDate(value) {
@@ -2129,6 +2164,15 @@
       setCreateJobExpanded(expanded, { scroll: false, focusFirstField: false });
     }
 
+    function applyCreateJobRouteIntent() {
+      const target = clean(window.location.hash || "").replace(/^#/, "");
+      if (target !== "create-job") {
+        return;
+      }
+
+      setCreateJobExpanded(true, { scroll: true, focusFirstField: true });
+    }
+
     async function loadRecurringCustomers() {
       const result = await client
         .from("customer_portal_accounts")
@@ -2496,6 +2540,7 @@
       const data = new FormData(form);
       const columnSupport = await detectQuoteColumnSupport();
       const priceRaw = String(data.get("approved_price") || "").trim();
+      const approvedPrice = parseCurrencyAmount(priceRaw);
       const estimatedMilesRaw = String(data.get("estimated_miles") || "").trim();
       const estimatedMilesValue = estimatedMilesRaw === "" ? null : Number(estimatedMilesRaw);
       const scheduledDateValue = String(data.get("scheduled_date") || "").trim();
@@ -2558,7 +2603,7 @@
         package_type: String(data.get("package_type") || "").trim() || null,
         package_weight: packageWeight || null,
         special_instructions: [internalNotes].concat(instructions).filter(Boolean).join("\n") || null,
-        approved_price: priceRaw === "" ? null : Number(priceRaw),
+        approved_price: priceRaw === "" ? null : approvedPrice,
         billing_notes: billingMeta.join("\n") || null,
         status: "waiting_payment",
         assigned_driver_id: null,
@@ -2580,6 +2625,10 @@
         payload.return_address = null;
         payload.return_suite_floor = null;
         payload.return_zip = null;
+      }
+
+      if (priceRaw !== "" && approvedPrice === null) {
+        throw new Error("Total amount billed must be a valid number.");
       }
 
       if (clean(payload.service_level) !== "scheduled") {
@@ -2813,6 +2862,15 @@
     });
 
     elements.createJobForm.addEventListener("submit", createJob);
+    if (elements.createJobForm?.approved_price) {
+      elements.createJobForm.approved_price.addEventListener("focus", () => {
+        toCurrencyEditValue(elements.createJobForm.approved_price);
+      });
+
+      elements.createJobForm.approved_price.addEventListener("blur", () => {
+        toCurrencyDisplayValue(elements.createJobForm.approved_price);
+      });
+    }
     elements.returnRequired.addEventListener("change", syncReturnDetailsVisibility);
     elements.returnLocationType.addEventListener("change", syncReturnDetailsVisibility);
     elements.serviceLevel.addEventListener("change", syncScheduledFieldsVisibility);
@@ -2849,6 +2907,7 @@
 
       renderGreeting(session);
       restoreCreateJobExpandedState();
+      applyCreateJobRouteIntent();
       setupAddressAutocomplete();
       syncReturnDetailsVisibility();
       syncScheduledFieldsVisibility();

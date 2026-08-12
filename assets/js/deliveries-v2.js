@@ -665,6 +665,41 @@
     return roundMoney(customerCharge * 0.4);
   }
 
+  function parseCurrencyAmount(value) {
+    const raw = String(value ?? "").trim();
+    if (!raw) {
+      return null;
+    }
+
+    const normalized = raw.replace(/[^0-9.-]/g, "");
+    if (!normalized || normalized === "-" || normalized === "." || normalized === "-.") {
+      return null;
+    }
+
+    const amount = Number(normalized);
+    return Number.isFinite(amount) ? roundMoney(amount) : null;
+  }
+
+  function toCurrencyEditValue(input) {
+    if (!input) {
+      return null;
+    }
+
+    const amount = parseCurrencyAmount(input.value);
+    input.value = amount == null ? "" : amount.toFixed(2);
+    return amount;
+  }
+
+  function toCurrencyDisplayValue(input) {
+    if (!input) {
+      return null;
+    }
+
+    const amount = parseCurrencyAmount(input.value);
+    input.value = amount == null ? "" : formatMoney(amount);
+    return amount;
+  }
+
   function hasReturnService(delivery) {
     return clean(delivery?.return_required) === "true" || delivery?.return_required === true;
   }
@@ -743,6 +778,7 @@
     elements.editReturnSuiteFloor.value = delivery.return_suite_floor || "";
     elements.editReturnZip.value = delivery.return_zip || "";
     elements.editApprovedPrice.value = delivery.approved_price ?? delivery.customer_charge ?? "";
+    toCurrencyDisplayValue(elements.editApprovedPrice);
     syncEditReturnFields();
   }
 
@@ -760,9 +796,7 @@
     const hasCustomerCharge = delivery?.approved_price != null || delivery?.customer_charge != null;
     const customerCharge = getCustomerCharge(delivery);
     const payText = String(payInput?.value ?? state.assignDriverPay ?? delivery.driver_pay ?? "").trim();
-    const hasPay = payText !== "";
-    const payValue = hasPay ? Number(payText) : null;
-    const validPay = hasPay && Number.isFinite(payValue) ? roundMoney(payValue) : null;
+    const validPay = parseCurrencyAmount(payText);
     const margin = hasCustomerCharge && validPay !== null ? roundMoney(customerCharge - validPay) : null;
     const driverPercent = hasCustomerCharge && validPay !== null && customerCharge > 0 ? (validPay / customerCharge) * 100 : null;
     const marginPercent = hasCustomerCharge && margin !== null && customerCharge > 0 ? (margin / customerCharge) * 100 : null;
@@ -802,8 +836,12 @@
     }
 
     const approvedPriceRaw = String(elements.editApprovedPrice?.value || "").trim();
-    const approvedPrice = approvedPriceRaw === "" ? null : Number(approvedPriceRaw);
-    if (approvedPriceRaw !== "" && (!Number.isFinite(approvedPrice) || approvedPrice < 0)) {
+    const approvedPrice = parseCurrencyAmount(approvedPriceRaw);
+    if (approvedPriceRaw !== "" && approvedPrice === null) {
+      showToast("Enter a valid customer charge.", "error");
+      return;
+    }
+    if (approvedPrice !== null && approvedPrice < 0) {
       showToast("Enter a valid customer charge.", "error");
       return;
     }
@@ -1136,7 +1174,7 @@
         <div class="assign-summary-row"><strong>Customer</strong><span class="assign-summary-value">${escapeHtml(summary.customer_name || summary.company_name || "-")}</span></div>
         <div class="assign-summary-row"><strong>Route</strong><span class="assign-summary-value">${escapeHtml([summary.pickup_address, summary.delivery_address].filter(Boolean).join(" → ") || "-")}</span></div>
         <div class="assign-summary-row"><strong>Customer Charge</strong><span class="assign-summary-value" id="assignCustomerCharge">${escapeHtml(formatMoney(getCustomerCharge(summary)))}</span></div>
-        <div class="assign-summary-row"><strong>Driver Pay</strong><span class="assign-summary-value"><input id="assignDriverPayInput" type="number" min="0" step="0.01" value="${escapeHtml(String(state.assignDriverPay || summary.driver_pay || ""))}" placeholder="0.00"></span></div>
+        <div class="assign-summary-row"><strong>Driver Pay</strong><span class="assign-summary-value"><input id="assignDriverPayInput" type="text" inputmode="decimal" value="${escapeHtml(String(state.assignDriverPay || summary.driver_pay || ""))}" placeholder="0.00"></span></div>
         <div class="assign-summary-row"><strong>Driver %</strong><span class="assign-summary-value" id="assignDriverPercent">-</span></div>
         <div class="assign-summary-row"><strong>Suggested</strong><span class="assign-summary-value"><button class="action-btn secondary" id="assignResetSuggestedPay" type="button">Use 40% Suggested Pay</button></span></div>
         <div class="assign-summary-row total"><strong>Estimated Margin</strong><span class="assign-summary-value" id="assignEstimatedMargin">-</span></div>
@@ -1193,8 +1231,20 @@
 
     const payInput = document.getElementById("assignDriverPayInput");
     if (payInput) {
+      toCurrencyDisplayValue(payInput);
+
+      payInput.addEventListener("focus", () => {
+        toCurrencyEditValue(payInput);
+      });
+
       payInput.addEventListener("input", () => {
         state.assignDriverPay = String(payInput.value || "");
+        updateAssignBillingPreview();
+      });
+
+      payInput.addEventListener("blur", () => {
+        const value = toCurrencyDisplayValue(payInput);
+        state.assignDriverPay = value == null ? "" : String(value);
         updateAssignBillingPreview();
       });
     }
@@ -1207,6 +1257,7 @@
         state.assignDriverPay = String(suggestedDriverPay);
         if (payInput) {
           payInput.value = String(suggestedDriverPay);
+          toCurrencyDisplayValue(payInput);
         }
         updateAssignBillingPreview();
       });
@@ -1305,8 +1356,8 @@
       return;
     }
 
-    const driverPay = Number(payValue);
-    if (payValue === "" || !Number.isFinite(driverPay) || driverPay < 0) {
+    const driverPay = parseCurrencyAmount(payValue);
+    if (payValue === "" || driverPay === null || driverPay < 0) {
       showToast("Enter a valid driver pay amount.", "error");
       return;
     }
@@ -1592,6 +1643,16 @@
       renderDeliveries();
     });
 
+    if (elements.editApprovedPrice) {
+      elements.editApprovedPrice.addEventListener("focus", () => {
+        toCurrencyEditValue(elements.editApprovedPrice);
+      });
+
+      elements.editApprovedPrice.addEventListener("blur", () => {
+        toCurrencyDisplayValue(elements.editApprovedPrice);
+      });
+    }
+
     if (elements.statusFilter) {
       elements.statusFilter.addEventListener("change", renderDeliveries);
     }
@@ -1606,7 +1667,7 @@
     });
 
     elements.newDeliveryButton.addEventListener("click", () => {
-      window.location.href = "request.html";
+      window.location.href = "/dashboard.html#create-job";
     });
 
     elements.categoryFilters.addEventListener("click", event => {

@@ -494,7 +494,7 @@
         <a
           class="primary-button"
           id="createJobButton"
-          href="/dashboard.html"
+          href="/dashboard.html#create-job"
         >
           + Create New Job
         </a>
@@ -1160,7 +1160,8 @@
           email === "No email recorded"
             ? ""
             : email
-        );
+        ) +
+        "#create-job";
 
       renderJobs();
       renderAddresses();

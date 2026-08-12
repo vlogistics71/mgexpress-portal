@@ -37,6 +37,14 @@
       icon: "🏠"
     },
     {
+      href: routeUrl("/dashboard.html")
+        ? routeUrl("/dashboard.html") + "#create-job"
+        : "",
+
+      label: "Create Job",
+      icon: "➕"
+    },
+    {
       href: routeUrl("/deliveries.html"),
 
       label: "Deliveries",
