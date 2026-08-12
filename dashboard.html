@@ -468,6 +468,97 @@
       min-height: 40px;
     }
 
+    .payment-panel {
+      border: 1px solid #cfe4d9;
+      border-radius: 18px;
+      background: linear-gradient(180deg, #f7fbf9, #ffffff);
+      padding: 14px;
+      display: grid;
+      gap: 12px;
+      box-shadow: 0 10px 24px rgba(0, 0, 0, .04);
+    }
+
+    .payment-panel-header {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      gap: 8px 12px;
+      align-items: flex-start;
+    }
+
+    .payment-panel-title {
+      color: var(--dark-green);
+      font-size: 16px;
+      font-weight: 900;
+      letter-spacing: .02em;
+    }
+
+    .payment-panel-job {
+      color: var(--ink);
+      font-size: 18px;
+      font-weight: 900;
+    }
+
+    .payment-panel-grid {
+      display: grid;
+      gap: 8px;
+    }
+
+    .payment-panel-row {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 10px 12px;
+      border-radius: 12px;
+      background: #fff;
+      border: 1px solid var(--line);
+    }
+
+    .payment-panel-row strong {
+      color: var(--dark-green);
+      font-size: 12px;
+      font-weight: 900;
+      text-transform: uppercase;
+      letter-spacing: .04em;
+    }
+
+    .payment-panel-row span {
+      color: var(--ink);
+      font-weight: 800;
+      text-align: right;
+      overflow-wrap: anywhere;
+    }
+
+    .payment-panel-link {
+      display: grid;
+      gap: 8px;
+    }
+
+    .payment-panel-url {
+      width: 100%;
+      min-height: 44px;
+      padding: 12px 14px;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      background: #fff;
+      color: var(--muted);
+      font-size: 12px;
+      overflow-wrap: anywhere;
+      word-break: break-all;
+    }
+
+    .payment-panel-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .payment-panel-actions .action-btn,
+    .payment-panel-actions .action-btn.secondary {
+      min-height: 42px;
+      padding: 11px 14px;
+    }
+
     .hint {
       color: var(--muted);
       font-size: 12px;
@@ -1139,6 +1230,29 @@
             <button class="create-job-button" id="createJobSubmitBtn" type="submit">Create Job</button>
             <div id="createJobMessage"></div>
           </div>
+
+          <section id="paymentPanel" class="payment-panel" hidden>
+            <div class="payment-panel-header">
+              <div>
+                <div class="payment-panel-title">JOB CREATED</div>
+                <div class="payment-panel-job" id="paymentPanelJobNumber">-</div>
+              </div>
+              <div class="mini-status" id="paymentPanelStatus">Waiting Payment</div>
+            </div>
+
+            <div class="payment-panel-grid">
+              <div class="payment-panel-row"><strong>Customer Amount</strong><span id="paymentPanelAmount">$0.00</span></div>
+              <div class="payment-panel-row"><strong>Payment Status</strong><span id="paymentPanelPaymentStatus">Waiting Payment</span></div>
+            </div>
+
+            <div class="payment-panel-link">
+              <div class="lookup-confirm-title">SEND PAYMENT LINK</div>
+              <div id="paymentPanelAvailability" class="lookup-confirm-copy"></div>
+              <div id="paymentPanelUrl" class="payment-panel-url" hidden></div>
+            </div>
+
+            <div class="payment-panel-actions" id="paymentPanelActions"></div>
+          </section>
         </form>
       </div>
     </section>
@@ -1188,6 +1302,14 @@
       createJobForm: document.getElementById("createJobForm"),
       createJobSubmitBtn: document.getElementById("createJobSubmitBtn"),
       createJobMessage: document.getElementById("createJobMessage"),
+      paymentPanel: document.getElementById("paymentPanel"),
+      paymentPanelJobNumber: document.getElementById("paymentPanelJobNumber"),
+      paymentPanelAmount: document.getElementById("paymentPanelAmount"),
+      paymentPanelStatus: document.getElementById("paymentPanelStatus"),
+      paymentPanelPaymentStatus: document.getElementById("paymentPanelPaymentStatus"),
+      paymentPanelAvailability: document.getElementById("paymentPanelAvailability"),
+      paymentPanelUrl: document.getElementById("paymentPanelUrl"),
+      paymentPanelActions: document.getElementById("paymentPanelActions"),
       customerLookupInput: document.getElementById("customerLookupInput"),
       customerLookupResults: document.getElementById("customerLookupResults"),
       customerAutofillPrompt: document.getElementById("customerAutofillPrompt"),
@@ -1217,7 +1339,11 @@
       countRevenueToday: document.getElementById("countRevenueToday")
     };
 
+    const PAYMENT_LINK_ENDPOINT = "/api/send-payment-link";
+    const CREATE_CHECKOUT_ENDPOINT = "/api/create-checkout";
+
     const CREATE_JOB_EXPANDED_KEY = "mgexpress.dashboard.createJobExpanded";
+    const PAYMENT_PANEL_LAST_KEY = "mgexpress.dashboard.lastPaymentLink";
     const GEOAPIFY_AUTOCOMPLETE_CONFIG = Object.freeze({
       apiKey: String(window.MG_CONFIG?.geoapifyApiKey || window.MG_GEOAPIFY_API_KEY || "").trim(),
       minChars: 3,
@@ -2075,6 +2201,170 @@
 
       elements.createJobMessage.className = text ? "message " + type : "";
       elements.createJobMessage.textContent = text || "";
+    }
+
+    function setPaymentPanelVisible(visible) {
+      if (!elements.paymentPanel) {
+        return;
+      }
+
+      elements.paymentPanel.hidden = !visible;
+    }
+
+    function storeLastPaymentLink(data) {
+      try {
+        sessionStorage.setItem(PAYMENT_PANEL_LAST_KEY, JSON.stringify(data || {}));
+      } catch (_error) {
+        // Non-blocking convenience storage.
+      }
+    }
+
+    function buildPaymentMethodList(context) {
+      const methods = [];
+      const hasEmail = Boolean(String(context.customer_email || "").trim());
+      const hasPhone = Boolean(String(context.customer_phone || "").trim());
+
+      if (hasEmail && hasPhone) {
+        methods.push({ key: "both", label: "Email + Text", primary: true });
+      }
+
+      if (hasEmail) {
+        methods.push({ key: "email", label: "Email", primary: !hasPhone });
+      }
+
+      if (hasPhone) {
+        methods.push({ key: "text", label: "Text", primary: !hasEmail });
+      }
+
+      return methods;
+    }
+
+    function renderPaymentPanel(context) {
+      if (!elements.paymentPanel || !elements.paymentPanelActions) {
+        return;
+      }
+
+      const methods = buildPaymentMethodList(context);
+      elements.paymentPanelJobNumber.textContent = context.job_number || "-";
+      elements.paymentPanelAmount.textContent = context.amount_label || "$0.00";
+      elements.paymentPanelStatus.textContent = context.payment_status_label || "Waiting Payment";
+      elements.paymentPanelPaymentStatus.textContent = context.payment_status_label || "Waiting Payment";
+
+      const hasCheckoutUrl = Boolean(String(context.checkout_url || "").trim());
+      elements.paymentPanelAvailability.textContent = hasCheckoutUrl
+        ? "Choose a delivery method to send the secure Stripe link, or copy it below."
+        : "Payment link could not be created. The job remains Waiting Payment.";
+
+      if (elements.paymentPanelUrl) {
+        elements.paymentPanelUrl.textContent = context.checkout_url || "";
+        elements.paymentPanelUrl.hidden = !hasCheckoutUrl;
+      }
+
+      elements.paymentPanelActions.innerHTML = "";
+
+      methods.forEach(method => {
+        const button = document.createElement("button");
+        button.type = "button";
+        button.className = method.primary ? "action-btn" : "action-btn secondary";
+        button.textContent = method.label;
+        button.addEventListener("click", () => {
+          sendPaymentLink(context, method.key, button);
+        });
+        elements.paymentPanelActions.appendChild(button);
+      });
+
+      const copyButton = document.createElement("button");
+      copyButton.type = "button";
+      copyButton.className = "action-btn secondary";
+      copyButton.textContent = "Copy Payment Link";
+      copyButton.disabled = !hasCheckoutUrl;
+      copyButton.addEventListener("click", async () => {
+        if (!context.checkout_url) {
+          setCreateJobMessage("No payment link available to copy.", "error");
+          return;
+        }
+
+        try {
+          await navigator.clipboard.writeText(context.checkout_url);
+          setCreateJobMessage("Payment link copied.", "success");
+        } catch (_error) {
+          setCreateJobMessage("Unable to copy payment link on this device.", "error");
+        }
+      });
+      elements.paymentPanelActions.appendChild(copyButton);
+
+      setPaymentPanelVisible(true);
+      storeLastPaymentLink(context);
+    }
+
+    async function createStripeCheckoutForJob(quoteId) {
+      const response = await fetch(CREATE_CHECKOUT_ENDPOINT, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({ quote_id: quoteId })
+      });
+
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data.error || "Unable to create payment link.");
+      }
+
+      return data;
+    }
+
+    async function sendPaymentLink(context, mode, button) {
+      if (!context?.quote_id) {
+        setCreateJobMessage("No job is available for payment sending.", "error");
+        return;
+      }
+
+      if (button) {
+        button.disabled = true;
+      }
+
+      try {
+        const response = await fetch(PAYMENT_LINK_ENDPOINT, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({
+            quote_id: context.quote_id,
+            checkout_url: context.checkout_url,
+            mode
+          })
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          throw new Error(data.error || "Unable to send payment link.");
+        }
+
+        if (!data.sent) {
+          const configuredMessage = Array.isArray(data.errors) && data.errors.length
+            ? data.errors.join(" ")
+            : "Sending is not configured yet.";
+          setCreateJobMessage(configuredMessage, "error");
+          return;
+        }
+
+        if (data.checkout_url) {
+          context.checkout_url = data.checkout_url;
+          context.amount_label = data.amount_label || context.amount_label;
+          renderPaymentPanel(context);
+        }
+
+        setCreateJobMessage(`Payment link sent via ${data.sent_via.join(", ")}.`, "success");
+      } catch (error) {
+        setCreateJobMessage(error.message || "Unable to send payment link.", "error");
+      } finally {
+        if (button) {
+          button.disabled = false;
+        }
+      }
     }
 
     function isComplete(job) {
@@ -3076,8 +3366,34 @@
         }
 
         const createdJobNumber = insertResult.data?.job_number || payload.job_number;
-        setCreateJobMessage(`Job ${createdJobNumber} created successfully.`, "success");
 
+        let paymentContext = {
+          quote_id: insertResult.data?.id,
+          job_number: createdJobNumber,
+          amount_label: "$0.00",
+          payment_status_label: "Waiting Payment",
+          checkout_url: "",
+          customer_email: String(elements.createJobForm.customer_email?.value || "").trim(),
+          customer_phone: String(elements.createJobForm.customer_phone?.value || "").trim()
+        };
+
+        if (insertResult.data?.id) {
+          try {
+            const checkoutResult = await createStripeCheckoutForJob(insertResult.data.id);
+            paymentContext = {
+              ...paymentContext,
+              ...checkoutResult,
+              quote_id: checkoutResult.quote_id || insertResult.data.id,
+              job_number: checkoutResult.job_number || createdJobNumber,
+              payment_status_label: "Waiting Payment"
+            };
+          } catch (checkoutError) {
+            console.error("Unable to create payment checkout", checkoutError);
+          }
+        }
+
+        setCreateJobMessage(`Job ${createdJobNumber} created successfully.`, "success");
+        renderPaymentPanel(paymentContext);
         resetCreateJobForm({ clearMessage: false });
 
         await loadQuotes();

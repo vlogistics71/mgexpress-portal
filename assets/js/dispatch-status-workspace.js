@@ -3,6 +3,8 @@ const client = supabase.createClient(
   "sb_publishable_kcv_a78ZyUxMo2neKUANdw_XN7eAMpI"
 );
 
+const PAYMENT_LINK_ENDPOINT = "/api/send-payment-link";
+
 window.mgDispatchClient = client;
 
 const MODE_CONFIG = {
@@ -1911,6 +1913,9 @@ function openJobDetails(jobId, readOnly = false) {
 
   const statusValue = clean(job.status);
   const canDelete = ["new", "pending", "waiting_payment", "quoted", "quote"].includes(statusValue);
+  const paymentIsPaid = clean(job.payment_status) === "paid";
+  const hasPaymentEmail = Boolean(String(job.customer_email || "").trim());
+  const hasPaymentPhone = Boolean(String(job.customer_phone || "").trim());
 
   let primaryAction = "";
   if (stage === "pending_approval") {
@@ -1929,6 +1934,24 @@ function openJobDetails(jobId, readOnly = false) {
     `<button class="menu-item" type="button" data-copy-payment-link="${escapeHtml(String(job.id))}">Copy Payment Link</button>`,
     `<button class="menu-item" type="button" data-mark-paid-manual="${escapeHtml(String(job.id))}">Mark Paid Manually</button>`
   ];
+
+  if (!paymentIsPaid) {
+    const paymentActions = [];
+
+    if (hasPaymentEmail && hasPaymentPhone) {
+      paymentActions.push(`<button class="menu-item" type="button" data-resend-payment-link="${escapeHtml(String(job.id))}" data-payment-mode="both">Email + Text Payment Link</button>`);
+    }
+
+    if (hasPaymentEmail) {
+      paymentActions.push(`<button class="menu-item" type="button" data-resend-payment-link="${escapeHtml(String(job.id))}" data-payment-mode="email">Email Payment Link</button>`);
+    }
+
+    if (hasPaymentPhone) {
+      paymentActions.push(`<button class="menu-item" type="button" data-resend-payment-link="${escapeHtml(String(job.id))}" data-payment-mode="text">Text Payment Link</button>`);
+    }
+
+    menuActions.unshift(...paymentActions);
+  }
 
   if (stage === "ready_to_dispatch" || stage === "assigned") {
     menuActions.push(`<button class="menu-item" type="button" data-assign-job="${escapeHtml(String(job.id))}">Assign / Reassign Driver</button>`);
@@ -2938,6 +2961,43 @@ function sendPaymentLinkByText(jobId) {
   }
 }
 
+async function resendPaymentLink(jobId, mode) {
+  const job = getRowById(jobId);
+  if (!job) {
+    showToast("Selected delivery not found", "error");
+    return;
+  }
+
+  try {
+    const response = await fetch(PAYMENT_LINK_ENDPOINT, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        quote_id: jobId,
+        mode: mode || "both"
+      })
+    });
+
+    const data = await response.json();
+    if (!response.ok) {
+      throw new Error(data.error || "Unable to send payment link");
+    }
+
+    if (!data.sent) {
+      showToast((data.errors || ["Sending is not configured yet."]).join(" "), "info");
+      return;
+    }
+
+    await loadRows();
+    openJobDetails(jobId, false);
+    showToast(`Payment link sent via ${data.sent_via.join(", ")}`, "success");
+  } catch (error) {
+    showToast(error.message || "Unable to send payment link", "error");
+  }
+}
+
 function sendPaymentLinkByEmail(jobId) {
   const job = getRowById(jobId);
   if (!job) {
@@ -3297,6 +3357,15 @@ function handleDocumentClick(event) {
   const sendPayEmail = target.closest("[data-send-payment-email]");
   if (sendPayEmail) {
     sendPaymentLinkByEmail(sendPayEmail.getAttribute("data-send-payment-email"));
+    return;
+  }
+
+  const resendPayment = target.closest("[data-resend-payment-link]");
+  if (resendPayment) {
+    resendPaymentLink(
+      resendPayment.getAttribute("data-resend-payment-link"),
+      resendPayment.getAttribute("data-payment-mode") || "both"
+    );
     return;
   }
 
