@@ -49,7 +49,7 @@ exports.handler = async function handler(event) {
     }
 
     let checkoutUrl = checkoutUrlFromRequest;
-    let amountCents = parseAmountToCents(quote.approved_price ?? quote.customer_charge);
+    let amountCents = parseAmountToCents(quote.customer_charge ?? quote.approved_price);
 
     if (!amountCents || amountCents <= 0) {
       return toJsonResponse(400, { error: "No valid customer amount is stored for this job." });

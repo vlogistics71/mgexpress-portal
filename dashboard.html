@@ -3144,8 +3144,9 @@
         return "Pickup and delivery addresses are required.";
       }
 
-      if (payload.approved_price !== null && (!Number.isFinite(payload.approved_price) || payload.approved_price < 0)) {
-        return "Total amount billed must be a valid number.";
+      const billedAmount = Number(payload.approved_price ?? payload.customer_charge);
+      if (!Number.isFinite(billedAmount) || billedAmount <= 0) {
+        return "Total amount billed must be greater than $0.00.";
       }
 
       if (clean(payload.service_level) === "scheduled") {
@@ -3230,6 +3231,7 @@
         package_weight: packageWeight || null,
         special_instructions: [internalNotes].concat(instructions).filter(Boolean).join("\n") || null,
         approved_price: priceRaw === "" ? null : approvedPrice,
+        customer_charge: priceRaw === "" ? null : approvedPrice,
         billing_notes: billingMeta.join("\n") || null,
         status: "waiting_payment",
         assigned_driver_id: null,
@@ -3253,8 +3255,12 @@
         payload.return_zip = null;
       }
 
-      if (priceRaw !== "" && approvedPrice === null) {
-        throw new Error("Total amount billed must be a valid number.");
+      if (priceRaw === "") {
+        throw new Error("Total amount billed is required.");
+      }
+
+      if (approvedPrice === null || approvedPrice <= 0) {
+        throw new Error("Total amount billed must be greater than $0.00.");
       }
 
       if (clean(payload.service_level) !== "scheduled") {
@@ -3358,7 +3364,7 @@
         const insertResult = await client
           .from("quotes")
           .insert(payload)
-          .select("id,job_number")
+          .select("*")
           .maybeSingle();
 
         if (insertResult.error) {
@@ -3366,11 +3372,15 @@
         }
 
         const createdJobNumber = insertResult.data?.job_number || payload.job_number;
+        const savedAmountNumber = Number(insertResult.data?.customer_charge ?? insertResult.data?.approved_price ?? payload.customer_charge ?? payload.approved_price ?? 0);
+        const savedAmountLabel = Number.isFinite(savedAmountNumber)
+          ? new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(savedAmountNumber)
+          : "$0.00";
 
         let paymentContext = {
           quote_id: insertResult.data?.id,
           job_number: createdJobNumber,
-          amount_label: "$0.00",
+          amount_label: savedAmountLabel,
           payment_status_label: "Waiting Payment",
           checkout_url: "",
           customer_email: String(elements.createJobForm.customer_email?.value || "").trim(),

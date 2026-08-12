@@ -28,7 +28,7 @@ exports.handler = async function handler(event) {
       return toJsonResponse(404, { error: "Job not found" });
     }
 
-    const amountValue = quote.approved_price ?? quote.customer_charge;
+    const amountValue = quote.customer_charge ?? quote.approved_price;
     const amountCents = parseAmountToCents(amountValue);
 
     if (!amountCents || amountCents <= 0) {
