@@ -22,6 +22,7 @@ async function maybeSendCustomerConfirmation({ quote, amountLabel, checkoutUrl }
 
   if (quote.customer_email) {
     const emailResult = await sendResendEmail({
+      from: "MG Express <billing@mignexpress.com>",
       to: quote.customer_email,
       subject: `MG Express Payment Received — ${quote.job_number || quote.id}`,
       html: `

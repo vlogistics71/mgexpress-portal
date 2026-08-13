@@ -100,6 +100,7 @@ exports.handler = async function handler(event) {
         };
 
         const result = await sendResendEmail({
+          from: "MG Express <billing@mignexpress.com>",
           to: quote.customer_email,
           subject: email.subject,
           html: email.html,

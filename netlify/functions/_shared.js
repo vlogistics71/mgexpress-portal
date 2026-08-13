@@ -208,7 +208,7 @@ async function sendResendEmail({ to, subject, html, text, from }) {
       "Content-Type": "application/json"
     },
     body: JSON.stringify({
-      from: String(from || process.env.RESEND_FROM_EMAIL || "MG Express <noreply@mgexpress.com>"),
+      from: String(from || process.env.RESEND_FROM_EMAIL || "MG Express <billing@mignexpress.com>"),
       to,
       subject,
       html,

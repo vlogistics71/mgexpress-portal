@@ -6,7 +6,7 @@ const {
   toJsonResponse
 } = require("./_shared");
 
-const INVOICE_SENDER = "MG Express <billing@migenteexpress.com>";
+const INVOICE_SENDER = "MG Express <billing@mignexpress.com>";
 const DISPATCH_ROLES = new Set(["admin", "staff", "dispatcher"]);
 
 function clean(value) {
