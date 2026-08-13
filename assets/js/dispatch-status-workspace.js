@@ -82,7 +82,8 @@ const state = {
   pendingRejectedReturnJobId: "",
   assignDriverFocusId: "",
   assignDriverFocusName: "",
-  hasShownAssignFocusToast: false
+  hasShownAssignFocusToast: false,
+  assignmentDriverNameFields: null
 };
 
 const elements = {
@@ -1298,6 +1299,42 @@ function pickRecommendedDriver(metrics) {
   return ranked[0] || null;
 }
 
+async function detectAssignmentDriverNameFields() {
+  if (Array.isArray(state.assignmentDriverNameFields)) {
+    return state.assignmentDriverNameFields;
+  }
+
+  const candidates = [
+    "assigned_driver_name",
+    "assigned_driver_full_name",
+    "driver_name",
+    "driver_full_name"
+  ];
+
+  const existing = [];
+  for (const field of candidates) {
+    const probe = await client
+      .from("quotes")
+      .select(field)
+      .limit(1);
+
+    if (!probe.error) {
+      existing.push(field);
+      continue;
+    }
+
+    const message = String(probe.error.message || "").toLowerCase();
+    if (message.includes("column") && message.includes("exist")) {
+      continue;
+    }
+
+    throw probe.error;
+  }
+
+  state.assignmentDriverNameFields = existing;
+  return existing;
+}
+
 function getRecommendedReasons(driverMetric) {
   if (!driverMetric) {
     return [];
@@ -2115,6 +2152,14 @@ async function assignOrReassignDriver(event) {
     return;
   }
 
+  const selectedDriver = state.drivers.find(item => String(item.id) === driverId);
+  if (!selectedDriver) {
+    showToast("Selected driver was not found.", "error");
+    return;
+  }
+
+  const selectedDriverName = driverDisplayName(selectedDriver);
+
   const payload = {
     assigned_driver_id: driverId,
     driver_pay: driverPay,
@@ -2124,6 +2169,11 @@ async function assignOrReassignDriver(event) {
     driver_accepted_at: null,
     driver_rejected_at: null
   };
+
+  const optionalNameFields = await detectAssignmentDriverNameFields();
+  optionalNameFields.forEach(field => {
+    payload[field] = selectedDriverName;
+  });
 
   setButtonLoading(elements.assignSubmitBtn, true, "Sending...", "Assign Driver");
 

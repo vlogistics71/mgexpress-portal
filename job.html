@@ -1378,6 +1378,9 @@
               Delivery: ${escapeHtml(buildAddressDisplay(job, "delivery"))}
             </div>
             <div class="workflow-card-meta">
+              Driver Pay: ${escapeHtml(money(job.driver_pay || 0))}
+            </div>
+            <div class="workflow-card-meta">
               Status: ${escapeHtml(workflowStatusLabel(job))}
             </div>
             <div class="workflow-button-row">
