@@ -1081,7 +1081,7 @@
                 <label for="vehicle_type">Vehicle Type</label>
                 <select id="vehicle_type" name="vehicle_type">
                   <option value="">Choose vehicle</option>
-                  <option value="Car">Car</option>
+                  <option value="Car" selected>Car</option>
                   <option value="SUV">SUV</option>
                   <option value="Cargo Van">Cargo Van</option>
                   <option value="Sprinter Van">Sprinter Van</option>
@@ -1095,7 +1095,7 @@
                   <option value="">Choose speed</option>
                   <option value="2_hr">2 Hour</option>
                   <option value="3_hr">3 Hour</option>
-                  <option value="4_hr">4 Hour</option>
+                  <option value="4_hr" selected>4 Hour</option>
                   <option value="5_hr">5 Hour</option>
                   <option value="6_hr">6 Hour</option>
                   <option value="next_day">Next Day</option>
@@ -1153,11 +1153,10 @@
               <div class="field">
                 <label for="package_weight">Estimated Weight</label>
                 <select id="package_weight" name="package_weight">
-                  <option value="" selected>Select weight</option>
+                  <option value="">Select weight</option>
                   <option value="Under 10 lbs">Under 10 lbs</option>
-                  <option value="Under 50 lbs">Under 50 lbs</option>
+                  <option value="Under 50 lbs" selected>Under 50 lbs</option>
                   <option value="Under 100 lbs">Under 100 lbs</option>
-                  <option value="Over 150 lbs">Over 150 lbs</option>
                   <option value="custom">Custom</option>
                 </select>
               </div>
@@ -3033,12 +3032,20 @@
         elements.serviceLevel.value = "on_demand";
       }
 
+      if (elements.createJobForm.vehicle_type) {
+        elements.createJobForm.vehicle_type.value = "Car";
+      }
+
+      if (elements.createJobForm.delivery_speed) {
+        elements.createJobForm.delivery_speed.value = "4_hr";
+      }
+
       if (elements.createJobForm.delivery_type) {
         elements.createJobForm.delivery_type.value = "business_to_business";
       }
 
       if (elements.packageWeight) {
-        elements.packageWeight.value = "";
+        elements.packageWeight.value = "Under 50 lbs";
       }
 
       if (elements.packageWeightCustom) {
