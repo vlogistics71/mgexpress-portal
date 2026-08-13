@@ -144,6 +144,31 @@
     .details-actions-section { display: grid; gap: 10px; }
     .details-kv { display: grid; grid-template-columns: minmax(120px, 170px) minmax(0, 1fr); gap: 10px; align-items: baseline; font-size: 13px; line-height: 1.45; }
     .details-kv strong { color: var(--muted); font-size: 11px; text-transform: uppercase; letter-spacing: .04em; }
+    .payment-badge {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 34px;
+      padding: 8px 16px;
+      border-radius: 999px;
+      font-size: 14px;
+      font-weight: 900;
+      letter-spacing: .06em;
+      text-transform: uppercase;
+      line-height: 1;
+    }
+    .payment-badge-paid {
+      background: #128a4b;
+      color: #fff;
+    }
+    .payment-badge-unpaid {
+      background: #c7362c;
+      color: #fff;
+    }
+    .payment-badge-pending {
+      background: #f4ca4f;
+      color: #2f2500;
+    }
     .details-inline-actions { display: flex; flex-wrap: wrap; gap: 8px; }
     .details-action-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
     .details-action-grid .action-btn, .details-action-grid .action-btn.secondary, .details-action-grid .danger-btn { width: 100%; }

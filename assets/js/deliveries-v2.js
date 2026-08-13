@@ -260,6 +260,14 @@
     return Boolean(String(delivery?.assigned_driver_id || "").trim()) && !isComplete(delivery) && !isCancelled(delivery);
   }
 
+  function isAccepted(delivery) {
+    if (!isAssigned(delivery) || isRejected(delivery) || isInTransit(delivery)) {
+      return false;
+    }
+
+    return clean(delivery?.driver_acceptance_status) === "accepted";
+  }
+
   function isReady(delivery) {
     const status = clean(delivery?.status);
     return status === "ready" || status === "ready_to_dispatch";
@@ -268,7 +276,7 @@
   function isInTransit(delivery) {
     const status = clean(delivery?.status);
     const workflow = clean(delivery?.driver_workflow_status);
-    return ["assigned", "in_progress", "en_route", "en_route_pickup", "arrived_pickup", "picked_up", "en_route_delivery", "arrived_delivery"].includes(status)
+    return ["in_progress", "en_route", "en_route_pickup", "arrived_pickup", "picked_up", "en_route_delivery", "arrived_delivery"].includes(status)
       || ["in_progress", "en_route", "en_route_pickup", "arrived_pickup", "picked_up", "en_route_delivery", "arrived_delivery"].includes(workflow);
   }
 
@@ -315,6 +323,12 @@
     }
     if (isRejected(delivery)) {
       return "Rejected";
+    }
+    if (isInTransit(delivery)) {
+      return "In Transit";
+    }
+    if (isAccepted(delivery)) {
+      return "Accepted";
     }
     if (isAssigned(delivery)) {
       return "Assigned";
@@ -643,6 +657,24 @@
     return `<div class="details-kv"><strong>${escapeHtml(label)}</strong><span>${value ? escapeHtml(value) : "-"}</span></div>`;
   }
 
+  function detailsBlockMarkup(label, markup) {
+    return `<div class="details-kv"><strong>${escapeHtml(label)}</strong><span>${markup || "-"}</span></div>`;
+  }
+
+  function paymentBadgeMarkup(value) {
+    const normalized = clean(value);
+
+    if (normalized === "paid") {
+      return '<span class="payment-badge payment-badge-paid">PAID</span>';
+    }
+
+    if (["pending", "payment_sent", "sent"].includes(normalized)) {
+      return '<span class="payment-badge payment-badge-pending">PENDING</span>';
+    }
+
+    return '<span class="payment-badge payment-badge-unpaid">UNPAID</span>';
+  }
+
   function getCustomerCharge(delivery) {
     const amount = Number(delivery?.approved_price ?? delivery?.customer_charge ?? 0);
     return Number.isFinite(amount) ? amount : 0;
@@ -964,7 +996,7 @@
           ${detailsBlock("Reference", delivery.reference_number || "-")}
           ${detailsBlock("Assigned Driver", assignedDriver)}
           ${detailsBlock("Driver Pay", delivery.driver_pay != null && delivery.driver_pay !== "" ? formatMoney(delivery.driver_pay) : "-")}
-          ${detailsBlock("Payment", delivery.payment_status || "-")}
+          ${detailsBlockMarkup("Payment", paymentBadgeMarkup(delivery.payment_status))}
           ${detailsBlock("Created", formatDateTime(delivery.created_at))}
           ${detailsBlock("Updated", formatDateTime(delivery.updated_at || delivery.modified_at || delivery.created_at))}
         </div>
