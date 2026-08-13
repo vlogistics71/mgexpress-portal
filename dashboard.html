@@ -1117,7 +1117,7 @@
                 <label for="delivery_type">Delivery Type</label>
                 <select id="delivery_type" name="delivery_type">
                   <option value="">Choose type</option>
-                  <option value="business_to_business">Business to Business</option>
+                  <option value="business_to_business" selected>Business to Business</option>
                   <option value="business_to_residential">Business to Residential</option>
                   <option value="residential_to_business">Residential to Business</option>
                   <option value="residential_to_residential">Residential to Residential</option>
@@ -1128,7 +1128,7 @@
                 <label for="service_level">Service Level</label>
                 <select id="service_level" name="service_level">
                   <option value="">Choose service level</option>
-                  <option value="on_demand">On Demand</option>
+                  <option value="on_demand" selected>On Demand</option>
                   <option value="priority">Priority</option>
                   <option value="stat">STAT</option>
                   <option value="scheduled">Scheduled</option>
@@ -1151,8 +1151,20 @@
               </div>
 
               <div class="field">
-                <label for="package_weight">Approximate Weight</label>
-                <input id="package_weight" name="package_weight">
+                <label for="package_weight">Estimated Weight</label>
+                <select id="package_weight" name="package_weight">
+                  <option value="" selected>Select weight</option>
+                  <option value="Under 10 lbs">Under 10 lbs</option>
+                  <option value="Under 50 lbs">Under 50 lbs</option>
+                  <option value="Under 100 lbs">Under 100 lbs</option>
+                  <option value="Over 150 lbs">Over 150 lbs</option>
+                  <option value="custom">Custom</option>
+                </select>
+              </div>
+
+              <div class="field hidden" id="packageWeightCustomField">
+                <label for="package_weight_custom">Custom Estimated Weight</label>
+                <input id="package_weight_custom" name="package_weight_custom" placeholder="Enter estimated weight">
               </div>
 
               <div class="field">
@@ -1328,6 +1340,9 @@
       estimatedMiles: document.getElementById("estimated_miles"),
       estimatedMilesStatus: document.getElementById("estimatedMilesStatus"),
       serviceLevel: document.getElementById("service_level"),
+      packageWeight: document.getElementById("package_weight"),
+      packageWeightCustomField: document.getElementById("packageWeightCustomField"),
+      packageWeightCustom: document.getElementById("package_weight_custom"),
       scheduledDateField: document.getElementById("scheduledDateField"),
       scheduledTimeField: document.getElementById("scheduledTimeField"),
       scheduledDate: document.getElementById("scheduled_date"),
@@ -2961,6 +2976,19 @@
       }
     }
 
+    function syncPackageWeightCustomVisibility() {
+      if (!elements.packageWeight || !elements.packageWeightCustomField || !elements.packageWeightCustom) {
+        return;
+      }
+
+      const customSelected = clean(elements.packageWeight.value) === "custom";
+      elements.packageWeightCustomField.classList.toggle("hidden", !customSelected);
+
+      if (!customSelected) {
+        elements.packageWeightCustom.value = "";
+      }
+    }
+
     function resetCreateJobForm(options = {}) {
       const clearMessage = options.clearMessage !== false;
 
@@ -3002,7 +3030,19 @@
       }
 
       if (elements.serviceLevel) {
-        elements.serviceLevel.value = "";
+        elements.serviceLevel.value = "on_demand";
+      }
+
+      if (elements.createJobForm.delivery_type) {
+        elements.createJobForm.delivery_type.value = "business_to_business";
+      }
+
+      if (elements.packageWeight) {
+        elements.packageWeight.value = "";
+      }
+
+      if (elements.packageWeightCustom) {
+        elements.packageWeightCustom.value = "";
       }
 
       if (elements.scheduledDate) {
@@ -3018,6 +3058,7 @@
 
       syncReturnDetailsVisibility();
       syncScheduledFieldsVisibility();
+      syncPackageWeightCustomVisibility();
 
       if (clearMessage) {
         setCreateJobMessage("", "");
@@ -3214,9 +3255,17 @@
       const deliveryContactName = String(data.get("delivery_contact_name") || "").trim();
       const deliveryContactPhone = String(data.get("delivery_contact_phone") || "").trim();
       const deliveryInstructions = String(data.get("delivery_instructions") || "").trim();
-      const packageWeight = String(data.get("package_weight") || "").trim();
+      const packageWeightSelection = String(data.get("package_weight") || "").trim();
+      const packageWeightCustom = String(data.get("package_weight_custom") || "").trim();
+      const packageWeight = clean(packageWeightSelection) === "custom"
+        ? packageWeightCustom
+        : packageWeightSelection;
       const referenceNumber = String(data.get("reference_number") || "").trim();
       const internalNotes = String(data.get("special_instructions") || "").trim();
+
+      if (clean(packageWeightSelection) === "custom" && !packageWeightCustom) {
+        throw new Error("Please enter a custom estimated weight.");
+      }
 
       const instructions = [];
       const billingMeta = [];
@@ -3578,6 +3627,7 @@
     elements.returnRequired.addEventListener("change", syncReturnDetailsVisibility);
     elements.returnLocationType.addEventListener("change", syncReturnDetailsVisibility);
     elements.serviceLevel.addEventListener("change", syncScheduledFieldsVisibility);
+    elements.packageWeight?.addEventListener("change", syncPackageWeightCustomVisibility);
     elements.customerLookupInput.addEventListener("input", handleCustomerLookupInput);
 
     elements.customerLookupResults.addEventListener("click", event => {
@@ -3615,6 +3665,7 @@
       setupAddressAutocomplete();
       syncReturnDetailsVisibility();
       syncScheduledFieldsVisibility();
+      syncPackageWeightCustomVisibility();
 
       window.dispatchEvent(new CustomEvent("mg-dispatch-ready", {
         detail: {
