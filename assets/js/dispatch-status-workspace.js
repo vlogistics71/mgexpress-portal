@@ -4,6 +4,7 @@ const client = supabase.createClient(
 );
 
 const PAYMENT_LINK_ENDPOINT = "/api/send-payment-link";
+const SEND_INVOICE_EMAIL_ENDPOINT = "/api/send-invoice-email";
 
 window.mgDispatchClient = client;
 
@@ -3048,7 +3049,7 @@ async function resendPaymentLink(jobId, mode) {
   }
 }
 
-function sendPaymentLinkByEmail(jobId) {
+async function sendPaymentLinkByEmail(jobId) {
   const job = getRowById(jobId);
   if (!job) {
     showToast("Selected delivery not found", "error");
@@ -3056,16 +3057,36 @@ function sendPaymentLinkByEmail(jobId) {
   }
 
   try {
-    const safeLink = state.activeInvoice?.jobId === String(job.id)
-      ? String(state.activeInvoice.paymentLink || "")
-      : resolveInvoicePaymentLink(state.activeInvoice?.invoice || null, job);
-    if (!safeLink) {
-      throw new Error("Payment integration not connected");
+    const sessionResult = await client.auth.getSession();
+    const accessToken = sessionResult?.data?.session?.access_token;
+    if (!accessToken) {
+      throw new Error("Please sign in again to send invoice emails.");
     }
 
-    const subject = "Invoice Payment Link - " + String(job.job_number || "Delivery");
-    const body = "Please use this payment link: " + safeLink;
-    window.location.href = "mailto:?subject=" + encodeURIComponent(subject) + "&body=" + encodeURIComponent(body);
+    const response = await fetch(SEND_INVOICE_EMAIL_ENDPOINT, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: "Bearer " + accessToken
+      },
+      body: JSON.stringify({
+        quote_id: jobId
+      })
+    });
+
+    const data = await response.json();
+    if (!response.ok) {
+      throw new Error(data.error || "Unable to send invoice by email");
+    }
+
+    if (!data.sent) {
+      showToast("Email sending is not configured yet.", "info");
+      return;
+    }
+
+    await loadRows();
+    openJobDetails(jobId, false);
+    showToast("Invoice email sent to customer", "success");
   } catch (error) {
     showToast(error.message || "Unable to send invoice by email", "error");
   }

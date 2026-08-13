@@ -195,7 +195,7 @@ async function createStripeCheckoutSession({ quote, amountCents, siteUrl }) {
   return json;
 }
 
-async function sendResendEmail({ to, subject, html, text }) {
+async function sendResendEmail({ to, subject, html, text, from }) {
   const apiKey = String(process.env.RESEND_API_KEY || "").trim();
   if (!apiKey) {
     return { configured: false };
@@ -208,7 +208,7 @@ async function sendResendEmail({ to, subject, html, text }) {
       "Content-Type": "application/json"
     },
     body: JSON.stringify({
-      from: String(process.env.RESEND_FROM_EMAIL || "MG Express <noreply@mgexpress.com>"),
+      from: String(from || process.env.RESEND_FROM_EMAIL || "MG Express <noreply@mgexpress.com>"),
       to,
       subject,
       html,

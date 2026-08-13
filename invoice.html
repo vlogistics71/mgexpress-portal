@@ -430,6 +430,7 @@
       const sendInvoiceModal = document.getElementById("sendInvoiceModal");
       const sendInvoiceMeta = document.getElementById("sendInvoiceMeta");
       const sendInvoiceActions = document.getElementById("sendInvoiceActions");
+      const SEND_INVOICE_EMAIL_ENDPOINT = "/api/send-invoice-email";
 
       const state = {
         id: "",
@@ -861,12 +862,16 @@
         if (hasValue(customerPhone)) {
           actions.push('<button class="btn" type="button" id="sendByTextBtn">Text</button>');
         }
+        if (hasValue(customerEmail) && hasValue(customerPhone)) {
+          actions.push('<button class="btn" type="button" id="sendByBothBtn">Email + Text</button>');
+        }
         actions.push('<button class="btn" type="button" id="sendCancelBtn">Close</button>');
 
         sendInvoiceActions.innerHTML = actions.join("");
 
         const sendByEmailBtn = document.getElementById("sendByEmailBtn");
         const sendByTextBtn = document.getElementById("sendByTextBtn");
+        const sendByBothBtn = document.getElementById("sendByBothBtn");
         const sendCancelBtn = document.getElementById("sendCancelBtn");
 
         if (sendByEmailBtn) {
@@ -878,6 +883,12 @@
         if (sendByTextBtn) {
           sendByTextBtn.addEventListener("click", function () {
             sendInvoiceByText(customerPhone);
+          });
+        }
+
+        if (sendByBothBtn) {
+          sendByBothBtn.addEventListener("click", function () {
+            sendInvoiceByEmail(customerEmail, customerPhone, true);
           });
         }
 
@@ -914,18 +925,57 @@
         return lines.join("\n");
       }
 
-      function sendInvoiceByEmail(email) {
+      async function sendInvoiceByEmail(email, phone, alsoSendText) {
         if (!hasValue(email)) {
           statusText.textContent = "Customer email is not available.";
           return;
         }
 
-        const jobNumber = firstPresentValue([state.quote && state.quote.job_number, "Delivery"]);
-        const subject = "MG Express Invoice - " + jobNumber;
-        const body = buildCustomerMessageBody();
-        window.location.href = "mailto:" + encodeURIComponent(email) + "?subject=" + encodeURIComponent(subject) + "&body=" + encodeURIComponent(body);
-        statusText.textContent = "Email composer opened. Automatic PDF attachments require a server-side PDF generation/send function.";
-        closeSendModal();
+        if (!state.id) {
+          statusText.textContent = "Missing delivery id.";
+          return;
+        }
+
+        statusText.textContent = "Sending invoice email...";
+
+        try {
+          const sessionResult = await client.auth.getSession();
+          const accessToken = sessionResult && sessionResult.data && sessionResult.data.session
+            ? sessionResult.data.session.access_token
+            : "";
+
+          if (!accessToken) {
+            throw new Error("Please sign in again to send invoice emails.");
+          }
+
+          const response = await fetch(SEND_INVOICE_EMAIL_ENDPOINT, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "Authorization": "Bearer " + accessToken
+            },
+            body: JSON.stringify({
+              quote_id: state.id
+            })
+          });
+
+          const data = await response.json();
+          if (!response.ok) {
+            throw new Error(data.error || "Unable to send invoice email.");
+          }
+
+          statusText.textContent = "Invoice email sent successfully.";
+
+          if (alsoSendText && hasValue(phone)) {
+            const message = buildCustomerMessageBody();
+            window.location.href = "sms:" + encodeURIComponent(phone) + "?&body=" + encodeURIComponent(message);
+            statusText.textContent = "Invoice email sent. SMS composer opened for optional text follow-up.";
+          }
+
+          closeSendModal();
+        } catch (error) {
+          statusText.textContent = error.message || "Unable to send invoice email.";
+        }
       }
 
       function sendInvoiceByText(phone) {
