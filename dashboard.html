@@ -2411,6 +2411,46 @@
       return parseDate(job.completed_at || job.updated_at || job.created_at);
     }
 
+    function resolveCustomerAmount(job) {
+      const customerCharge = Number(job?.customer_charge);
+      if (Number.isFinite(customerCharge)) {
+        return customerCharge;
+      }
+
+      const approved = Number(job?.approved_price);
+      if (Number.isFinite(approved)) {
+        return approved;
+      }
+
+      return 0;
+    }
+
+    function paidDate(job) {
+      if (clean(job?.payment_status) !== "paid") {
+        return null;
+      }
+
+      return parseDate(
+        job.payment_received_at ||
+        job.paid_at ||
+        job.updated_at ||
+        job.created_at
+      );
+    }
+
+    function isPaidToday(job) {
+      const paid = paidDate(job);
+      if (!paid) {
+        return false;
+      }
+
+      const start = new Date();
+      start.setHours(0, 0, 0, 0);
+      const end = new Date(start);
+      end.setDate(end.getDate() + 1);
+      return paid >= start && paid < end;
+    }
+
     function isCompletedToday(job) {
       if (!isComplete(job)) {
         return false;
@@ -2428,27 +2468,14 @@
       return completed >= start && completed < end;
     }
 
-    function billingAmount(job) {
-      const approved = Number(job?.approved_price);
-      if (Number.isFinite(approved)) {
-        return approved;
-      }
-
-      const customerCharge = Number(job?.customer_charge);
-      if (Number.isFinite(customerCharge)) {
-        return customerCharge;
-      }
-
-      return 0;
-    }
-
     function updateCounts() {
       const pendingPayment = state.quotes.filter(isPendingPayment).length;
       const readyDispatch = state.quotes.filter(isReady).length;
       const liveJobs = state.quotes.filter(row => (isAssigned(row) || isInTransit(row)) && !isRejected(row) && !isComplete(row) && !isCancelled(row)).length;
       const completedTodayRows = state.quotes.filter(isCompletedToday);
       const completedJobs = completedTodayRows.length;
-      const revenueToday = completedTodayRows.reduce((sum, row) => sum + billingAmount(row), 0);
+      const paidTodayRows = state.quotes.filter(isPaidToday);
+      const revenueToday = paidTodayRows.reduce((sum, row) => sum + resolveCustomerAmount(row), 0);
 
       elements.countPendingPayment.textContent = String(pendingPayment);
       elements.countReadyDispatch.textContent = String(readyDispatch);

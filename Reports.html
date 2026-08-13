@@ -1047,52 +1047,49 @@
       ).format(value);
     }
 
-    function originalCharge(job) {
-      const possibleValues = [
-        job.customer_charge,
-        job.customer_price,
-        job.quoted_price,
-        job.quote_amount,
-        job.price,
-        job.total_price,
-        job.total_amount,
-        job.amount,
-        job.charge
-      ];
-
-      const value =
-        possibleValues.find(item =>
-          item !== null &&
-          item !== undefined &&
-          item !== "" &&
-          !Number.isNaN(Number(item))
-        );
-
-      return Number(value || 0);
-    }
-
     function customerCharge(job) {
-      const saved =
-        invoiceRecords[
-          String(job.id || "")
-        ];
-
-      if (
-        saved &&
-        saved.amount !== undefined
-      ) {
-        return Number(saved.amount || 0);
+      const charge = Number(job?.customer_charge);
+      if (Number.isFinite(charge)) {
+        return charge;
       }
 
-      return originalCharge(job);
+      const approved = Number(job?.approved_price);
+      if (Number.isFinite(approved)) {
+        return approved;
+      }
+
+      return 0;
+    }
+
+    function paidDate(job) {
+      if (cleanStatus(job?.payment_status) !== "paid") {
+        return null;
+      }
+
+      const value =
+        job.payment_received_at ||
+        job.paid_at ||
+        job.updated_at ||
+        completedDate(job) ||
+        job.created_at;
+
+      if (!value) {
+        return null;
+      }
+
+      const date = new Date(value);
+      return Number.isNaN(date.getTime()) ? null : date;
     }
 
     function invoiceStatus(job) {
+      if (cleanStatus(job?.payment_status) === "paid") {
+        return "paid";
+      }
+
       const id = String(job.id || "");
       const saved = invoiceRecords[id] || {};
-
-      if (saved.paymentStatus) {
-        return saved.paymentStatus;
+      if (saved.paymentStatus === "paid") {
+        return "paid";
       }
 
       const date =
@@ -1176,7 +1173,7 @@
     }
 
     function updatePeriodLabel() {
-      let label = "All completed jobs";
+      let label = "All paid jobs";
 
       if (rangeStart && rangeEnd) {
         const displayEnd =
@@ -1196,14 +1193,11 @@
 
     function reportJobs() {
       return allJobs.filter(job => {
-        if (
-          cleanStatus(job.status) !==
-          "delivered"
-        ) {
+        if (cleanStatus(job.payment_status) !== "paid") {
           return false;
         }
 
-        const date = completedDate(job);
+        const date = paidDate(job);
 
         if (!date) {
           return false;

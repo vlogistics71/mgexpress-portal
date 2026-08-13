@@ -897,6 +897,8 @@
 
     let invoices = [];
     let jobsById = {};
+    let invoiceRows = [];
+    let invoiceRowsById = {};
 
     function escapeHtml(value) {
       const div =
@@ -924,6 +926,25 @@
         .toLowerCase()
         .replaceAll(" ", "_")
         .replaceAll("-", "_");
+    }
+
+    function resolveCustomerAmount(job, invoice) {
+      const charge = Number(job?.customer_charge);
+      if (Number.isFinite(charge)) {
+        return charge;
+      }
+
+      const approved = Number(job?.approved_price);
+      if (Number.isFinite(approved)) {
+        return approved;
+      }
+
+      const invoiceAmount = Number(invoice?.amount);
+      if (Number.isFinite(invoiceAmount)) {
+        return invoiceAmount;
+      }
+
+      return 0;
     }
 
     function localDateString(date) {
@@ -985,33 +1006,33 @@
           : "message hidden";
     }
 
-    function isPaid(invoice) {
+    function isPaid(row) {
       return cleanStatus(
-        invoice.payment_status ||
-        invoice.status
+        row.payment_status ||
+        row.status
       ) === "paid";
     }
 
-    function isOverdue(invoice) {
+    function isOverdue(row) {
       if (
-        isPaid(invoice) ||
-        !invoice.due_date
+        isPaid(row) ||
+        !row.due_date
       ) {
         return false;
       }
 
       return (
-        String(invoice.due_date).slice(0, 10) <
+        String(row.due_date).slice(0, 10) <
         localDateString(new Date())
       );
     }
 
-    function invoiceStatus(invoice) {
-      if (isPaid(invoice)) {
+    function invoiceStatus(row) {
+      if (isPaid(row)) {
         return "paid";
       }
 
-      if (isOverdue(invoice)) {
+      if (isOverdue(row)) {
         return "overdue";
       }
 
@@ -1079,6 +1100,90 @@
           job.billing_notes ||
           ""
       };
+    }
+
+    function buildInvoiceRows() {
+      const rows = [];
+      const invoicedJobIds = new Set();
+
+      invoices.forEach(invoice => {
+        const combined = combinedInvoice(invoice);
+        const jobId = String(invoice.job_id || "");
+        if (jobId) {
+          invoicedJobIds.add(jobId);
+        }
+
+        const amount = resolveCustomerAmount(combined.job, invoice);
+        const paymentStatus = cleanStatus(
+          combined.job?.payment_status ||
+          invoice.payment_status ||
+          invoice.status ||
+          "unpaid"
+        );
+
+        rows.push({
+          row_id: `invoice:${invoice.id}`,
+          source: "invoice",
+          invoice,
+          job: combined.job || {},
+          amount,
+          payment_status: paymentStatus,
+          due_date: invoice.due_date || null,
+          created_at: invoice.created_at || combined.job?.created_at || null,
+          display_customer_name: combined.display_customer_name,
+          display_customer_email: combined.display_customer_email,
+          display_customer_phone: combined.display_customer_phone,
+          display_job_number: combined.display_job_number,
+          display_pickup_address: combined.display_pickup_address,
+          display_delivery_address: combined.display_delivery_address,
+          display_vehicle_type: combined.display_vehicle_type,
+          display_delivery_speed: combined.display_delivery_speed,
+          display_package_type: combined.display_package_type,
+          display_billing_notes: combined.display_billing_notes,
+          display_invoice_number: invoice.invoice_number || "Invoice"
+        });
+      });
+
+      Object.values(jobsById).forEach(job => {
+        const jobId = String(job.id || "");
+        if (!jobId || invoicedJobIds.has(jobId)) {
+          return;
+        }
+
+        const amount = resolveCustomerAmount(job, null);
+        if (!(amount > 0)) {
+          return;
+        }
+
+        rows.push({
+          row_id: `quote:${jobId}`,
+          source: "quote",
+          invoice: null,
+          job,
+          amount,
+          payment_status: cleanStatus(job.payment_status || "unpaid"),
+          due_date: null,
+          created_at: job.updated_at || job.created_at || null,
+          display_customer_name: job.customer_name || "Customer",
+          display_customer_email: job.customer_email || "",
+          display_customer_phone: job.customer_phone || "",
+          display_job_number: job.job_number || "",
+          display_pickup_address: job.pickup_address || "",
+          display_delivery_address: job.delivery_address || "",
+          display_vehicle_type: job.vehicle_type || "",
+          display_delivery_speed: job.delivery_speed || "",
+          display_package_type: job.package_type || "Courier delivery",
+          display_billing_notes: job.billing_notes || "",
+          display_invoice_number: `Job ${job.job_number || jobId}`
+        });
+      });
+
+      rows.sort((a, b) => new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime());
+      invoiceRows = rows;
+      invoiceRowsById = {};
+      rows.forEach(row => {
+        invoiceRowsById[String(row.row_id)] = row;
+      });
     }
 
     async function verifyUser() {
@@ -1169,36 +1274,27 @@
       invoices =
         invoiceResult.data || [];
 
-      const jobIds = [
-        ...new Set(
-          invoices
-            .map(invoice =>
-              invoice.job_id
-            )
-            .filter(Boolean)
-        )
-      ];
+      const jobsResult =
+        await client
+          .from("quotes")
+          .select("*")
+          .order("created_at", {
+            ascending: false
+          });
+
+      if (jobsResult.error) {
+        throw jobsResult.error;
+      }
 
       jobsById = {};
+      (jobsResult.data || [])
+        .forEach(job => {
+          jobsById[
+            String(job.id)
+          ] = job;
+        });
 
-      if (jobIds.length) {
-        const jobsResult =
-          await client
-            .from("quotes")
-            .select("*")
-            .in("id", jobIds);
-
-        if (jobsResult.error) {
-          throw jobsResult.error;
-        }
-
-        (jobsResult.data || [])
-          .forEach(job => {
-            jobsById[
-              String(job.id)
-            ] = job;
-          });
-      }
+      buildInvoiceRows();
 
       updateTotals();
       renderInvoices();
@@ -1206,38 +1302,38 @@
 
     function updateTotals() {
       const totalInvoiced =
-        invoices.reduce(
-          (sum, invoice) =>
-            sum + Number(invoice.amount || 0),
+        invoiceRows.reduce(
+          (sum, row) =>
+            sum + Number(row.amount || 0),
           0
         );
 
       const totalPaid =
-        invoices
-          .filter(isPaid)
+        invoiceRows
+          .filter(row => cleanStatus(row.payment_status) === "paid")
           .reduce(
-            (sum, invoice) =>
-              sum + Number(invoice.amount || 0),
+            (sum, row) =>
+              sum + Number(row.amount || 0),
             0
           );
 
       const totalUnpaid =
-        invoices
-          .filter(invoice =>
-            !isPaid(invoice)
+        invoiceRows
+          .filter(row =>
+            cleanStatus(row.payment_status) !== "paid"
           )
           .reduce(
-            (sum, invoice) =>
-              sum + Number(invoice.amount || 0),
+            (sum, row) =>
+              sum + Number(row.amount || 0),
             0
           );
 
       const totalOverdue =
-        invoices
+        invoiceRows
           .filter(isOverdue)
           .reduce(
-            (sum, invoice) =>
-              sum + Number(invoice.amount || 0),
+            (sum, row) =>
+              sum + Number(row.amount || 0),
             0
           );
 
@@ -1271,12 +1367,10 @@
       const filter =
         statusFilter.value;
 
-      return invoices.filter(invoice => {
-        const combined =
-          combinedInvoice(invoice);
+      return invoiceRows.filter(row => {
 
         const status =
-          invoiceStatus(invoice);
+          invoiceStatus(row);
 
         if (
           filter !== "all" &&
@@ -1290,12 +1384,12 @@
         }
 
         return [
-          invoice.invoice_number,
-          String(combined.job_id || ""),
-          combined.display_customer_name,
-          combined.display_customer_email,
-          combined.display_customer_phone,
-          combined.display_job_number
+          row.display_invoice_number,
+          String(row.job?.id || ""),
+          row.display_customer_name,
+          row.display_customer_email,
+          row.display_customer_phone,
+          row.display_job_number
         ]
           .filter(Boolean)
           .join(" ")
@@ -1320,20 +1414,20 @@
 
       invoiceList.innerHTML =
         visible
-          .map(invoice => {
-            const combined =
-              combinedInvoice(invoice);
+          .map(row => {
 
             const status =
-              invoiceStatus(invoice);
+              invoiceStatus(row);
+
+            const isManagedInvoice = row.source === "invoice";
 
             const nextStatus =
-              isPaid(invoice)
+              isPaid(row)
                 ? "unpaid"
                 : "paid";
 
             const statusButtonLabel =
-              isPaid(invoice)
+              isPaid(row)
                 ? "Mark Unpaid"
                 : "Mark Paid";
 
@@ -1343,16 +1437,16 @@
                   <div>
                     <div class="invoice-number">
                       ${escapeHtml(
-                        invoice.invoice_number ||
+                        row.display_invoice_number ||
                         "Invoice"
                       )}
                     </div>
 
                     <div class="job-number">
                       ${
-                        combined.display_job_number
+                        row.display_job_number
                           ? `Job ${escapeHtml(
-                              combined.display_job_number
+                              row.display_job_number
                             )}`
                           : "No job number"
                       }
@@ -1362,13 +1456,13 @@
                   <div>
                     <div class="customer-name">
                       ${escapeHtml(
-                        combined.display_customer_name
+                        row.display_customer_name
                       )}
                     </div>
 
                     <div class="customer-email">
                       ${escapeHtml(
-                        combined.display_customer_email ||
+                        row.display_customer_email ||
                         "No email recorded"
                       )}
                     </div>
@@ -1376,12 +1470,12 @@
 
                   <div>
                     <div class="amount">
-                      ${money(invoice.amount)}
+                      ${money(row.amount)}
                     </div>
 
                     <div class="due-date">
-                      Due ${escapeHtml(
-                        displayDate(invoice.due_date)
+                      Date ${escapeHtml(
+                        displayDate(row.created_at)
                       )}
                     </div>
                   </div>
@@ -1398,42 +1492,44 @@
                     class="action-button primary"
                     type="button"
                     data-action="print"
-                    data-id="${escapeHtml(invoice.id)}"
+                    data-id="${escapeHtml(row.row_id)}"
                   >
                     Print Invoice
                   </button>
 
-                  <button
-                    class="action-button"
-                    type="button"
-                    data-action="edit"
-                    data-id="${escapeHtml(invoice.id)}"
-                  >
-                    Edit
-                  </button>
+                  ${isManagedInvoice ? `
+                    <button
+                      class="action-button"
+                      type="button"
+                      data-action="edit"
+                      data-id="${escapeHtml(row.row_id)}"
+                    >
+                      Edit
+                    </button>
 
-                  <button
-                    class="action-button ${
-                      nextStatus === "paid"
-                        ? "warning"
-                        : ""
-                    }"
-                    type="button"
-                    data-action="status"
-                    data-id="${escapeHtml(invoice.id)}"
-                    data-status="${nextStatus}"
-                  >
-                    ${statusButtonLabel}
-                  </button>
+                    <button
+                      class="action-button ${
+                        nextStatus === "paid"
+                          ? "warning"
+                          : ""
+                      }"
+                      type="button"
+                      data-action="status"
+                      data-id="${escapeHtml(row.row_id)}"
+                      data-status="${nextStatus}"
+                    >
+                      ${statusButtonLabel}
+                    </button>
 
-                  <button
-                    class="action-button danger"
-                    type="button"
-                    data-action="delete"
-                    data-id="${escapeHtml(invoice.id)}"
-                  >
-                    Delete
-                  </button>
+                    <button
+                      class="action-button danger"
+                      type="button"
+                      data-action="delete"
+                      data-id="${escapeHtml(row.row_id)}"
+                    >
+                      Delete
+                    </button>
+                  ` : ""}
                 </div>
               </article>
             `;
@@ -1442,10 +1538,10 @@
     }
 
     function findInvoice(id) {
-      return invoices.find(
-        invoice =>
-          String(invoice.id) ===
+      return (
+        invoiceRowsById[
           String(id)
+        ] || null
       );
     }
 
@@ -1541,6 +1637,7 @@
           result.data;
       }
 
+      buildInvoiceRows();
       updateTotals();
       renderInvoices();
 
@@ -1579,6 +1676,7 @@
             String(invoiceId)
         );
 
+      buildInvoiceRows();
       updateTotals();
       renderInvoices();
 
@@ -1588,12 +1686,25 @@
       );
     }
 
-    function printInvoice(invoice) {
-      const combined =
-        combinedInvoice(invoice);
+    function printInvoice(row) {
+      const invoice = row?.invoice || {};
+      const combined = {
+        display_customer_name: row?.display_customer_name || "Customer",
+        display_customer_email: row?.display_customer_email || "",
+        display_customer_phone: row?.display_customer_phone || "",
+        display_job_number: row?.display_job_number || "",
+        display_pickup_address: row?.display_pickup_address || "",
+        display_delivery_address: row?.display_delivery_address || "",
+        display_vehicle_type: row?.display_vehicle_type || "",
+        display_delivery_speed: row?.display_delivery_speed || "",
+        display_package_type: row?.display_package_type || "Courier service",
+        display_billing_notes: row?.display_billing_notes || ""
+      };
 
       const status =
-        invoiceStatus(invoice);
+        invoiceStatus(row || {});
+
+      const amount = Number(row?.amount || 0);
 
       const printSheet =
         document.getElementById(
@@ -1617,8 +1728,9 @@
 
             <div style="margin-top:7px;">
               ${escapeHtml(
+                row?.display_invoice_number ||
                 invoice.invoice_number ||
-                ""
+                "Invoice"
               )}
             </div>
 
@@ -1661,12 +1773,12 @@
             <div class="print-value">
               Invoice Date:
               ${escapeHtml(
-                displayDate(invoice.created_at)
+                displayDate(row?.created_at || invoice.created_at)
               )}<br>
 
               Due Date:
               ${escapeHtml(
-                displayDate(invoice.due_date)
+                displayDate(row?.due_date || invoice.due_date)
               )}<br>
 
               Job Number:
@@ -1746,14 +1858,14 @@
               </td>
 
               <td>
-                ${money(invoice.amount)}
+                ${money(amount)}
               </td>
             </tr>
           </tbody>
         </table>
 
         <div class="print-total">
-          Total: ${money(invoice.amount)}
+          Total: ${money(amount)}
         </div>
 
         ${
@@ -1800,10 +1912,10 @@
         const invoiceId =
           button.dataset.id;
 
-        const invoice =
+        const row =
           findInvoice(invoiceId);
 
-        if (!invoice) {
+        if (!row) {
           return;
         }
 
@@ -1811,23 +1923,38 @@
 
         try {
           if (action === "print") {
-            printInvoice(invoice);
+            printInvoice(row);
           }
 
           if (action === "edit") {
-            openEditModal(invoice);
+            if (row.source !== "invoice" || !row.invoice?.id) {
+              setPageMessage("This row is sourced from a job record. Edit is available after an invoice record exists.", "info");
+              return;
+            }
+
+            openEditModal(row.invoice);
           }
 
           if (action === "status") {
+            if (row.source !== "invoice" || !row.invoice?.id) {
+              setPageMessage("This row is sourced from a job record. Payment status is driven by the job payment field.", "info");
+              return;
+            }
+
             await updateInvoiceStatus(
-              invoiceId,
+              row.invoice.id,
               button.dataset.status
             );
           }
 
           if (action === "delete") {
+            if (row.source !== "invoice" || !row.invoice?.id) {
+              setPageMessage("Only saved invoice records can be deleted here.", "info");
+              return;
+            }
+
             await deleteInvoice(
-              invoiceId
+              row.invoice.id
             );
           }
         } catch (error) {
@@ -1914,6 +2041,7 @@
               result.data;
           }
 
+          buildInvoiceRows();
           updateTotals();
           renderInvoices();
 
