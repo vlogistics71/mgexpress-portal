@@ -70,15 +70,16 @@ exports.handler = async function handler(event) {
       clean(input.details, 3000)
     ].filter(Boolean);
 
+    const deliveryNotes = [
+      clean(input.delivery_contact_phone, 80) ? `Delivery contact phone: ${clean(input.delivery_contact_phone, 80)}` : "",
+      clean(input.delivery_instructions, 2000) ? `Delivery instructions: ${clean(input.delivery_instructions, 2000)}` : ""
+    ].filter(Boolean);
+
     const instructionParts = [
       company ? `Company: ${company}` : "",
       clean(input.special_instructions, 3000),
+      ...deliveryNotes,
       ...legacyNotes
-    ].filter(Boolean);
-
-    const deliveryInstructionParts = [
-      clean(input.delivery_contact_phone, 80) ? `Delivery contact phone: ${clean(input.delivery_contact_phone, 80)}` : "",
-      clean(input.delivery_instructions, 2000)
     ].filter(Boolean);
 
     const payload = {
@@ -97,7 +98,6 @@ exports.handler = async function handler(event) {
       delivery_suite_floor: nullable(input.delivery_suite_floor, 120),
       delivery_zip: nullable(input.delivery_zip, 20),
       delivery_recipient_name: nullable(input.delivery_recipient_name || input.delivery_contact_name, 160),
-      delivery_instructions: deliveryInstructionParts.length ? deliveryInstructionParts.join("\n") : null,
 
       vehicle_type: nullable(input.vehicle_type, 100),
       delivery_speed: nullable(input.delivery_speed, 100),
