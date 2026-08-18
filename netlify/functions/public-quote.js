@@ -63,23 +63,51 @@ exports.handler = async function handler(event) {
       "Legal Documents": "legal"
     };
 
+    const allowedCategories = new Set(["medical", "pallet", "legal", "general", "special"]);
+    const requestedCategory = clean(input.job_category, 100) || categoryMap[legacyType] || "general";
+    const jobCategory = allowedCategories.has(requestedCategory) ? requestedCategory : "general";
+
+    const allowedDeliveryTypes = new Set([
+      "business_to_business",
+      "business_to_residential",
+      "residential_to_business",
+      "residential_to_residential"
+    ]);
+    const requestedDeliveryType = clean(input.delivery_type, 100);
+    const deliveryType = allowedDeliveryTypes.has(requestedDeliveryType) ? requestedDeliveryType : null;
+
+    const allowedServiceLevels = new Set(["routine", "priority", "stat", "scheduled", "on_demand"]);
+    const requestedServiceLevel = clean(input.service_level, 100) || (legacyType === "Scheduled Route" ? "scheduled" : "on_demand");
+    const serviceLevel = allowedServiceLevels.has(requestedServiceLevel) ? requestedServiceLevel : "on_demand";
+
+    const returnRequired = String(input.return_required || "false") === "true";
+    const allowedReturnLocations = new Set(["same_as_pickup", "different_location"]);
+    const requestedReturnLocation = clean(input.return_location_type, 100) || "same_as_pickup";
+    const returnLocationType = returnRequired && allowedReturnLocations.has(requestedReturnLocation)
+      ? requestedReturnLocation
+      : null;
+
+    const allowedReturnTimings = new Set(["immediate", "later_today", "another_day"]);
+    const requestedReturnTiming = clean(input.return_timing, 100) || "immediate";
+    const returnTiming = returnRequired && allowedReturnTimings.has(requestedReturnTiming)
+      ? requestedReturnTiming
+      : null;
+
     const company = clean(input.company || input.business, 200);
-    const legacyNotes = [
-      legacyType ? `Website delivery type: ${legacyType}` : "",
-      input.date ? `Preferred date: ${clean(input.date, 30)}` : "",
-      clean(input.details, 3000)
-    ].filter(Boolean);
-
-    const deliveryNotes = [
-      clean(input.delivery_contact_phone, 80) ? `Delivery contact phone: ${clean(input.delivery_contact_phone, 80)}` : "",
-      clean(input.delivery_instructions, 2000) ? `Delivery instructions: ${clean(input.delivery_instructions, 2000)}` : ""
-    ].filter(Boolean);
-
     const instructionParts = [
       company ? `Company: ${company}` : "",
+      clean(input.pickup_contact_name, 160) ? `Pickup contact: ${clean(input.pickup_contact_name, 160)}` : "",
+      clean(input.pickup_contact_phone, 80) ? `Pickup contact phone: ${clean(input.pickup_contact_phone, 80)}` : "",
+      clean(input.pickup_instructions, 2000) ? `Pickup instructions: ${clean(input.pickup_instructions, 2000)}` : "",
+      clean(input.delivery_contact_phone, 80) ? `Delivery contact phone: ${clean(input.delivery_contact_phone, 80)}` : "",
+      clean(input.delivery_instructions, 2000) ? `Delivery instructions: ${clean(input.delivery_instructions, 2000)}` : "",
+      input.estimated_miles !== "" && input.estimated_miles != null
+        ? `Estimated miles: ${clean(input.estimated_miles, 50)}`
+        : "",
+      legacyType ? `Website delivery type: ${legacyType}` : "",
+      input.date ? `Preferred date: ${clean(input.date, 30)}` : "",
       clean(input.special_instructions, 3000),
-      ...deliveryNotes,
-      ...legacyNotes
+      clean(input.details, 3000)
     ].filter(Boolean);
 
     const payload = {
@@ -89,35 +117,34 @@ exports.handler = async function handler(event) {
 
       pickup_address: pickupAddress,
       pickup_suite_floor: nullable(input.pickup_suite_floor, 120),
+      pickup_city: nullable(input.pickup_city, 120),
+      pickup_state: nullable(input.pickup_state, 80),
       pickup_zip: nullable(input.pickup_zip, 20),
-      pickup_contact_name: nullable(input.pickup_contact_name, 160),
-      pickup_contact_phone: nullable(input.pickup_contact_phone, 80),
-      pickup_instructions: nullable(input.pickup_instructions, 2000),
 
       delivery_address: deliveryAddress,
       delivery_suite_floor: nullable(input.delivery_suite_floor, 120),
+      delivery_city: nullable(input.delivery_city, 120),
+      delivery_state: nullable(input.delivery_state, 80),
       delivery_zip: nullable(input.delivery_zip, 20),
       delivery_recipient_name: nullable(input.delivery_recipient_name || input.delivery_contact_name, 160),
 
       vehicle_type: nullable(input.vehicle_type, 100),
       delivery_speed: nullable(input.delivery_speed, 100),
-      job_category: clean(input.job_category, 100) || categoryMap[legacyType] || "general",
-      delivery_type: nullable(input.delivery_type, 100),
-      service_level: clean(input.service_level, 100) || (legacyType === "Scheduled Route" ? "scheduled" : "on_demand"),
+      job_category: jobCategory,
+      delivery_type: deliveryType,
+      service_level: serviceLevel,
       package_type: nullable(input.package_type, 160),
-      package_weight: nullable(input.weight || input.package_weight, 100),
-      estimated_miles: input.estimated_miles === "" || input.estimated_miles == null
-        ? null
-        : Number(input.estimated_miles),
+      weight: nullable(input.weight || input.package_weight, 100),
       special_instructions: instructionParts.length ? instructionParts.join("\n") : null,
 
-      return_required: String(input.return_required || "false") === "true",
-      return_location_type: clean(input.return_location_type, 100) || "same_as_pickup",
-      return_timing: clean(input.return_timing, 100) || "immediate",
-      return_address: nullable(input.return_address, 500),
-      return_suite_floor: nullable(input.return_suite_floor, 120),
-      return_zip: nullable(input.return_zip, 20),
+      return_required: returnRequired,
+      return_location_type: returnLocationType,
+      return_timing: returnTiming,
+      return_address: returnRequired && returnLocationType === "different_location" ? nullable(input.return_address, 500) : null,
+      return_suite_floor: returnRequired && returnLocationType === "different_location" ? nullable(input.return_suite_floor, 120) : null,
+      return_zip: returnRequired && returnLocationType === "different_location" ? nullable(input.return_zip, 20) : null,
 
+      request_source: "website",
       status: "new"
     };
 
