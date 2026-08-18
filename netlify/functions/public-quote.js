@@ -55,6 +55,8 @@ exports.handler = async function handler(event) {
       "Legal Documents": "legal"
     };
 
+    // Keep this payload aligned with the fields used by request.html, which
+    // already inserts into public.quotes successfully from the dispatch portal.
     const payload = {
       customer_name: customerName,
       customer_phone: customerPhone,
@@ -86,7 +88,23 @@ exports.handler = async function handler(event) {
       message: "Quote request received. MG Express will contact you shortly."
     }, origin);
   } catch (error) {
-    console.error("public-quote error", error);
-    return response(500, { error: "Unable to submit your quote request right now. Please try again." }, origin);
+    // Netlify function logs get the full database/configuration error while the
+    // public website receives only a safe message plus a short diagnostic code.
+    console.error("public-quote error", {
+      message: error?.message,
+      statusCode: error?.statusCode,
+      data: error?.data
+    });
+
+    const diagnostic = error?.statusCode
+      ? `PQ-${error.statusCode}`
+      : error?.message?.includes("Missing required environment variable")
+        ? "PQ-CONFIG"
+        : "PQ-500";
+
+    return response(500, {
+      error: "Unable to submit your quote request right now. Please try again.",
+      diagnostic
+    }, origin);
   }
 };
