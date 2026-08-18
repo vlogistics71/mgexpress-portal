@@ -91,7 +91,7 @@ exports.handler = async function handler(event) {
       delivery_address: deliveryAddress,
       delivery_suite_floor: nullable(input.delivery_suite_floor, 120),
       delivery_zip: nullable(input.delivery_zip, 20),
-      delivery_contact_name: nullable(input.delivery_contact_name, 160),
+      delivery_recipient_name: nullable(input.delivery_recipient_name || input.delivery_contact_name, 160),
       delivery_contact_phone: nullable(input.delivery_contact_phone, 80),
       delivery_instructions: nullable(input.delivery_instructions, 2000),
 
