@@ -23,6 +23,11 @@ function clean(value, max = 1000) {
   return String(value || "").trim().slice(0, max);
 }
 
+function nullable(value, max = 1000) {
+  const text = clean(value, max);
+  return text || null;
+}
+
 exports.handler = async function handler(event) {
   const origin = String(event.headers?.origin || event.headers?.Origin || "");
 
@@ -40,39 +45,75 @@ exports.handler = async function handler(event) {
 
   try {
     const input = JSON.parse(event.body || "{}");
-    const customerName = clean(input.name, 160);
-    const customerPhone = clean(input.phone, 80);
-    const pickupAddress = clean(input.pickup, 500);
-    const deliveryAddress = clean(input.delivery, 500);
+
+    const customerName = clean(input.customer_name || input.name, 160);
+    const customerPhone = clean(input.customer_phone || input.phone, 80);
+    const pickupAddress = clean(input.pickup_address || input.pickup, 500);
+    const deliveryAddress = clean(input.delivery_address || input.delivery, 500);
 
     if (!customerName || !customerPhone || !pickupAddress || !deliveryAddress) {
-      return response(400, { error: "Name, phone, pickup address, and delivery address are required." }, origin);
+      return response(400, {
+        error: "Name, phone, pickup address, and delivery address are required."
+      }, origin);
     }
 
-    const type = clean(input.type, 100);
-    const business = clean(input.business, 200);
+    const legacyType = clean(input.type, 100);
     const categoryMap = {
       "Medical Courier": "medical",
       "Legal Documents": "legal"
     };
 
-    // Only send columns that exist in public.quotes. The current dispatch form
-    // does not persist a company column, so preserve the website business name
-    // inside special_instructions instead of causing the insert to fail.
+    const company = clean(input.company || input.business, 200);
+    const legacyNotes = [
+      legacyType ? `Website delivery type: ${legacyType}` : "",
+      input.date ? `Preferred date: ${clean(input.date, 30)}` : "",
+      clean(input.details, 3000)
+    ].filter(Boolean);
+
+    const instructionParts = [
+      company ? `Company: ${company}` : "",
+      clean(input.special_instructions, 3000),
+      ...legacyNotes
+    ].filter(Boolean);
+
     const payload = {
       customer_name: customerName,
+      customer_email: nullable(input.customer_email || input.email, 200),
       customer_phone: customerPhone,
-      customer_email: clean(input.email, 200) || null,
+
       pickup_address: pickupAddress,
+      pickup_suite_floor: nullable(input.pickup_suite_floor, 120),
+      pickup_zip: nullable(input.pickup_zip, 20),
+      pickup_contact_name: nullable(input.pickup_contact_name, 160),
+      pickup_contact_phone: nullable(input.pickup_contact_phone, 80),
+      pickup_instructions: nullable(input.pickup_instructions, 2000),
+
       delivery_address: deliveryAddress,
-      job_category: categoryMap[type] || "general",
-      service_level: type === "Scheduled Route" ? "scheduled" : "on_demand",
-      special_instructions: [
-        business ? `Business name: ${business}` : "",
-        type ? `Website delivery type: ${type}` : "",
-        input.date ? `Preferred date: ${clean(input.date, 30)}` : "",
-        clean(input.details, 3000)
-      ].filter(Boolean).join("\n"),
+      delivery_suite_floor: nullable(input.delivery_suite_floor, 120),
+      delivery_zip: nullable(input.delivery_zip, 20),
+      delivery_contact_name: nullable(input.delivery_contact_name, 160),
+      delivery_contact_phone: nullable(input.delivery_contact_phone, 80),
+      delivery_instructions: nullable(input.delivery_instructions, 2000),
+
+      vehicle_type: nullable(input.vehicle_type, 100),
+      delivery_speed: nullable(input.delivery_speed, 100),
+      job_category: clean(input.job_category, 100) || categoryMap[legacyType] || "general",
+      delivery_type: nullable(input.delivery_type, 100),
+      service_level: clean(input.service_level, 100) || (legacyType === "Scheduled Route" ? "scheduled" : "on_demand"),
+      package_type: nullable(input.package_type, 160),
+      weight: nullable(input.weight, 100),
+      estimated_miles: input.estimated_miles === "" || input.estimated_miles == null
+        ? null
+        : Number(input.estimated_miles),
+      special_instructions: instructionParts.length ? instructionParts.join("\n") : null,
+
+      return_required: String(input.return_required || "false") === "true",
+      return_location_type: clean(input.return_location_type, 100) || "same_as_pickup",
+      return_timing: clean(input.return_timing, 100) || "immediate",
+      return_address: nullable(input.return_address, 500),
+      return_suite_floor: nullable(input.return_suite_floor, 120),
+      return_zip: nullable(input.return_zip, 20),
+
       status: "new"
     };
 
