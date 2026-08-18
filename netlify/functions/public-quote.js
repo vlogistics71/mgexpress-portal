@@ -50,23 +50,25 @@ exports.handler = async function handler(event) {
     }
 
     const type = clean(input.type, 100);
+    const business = clean(input.business, 200);
     const categoryMap = {
       "Medical Courier": "medical",
       "Legal Documents": "legal"
     };
 
-    // Keep this payload aligned with the fields used by request.html, which
-    // already inserts into public.quotes successfully from the dispatch portal.
+    // Only send columns that exist in public.quotes. The current dispatch form
+    // does not persist a company column, so preserve the website business name
+    // inside special_instructions instead of causing the insert to fail.
     const payload = {
       customer_name: customerName,
       customer_phone: customerPhone,
       customer_email: clean(input.email, 200) || null,
-      company: clean(input.business, 200) || null,
       pickup_address: pickupAddress,
       delivery_address: deliveryAddress,
       job_category: categoryMap[type] || "general",
       service_level: type === "Scheduled Route" ? "scheduled" : "on_demand",
       special_instructions: [
+        business ? `Business name: ${business}` : "",
         type ? `Website delivery type: ${type}` : "",
         input.date ? `Preferred date: ${clean(input.date, 30)}` : "",
         clean(input.details, 3000)
@@ -88,8 +90,6 @@ exports.handler = async function handler(event) {
       message: "Quote request received. MG Express will contact you shortly."
     }, origin);
   } catch (error) {
-    // Netlify function logs get the full database/configuration error while the
-    // public website receives only a safe message plus a short diagnostic code.
     console.error("public-quote error", {
       message: error?.message,
       statusCode: error?.statusCode,
