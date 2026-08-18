@@ -101,7 +101,7 @@ exports.handler = async function handler(event) {
       delivery_type: nullable(input.delivery_type, 100),
       service_level: clean(input.service_level, 100) || (legacyType === "Scheduled Route" ? "scheduled" : "on_demand"),
       package_type: nullable(input.package_type, 160),
-      weight: nullable(input.weight, 100),
+      package_weight: nullable(input.weight || input.package_weight, 100),
       estimated_miles: input.estimated_miles === "" || input.estimated_miles == null
         ? null
         : Number(input.estimated_miles),
