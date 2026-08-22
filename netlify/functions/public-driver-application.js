@@ -62,6 +62,10 @@ async function insertAdaptive(payload) {
   throw new Error("Unable to match driver table schema.");
 }
 
+function pack(value) {
+  return encodeURIComponent(clean(value, 500));
+}
+
 exports.handler = async function handler(event) {
   const origin = String(event.headers?.origin || event.headers?.Origin || "");
 
@@ -88,7 +92,7 @@ exports.handler = async function handler(event) {
     const experience = clean(input.delivery_experience, 40);
     const validLicense = clean(input.valid_drivers_license, 40);
     const insured = clean(input.current_auto_insurance, 40);
-    const applicantNotes = clean(input.notes, 2000);
+    const applicantNotes = clean(input.notes, 500);
 
     if (!name || !phone || !email || !residence || !vehicleType || !vehicleDetails || !availability || !preferredArea || !experience || !validLicense || !insured) {
       return response(400, { error: "Please complete all required driver application fields." }, origin);
@@ -108,10 +112,23 @@ exports.handler = async function handler(event) {
       applicantNotes ? `Applicant Notes: ${applicantNotes}` : ""
     ].filter(Boolean).join("\n");
 
-    // vehicle_make_model is supported by the existing driver workspace and is
-    // used as a durable marker so website applicants never appear as drivers.
-    const markedVehicleDetails = `[DRIVER_APPLICATION] ${vehicleDetails}`;
-    const markedServiceArea = `[DRIVER_APPLICATION] ${preferredArea}`;
+    // The existing drivers table reliably keeps vehicle_make_model and service_area.
+    // Store a compact application payload in those fields so no applicant answers
+    // are lost even when optional driver columns do not exist in the schema.
+    const markedVehicleDetails = [
+      `[DRIVER_APPLICATION] ${vehicleDetails}`,
+      `R=${pack(residence)}`,
+      `A=${pack(availability)}`,
+      `E=${pack(experience)}`,
+      `L=${pack(validLicense)}`,
+      `I=${pack(insured)}`
+    ].join("||");
+
+    const markedServiceArea = [
+      `[DRIVER_APPLICATION] ${preferredArea}`,
+      `N=${pack(applicantNotes)}`,
+      `S=${pack(new Date().toISOString())}`
+    ].join("||");
 
     const payload = {
       full_name: name,
