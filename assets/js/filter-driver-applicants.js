@@ -11,11 +11,8 @@
   function unpack(value, key) {
     const part = text(value).split('||').find(item => item.startsWith(key + '='));
     if (!part) return '';
-    try {
-      return decodeURIComponent(part.slice(key.length + 1));
-    } catch (_error) {
-      return part.slice(key.length + 1);
-    }
+    try { return decodeURIComponent(part.slice(key.length + 1)); }
+    catch (_error) { return part.slice(key.length + 1); }
   }
 
   function isHired(row) {
@@ -49,27 +46,24 @@
     );
   }
 
-  function applicantName(row) {
-    return text(row.full_name || row.display_name || row.name).toLowerCase();
-  }
-
   function hideApplicantCards(applicants) {
-    const names = new Set(applicants.map(applicantName).filter(Boolean));
-    document.querySelectorAll('#driversGrid > *').forEach(card => {
-      const heading = card.querySelector('h2, h3, strong');
-      const name = text(heading?.textContent).toLowerCase();
-      card.style.display = name && names.has(name) ? 'none' : '';
+    const ids = new Set(applicants.map(row => String(row.id || '')).filter(Boolean));
+
+    document.querySelectorAll('#driversGrid [data-driver-open]').forEach(card => {
+      const id = String(card.getAttribute('data-driver-open') || '');
+      card.style.display = ids.has(id) ? 'none' : '';
     });
 
-    const visibleCards = [...document.querySelectorAll('#driversGrid > *')]
-      .filter(card => card.style.display !== 'none' && !card.classList.contains('empty'));
+    const visibleCards = [...document.querySelectorAll('#driversGrid [data-driver-open]')]
+      .filter(card => card.style.display !== 'none');
 
     const meta = document.getElementById('visibleDriversMeta');
     if (meta) meta.textContent = `${visibleCards.length} driver${visibleCards.length === 1 ? '' : 's'}`;
 
     const totals = { available: 0, busy: 0, offline: 0 };
     visibleCards.forEach(card => {
-      const value = text(card.textContent).toLowerCase();
+      const badge = card.querySelector('.status-badge');
+      const value = text(badge?.textContent).toLowerCase();
       if (value.includes('available')) totals.available += 1;
       else if (value.includes('busy')) totals.busy += 1;
       else if (value.includes('offline')) totals.offline += 1;
@@ -95,10 +89,6 @@
     const applicants = (data || []).filter(row => {
       const marked = isMarked(row) || isLegacyWebsiteApplicant(row);
       if (!marked) return false;
-
-      // A hired application is shown as a driver until portal access is created.
-      // Once AU is present, the real portal-enabled driver record is a separate row,
-      // so the original application/history row should stay hidden here.
       if (isHired(row) && !hasPortalAccount(row)) return false;
       return true;
     });
