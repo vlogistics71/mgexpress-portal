@@ -20,11 +20,8 @@ function text(value) {
 function unpack(value, key) {
   const part = text(value).split("||").find(item => item.startsWith(`${key}=`));
   if (!part) return "";
-  try {
-    return decodeURIComponent(part.slice(key.length + 1));
-  } catch (_error) {
-    return part.slice(key.length + 1);
-  }
+  try { return decodeURIComponent(part.slice(key.length + 1)); }
+  catch (_error) { return part.slice(key.length + 1); }
 }
 
 function setPacked(value, key, newValue) {
@@ -43,10 +40,7 @@ function setPacked(value, key, newValue) {
 }
 
 function stripApplicationMarker(value) {
-  return text(value)
-    .split("||")[0]
-    .replace("[DRIVER_APPLICATION]", "")
-    .trim();
+  return text(value).split("||")[0].replace("[DRIVER_APPLICATION]", "").trim();
 }
 
 function escapeHtml(value) {
@@ -70,13 +64,12 @@ async function authRequest(path, options = {}) {
       ...(options.headers || {})
     }
   });
-
   const bodyText = await result.text();
   let data = null;
   if (bodyText) {
-    try { data = JSON.parse(bodyText); } catch (_error) { data = bodyText; }
+    try { data = JSON.parse(bodyText); }
+    catch (_error) { data = bodyText; }
   }
-
   if (!result.ok) {
     const error = new Error(data?.msg || data?.message || bodyText || `Auth request failed (${result.status})`);
     error.statusCode = result.status;
@@ -91,17 +84,11 @@ async function verifyDispatcher(accessToken) {
   const url = requireEnv("SUPABASE_URL").replace(/\/$/, "");
   const serviceRoleKey = requireEnv("SUPABASE_SERVICE_ROLE_KEY");
   const result = await fetch(`${url}/auth/v1/user`, {
-    headers: {
-      apikey: serviceRoleKey,
-      Authorization: `Bearer ${accessToken}`
-    }
+    headers: { apikey: serviceRoleKey, Authorization: `Bearer ${accessToken}` }
   });
   if (!result.ok) return null;
   const user = await result.json();
-
-  const profiles = await supabaseRequest(
-    `profiles?select=id,role&id=eq.${encodeURIComponent(user.id)}`
-  );
+  const profiles = await supabaseRequest(`profiles?select=id,role&id=eq.${encodeURIComponent(user.id)}`);
   const profile = Array.isArray(profiles) ? profiles[0] : null;
   if (text(profile?.role).toLowerCase() === "driver") return null;
   return user;
@@ -126,68 +113,46 @@ async function generateActionLink(email, type, fullName) {
 }
 
 async function ensureDriverProfile(userId, fullName) {
-  const existing = await supabaseRequest(
-    `profiles?select=id,role&id=eq.${encodeURIComponent(userId)}`
-  );
+  const existing = await supabaseRequest(`profiles?select=id,role&id=eq.${encodeURIComponent(userId)}`);
   const profile = Array.isArray(existing) ? existing[0] : null;
-
   if (profile && text(profile.role) && text(profile.role).toLowerCase() !== "driver") {
     throw new Error("This email already belongs to a non-driver MG Express account.");
   }
-
   await supabaseRequest("profiles?on_conflict=id", {
     method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Prefer: "resolution=merge-duplicates,return=representation"
-    },
+    headers: { "Content-Type": "application/json", Prefer: "resolution=merge-duplicates,return=representation" },
     body: JSON.stringify({ id: userId, role: "driver", full_name: fullName })
   });
 }
 
 function driverPortalRecord(application, userId) {
-  const vehicle = stripApplicationMarker(application.vehicle_make_model);
-  const serviceArea = stripApplicationMarker(application.service_area);
   const record = { id: userId };
-
   const copyFields = [
     "full_name", "display_name", "name", "email", "phone", "mobile_phone",
     "vehicle_type", "vehicle", "current_area", "area", "city"
   ];
-
   for (const field of copyFields) {
-    if (Object.prototype.hasOwnProperty.call(application, field)) {
-      record[field] = application[field];
-    }
+    if (Object.prototype.hasOwnProperty.call(application, field)) record[field] = application[field];
   }
-
   if (Object.prototype.hasOwnProperty.call(application, "vehicle_make_model")) {
-    record.vehicle_make_model = vehicle;
+    record.vehicle_make_model = stripApplicationMarker(application.vehicle_make_model);
   }
   if (Object.prototype.hasOwnProperty.call(application, "service_area")) {
-    record.service_area = serviceArea;
+    record.service_area = stripApplicationMarker(application.service_area);
   }
-  if (Object.prototype.hasOwnProperty.call(application, "availability_status")) {
-    record.availability_status = "offline";
-  }
+  if (Object.prototype.hasOwnProperty.call(application, "availability_status")) record.availability_status = "offline";
   if (Object.prototype.hasOwnProperty.call(application, "active")) record.active = true;
   if (Object.prototype.hasOwnProperty.call(application, "is_active")) record.is_active = true;
   if (Object.prototype.hasOwnProperty.call(application, "enabled")) record.enabled = true;
-
   return record;
 }
 
 async function ensurePortalDriver(application, userId) {
-  const record = driverPortalRecord(application, userId);
   await supabaseRequest("drivers?on_conflict=id", {
     method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Prefer: "resolution=merge-duplicates,return=representation"
-    },
-    body: JSON.stringify(record)
+    headers: { "Content-Type": "application/json", Prefer: "resolution=merge-duplicates,return=representation" },
+    body: JSON.stringify(driverPortalRecord(application, userId))
   });
-
   if (String(application.id) !== String(userId)) {
     await supabaseRequest(`quotes?assigned_driver_id=eq.${encodeURIComponent(application.id)}`, {
       method: "PATCH",
@@ -197,31 +162,37 @@ async function ensurePortalDriver(application, userId) {
   }
 }
 
-async function markApplicationInvited(application, userId) {
-  const invitedAt = new Date().toISOString();
-  let serviceArea = text(application.service_area);
-  serviceArea = setPacked(serviceArea, "H", "hired");
-  serviceArea = setPacked(serviceArea, "AU", userId);
-  serviceArea = setPacked(serviceArea, "IV", invitedAt);
-
+async function updateApplication(application, serviceArea) {
   const payload = { service_area: serviceArea };
   if (Object.prototype.hasOwnProperty.call(application, "active")) payload.active = false;
   if (Object.prototype.hasOwnProperty.call(application, "is_active")) payload.is_active = false;
   if (Object.prototype.hasOwnProperty.call(application, "enabled")) payload.enabled = false;
-
   await supabaseRequest(`drivers?id=eq.${encodeURIComponent(application.id)}`, {
     method: "PATCH",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(payload)
   });
+}
 
+async function markApplicationLinked(application, userId) {
+  let serviceArea = text(application.service_area);
+  serviceArea = setPacked(serviceArea, "H", "hired");
+  serviceArea = setPacked(serviceArea, "AU", userId);
+  await updateApplication(application, serviceArea);
+  application.service_area = serviceArea;
+  return serviceArea;
+}
+
+async function markApplicationInviteSent(application) {
+  const invitedAt = new Date().toISOString();
+  const serviceArea = setPacked(application.service_area, "IV", invitedAt);
+  await updateApplication(application, serviceArea);
+  application.service_area = serviceArea;
   return { serviceArea, invitedAt };
 }
 
 exports.handler = async function handler(event) {
-  if (event.httpMethod !== "POST") {
-    return response(405, { error: "Method not allowed." });
-  }
+  if (event.httpMethod !== "POST") return response(405, { error: "Method not allowed." });
 
   try {
     const authorization = String(event.headers?.authorization || event.headers?.Authorization || "");
@@ -233,9 +204,7 @@ exports.handler = async function handler(event) {
     const driverId = text(input.driver_id);
     if (!driverId) return response(400, { error: "Driver application ID is required." });
 
-    const rows = await supabaseRequest(
-      `drivers?select=*&id=eq.${encodeURIComponent(driverId)}`
-    );
+    const rows = await supabaseRequest(`drivers?select=*&id=eq.${encodeURIComponent(driverId)}`);
     const application = Array.isArray(rows) ? rows[0] : null;
     if (!application) return response(404, { error: "Driver application was not found." });
 
@@ -261,13 +230,11 @@ exports.handler = async function handler(event) {
 
     const userId = text(authUser?.id || linkData?.user?.id || linkData?.id);
     const actionLink = text(linkData?.action_link || linkData?.properties?.action_link);
-    if (!userId || !actionLink) {
-      throw new Error("Supabase did not return a valid driver activation link.");
-    }
+    if (!userId || !actionLink) throw new Error("Supabase did not return a valid driver activation link.");
 
     await ensureDriverProfile(userId, fullName);
     await ensurePortalDriver(application, userId);
-    const marked = await markApplicationInvited(application, userId);
+    await markApplicationLinked(application, userId);
 
     const safeName = escapeHtml(fullName);
     const safeLink = escapeHtml(actionLink);
@@ -287,10 +254,9 @@ exports.handler = async function handler(event) {
       text: `Hi ${fullName},\n\nYour MG Express driver account is ready. Set up your password here:\n${actionLink}\n\nAfter setup, go to ${MAIN_SITE_URL} and choose the Driver Portal to sign in.`
     });
 
-    if (!emailResult.configured) {
-      throw new Error("Driver email service is not configured on the portal.");
-    }
+    if (!emailResult.configured) throw new Error("Driver email service is not configured on the portal.");
 
+    const marked = await markApplicationInviteSent(application);
     return response(200, {
       ok: true,
       message: linkType === "invite" ? "Driver portal invite sent." : "Driver portal access link resent.",
