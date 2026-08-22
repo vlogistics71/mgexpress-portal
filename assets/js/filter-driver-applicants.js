@@ -8,6 +8,20 @@
     return String(value || '').trim();
   }
 
+  function unpack(value, key) {
+    const part = text(value).split('||').find(item => item.startsWith(key + '='));
+    if (!part) return '';
+    try {
+      return decodeURIComponent(part.slice(key.length + 1));
+    } catch (_error) {
+      return part.slice(key.length + 1);
+    }
+  }
+
+  function isHired(row) {
+    return unpack(row.service_area, 'H').toLowerCase() === 'hired';
+  }
+
   function isMarked(row) {
     return [
       row.vehicle_make_model,
@@ -40,7 +54,7 @@
     document.querySelectorAll('#driversGrid > *').forEach(card => {
       const heading = card.querySelector('h2, h3, strong');
       const name = text(heading?.textContent).toLowerCase();
-      if (name && names.has(name)) card.style.display = 'none';
+      card.style.display = name && names.has(name) ? 'none' : '';
     });
 
     const visibleCards = [...document.querySelectorAll('#driversGrid > *')]
@@ -73,7 +87,12 @@
 
     const { data, error } = await client.from('drivers').select('*');
     if (error) return;
-    const applicants = (data || []).filter(row => isMarked(row) || isLegacyWebsiteApplicant(row));
+
+    const applicants = (data || []).filter(row => {
+      if (isHired(row)) return false;
+      return isMarked(row) || isLegacyWebsiteApplicant(row);
+    });
+
     hideApplicantCards(applicants);
   }
 
