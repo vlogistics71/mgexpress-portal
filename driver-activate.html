@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Set Up Driver Portal | MG Express</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    *{box-sizing:border-box}body{margin:0;min-height:100vh;padding:22px;display:grid;place-items:center;font-family:Arial,Helvetica,sans-serif;background:#f3f8f6;color:#17221e}.card{width:min(520px,100%);padding:30px 26px;background:#fff;border:1px solid #dfe8e4;border-radius:24px;box-shadow:0 14px 38px rgba(0,0,0,.08)}.brand{color:#064f3b;font-size:26px;font-weight:900}.brand span{color:#ff665c}h1{margin:18px 0 8px;font-size:34px;line-height:1.05}.sub{margin:0 0 22px;color:#68756f;line-height:1.5}label{display:block;margin:15px 0 7px;font-weight:800}input{width:100%;min-height:54px;padding:13px 14px;border:1px solid #ccd8d3;border-radius:13px;font:inherit}button,.link-button{width:100%;min-height:54px;margin-top:20px;border:0;border-radius:13px;background:#087455;color:#fff;font-size:17px;font-weight:900;cursor:pointer;text-decoration:none;display:flex;align-items:center;justify-content:center}.secondary{background:#edf5f2;color:#064f3b}.message{margin-top:16px;padding:13px;border-radius:11px;line-height:1.45}.message.info{background:#edf7f3;color:#06543e}.message.error{background:#fff0f0;color:#9b2929}.hidden{display:none}.small{margin-top:16px;color:#75807b;font-size:13px;line-height:1.45}@media(max-width:520px){body{align-items:start;padding:18px 14px}.card{margin-top:25px;padding:25px 20px}h1{font-size:31px}}
+  </style>
+</head>
+<body>
+  <main class="card">
+    <div class="brand">MG <span>EXPRESS</span> DRIVER</div>
+    <h1>Set up your password</h1>
+    <p class="sub">Create the password you’ll use to sign in to the MG Express Driver Portal.</p>
+
+    <div id="loading" class="message info">Checking your activation link…</div>
+
+    <form id="passwordForm" class="hidden">
+      <label for="password">New Password</label>
+      <input id="password" type="password" minlength="8" autocomplete="new-password" required>
+      <label for="confirmPassword">Confirm Password</label>
+      <input id="confirmPassword" type="password" minlength="8" autocomplete="new-password" required>
+      <button id="saveButton" type="submit">Create Driver Login</button>
+    </form>
+
+    <div id="message"></div>
+
+    <div id="successActions" class="hidden">
+      <a class="link-button" href="https://migenteexpress.com">Go to MG Express</a>
+      <div class="small">Choose <strong>Driver Portal</strong> from the MG Express website and sign in with your email and new password.</div>
+    </div>
+  </main>
+
+  <script>
+    const client=supabase.createClient('https://dczlucwfjayymlwbzzdi.supabase.co','sb_publishable_kcv_a78ZyUxMo2neKUANdw_XN7eAMpI');
+    const loading=document.getElementById('loading');
+    const form=document.getElementById('passwordForm');
+    const message=document.getElementById('message');
+    const successActions=document.getElementById('successActions');
+    const saveButton=document.getElementById('saveButton');
+
+    function showMessage(text,type){message.className='message '+type;message.textContent=text}
+
+    async function waitForSession(){
+      for(let attempt=0;attempt<12;attempt++){
+        const result=await client.auth.getSession();
+        if(result.data.session)return result.data.session;
+        await new Promise(resolve=>setTimeout(resolve,250));
+      }
+      return null;
+    }
+
+    (async()=>{
+      const session=await waitForSession();
+      loading.classList.add('hidden');
+      if(!session){
+        showMessage('This activation link is invalid or has expired. Ask MG Express Dispatch to resend your Driver Portal invite.','error');
+        return;
+      }
+      form.classList.remove('hidden');
+    })();
+
+    form.addEventListener('submit',async event=>{
+      event.preventDefault();
+      const password=document.getElementById('password').value;
+      const confirmPassword=document.getElementById('confirmPassword').value;
+      if(password.length<8){showMessage('Password must be at least 8 characters.','error');return}
+      if(password!==confirmPassword){showMessage('The passwords do not match.','error');return}
+      saveButton.disabled=true;saveButton.textContent='Saving…';
+      const result=await client.auth.updateUser({password});
+      if(result.error){showMessage(result.error.message,'error');saveButton.disabled=false;saveButton.textContent='Create Driver Login';return}
+      await client.auth.signOut();
+      form.classList.add('hidden');
+      showMessage('Your MG Express Driver Portal login is ready.','info');
+      successActions.classList.remove('hidden');
+    });
+  </script>
+</body>
+</html>
