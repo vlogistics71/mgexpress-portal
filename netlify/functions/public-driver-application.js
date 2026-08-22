@@ -98,9 +98,11 @@ exports.handler = async function handler(event) {
       return response(400, { error: "Please complete all required driver application fields." }, origin);
     }
 
+    const submittedAt = new Date().toISOString();
     const applicationText = [
       "[DRIVER_APPLICATION]",
-      `Submitted: ${new Date().toISOString()}`,
+      `Submitted: ${submittedAt}`,
+      "Decision: pending",
       `Residence: ${residence}`,
       `Vehicle Type: ${vehicleType}`,
       `Vehicle: ${vehicleDetails}`,
@@ -112,9 +114,6 @@ exports.handler = async function handler(event) {
       applicantNotes ? `Applicant Notes: ${applicantNotes}` : ""
     ].filter(Boolean).join("\n");
 
-    // The existing drivers table reliably keeps vehicle_make_model and service_area.
-    // Store a compact application payload in those fields so no applicant answers
-    // are lost even when optional driver columns do not exist in the schema.
     const markedVehicleDetails = [
       `[DRIVER_APPLICATION] ${vehicleDetails}`,
       `R=${pack(residence)}`,
@@ -127,7 +126,8 @@ exports.handler = async function handler(event) {
     const markedServiceArea = [
       `[DRIVER_APPLICATION] ${preferredArea}`,
       `N=${pack(applicantNotes)}`,
-      `S=${pack(new Date().toISOString())}`
+      `S=${pack(submittedAt)}`,
+      "D=pending"
     ].join("||");
 
     const payload = {
