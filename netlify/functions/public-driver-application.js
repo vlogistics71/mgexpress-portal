@@ -108,6 +108,11 @@ exports.handler = async function handler(event) {
       applicantNotes ? `Applicant Notes: ${applicantNotes}` : ""
     ].filter(Boolean).join("\n");
 
+    // vehicle_make_model is supported by the existing driver workspace and is
+    // used as a durable marker so website applicants never appear as drivers.
+    const markedVehicleDetails = `[DRIVER_APPLICATION] ${vehicleDetails}`;
+    const markedServiceArea = `[DRIVER_APPLICATION] ${preferredArea}`;
+
     const payload = {
       full_name: name,
       display_name: name,
@@ -117,11 +122,11 @@ exports.handler = async function handler(event) {
       mobile_phone: phone,
       vehicle_type: vehicleType,
       vehicle: vehicleType,
-      vehicle_make_model: vehicleDetails,
+      vehicle_make_model: markedVehicleDetails,
       current_area: residence,
       area: residence,
       city: residence,
-      service_area: preferredArea,
+      service_area: markedServiceArea,
       availability_status: "offline",
       status: "applicant",
       active: false,
