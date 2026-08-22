@@ -22,6 +22,10 @@
     return unpack(row.service_area, 'H').toLowerCase() === 'hired';
   }
 
+  function hasPortalAccount(row) {
+    return Boolean(unpack(row.service_area, 'AU'));
+  }
+
   function isMarked(row) {
     return [
       row.vehicle_make_model,
@@ -89,8 +93,14 @@
     if (error) return;
 
     const applicants = (data || []).filter(row => {
-      if (isHired(row)) return false;
-      return isMarked(row) || isLegacyWebsiteApplicant(row);
+      const marked = isMarked(row) || isLegacyWebsiteApplicant(row);
+      if (!marked) return false;
+
+      // A hired application is shown as a driver until portal access is created.
+      // Once AU is present, the real portal-enabled driver record is a separate row,
+      // so the original application/history row should stay hidden here.
+      if (isHired(row) && !hasPortalAccount(row)) return false;
+      return true;
     });
 
     hideApplicantCards(applicants);
