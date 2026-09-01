@@ -4,83 +4,29 @@
   const PORTAL_BASE = "";
 
   const KNOWN_ROUTES = new Set([
-    "/dashboard.html",
-    "/deliveries.html",
-    "/pending-approval.html",
-    "/ready-to-dispatch.html",
-    "/assigned.html",
-    "/closed-today.html",
-    "/customer.html",
-    "/driver.html",
-    "/driver-onboarding.html",
-    "/payroll.html",
-    "/invoices.html",
-    "/Reports.html",
-    "/history.html",
-    "/settings.html",
-    "/index.html"
+    "/dashboard.html", "/deliveries.html", "/pending-approval.html", "/ready-to-dispatch.html",
+    "/assigned.html", "/closed-today.html", "/customer.html", "/leads.html", "/driver.html",
+    "/driver-onboarding.html", "/payroll.html", "/invoices.html", "/Reports.html", "/history.html",
+    "/settings.html", "/index.html"
   ]);
 
   function routeUrl(path) {
     const cleanPath = String(path || "").trim();
-    if (!KNOWN_ROUTES.has(cleanPath)) {
-      return "";
-    }
-
-    return PORTAL_BASE + cleanPath;
+    return KNOWN_ROUTES.has(cleanPath) ? PORTAL_BASE + cleanPath : "";
   }
 
   const pages = [
-    {
-      href: routeUrl("/dashboard.html"),
-      label: "Dashboard",
-      icon: "🏠"
-    },
-    {
-      href: routeUrl("/deliveries.html"),
-      label: "Deliveries",
-      icon: "📋"
-    },
-    {
-      href: routeUrl("/customer.html"),
-      label: "Customers",
-      icon: "👥"
-    },
-    {
-      href: routeUrl("/driver.html"),
-      label: "Drivers",
-      icon: "🚚"
-    },
-    {
-      href: routeUrl("/driver-onboarding.html"),
-      label: "Driver Onboarding",
-      icon: "🪪"
-    },
-    {
-      href: routeUrl("/payroll.html"),
-      label: "Payroll",
-      icon: "💵"
-    },
-    {
-      href: routeUrl("/invoices.html"),
-      label: "Invoices",
-      icon: "🧾"
-    },
-    {
-      href: routeUrl("/Reports.html"),
-      label: "Reports",
-      icon: "📊"
-    },
-    {
-      href: routeUrl("/history.html"),
-      label: "Job History",
-      icon: "📚"
-    },
-    {
-      href: routeUrl("/settings.html"),
-      label: "Settings",
-      icon: "⚙️"
-    }
+    { href: routeUrl("/dashboard.html"), label: "Dashboard", icon: "🏠" },
+    { href: routeUrl("/deliveries.html"), label: "Deliveries", icon: "📋" },
+    { href: routeUrl("/customer.html"), label: "Customers", icon: "👥" },
+    { href: routeUrl("/leads.html"), label: "Leads", icon: "🎯" },
+    { href: routeUrl("/driver.html"), label: "Drivers", icon: "🚚" },
+    { href: routeUrl("/driver-onboarding.html"), label: "Driver Onboarding", icon: "🪪" },
+    { href: routeUrl("/payroll.html"), label: "Payroll", icon: "💵" },
+    { href: routeUrl("/invoices.html"), label: "Invoices", icon: "🧾" },
+    { href: routeUrl("/Reports.html"), label: "Reports", icon: "📊" },
+    { href: routeUrl("/history.html"), label: "Job History", icon: "📚" },
+    { href: routeUrl("/settings.html"), label: "Settings", icon: "⚙️" }
   ];
 
   const style = document.createElement("style");
@@ -105,13 +51,10 @@
     .dispatch-menu-button { width:62px; height:62px; display:inline-flex; align-items:center; justify-content:center; border:0; border-radius:17px; background:#fff; color:#064f3b; font-size:34px; cursor:pointer; box-shadow:0 4px 16px rgba(0,0,0,.08); }
     .dispatch-menu-floating { position:fixed !important; top:15px !important; right:15px !important; z-index:997 !important; }
   `;
-
   document.head.appendChild(style);
 
   const currentPage = window.location.pathname.split("/").pop().toLowerCase();
-  function fileName(url) {
-    return new URL(url, window.location.origin).pathname.split("/").pop().toLowerCase();
-  }
+  function fileName(url) { return new URL(url, window.location.origin).pathname.split("/").pop().toLowerCase(); }
 
   const overlay = document.createElement("div");
   overlay.className = "dispatch-menu-overlay";
@@ -120,81 +63,32 @@
 
   const links = pages.map(page => {
     const active = fileName(page.href) === currentPage ? " active" : "";
-    const isEnabled = Boolean(page.href);
-    return `
-      <a class="dispatch-menu-link${active}${isEnabled ? "" : " disabled"}" href="${isEnabled ? page.href : "#"}" ${isEnabled ? "" : "aria-disabled=\"true\" tabindex=\"-1\""}>
-        <span class="dispatch-menu-icon">${page.icon}</span>
-        <span>${page.label}</span>
-      </a>`;
+    return `<a class="dispatch-menu-link${active}" href="${page.href}"><span class="dispatch-menu-icon">${page.icon}</span><span>${page.label}</span></a>`;
   }).join("");
 
-  menu.innerHTML = `
-    <div class="dispatch-menu-header">
-      <button class="dispatch-menu-close" id="dispatchMenuClose" type="button">×</button>
-      <div class="dispatch-menu-brand">MG <span>EXPRESS</span><br>COMMAND CENTER</div>
-      <div class="dispatch-menu-subtitle" id="dispatchMenuUser">MG Express Dispatch</div>
-    </div>
-    <nav class="dispatch-menu-links">${links}</nav>
-    <div class="dispatch-menu-footer"><button id="dispatchMenuSignOut" class="dispatch-menu-signout">Sign Out</button></div>`;
+  menu.innerHTML = `<div class="dispatch-menu-header"><button class="dispatch-menu-close" id="dispatchMenuClose" type="button">×</button><div class="dispatch-menu-brand">MG <span>EXPRESS</span><br>COMMAND CENTER</div><div class="dispatch-menu-subtitle" id="dispatchMenuUser">MG Express Dispatch</div></div><nav class="dispatch-menu-links">${links}</nav><div class="dispatch-menu-footer"><button id="dispatchMenuSignOut" class="dispatch-menu-signout">Sign Out</button></div>`;
 
   const openButton = document.createElement("button");
   openButton.className = "dispatch-menu-button";
   openButton.innerHTML = "☰";
 
-  function openMenu() {
-    overlay.classList.add("open");
-    menu.classList.add("open");
-    document.body.classList.add("dispatch-menu-open");
-  }
-  function closeMenu() {
-    overlay.classList.remove("open");
-    menu.classList.remove("open");
-    document.body.classList.remove("dispatch-menu-open");
-  }
+  function openMenu(){ overlay.classList.add("open"); menu.classList.add("open"); document.body.classList.add("dispatch-menu-open"); }
+  function closeMenu(){ overlay.classList.remove("open"); menu.classList.remove("open"); document.body.classList.remove("dispatch-menu-open"); }
 
-  document.body.appendChild(overlay);
-  document.body.appendChild(menu);
-
+  document.body.appendChild(overlay); document.body.appendChild(menu);
   const header = document.querySelector(".topbar-inner") || document.querySelector(".topbar");
-  if (header) {
-    header.style.display = "flex";
-    header.style.justifyContent = "space-between";
-    header.style.alignItems = "center";
-    header.appendChild(openButton);
-  } else {
-    openButton.classList.add("dispatch-menu-floating");
-    document.body.appendChild(openButton);
-  }
+  if (header) { header.style.display="flex"; header.style.justifyContent="space-between"; header.style.alignItems="center"; header.appendChild(openButton); }
+  else { openButton.classList.add("dispatch-menu-floating"); document.body.appendChild(openButton); }
 
-  openButton.addEventListener("click", openMenu);
-  overlay.addEventListener("click", closeMenu);
+  openButton.addEventListener("click", openMenu); overlay.addEventListener("click", closeMenu);
   document.getElementById("dispatchMenuClose").addEventListener("click", closeMenu);
-  document.getElementById("dispatchMenuSignOut").addEventListener("click", async function () {
-    this.disabled = true;
-    this.textContent = "Signing Out...";
-    try {
-      const client = window.mgDispatchClient || window.mgSupabaseClient || window.client;
-      if (client && client.auth && client.auth.signOut) await client.auth.signOut();
-    } catch (error) {
-      console.error("MG Express sign-out error:", error);
-    } finally {
-      localStorage.clear();
-      sessionStorage.clear();
-      window.location.replace(routeUrl("/index.html") + "?loggedout=1");
-    }
+  document.getElementById("dispatchMenuSignOut").addEventListener("click", async function(){
+    this.disabled=true; this.textContent="Signing Out...";
+    try { const client=window.mgDispatchClient||window.mgSupabaseClient||window.client; if(client?.auth?.signOut) await client.auth.signOut(); }
+    catch(error){ console.error("MG Express sign-out error:",error); }
+    finally { localStorage.clear(); sessionStorage.clear(); window.location.replace(routeUrl("/index.html")+"?loggedout=1"); }
   });
-
-  window.addEventListener("mg-dispatch-ready", function (event) {
-    const details = event.detail || {};
-    const userBox = document.getElementById("dispatchMenuUser");
-    if (!userBox) return;
-    userBox.textContent = details.name || details.email || "MG Express Dispatch";
-  });
-
-  document.addEventListener("keydown", function (event) {
-    if (event.key === "Escape") closeMenu();
-  });
-
-  const existingEmail = document.getElementById("staffEmail")?.textContent?.trim();
-  if (existingEmail) document.getElementById("dispatchMenuUser").textContent = existingEmail;
+  window.addEventListener("mg-dispatch-ready", event => { const d=event.detail||{}; const box=document.getElementById("dispatchMenuUser"); if(box) box.textContent=d.name||d.email||"MG Express Dispatch"; });
+  document.addEventListener("keydown", event => { if(event.key==="Escape") closeMenu(); });
+  const existingEmail=document.getElementById("staffEmail")?.textContent?.trim(); if(existingEmail) document.getElementById("dispatchMenuUser").textContent=existingEmail;
 })();
