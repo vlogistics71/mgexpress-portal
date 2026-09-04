@@ -217,6 +217,24 @@
 			font-weight: 700;
 		}
 
+		.pricing-card { border: 1px solid #b9ddce; border-radius: 18px; background: linear-gradient(145deg, #f4fcf8 0%, #e8f7f0 100%); padding: 16px; display: grid; gap: 14px; }
+		.pricing-heading { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+		.pricing-heading h3 { margin: 0; color: var(--dark-green); font-size: 18px; }
+		.pricing-heading p { margin: 4px 0 0; color: var(--muted); font-size: 13px; font-weight: 700; }
+		.price-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+		.price-stat { background: #fff; border: 1px solid var(--line); border-radius: 14px; padding: 12px; }
+		.price-stat span { display: block; color: var(--muted); font-size: 12px; font-weight: 800; }
+		.price-stat strong { display: block; margin-top: 4px; color: var(--dark-green); font-size: 22px; }
+		.price-table-wrap { overflow-x: auto; }
+		.price-table { width: 100%; min-width: 520px; border-collapse: collapse; font-size: 13px; }
+		.price-table th, .price-table td { padding: 9px 10px; border-bottom: 1px solid var(--line); text-align: left; }
+		.price-table th { color: var(--muted); font-size: 11px; text-transform: uppercase; letter-spacing: .05em; }
+		.price-table td:not(:first-child), .price-table th:not(:first-child) { text-align: right; }
+		.secondary-button { min-height: 46px; padding: 11px 16px; border: 0; border-radius: 13px; background: var(--dark-green); color: #fff; font-weight: 900; cursor: pointer; }
+		.pricing-status { color: var(--muted); font-size: 13px; font-weight: 800; }
+		.pricing-status.error { color: var(--danger); }
+		.price-approved { border-color: #71bd9d !important; background: #f3fff9 !important; }
+
 		.lookup-results {
 			display: none;
 			gap: 8px;
@@ -311,6 +329,7 @@
 		}
 
 		@media (max-width: 760px) {
+			.price-grid { grid-template-columns: 1fr; }
 			.topbar-inner {
 				align-items: stretch;
 				flex-direction: column;
@@ -541,6 +560,45 @@
 					</section>
 
 					<section class="job-section">
+						<h2 class="job-section-title">AI Pricing Assistant</h2>
+						<div class="job-subdivider"></div>
+						<div class="pricing-card">
+							<div class="pricing-heading">
+								<div>
+									<h3>Recommended job price</h3>
+									<p>Uses route miles, vehicle, and delivery speed. Dispatch approves the final amount.</p>
+								</div>
+								<button class="secondary-button" id="calculatePriceBtn" type="button">Calculate Price</button>
+							</div>
+							<div class="form-grid two-up three-up">
+								<div class="field"><label for="extra_stops">Additional Stops</label><input id="extra_stops" type="number" min="0" step="1" value="0"></div>
+								<div class="field"><label for="wait_blocks">Wait Time After 15 Minutes</label><select id="wait_blocks"><option value="0">None</option><option value="1">15 minutes</option><option value="2">30 minutes</option><option value="3">45 minutes</option><option value="4">60 minutes</option></select></div>
+								<div class="field"><label for="special_handling_fee">Special Handling</label><input id="special_handling_fee" type="number" min="0" step="1" value="0"></div>
+								<div class="field"><label for="tolls_parking">Tolls / Parking</label><input id="tolls_parking" type="number" min="0" step="0.01" value="0"></div>
+								<div class="field"><label for="after_hours">After Hours</label><select id="after_hours"><option value="no">No</option><option value="yes">Yes — add 20%</option></select></div>
+								<div class="field"><label for="weekend_service">Weekend</label><select id="weekend_service"><option value="no">No</option><option value="yes">Yes — add 15%</option></select></div>
+							</div>
+							<div class="price-grid">
+								<div class="price-stat"><span>Recommended price</span><strong id="recommendedPrice">—</strong></div>
+								<div class="price-stat"><span>Suggested driver pay</span><strong id="suggestedDriverPay">—</strong></div>
+								<div class="price-stat"><span>Estimated gross margin</span><strong id="estimatedMargin">—</strong></div>
+							</div>
+							<div class="form-grid two-up">
+								<div class="field"><label for="approved_price">Approved Customer Price</label><input id="approved_price" name="approved_price" type="number" min="0" step="0.01" inputmode="decimal" placeholder="Calculate or enter price" required></div>
+								<div class="field"><label for="driver_pay">Driver Pay</label><input id="driver_pay" name="driver_pay" type="number" min="0" step="0.01" inputmode="decimal" placeholder="Calculate or enter pay" required></div>
+							</div>
+							<div id="pricingStatus" class="pricing-status">Enter addresses, vehicle, speed, and miles—or let route lookup calculate miles.</div>
+							<details>
+								<summary><strong>View MG Express price chart</strong></summary>
+								<div class="price-table-wrap"><table class="price-table">
+									<thead><tr><th>Vehicle</th><th>Base</th><th>Per mile</th><th>Minimum</th></tr></thead>
+									<tbody><tr><td>Car / SUV</td><td>$25</td><td>$1.45</td><td>$35</td></tr><tr><td>Cargo Van</td><td>$35</td><td>$1.90</td><td>$50</td></tr><tr><td>Sprinter Van</td><td>$50</td><td>$2.50</td><td>$75</td></tr><tr><td>Box Truck</td><td>$75</td><td>$3.25</td><td>$110</td></tr></tbody>
+								</table></div>
+							</details>
+						</div>
+					</section>
+
+					<section class="job-section">
 						<h2 class="job-section-title">Return Service</h2>
 						<div class="job-subdivider"></div>
 						<div class="form-grid two-up">
@@ -603,6 +661,104 @@
 		const submitBtn = document.getElementById("submitBtn");
 		const returnRequired = document.getElementById("return_required");
 		const returnDetails = document.getElementById("returnDetails");
+		const calculatePriceBtn = document.getElementById("calculatePriceBtn");
+		const pricingStatus = document.getElementById("pricingStatus");
+		const approvedPriceInput = document.getElementById("approved_price");
+		const driverPayInput = document.getElementById("driver_pay");
+
+		const PRICE_CHART = Object.freeze({
+			car: { base: 25, mileage: 1.45, minimum: 35, driverMinimum: 20 },
+			suv: { base: 25, mileage: 1.45, minimum: 35, driverMinimum: 20 },
+			cargo_van: { base: 35, mileage: 1.90, minimum: 50, driverMinimum: 28 },
+			sprinter_van: { base: 50, mileage: 2.50, minimum: 75, driverMinimum: 38 },
+			box_truck: { base: 75, mileage: 3.25, minimum: 110, driverMinimum: 60 }
+		});
+
+		const SPEED_MULTIPLIERS = Object.freeze({ next_day: 0.90, "6_hr": 0.95, "5_hr": 1, "4_hr": 1, "3_hr": 1.15, "2_hr": 1.30 });
+
+		function normalizeVehicle(value) {
+			return String(value || "").trim().toLowerCase().replace(/\s+/g, "_");
+		}
+
+		function money(value) {
+			return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(value);
+		}
+
+		function setPricingStatus(text, type) {
+			pricingStatus.textContent = text;
+			pricingStatus.className = "pricing-status" + (type ? " " + type : "");
+		}
+
+		async function geocodeAddress(address) {
+			const apiKey = String(window.MG_CONFIG?.geoapifyApiKey || "").trim();
+			if (!apiKey) throw new Error("Route lookup is not configured. Enter miles manually.");
+			const url = new URL("https://api.geoapify.com/v1/geocode/search");
+			url.searchParams.set("text", address);
+			url.searchParams.set("format", "json");
+			url.searchParams.set("limit", "1");
+			url.searchParams.set("apiKey", apiKey);
+			const response = await fetch(url);
+			if (!response.ok) throw new Error("Address lookup failed. Enter miles manually.");
+			const result = (await response.json()).results?.[0];
+			if (!result) throw new Error("One of the addresses could not be found. Enter miles manually.");
+			return { lat: result.lat, lon: result.lon };
+		}
+
+		async function routeMiles(pickupAddress, deliveryAddress) {
+			const [pickup, delivery] = await Promise.all([geocodeAddress(pickupAddress), geocodeAddress(deliveryAddress)]);
+			const url = new URL("https://api.geoapify.com/v1/routing");
+			url.searchParams.set("waypoints", `${pickup.lat},${pickup.lon}|${delivery.lat},${delivery.lon}`);
+			url.searchParams.set("mode", "drive");
+			url.searchParams.set("apiKey", window.MG_CONFIG.geoapifyApiKey);
+			const response = await fetch(url);
+			if (!response.ok) throw new Error("Route lookup failed. Enter miles manually.");
+			const meters = Number((await response.json()).features?.[0]?.properties?.distance);
+			if (!Number.isFinite(meters) || meters <= 0) throw new Error("Route mileage was unavailable. Enter miles manually.");
+			return Math.round((meters / 1609.344) * 10) / 10;
+		}
+
+		async function calculatePrice() {
+			const vehicleKey = normalizeVehicle(requestForm.vehicle_type.value);
+			const rate = PRICE_CHART[vehicleKey];
+			const speed = String(requestForm.delivery_speed.value || "");
+			if (!rate) throw new Error("Choose a vehicle before calculating.");
+			if (!SPEED_MULTIPLIERS[speed]) throw new Error("Choose a delivery speed before calculating.");
+
+			let miles = Number(requestForm.estimated_miles.value);
+			if (!Number.isFinite(miles) || miles <= 0) {
+				const pickup = requestForm.pickup_address.value.trim();
+				const delivery = requestForm.delivery_address.value.trim();
+				if (!pickup || !delivery) throw new Error("Enter both addresses or enter route miles manually.");
+				setPricingStatus("Looking up the driving route…");
+				miles = await routeMiles(pickup, delivery);
+				requestForm.estimated_miles.value = miles.toFixed(1);
+			}
+
+			const extraStops = Math.max(0, Number(document.getElementById("extra_stops").value) || 0);
+			const waitBlocks = Math.max(0, Number(document.getElementById("wait_blocks").value) || 0);
+			const specialHandling = Math.max(0, Number(document.getElementById("special_handling_fee").value) || 0);
+			const tollsParking = Math.max(0, Number(document.getElementById("tolls_parking").value) || 0);
+			let multiplier = SPEED_MULTIPLIERS[speed];
+			if (String(requestForm.service_level.value || "") === "stat") multiplier = Math.max(multiplier, 1.50);
+			if (document.getElementById("after_hours").value === "yes") multiplier += 0.20;
+			if (document.getElementById("weekend_service").value === "yes") multiplier += 0.15;
+			multiplier = Math.min(multiplier, 1.60);
+
+			const extraFees = extraStops * 12 + waitBlocks * 15 + specialHandling + tollsParking;
+			let recommended = Math.max(rate.minimum, (rate.base + miles * rate.mileage) * multiplier + extraFees);
+			if (String(requestForm.return_required.value) === "true") recommended += Math.max(rate.minimum, rate.base + miles * rate.mileage);
+			recommended = Math.ceil(recommended / 5) * 5;
+			const driverPay = Math.ceil(Math.max(rate.driverMinimum, recommended * 0.55));
+			const margin = ((recommended - driverPay) / recommended) * 100;
+
+			approvedPriceInput.value = recommended.toFixed(2);
+			driverPayInput.value = driverPay.toFixed(2);
+			document.getElementById("recommendedPrice").textContent = money(recommended);
+			document.getElementById("suggestedDriverPay").textContent = money(driverPay);
+			document.getElementById("estimatedMargin").textContent = margin.toFixed(1) + "%";
+			approvedPriceInput.classList.add("price-approved");
+			setPricingStatus(`${miles.toFixed(1)} route miles · ${money(rate.base)} base · ${money(rate.mileage)}/mile · dispatch approval required`);
+		}
 
 		function syncReturnFields() {
 			const enabled = String(returnRequired.value || "false") === "true";
@@ -630,6 +786,27 @@
 
 		returnRequired.addEventListener("change", syncReturnFields);
 		requestForm.return_location_type.addEventListener("change", syncReturnFields);
+		calculatePriceBtn.addEventListener("click", async () => {
+			calculatePriceBtn.disabled = true;
+			calculatePriceBtn.textContent = "Calculating…";
+			try {
+				await calculatePrice();
+			} catch (error) {
+				setPricingStatus(error.message || "Unable to calculate a price.", "error");
+			} finally {
+				calculatePriceBtn.disabled = false;
+				calculatePriceBtn.textContent = "Calculate Price";
+			}
+		});
+		approvedPriceInput.addEventListener("input", () => {
+			approvedPriceInput.classList.remove("price-approved");
+			const price = Number(approvedPriceInput.value);
+			const pay = Number(driverPayInput.value);
+			if (Number.isFinite(price) && price > 0 && Number.isFinite(pay)) {
+				document.getElementById("estimatedMargin").textContent = (((price - pay) / price) * 100).toFixed(1) + "%";
+			}
+		});
+		driverPayInput.addEventListener("input", () => approvedPriceInput.dispatchEvent(new Event("input")));
 		syncReturnFields();
 
 		requestForm.addEventListener("submit", async event => {
@@ -644,6 +821,9 @@
 
 			try {
 				const body = Object.fromEntries(new FormData(requestForm).entries());
+				body.approved_price = Number(body.approved_price);
+				body.driver_pay = Number(body.driver_pay);
+				body.estimated_miles = body.estimated_miles === "" ? null : Number(body.estimated_miles);
 				body.status = "new";
 
 				const { error } = await client.from("quotes").insert(body);
@@ -653,6 +833,11 @@
 
 				setMessage("Your job was created successfully.", "success");
 				requestForm.reset();
+				document.getElementById("recommendedPrice").textContent = "—";
+				document.getElementById("suggestedDriverPay").textContent = "—";
+				document.getElementById("estimatedMargin").textContent = "—";
+				approvedPriceInput.classList.remove("price-approved");
+				setPricingStatus("Enter addresses, vehicle, speed, and miles—or let route lookup calculate miles.");
 				syncReturnFields();
 			} catch (error) {
 				setMessage(error.message || "Unable to create job.", "error");
