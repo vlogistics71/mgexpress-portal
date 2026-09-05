@@ -137,6 +137,66 @@
       font-size: 13px;
     }
 
+    .primary-btn,
+    .secondary-btn,
+    .danger-btn {
+      min-height: 46px;
+      padding: 10px 14px;
+      border-radius: 12px;
+      font-weight: 800;
+      cursor: pointer;
+    }
+
+    .primary-btn {
+      border: 0;
+      background: var(--green);
+      color: #fff;
+    }
+
+    .secondary-btn {
+      border: 1px solid var(--line);
+      background: #fff;
+      color: var(--green-dark);
+    }
+
+    .security-status {
+      display: inline-flex;
+      padding: 6px 10px;
+      border-radius: 999px;
+      background: #fff3cd;
+      color: #725500;
+      font-size: 13px;
+      font-weight: 800;
+    }
+
+    .security-status.enabled {
+      background: #e6f6ef;
+      color: var(--green-dark);
+    }
+
+    .mfa-setup {
+      display: none;
+      margin-top: 14px;
+      padding: 16px;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      background: #f7fbf9;
+    }
+
+    .mfa-setup.open { display: grid; gap: 12px; }
+    .mfa-setup img { width: min(220px, 100%); background: #fff; padding: 8px; border-radius: 10px; }
+    .mfa-setup input {
+      width: 100%;
+      max-width: 260px;
+      min-height: 46px;
+      padding: 10px 12px;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      font-size: 18px;
+      letter-spacing: .18em;
+    }
+    .button-row { display: flex; flex-wrap: wrap; gap: 8px; }
+
     .danger-btn {
       min-height: 46px;
       padding: 10px 14px;
@@ -207,6 +267,29 @@
         <div class="value" id="loginEmailValue">Loading...</div>
       </div>
       <div class="hint">Login email changes require a separate account update.</div>
+    </section>
+
+    <section class="panel">
+      <h2>Two-Step Verification</h2>
+      <div class="row">
+        <div class="label">Authenticator App</div>
+        <div class="value"><span class="security-status" id="mfaStatus">Checking...</span></div>
+      </div>
+      <div class="hint" id="mfaHint">Adds a one-time code after your password to protect dispatch access.</div>
+      <div class="button-row" style="margin-top:14px">
+        <button class="primary-btn" id="enableMfaBtn" type="button" hidden>Set Up Authenticator</button>
+        <button class="danger-btn" id="disableMfaBtn" type="button" hidden>Remove Authenticator</button>
+      </div>
+      <div class="mfa-setup" id="mfaSetup">
+        <strong>1. Scan this code with Google Authenticator, Microsoft Authenticator, or Authy.</strong>
+        <img id="mfaQr" alt="Authenticator setup QR code">
+        <div class="hint">2. Enter the 6-digit code shown in your authenticator app.</div>
+        <input id="mfaCode" type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="6" pattern="[0-9]{6}" aria-label="Six-digit authenticator code">
+        <div class="button-row">
+          <button class="primary-btn" id="verifyMfaBtn" type="button">Verify and Enable</button>
+          <button class="secondary-btn" id="cancelMfaBtn" type="button">Cancel</button>
+        </div>
+      </div>
     </section>
 
     <section class="panel">
@@ -304,6 +387,127 @@
       return session;
     }
 
+    let pendingMfaFactorId = "";
+    let verifiedMfaFactorId = "";
+
+    async function loadMfaStatus() {
+      const result = await client.auth.mfa.listFactors();
+      if (result.error) throw result.error;
+
+      const verified = (result.data.totp || []).find(factor => factor.status === "verified");
+      verifiedMfaFactorId = verified?.id || "";
+
+      const status = document.getElementById("mfaStatus");
+      const enableButton = document.getElementById("enableMfaBtn");
+      const disableButton = document.getElementById("disableMfaBtn");
+      const hint = document.getElementById("mfaHint");
+
+      if (verified) {
+        status.textContent = "Enabled";
+        status.classList.add("enabled");
+        enableButton.hidden = true;
+        disableButton.hidden = false;
+        hint.textContent = "Your dispatch login requires a code from your authenticator app.";
+      } else {
+        status.textContent = "Not enabled";
+        status.classList.remove("enabled");
+        enableButton.hidden = false;
+        disableButton.hidden = true;
+        hint.textContent = "Set this up before enforcement is turned on. You will not be locked out during setup.";
+      }
+    }
+
+    async function cancelPendingEnrollment() {
+      if (pendingMfaFactorId) {
+        await client.auth.mfa.unenroll({ factorId: pendingMfaFactorId });
+      }
+      pendingMfaFactorId = "";
+      document.getElementById("mfaSetup").classList.remove("open");
+      document.getElementById("mfaCode").value = "";
+    }
+
+    document.getElementById("enableMfaBtn").addEventListener("click", async function () {
+      this.disabled = true;
+      try {
+        const factors = await client.auth.mfa.listFactors();
+        if (factors.error) throw factors.error;
+        const stale = (factors.data.totp || []).filter(factor => factor.status !== "verified");
+        for (const factor of stale) {
+          await client.auth.mfa.unenroll({ factorId: factor.id });
+        }
+
+        const result = await client.auth.mfa.enroll({
+          factorType: "totp",
+          friendlyName: "MG Express Dispatch"
+        });
+        if (result.error) throw result.error;
+
+        pendingMfaFactorId = result.data.id;
+        document.getElementById("mfaQr").src = result.data.totp.qr_code;
+        document.getElementById("mfaSetup").classList.add("open");
+        document.getElementById("mfaCode").focus();
+      } catch (error) {
+        showToast(error.message || "Unable to start authenticator setup", "error");
+      } finally {
+        this.disabled = false;
+      }
+    });
+
+    document.getElementById("verifyMfaBtn").addEventListener("click", async function () {
+      const code = document.getElementById("mfaCode").value.replace(/\D/g, "");
+      if (!pendingMfaFactorId || code.length !== 6) {
+        showToast("Enter the 6-digit code from your authenticator app.", "error");
+        return;
+      }
+
+      this.disabled = true;
+      try {
+        const challenge = await client.auth.mfa.challenge({ factorId: pendingMfaFactorId });
+        if (challenge.error) throw challenge.error;
+
+        const verification = await client.auth.mfa.verify({
+          factorId: pendingMfaFactorId,
+          challengeId: challenge.data.id,
+          code
+        });
+        if (verification.error) throw verification.error;
+
+        pendingMfaFactorId = "";
+        document.getElementById("mfaSetup").classList.remove("open");
+        document.getElementById("mfaCode").value = "";
+        await loadMfaStatus();
+        showToast("Two-step verification is now enabled.", "success");
+      } catch (error) {
+        showToast(error.message || "That code could not be verified.", "error");
+      } finally {
+        this.disabled = false;
+      }
+    });
+
+    document.getElementById("cancelMfaBtn").addEventListener("click", async function () {
+      try {
+        await cancelPendingEnrollment();
+      } catch (error) {
+        showToast(error.message || "Unable to cancel setup", "error");
+      }
+    });
+
+    document.getElementById("disableMfaBtn").addEventListener("click", async function () {
+      if (!verifiedMfaFactorId || !confirm("Remove two-step verification from this account?")) return;
+      this.disabled = true;
+      try {
+        const result = await client.auth.mfa.unenroll({ factorId: verifiedMfaFactorId });
+        if (result.error) throw result.error;
+        await client.auth.refreshSession();
+        await loadMfaStatus();
+        showToast("Authenticator removed.", "success");
+      } catch (error) {
+        showToast(error.message || "Unable to remove authenticator", "error");
+      } finally {
+        this.disabled = false;
+      }
+    });
+
     document.getElementById("signOutBtn").addEventListener("click", async function () {
       this.disabled = true;
       this.textContent = "Signing Out...";
@@ -322,6 +526,7 @@
     (async function startPage() {
       try {
         await requireDispatchAccess();
+        await loadMfaStatus();
       } catch (error) {
         showToast(error.message || "Unable to open settings", "error");
       }
