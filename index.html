@@ -115,6 +115,14 @@
       color: #06543e;
     }
 
+    .hidden { display: none; }
+
+    .mfa-copy {
+      color: #66736e;
+      line-height: 1.5;
+      margin-bottom: 10px;
+    }
+
     .help {
       color: #68756f;
       text-align: center;
@@ -151,6 +159,13 @@
       <button id="signInButton" type="submit">Sign In</button>
     </form>
 
+    <form id="mfaForm" class="hidden">
+      <div class="mfa-copy">Open your authenticator app and enter the 6-digit code.</div>
+      <label for="mfaCode">Authenticator code</label>
+      <input id="mfaCode" type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="6" pattern="[0-9]{6}" required>
+      <button id="mfaButton" type="submit">Verify Code</button>
+    </form>
+
     <div id="message" class="message"></div>
 
     <div class="help">
@@ -168,11 +183,72 @@
     const form = document.getElementById("loginForm");
     const button = document.getElementById("signInButton");
     const message = document.getElementById("message");
+    const mfaForm = document.getElementById("mfaForm");
+    const mfaButton = document.getElementById("mfaButton");
+    let pendingMfaFactorId = "";
+    let mfaResolve = null;
 
     function showMessage(text, type) {
       message.textContent = text;
       message.className = "message " + type;
     }
+
+    async function requireMfaIfEnrolled() {
+      const aal = await client.auth.mfa.getAuthenticatorAssuranceLevel();
+      if (aal.error) throw aal.error;
+
+      if (aal.data.currentLevel !== "aal1" || aal.data.nextLevel !== "aal2") {
+        return;
+      }
+
+      const factors = await client.auth.mfa.listFactors();
+      if (factors.error) throw factors.error;
+      const factor = (factors.data.totp || []).find(item => item.status === "verified");
+      if (!factor) return;
+
+      pendingMfaFactorId = factor.id;
+      form.classList.add("hidden");
+      mfaForm.classList.remove("hidden");
+      document.getElementById("mfaCode").focus();
+      showMessage("Password accepted. Complete two-step verification.", "info");
+
+      await new Promise((resolve) => {
+        mfaResolve = resolve;
+      });
+    }
+
+    mfaForm.addEventListener("submit", async function (event) {
+      event.preventDefault();
+      const code = document.getElementById("mfaCode").value.replace(/\D/g, "");
+      if (code.length !== 6 || !pendingMfaFactorId) {
+        showMessage("Enter the 6-digit code from your authenticator app.", "error");
+        return;
+      }
+
+      mfaButton.disabled = true;
+      mfaButton.textContent = "Verifying…";
+      try {
+        const challenge = await client.auth.mfa.challenge({ factorId: pendingMfaFactorId });
+        if (challenge.error) throw challenge.error;
+        const result = await client.auth.mfa.verify({
+          factorId: pendingMfaFactorId,
+          challengeId: challenge.data.id,
+          code
+        });
+        if (result.error) throw result.error;
+
+        showMessage("Verified. Opening dispatch…", "info");
+        const resolve = mfaResolve;
+        mfaResolve = null;
+        pendingMfaFactorId = "";
+        if (resolve) resolve();
+      } catch (error) {
+        showMessage(error.message || "That code could not be verified.", "error");
+      } finally {
+        mfaButton.disabled = false;
+        mfaButton.textContent = "Verify Code";
+      }
+    });
 
     async function sendUserToPortal(userId) {
       const profileResult = await client
@@ -206,6 +282,12 @@
         role === "staff" ||
         role === "dispatcher"
       ) {
+        try {
+          await requireMfaIfEnrolled();
+        } catch (error) {
+          showMessage(error.message || "Unable to verify two-step security.", "error");
+          return;
+        }
         location.replace("/dashboard.html");
         return;
       }
