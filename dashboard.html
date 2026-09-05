@@ -566,6 +566,25 @@
       font-weight: 700;
     }
 
+    .pricing-assistant { border: 1px solid #b9ddce; border-radius: 18px; background: linear-gradient(145deg, #f4fcf8, #e8f7f0); padding: 16px; display: grid; gap: 14px; }
+    .pricing-head { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; }
+    .pricing-head h4 { margin: 0; color: var(--dark-green); font-size: 18px; }
+    .pricing-head p { margin: 4px 0 0; color: var(--muted); font-size: 13px; font-weight: 700; }
+    .pricing-button { min-height: 44px; border: 0; border-radius: 12px; padding: 11px 16px; background: var(--dark-green); color: #fff; font-weight: 900; cursor: pointer; }
+    .pricing-results { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 9px; }
+    .pricing-result { padding: 11px; border: 1px solid var(--line); border-radius: 13px; background: #fff; }
+    .pricing-result span { display: block; color: var(--muted); font-size: 12px; font-weight: 800; }
+    .pricing-result strong { display: block; margin-top: 4px; color: var(--dark-green); font-size: 21px; }
+    .pricing-status { color: var(--muted); font-size: 13px; font-weight: 800; }
+    .pricing-status.error { color: #9b2929; }
+    .rate-chart-wrap { overflow-x: auto; }
+    .rate-chart { width: 100%; min-width: 480px; border-collapse: collapse; font-size: 13px; }
+    .rate-chart th, .rate-chart td { padding: 8px 10px; border-bottom: 1px solid var(--line); text-align: left; }
+    .rate-chart th { color: var(--muted); font-size: 11px; text-transform: uppercase; }
+    .rate-chart th:not(:first-child), .rate-chart td:not(:first-child) { text-align: right; }
+
+    @media (max-width: 720px) { .pricing-results { grid-template-columns: 1fr; } }
+
     .return-details[hidden] {
       display: none !important;
     }
@@ -1228,12 +1247,35 @@
           </section>
 
           <section class="form-group">
-            <h3>Customer Billing</h3>
-            <div class="form-grid two-up">
-              <div class="field">
-                <label for="approved_price">Total Amount Billed to Customer</label>
-                <input id="approved_price" name="approved_price" type="text" inputmode="decimal" placeholder="0.00">
+            <h3>AI Pricing Assistant</h3>
+            <div class="pricing-assistant">
+              <div class="pricing-head">
+                <div><h4>Recommended job price</h4><p>Uses route miles, vehicle, speed, and job conditions. Dispatch approves the final price.</p></div>
+                <button class="pricing-button" id="calculateJobPrice" type="button">Calculate Price</button>
               </div>
+
+              <div class="form-grid three-up">
+                <div class="field"><label for="pricingExtraStops">Additional Stops</label><input id="pricingExtraStops" type="number" min="0" step="1" value="0"></div>
+                <div class="field"><label for="pricingWaitBlocks">Wait After First 15 Minutes</label><select id="pricingWaitBlocks"><option value="0">None</option><option value="1">15 minutes</option><option value="2">30 minutes</option><option value="3">45 minutes</option><option value="4">60 minutes</option></select></div>
+                <div class="field"><label for="pricingSpecialHandling">Special Handling Fee</label><input id="pricingSpecialHandling" type="number" min="0" step="1" value="0"></div>
+                <div class="field"><label for="pricingTolls">Tolls / Parking</label><input id="pricingTolls" type="number" min="0" step="0.01" value="0"></div>
+                <div class="field"><label for="pricingAfterHours">After Hours</label><select id="pricingAfterHours"><option value="no">No</option><option value="yes">Yes — add 20%</option></select></div>
+                <div class="field"><label for="pricingWeekend">Weekend</label><select id="pricingWeekend"><option value="no">No</option><option value="yes">Yes — add 15%</option></select></div>
+              </div>
+
+              <div class="pricing-results">
+                <div class="pricing-result"><span>Recommended Price</span><strong id="pricingRecommended">—</strong></div>
+                <div class="pricing-result"><span>Suggested Driver Pay</span><strong id="pricingDriverPay">—</strong></div>
+                <div class="pricing-result"><span>Estimated Gross Margin</span><strong id="pricingMargin">—</strong></div>
+              </div>
+
+              <div class="form-grid two-up">
+                <div class="field"><label for="approved_price">Approved Customer Price</label><input id="approved_price" name="approved_price" type="text" inputmode="decimal" placeholder="0.00" required></div>
+                <div class="field"><label for="pricing_driver_pay">Driver Pay</label><input id="pricing_driver_pay" name="driver_pay" type="number" min="0" step="0.01" inputmode="decimal" placeholder="0.00" required></div>
+              </div>
+
+              <div id="pricingStatus" class="pricing-status">Complete the route and service fields, then calculate the price.</div>
+              <details><summary><strong>View MG Express price chart</strong></summary><div class="rate-chart-wrap"><table class="rate-chart"><thead><tr><th>Vehicle</th><th>Base</th><th>Per mile</th><th>Minimum</th></tr></thead><tbody><tr><td>Car / SUV</td><td>$25</td><td>$1.45</td><td>$35</td></tr><tr><td>Cargo Van</td><td>$35</td><td>$1.90</td><td>$50</td></tr><tr><td>Sprinter Van</td><td>$50</td><td>$2.50</td><td>$75</td></tr><tr><td>Box Truck</td><td>$75</td><td>$3.25</td><td>$110</td></tr></tbody></table></div></details>
             </div>
           </section>
 
@@ -1338,6 +1380,12 @@
       returnDetails: document.getElementById("returnDetails"),
       estimatedMiles: document.getElementById("estimated_miles"),
       estimatedMilesStatus: document.getElementById("estimatedMilesStatus"),
+      calculateJobPrice: document.getElementById("calculateJobPrice"),
+      pricingRecommended: document.getElementById("pricingRecommended"),
+      pricingDriverPay: document.getElementById("pricingDriverPay"),
+      pricingMargin: document.getElementById("pricingMargin"),
+      pricingStatus: document.getElementById("pricingStatus"),
+      pricingDriverPayInput: document.getElementById("pricing_driver_pay"),
       serviceLevel: document.getElementById("service_level"),
       packageWeight: document.getElementById("package_weight"),
       packageWeightCustomField: document.getElementById("packageWeightCustomField"),
@@ -1380,6 +1428,16 @@
       format: "json"
     });
 
+    const PRICE_CHART = Object.freeze({
+      car: { base: 25, mileage: 1.45, minimum: 35, driverMinimum: 20 },
+      suv: { base: 25, mileage: 1.45, minimum: 35, driverMinimum: 20 },
+      cargo_van: { base: 35, mileage: 1.90, minimum: 50, driverMinimum: 28 },
+      sprinter_van: { base: 50, mileage: 2.50, minimum: 75, driverMinimum: 38 },
+      box_truck: { base: 75, mileage: 3.25, minimum: 110, driverMinimum: 60 }
+    });
+
+    const PRICE_SPEED_MULTIPLIERS = Object.freeze({ next_day: 0.90, "6_hr": 0.95, "5_hr": 1, "4_hr": 1, "3_hr": 1.15, "2_hr": 1.30 });
+
     function escapeHtml(value) {
       const element = document.createElement("div");
       element.textContent = value == null ? "" : String(value);
@@ -1410,6 +1468,56 @@
 
       const amount = Number(normalized);
       return Number.isFinite(amount) ? Math.round(amount * 100) / 100 : null;
+    }
+
+    function setPricingStatus(message, type = "") {
+      if (!elements.pricingStatus) return;
+      elements.pricingStatus.textContent = message || "";
+      elements.pricingStatus.className = type ? `pricing-status ${type}` : "pricing-status";
+    }
+
+    function normalizedPriceVehicle(value) {
+      return clean(value).replace(/\s+/g, "_");
+    }
+
+    function updatePricingMargin() {
+      const price = parseCurrencyAmount(elements.createJobForm?.approved_price?.value);
+      const pay = Number(elements.pricingDriverPayInput?.value || 0);
+      if (!elements.pricingMargin || !Number.isFinite(price) || price <= 0 || !Number.isFinite(pay)) return;
+      elements.pricingMargin.textContent = (((price - pay) / price) * 100).toFixed(1) + "%";
+    }
+
+    function calculateRecommendedJobPrice() {
+      const form = elements.createJobForm;
+      const rate = PRICE_CHART[normalizedPriceVehicle(form.vehicle_type.value)];
+      const speed = String(form.delivery_speed.value || "");
+      const miles = Number(elements.estimatedMiles?.value || 0);
+      if (!rate) throw new Error("Choose a vehicle before calculating.");
+      if (!PRICE_SPEED_MULTIPLIERS[speed]) throw new Error("Choose a delivery speed before calculating.");
+      if (!Number.isFinite(miles) || miles <= 0) throw new Error("Select both route addresses or enter the driving miles.");
+
+      const extraStops = Math.max(0, Number(document.getElementById("pricingExtraStops").value) || 0);
+      const waitBlocks = Math.max(0, Number(document.getElementById("pricingWaitBlocks").value) || 0);
+      const handling = Math.max(0, Number(document.getElementById("pricingSpecialHandling").value) || 0);
+      const tolls = Math.max(0, Number(document.getElementById("pricingTolls").value) || 0);
+      let multiplier = PRICE_SPEED_MULTIPLIERS[speed];
+      if (clean(form.service_level.value) === "stat") multiplier = Math.max(multiplier, 1.50);
+      if (document.getElementById("pricingAfterHours").value === "yes") multiplier += 0.20;
+      if (document.getElementById("pricingWeekend").value === "yes") multiplier += 0.15;
+      multiplier = Math.min(multiplier, 1.60);
+
+      const fees = extraStops * 12 + waitBlocks * 15 + handling + tolls;
+      let recommended = Math.max(rate.minimum, (rate.base + miles * rate.mileage) * multiplier + fees);
+      if (clean(form.return_required.value) === "true") recommended += Math.max(rate.minimum, rate.base + miles * rate.mileage);
+      recommended = Math.ceil(recommended / 5) * 5;
+      const driverPay = Math.ceil(Math.max(rate.driverMinimum, recommended * 0.55));
+
+      form.approved_price.value = recommended.toFixed(2);
+      elements.pricingDriverPayInput.value = driverPay.toFixed(2);
+      elements.pricingRecommended.textContent = money(recommended);
+      elements.pricingDriverPay.textContent = money(driverPay);
+      updatePricingMargin();
+      setPricingStatus(`${miles.toFixed(1)} route miles · ${money(rate.base)} base · ${money(rate.mileage)}/mile · dispatch approval required`);
     }
 
     function toCurrencyEditValue(input) {
@@ -3063,6 +3171,11 @@
       clearAddressAutocompleteUi();
       clearMileageRoutingState({ clearInput: false });
 
+      if (elements.pricingRecommended) elements.pricingRecommended.textContent = "—";
+      if (elements.pricingDriverPay) elements.pricingDriverPay.textContent = "—";
+      if (elements.pricingMargin) elements.pricingMargin.textContent = "—";
+      setPricingStatus("Complete the route and service fields, then calculate the price.");
+
       syncReturnDetailsVisibility();
       syncScheduledFieldsVisibility();
       syncPackageWeightCustomVisibility();
@@ -3243,6 +3356,7 @@
       const columnSupport = await detectQuoteColumnSupport();
       const rawInputValue = String(form?.elements?.approved_price?.value ?? data.get("approved_price") ?? "").trim();
       const parsedCustomerCharge = parseCurrencyAmount(rawInputValue);
+      const parsedDriverPay = Number(data.get("driver_pay"));
       const estimatedMilesRaw = String(data.get("estimated_miles") || "").trim();
       const estimatedMilesValue = estimatedMilesRaw === "" ? null : Number(estimatedMilesRaw);
       const scheduledDateValue = String(data.get("scheduled_date") || "").trim();
@@ -3318,7 +3432,7 @@
         billing_notes: billingMeta.join("\n") || null,
         status: "waiting_payment",
         assigned_driver_id: null,
-        driver_pay: null,
+        driver_pay: parsedDriverPay,
         driver_acceptance_status: null,
         driver_workflow_status: null,
         driver_accepted_at: null,
@@ -3342,6 +3456,10 @@
 
       if (rawInputValue === "" || parsedCustomerCharge === null || parsedCustomerCharge <= 0) {
         throw new Error("Please enter a valid customer billing amount.");
+      }
+
+      if (!Number.isFinite(parsedDriverPay) || parsedDriverPay <= 0) {
+        throw new Error("Please enter a valid driver pay amount.");
       }
 
       if (clean(payload.service_level) !== "scheduled") {
@@ -3617,6 +3735,16 @@
       });
     }
 
+    elements.calculateJobPrice?.addEventListener("click", () => {
+      try {
+        calculateRecommendedJobPrice();
+      } catch (error) {
+        setPricingStatus(error.message || "Unable to calculate the price.", "error");
+      }
+    });
+
+    elements.pricingDriverPayInput?.addEventListener("input", updatePricingMargin);
+
     elements.refreshButton.addEventListener("click", () => {
       resetCreateJobForm({ clearMessage: true });
     });
@@ -3629,7 +3757,10 @@
 
       elements.createJobForm.approved_price.addEventListener("blur", () => {
         toCurrencyDisplayValue(elements.createJobForm.approved_price);
+        updatePricingMargin();
       });
+
+      elements.createJobForm.approved_price.addEventListener("input", updatePricingMargin);
     }
     elements.returnRequired.addEventListener("change", syncReturnDetailsVisibility);
     elements.returnLocationType.addEventListener("change", syncReturnDetailsVisibility);
