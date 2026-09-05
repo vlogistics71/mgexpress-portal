@@ -427,9 +427,9 @@
 
   function formatNotes(job) {
     const notes = firstPresent(
-      job.special_instructions,
+      job.customer_visible_notes,
       job.customer_notes,
-      job.billing_notes
+      job.special_instructions
     );
 
     return notes || "No customer-facing notes are available yet.";
@@ -1126,19 +1126,7 @@
       invoicesResult,
       locationsResult
     ] = await Promise.all([
-      client
-        .from("quotes")
-        .select("*")
-        .eq(
-          "customer_account_id",
-          customerAccount.id
-        )
-        .order(
-          "created_at",
-          {
-            ascending: false
-          }
-        ),
+      client.rpc("customer_portal_jobs"),
 
       client
         .from("invoices")
@@ -1323,8 +1311,6 @@
           .trim() ||
         null,
 
-      customer_charge: 0,
-      driver_pay: 0,
       status: "quote_pending",
       request_source:
         "customer_portal"
