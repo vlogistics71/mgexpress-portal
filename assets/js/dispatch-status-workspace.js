@@ -3020,10 +3020,14 @@ async function resendPaymentLink(jobId, mode) {
   }
 
   try {
+    const sessionResult = await client.auth.getSession();
+    const accessToken = sessionResult?.data?.session?.access_token;
+    if (!accessToken) throw new Error("Please sign in again to send a payment link.");
     const response = await fetch(PAYMENT_LINK_ENDPOINT, {
       method: "POST",
       headers: {
-        "Content-Type": "application/json"
+        "Content-Type": "application/json",
+        Authorization: "Bearer " + accessToken
       },
       body: JSON.stringify({
         quote_id: jobId,
