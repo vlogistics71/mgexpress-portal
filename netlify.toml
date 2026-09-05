@@ -2,6 +2,70 @@
   functions = "netlify/functions"
   publish = "."
 
+[[headers]]
+  for = "/*"
+  [headers.values]
+    Strict-Transport-Security = "max-age=31536000; includeSubDomains"
+    X-Content-Type-Options = "nosniff"
+    X-Frame-Options = "DENY"
+    Referrer-Policy = "strict-origin-when-cross-origin"
+    Permissions-Policy = "camera=(self), geolocation=(), microphone=(), payment=(self)"
+    Content-Security-Policy-Report-Only = "default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https:; connect-src 'self' https://dczlucwfjayymlwbzzdi.supabase.co wss://dczlucwfjayymlwbzzdi.supabase.co https://api.geoapify.com https://api.stripe.com; frame-src https://js.stripe.com https://hooks.stripe.com; object-src 'none'; base-uri 'self'; frame-ancestors 'none'; form-action 'self' https://checkout.stripe.com"
+
+[[redirects]]
+  from = "/request.html"
+  to = "/dashboard.html"
+  status = 301
+  force = true
+
+[[redirects]]
+  from = "/admin.html"
+  to = "/dashboard.html"
+  status = 301
+  force = true
+
+[[redirects]]
+  from = "/dashboard-original-backup.html"
+  to = "/dashboard.html"
+  status = 301
+  force = true
+
+[[redirects]]
+  from = "/dashboard-backup-aug-7-2026.html"
+  to = "/dashboard.html"
+  status = 301
+  force = true
+
+[[redirects]]
+  from = "/history-backup.html"
+  to = "/history.html"
+  status = 301
+  force = true
+
+[[redirects]]
+  from = "/jobs-backup.html"
+  to = "/jobs.html"
+  status = 301
+  force = true
+
+[[redirects]]
+  from = "/deliveries-backup.html"
+  to = "/deliveries.html"
+  status = 301
+  force = true
+
+[[redirects]]
+  from = "/customers-backup.html"
+  to = "/customer.html"
+  status = 301
+  force = true
+
+[[redirects]]
+  from = "/drivers-backup.html"
+  to = "/driver.html"
+  status = 301
+  force = true
+
 [[redirects]]
   from = "/api/public-quote"
   to = "/.netlify/functions/public-quote"
