@@ -3,6 +3,7 @@ const {
   getSiteUrl,
   loadQuoteById,
   parseAmountToCents,
+  requireDispatchAccess,
   sendResendEmail,
   sendTwilioSms,
   toJsonResponse
@@ -24,15 +25,31 @@ function formatAmount(amountCents) {
   }).format(amountCents / 100);
 }
 
+function safeCheckoutUrl(value) {
+  if (!value) return "";
+  try {
+    const url = new URL(value);
+    return url.protocol === "https:" && url.hostname === "checkout.stripe.com" ? url.toString() : "";
+  } catch (_error) {
+    return "";
+  }
+}
+
 exports.handler = async function handler(event) {
   try {
     if (event.httpMethod !== "POST") {
       return toJsonResponse(405, { error: "Method not allowed" });
     }
 
+    await requireDispatchAccess(event);
+
     const body = event.body ? JSON.parse(event.body) : {};
     const quoteId = String(body.quote_id || body.quoteId || "").trim();
-    const checkoutUrlFromRequest = String(body.checkout_url || body.checkoutUrl || "").trim();
+    const requestedCheckoutUrl = String(body.checkout_url || body.checkoutUrl || "").trim();
+    const checkoutUrlFromRequest = safeCheckoutUrl(requestedCheckoutUrl);
+    if (requestedCheckoutUrl && !checkoutUrlFromRequest) {
+      return toJsonResponse(400, { error: "Invalid Stripe checkout URL" });
+    }
     const mode = normalizeMode(body.mode || body.method);
 
     if (!quoteId) {
