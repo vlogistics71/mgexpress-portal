@@ -95,6 +95,28 @@
       opacity: .65;
     }
 
+    .text-button {
+      min-height: auto;
+      margin-top: 14px;
+      padding: 6px;
+      background: transparent;
+      color: #087455;
+      font-size: 15px;
+      text-decoration: underline;
+    }
+
+    .form-copy {
+      color: #66736e;
+      line-height: 1.5;
+      margin-bottom: 12px;
+    }
+
+    .back-button {
+      background: #edf7f3;
+      color: #06543e;
+      margin-top: 10px;
+    }
+
     .message {
       display: none;
       margin-top: 18px;
@@ -157,6 +179,24 @@
       >
 
       <button id="signInButton" type="submit">Sign In</button>
+      <button class="text-button" id="forgotPasswordBtn" type="button">Forgot password?</button>
+    </form>
+
+    <form id="recoveryRequestForm" class="hidden">
+      <div class="form-copy">Enter your login email and we’ll send you a secure password-reset link.</div>
+      <label for="recoveryEmail">Login email</label>
+      <input id="recoveryEmail" type="email" autocomplete="email" required>
+      <button id="sendRecoveryBtn" type="submit">Send Reset Email</button>
+      <button class="back-button" id="backToLoginBtn" type="button">Back to Sign In</button>
+    </form>
+
+    <form id="passwordResetForm" class="hidden">
+      <div class="form-copy">Create a new password for your MG Express account.</div>
+      <label for="newPassword">New password</label>
+      <input id="newPassword" type="password" autocomplete="new-password" minlength="12" required>
+      <label for="confirmPassword">Confirm new password</label>
+      <input id="confirmPassword" type="password" autocomplete="new-password" minlength="12" required>
+      <button id="savePasswordBtn" type="submit">Save New Password</button>
     </form>
 
     <form id="mfaForm" class="hidden">
@@ -185,6 +225,10 @@
     const message = document.getElementById("message");
     const mfaForm = document.getElementById("mfaForm");
     const mfaButton = document.getElementById("mfaButton");
+    const recoveryRequestForm = document.getElementById("recoveryRequestForm");
+    const passwordResetForm = document.getElementById("passwordResetForm");
+    const sendRecoveryBtn = document.getElementById("sendRecoveryBtn");
+    const savePasswordBtn = document.getElementById("savePasswordBtn");
     let pendingMfaFactorId = "";
     let mfaResolve = null;
 
@@ -192,6 +236,88 @@
       message.textContent = text;
       message.className = "message " + type;
     }
+
+    function showOnly(target) {
+      [form, mfaForm, recoveryRequestForm, passwordResetForm].forEach(item => {
+        item.classList.toggle("hidden", item !== target);
+      });
+    }
+
+    document.getElementById("forgotPasswordBtn").addEventListener("click", function () {
+      document.getElementById("recoveryEmail").value =
+        document.getElementById("email").value.trim();
+      showOnly(recoveryRequestForm);
+      showMessage("Enter your email to receive a reset link.", "info");
+      document.getElementById("recoveryEmail").focus();
+    });
+
+    document.getElementById("backToLoginBtn").addEventListener("click", function () {
+      showOnly(form);
+      message.className = "message";
+    });
+
+    recoveryRequestForm.addEventListener("submit", async function (event) {
+      event.preventDefault();
+      const email = document.getElementById("recoveryEmail").value.trim();
+      sendRecoveryBtn.disabled = true;
+      sendRecoveryBtn.textContent = "Sending…";
+
+      try {
+        const result = await client.auth.resetPasswordForEmail(email, {
+          redirectTo: location.origin + "/index.html?recovery=1"
+        });
+        if (result.error) throw result.error;
+        showMessage(
+          "If that email belongs to an MG Express account, a password-reset link has been sent. Check your inbox and spam folder.",
+          "info"
+        );
+      } catch (error) {
+        showMessage(error.message || "Unable to send the reset email.", "error");
+      } finally {
+        sendRecoveryBtn.disabled = false;
+        sendRecoveryBtn.textContent = "Send Reset Email";
+      }
+    });
+
+    passwordResetForm.addEventListener("submit", async function (event) {
+      event.preventDefault();
+      const password = document.getElementById("newPassword").value;
+      const confirmation = document.getElementById("confirmPassword").value;
+
+      if (password.length < 12) {
+        showMessage("Use at least 12 characters for your new password.", "error");
+        return;
+      }
+      if (password !== confirmation) {
+        showMessage("The two passwords do not match.", "error");
+        return;
+      }
+
+      savePasswordBtn.disabled = true;
+      savePasswordBtn.textContent = "Saving…";
+      try {
+        const result = await client.auth.updateUser({ password });
+        if (result.error) throw result.error;
+        await client.auth.signOut();
+        history.replaceState({}, "", "/index.html");
+        showOnly(form);
+        document.getElementById("password").value = "";
+        showMessage("Password updated. Sign in with your new password.", "info");
+      } catch (error) {
+        showMessage(error.message || "Unable to update the password.", "error");
+      } finally {
+        savePasswordBtn.disabled = false;
+        savePasswordBtn.textContent = "Save New Password";
+      }
+    });
+
+    client.auth.onAuthStateChange(function (event) {
+      if (event === "PASSWORD_RECOVERY") {
+        showOnly(passwordResetForm);
+        showMessage("Reset link verified. Choose your new password.", "info");
+        document.getElementById("newPassword").focus();
+      }
+    });
 
     async function requireMfaIfEnrolled() {
       const aal = await client.auth.mfa.getAuthenticatorAssuranceLevel();
@@ -207,8 +333,7 @@
       if (!factor) return;
 
       pendingMfaFactorId = factor.id;
-      form.classList.add("hidden");
-      mfaForm.classList.remove("hidden");
+      showOnly(mfaForm);
       document.getElementById("mfaCode").focus();
       showMessage("Password accepted. Complete two-step verification.", "info");
 
@@ -304,6 +429,10 @@
     }
 
     async function checkExistingSession() {
+      if (new URLSearchParams(location.search).get("recovery") === "1") {
+        return;
+      }
+
       const sessionResult = await client.auth.getSession();
       const session = sessionResult.data.session;
 
