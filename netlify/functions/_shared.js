@@ -39,6 +39,44 @@ function toJsonResponse(statusCode, body) {
   };
 }
 
+const DISPATCH_ROLES = new Set(["admin", "staff", "dispatcher"]);
+
+function readBearerToken(headers = {}) {
+  const authHeader = String(headers.authorization || headers.Authorization || "").trim();
+  return authHeader.toLowerCase().startsWith("bearer ") ? authHeader.slice(7).trim() : "";
+}
+
+async function requireDispatchAccess(event) {
+  const accessToken = readBearerToken(event.headers || {});
+  if (!accessToken) {
+    const error = new Error("Dispatch authentication required");
+    error.statusCode = 401;
+    throw error;
+  }
+
+  const { url, serviceRoleKey } = getSupabaseConfig();
+  const authResponse = await fetch(`${url.replace(/\/$/, "")}/auth/v1/user`, {
+    headers: { apikey: serviceRoleKey, Authorization: `Bearer ${accessToken}` }
+  });
+  if (!authResponse.ok) {
+    const error = new Error("Invalid or expired dispatch session");
+    error.statusCode = 401;
+    throw error;
+  }
+
+  const user = await authResponse.json();
+  const profiles = await supabaseRequest(`profiles?select=id,role&id=eq.${encodeURIComponent(user.id)}&limit=1`);
+  const profile = Array.isArray(profiles) ? profiles[0] || null : null;
+  const role = String(profile?.role || "").trim().toLowerCase();
+  if (!DISPATCH_ROLES.has(role)) {
+    const error = new Error("Dispatch access required");
+    error.statusCode = 403;
+    throw error;
+  }
+
+  return { user, profile };
+}
+
 async function supabaseRequest(path, options = {}) {
   const { url, serviceRoleKey } = getSupabaseConfig();
   const response = await fetch(`${url}/rest/v1/${path.replace(/^\//, "")}`, {
@@ -296,6 +334,7 @@ module.exports = {
   getStripeWebhookSecret,
   sendResendEmail,
   sendTwilioSms,
+  requireDispatchAccess,
   signaturePayload,
   supabaseRequest,
   toJsonResponse,
