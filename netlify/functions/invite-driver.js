@@ -90,7 +90,7 @@ async function verifyDispatcher(accessToken) {
   const user = await result.json();
   const profiles = await supabaseRequest(`profiles?select=id,role&id=eq.${encodeURIComponent(user.id)}`);
   const profile = Array.isArray(profiles) ? profiles[0] : null;
-  if (text(profile?.role).toLowerCase() === "driver") return null;
+  if (!["admin", "staff", "dispatcher"].includes(text(profile?.role).toLowerCase())) return null;
   return user;
 }
 
