@@ -3,6 +3,7 @@ const {
   getSiteUrl,
   loadQuoteById,
   parseAmountToCents,
+  requireDispatchAccess,
   toJsonResponse
 } = require("./_shared");
 
@@ -11,6 +12,8 @@ exports.handler = async function handler(event) {
     if (event.httpMethod !== "POST") {
       return toJsonResponse(405, { error: "Method not allowed" });
     }
+
+    await requireDispatchAccess(event);
 
     const body = event.body ? JSON.parse(event.body) : {};
     const quoteId = String(body.quote_id || body.quoteId || "").trim();
