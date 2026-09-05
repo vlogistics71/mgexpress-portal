@@ -1128,39 +1128,13 @@
     ] = await Promise.all([
       client.rpc("customer_portal_jobs"),
 
-      client
-        .from("invoices")
-        .select("*")
-        .eq(
-          "customer_account_id",
-          customerAccount.id
-        )
-        .order(
-          "created_at",
-          {
-            ascending: false
-          }
-        ),
+      client.rpc(
+        "customer_portal_invoices"
+      ),
 
-      client
-        .from(
-          "customer_saved_locations"
-        )
-        .select("*")
-        .eq(
-          "customer_account_id",
-          customerAccount.id
-        )
-        .eq(
-          "is_active",
-          true
-        )
-        .order(
-          "location_name",
-          {
-            ascending: true
-          }
-        )
+      client.rpc(
+        "customer_portal_saved_locations"
+      )
     ]);
 
     if (jobsResult.error) {
