@@ -102,5 +102,14 @@
       String(window.MG_GEOAPIFY_API_KEY || "").trim()
   });
 
+  // Dispatch Create Job enhancement: load the internal customer directory
+  // helper only on request.html. Customer portal pages never load this file.
+  if (/(^|\/)request\.html$/.test(window.location.pathname)) {
+    const customerAutofillScript = document.createElement("script");
+    customerAutofillScript.src = "assets/js/customer-autofill.js";
+    customerAutofillScript.defer = true;
+    document.head.appendChild(customerAutofillScript);
+  }
+
   console.log("[MG Config] Geoapify configured:", Boolean(window.MG_CONFIG?.geoapifyApiKey));
 })();
