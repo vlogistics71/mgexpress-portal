@@ -6,6 +6,7 @@
 	<title>Create Job | MG Express Dispatch</title>
 	<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 	<script src="assets/js/config.js"></script>
+	<script src="assets/js/auth.js"></script>
 	<style>
 		* { box-sizing: border-box; }
 
@@ -651,6 +652,10 @@
 	</main>
 
 	<script>
+		(async function () {
+		const dispatchAuth = await window.MG_AUTH.requireDispatch();
+		if (!dispatchAuth) return;
+
 		const client = window.mgSupabase || window.supabase.createClient(
 			"https://dczlucwfjayymlwbzzdi.supabase.co",
 			"sb_publishable_kcv_a78ZyUxMo2neKUANdw_XN7eAMpI"
@@ -847,6 +852,7 @@
 				submitBtn.textContent = "Create Job";
 			}
 		});
+		})();
 	</script>
 </body>
 </html>
