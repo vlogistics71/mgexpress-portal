@@ -2,6 +2,9 @@
   functions = "netlify/functions"
   publish = "."
 
+[functions."daily-visitor-summary"]
+  schedule = "0 14 * * *"
+
 [[headers]]
   for = "/*"
   [headers.values]
@@ -65,6 +68,11 @@
   to = "/driver.html"
   status = 301
   force = true
+
+[[redirects]]
+  from = "/api/website-view"
+  to = "/.netlify/functions/record-website-view"
+  status = 200
 
 [[redirects]]
   from = "/api/public-quote"
