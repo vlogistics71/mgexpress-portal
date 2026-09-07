@@ -11,6 +11,20 @@
     const client = window.mgSupabase;
     if (!form || !client || !form.customer_name) return;
 
+    if (
+      !window.MG_AUTH ||
+      typeof window.MG_AUTH.requireDispatch !== "function"
+    ) {
+      return;
+    }
+
+    const authData =
+      await window.MG_AUTH.requireDispatch();
+
+    if (!authData) {
+      return;
+    }
+
     const nameInput = form.customer_name;
     const emailInput = form.customer_email;
     const phoneInput = form.customer_phone;
