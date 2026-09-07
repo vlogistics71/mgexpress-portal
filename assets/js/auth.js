@@ -117,13 +117,42 @@
   }
 
   async function requireDispatch() {
-    return requireSession({
-      allowedRoles: [
-        "admin",
-        "staff",
-        "dispatcher"
-      ]
-    });
+    const auth =
+      await requireSession({
+        allowedRoles: [
+          "admin",
+          "staff",
+          "dispatcher"
+        ]
+      });
+
+    if (!auth) {
+      return null;
+    }
+
+    const client =
+      getClient();
+
+    const assurance =
+      await client.auth.mfa
+        .getAuthenticatorAssuranceLevel();
+
+    if (assurance.error) {
+      throw assurance.error;
+    }
+
+    if (
+      assurance.data.currentLevel === "aal1" &&
+      assurance.data.nextLevel === "aal2"
+    ) {
+      window.location.replace(
+        "/index.html?mfa=required"
+      );
+
+      return null;
+    }
+
+    return auth;
   }
 
   async function requireDriver() {
