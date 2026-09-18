@@ -155,6 +155,66 @@ exports.handler = async function handler(event) {
     });
 
     const quote = Array.isArray(created) ? created[0] : created;
+
+    // Quote persistence is the primary operation. Email is intentionally best-effort:
+    // a notification failure must never cause a successfully saved quote to fail.
+    const resendApiKey = process.env.RESEND_API_KEY;
+    if (resendApiKey) {
+      try {
+        const quoteNumber = quote?.job_number || quote?.id || "New";
+        const htmlEscape = (value) => String(value ?? "")
+          .replaceAll("&", "&amp;")
+          .replaceAll("<", "&lt;")
+          .replaceAll(">", "&gt;")
+          .replaceAll('"', "&quot;")
+          .replaceAll("'", "&#039;");
+        const show = (value) => value ? htmlEscape(value) : "Not provided";
+
+        const emailResponse = await fetch("https://api.resend.com/emails", {
+          method: "POST",
+          headers: {
+            "Authorization": `Bearer ${resendApiKey}`,
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({
+            from: "MG Express Quotes <quotes@notify.migenteexpress.com>",
+            to: ["info@migenteexpress.com"],
+            reply_to: payload.customer_email || undefined,
+            subject: `New MG Express Quote Request – ${quoteNumber}`,
+            html: `
+              <h2>New MG Express Quote Request</h2>
+              <p><strong>Quote:</strong> ${show(quoteNumber)}</p>
+              <p><strong>Customer:</strong> ${show(payload.customer_name)}<br>
+              <strong>Phone:</strong> ${show(payload.customer_phone)}<br>
+              <strong>Email:</strong> ${show(payload.customer_email)}<br>
+              <strong>Company:</strong> ${show(company)}</p>
+              <p><strong>Pickup:</strong> ${show(payload.pickup_address)}<br>
+              <strong>Delivery:</strong> ${show(payload.delivery_address)}</p>
+              <p><strong>Vehicle:</strong> ${show(payload.vehicle_type)}<br>
+              <strong>Delivery speed:</strong> ${show(payload.delivery_speed)}<br>
+              <strong>Service level:</strong> ${show(payload.service_level)}</p>
+              <p><strong>Special instructions:</strong><br>${show(payload.special_instructions).replaceAll("\n", "<br>")}</p>
+              <p><a href="https://portal.migenteexpress.com/">Open MG Express Dispatch Portal</a></p>
+            `
+          })
+        });
+
+        if (!emailResponse.ok) {
+          const emailError = await emailResponse.text();
+          console.error("quote notification email failed", {
+            status: emailResponse.status,
+            body: emailError.slice(0, 500)
+          });
+        }
+      } catch (emailError) {
+        console.error("quote notification email failed", {
+          message: emailError?.message
+        });
+      }
+    } else {
+      console.log("quote notification email skipped: RESEND_API_KEY is not configured");
+    }
+
     return response(201, {
       ok: true,
       id: quote?.id || null,
