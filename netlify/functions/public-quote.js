@@ -1,3 +1,4 @@
+const crypto = require("crypto");
 const {
   createStripeCheckoutSession,
   supabaseRequest,
@@ -68,6 +69,13 @@ function displayPreferredTime(value) {
   const [hourText, minute] = normalized.split(":");
   const hour = Number(hourText);
   return `${hour % 12 || 12}:${minute} ${hour >= 12 ? "PM" : "AM"}`;
+}
+
+function createReviewToken(quoteId) {
+  return crypto
+    .createHmac("sha256", String(process.env.SUPABASE_SERVICE_ROLE_KEY || ""))
+    .update(String(quoteId || ""), "utf8")
+    .digest("hex");
 }
 
 async function geocodeAddress(input) {
@@ -298,6 +306,7 @@ exports.handler = async function handler(event) {
     // Quote persistence is the primary operation. Email is intentionally best-effort:
     // a notification failure must never cause a successfully saved quote to fail.
     const resendApiKey = process.env.RESEND_API_KEY;
+    let customerEmailSent = false;
     if (resendApiKey) {
       try {
         const quoteNumber = quote?.job_number || quote?.id || "New";
@@ -367,7 +376,10 @@ exports.handler = async function handler(event) {
             })
           });
           if (!customerEmailResponse.ok) {
-            console.error("customer quote email failed", { status: customerEmailResponse.status });
+            const customerEmailError = await customerEmailResponse.text();
+            console.error("customer quote email failed", { status: customerEmailResponse.status, body: customerEmailError.slice(0, 500) });
+          } else {
+            customerEmailSent = true;
           }
         }
       } catch (emailError) {
@@ -387,6 +399,8 @@ exports.handler = async function handler(event) {
       amount: needsReview ? null : customerPrice,
       amount_label: needsReview ? null : new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(customerPrice),
       checkout_url: checkoutUrl || null,
+      review_token: quote?.id ? createReviewToken(quote.id) : null,
+      customer_email_sent: customerEmailSent,
       message: needsReview
         ? "Quote request received. Dispatch will review the details and contact you shortly."
         : "Your instant quote is ready."
