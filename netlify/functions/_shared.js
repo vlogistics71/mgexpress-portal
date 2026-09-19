@@ -188,14 +188,14 @@ function verifyStripeWebhookSignature(rawBody, signatureHeader, secret) {
   });
 }
 
-async function createStripeCheckoutSession({ quote, amountCents, siteUrl }) {
+async function createStripeCheckoutSession({ quote, amountCents, siteUrl, successUrl, cancelUrl }) {
   const stripeSecretKey = getStripeSecretKey();
   const checkoutUrl = new URL("https://api.stripe.com/v1/checkout/sessions");
   const body = new URLSearchParams();
 
   body.set("mode", "payment");
-  body.set("success_url", `${siteUrl}/payment-success.html?quote_id=${encodeURIComponent(quote.id)}&session_id={CHECKOUT_SESSION_ID}`);
-  body.set("cancel_url", `${siteUrl}/dashboard.html?payment=cancelled&quote_id=${encodeURIComponent(quote.id)}`);
+  body.set("success_url", successUrl || `${siteUrl}/payment-success.html?quote_id=${encodeURIComponent(quote.id)}&session_id={CHECKOUT_SESSION_ID}`);
+  body.set("cancel_url", cancelUrl || `${siteUrl}/dashboard.html?payment=cancelled&quote_id=${encodeURIComponent(quote.id)}`);
   if (String(quote.customer_email || "").trim()) {
     body.set("customer_email", String(quote.customer_email || "").trim());
   }
