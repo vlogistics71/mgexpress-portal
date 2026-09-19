@@ -2,6 +2,25 @@
 
 const publicQuote = require("./public-quote");
 
+function parseObject(value) {
+  if (value && typeof value === "object" && !Array.isArray(value)) return value;
+  if (typeof value !== "string") return {};
+  try {
+    const parsed = JSON.parse(value);
+    return parsed && typeof parsed === "object" && !Array.isArray(parsed) ? parsed : {};
+  } catch (_) {
+    return {};
+  }
+}
+
+function extractArguments(body) {
+  const root = parseObject(body);
+  const nested = [root.args, root.arguments, root.payload, root.data]
+    .map(parseObject)
+    .find((candidate) => Object.keys(candidate).length > 0);
+  return nested || root;
+}
+
 exports.handler = async function handler(event) {
   if (event.httpMethod !== "POST") {
     return {
@@ -12,7 +31,7 @@ exports.handler = async function handler(event) {
   }
 
   try {
-    const input = JSON.parse(event.body || "{}");
+    const input = extractArguments(event.body || "{}");
     return await publicQuote.handler({
       ...event,
       headers: {},
