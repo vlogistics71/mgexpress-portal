@@ -113,14 +113,22 @@ async function calculateRouteMiles(pickup, delivery) {
   return Math.round(miles * 10) / 10;
 }
 
-function calculateCustomerPrice({ vehicleType, deliverySpeed, serviceLevel, miles }) {
+function calculatePackageFees(pieceCount, packageWeight) {
+  const additionalPieces = Math.max(0, pieceCount - 2);
+  const extraPieceFee = additionalPieces * 4;
+  const heavyWeightFee = normalizeToken(packageWeight) === "over_75_lbs" ? 8 : 0;
+  return { additionalPieces, extraPieceFee, heavyWeightFee, total: extraPieceFee + heavyWeightFee };
+}
+
+function calculateCustomerPrice({ vehicleType, deliverySpeed, serviceLevel, miles, packageFees }) {
   const rate = PRICE_CHART[normalizeToken(vehicleType)];
   const speedMultiplier = SPEED_MULTIPLIERS[normalizeToken(deliverySpeed)];
   if (!rate || !speedMultiplier || !Number.isFinite(miles) || miles <= 0) return null;
   let multiplier = speedMultiplier;
   if (normalizeToken(serviceLevel) === "stat") multiplier = Math.max(multiplier, 1.50);
   const calculated = Math.max(rate.minimum, (rate.base + miles * rate.mileage) * multiplier);
-  return Math.ceil(calculated / 5) * 5;
+  const basePrice = Math.ceil(calculated / 5) * 5;
+  return basePrice + packageFees.total;
 }
 
 exports.handler = async function handler(event) {
@@ -193,6 +201,12 @@ exports.handler = async function handler(event) {
       : null;
 
     const company = clean(input.company || input.business, 200);
+    const pieceCount = Number(input.piece_count);
+    if (!Number.isInteger(pieceCount) || pieceCount < 1 || pieceCount > 100) {
+      return response(400, { error: "Number of pieces must be a whole number from 1 to 100." }, origin);
+    }
+    const packageWeight = clean(input.package_weight, 100) || "under_50_lbs";
+    const packageFees = calculatePackageFees(pieceCount, packageWeight);
     const preferredPickupTime = normalizePreferredTime(input.preferred_pickup_time);
     const preferredDeliveryTime = normalizePreferredTime(input.preferred_delivery_time);
     const instructionParts = [
@@ -200,6 +214,10 @@ exports.handler = async function handler(event) {
       clean(input.reference_number, 160) ? `Reference number: ${clean(input.reference_number, 160)}` : "",
       preferredPickupTime ? `Preferred pickup time: ${displayPreferredTime(preferredPickupTime)}` : "",
       preferredDeliveryTime ? `Deliver by time: ${displayPreferredTime(preferredDeliveryTime)}` : "",
+      `Pieces / boxes: ${pieceCount}`,
+      `Estimated total weight: ${packageWeight.replaceAll("_", " ")}`,
+      packageFees.extraPieceFee ? `Additional-piece fee: ${packageFees.extraPieceFee.toFixed(2)}` : "",
+      packageFees.heavyWeightFee ? `Over-75-lb fee: ${packageFees.heavyWeightFee.toFixed(2)}` : "",
       clean(input.pickup_contact_name, 160) ? `Pickup contact: ${clean(input.pickup_contact_name, 160)}` : "",
       clean(input.pickup_contact_phone, 80) ? `Pickup contact phone: ${clean(input.pickup_contact_phone, 80)}` : "",
       clean(input.pickup_instructions, 2000) ? `Pickup instructions: ${clean(input.pickup_instructions, 2000)}` : "",
@@ -229,7 +247,8 @@ exports.handler = async function handler(event) {
       vehicleType: input.vehicle_type,
       deliverySpeed: input.delivery_speed,
       serviceLevel,
-      miles: routeMiles
+      miles: routeMiles,
+      packageFees
     });
     const needsReview = Boolean(
       routeError || !customerPrice || routeMiles > 300 ||
@@ -262,7 +281,7 @@ exports.handler = async function handler(event) {
       delivery_type: deliveryType,
       service_level: serviceLevel,
       package_type: nullable(input.package_type, 160),
-      weight: nullable(input.weight || input.package_weight, 100),
+      weight: nullable(input.weight || packageWeight, 100),
       special_instructions: instructionParts.length ? instructionParts.join("\n") : null,
       approved_price: needsReview ? null : customerPrice,
       customer_charge: needsReview ? null : customerPrice,
@@ -343,6 +362,10 @@ exports.handler = async function handler(event) {
               <p><strong>Vehicle:</strong> ${show(payload.vehicle_type)}<br>
               <strong>Delivery speed:</strong> ${show(payload.delivery_speed)}<br>
               <strong>Service level:</strong> ${show(payload.service_level)}<br>
+              <strong>Pieces / boxes:</strong> ${pieceCount}<br>
+              <strong>Estimated total weight:</strong> ${show(packageWeight.replaceAll("_", " "))}<br>
+              <strong>Additional-piece fee:</strong> ${packageFees.extraPieceFee.toFixed(2)}<br>
+              <strong>Over-75-lb fee:</strong> ${packageFees.heavyWeightFee.toFixed(2)}<br>
               <strong>Route miles:</strong> ${show(routeMiles)}<br>
               <strong>Customer quote:</strong> ${customerPrice ? `$${customerPrice.toFixed(2)}` : "Dispatch review required"}</p>
               <p><strong>Special instructions:</strong><br>${show(payload.special_instructions).replaceAll("\n", "<br>")}</p>
@@ -372,7 +395,7 @@ exports.handler = async function handler(event) {
               subject: needsReview ? "MG Express received your quote request" : `Your MG Express quote is ${customerPrice ? `$${customerPrice.toFixed(2)}` : "ready"}`,
               html: needsReview
                 ? `<h2>We received your delivery request</h2><p>Thank you, ${show(payload.customer_name)}. Dispatch is reviewing the details and will contact you shortly.</p>`
-                : `<h2>Your MG Express quote is ready</h2><p><strong>Quote:</strong> ${show(quoteNumber)}<br><strong>Total:</strong> ${customerPrice.toFixed(2)}<br><strong>Preferred pickup:</strong> ${show(displayPreferredTime(preferredPickupTime))}<br><strong>Deliver by:</strong> ${show(displayPreferredTime(preferredDeliveryTime))}</p>${checkoutUrl ? `<p><a href="${htmlEscape(checkoutUrl)}">Pay securely online</a></p>` : "<p>Dispatch will send your secure payment link shortly.</p>"}<p style="font-size:13px;line-height:1.5;color:#666"><strong>Pricing notice:</strong> This quote is based on the information submitted. The final price may change for wait time, additional packages, stops or trips, incorrect or incomplete addresses, a different vehicle requirement, stairs or limited access, tolls, parking, or other service changes. Dispatch will confirm any adjustment before an additional charge is made.</p>`
+                : `<h2>Your MG Express quote is ready</h2><p><strong>Quote:</strong> ${show(quoteNumber)}<br><strong>Pieces / boxes:</strong> ${pieceCount}<br><strong>Additional-piece fee:</strong> ${packageFees.extraPieceFee.toFixed(2)}<br><strong>Over-75-lb fee:</strong> ${packageFees.heavyWeightFee.toFixed(2)}<br><strong>Total:</strong> ${customerPrice.toFixed(2)}<br><strong>Preferred pickup:</strong> ${show(displayPreferredTime(preferredPickupTime))}<br><strong>Deliver by:</strong> ${show(displayPreferredTime(preferredDeliveryTime))}</p>${checkoutUrl ? `<p><a href="${htmlEscape(checkoutUrl)}">Pay securely online</a></p>` : "<p>Dispatch will send your secure payment link shortly.</p>"}<p style="font-size:13px;line-height:1.5;color:#666"><strong>Pricing notice:</strong> This quote is based on the information submitted. The final price may change for wait time, additional packages, stops or trips, incorrect or incomplete addresses, a different vehicle requirement, stairs or limited access, tolls, parking, or other service changes. Dispatch will confirm any adjustment before an additional charge is made.</p>`
             })
           });
           if (!customerEmailResponse.ok) {
