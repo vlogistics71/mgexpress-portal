@@ -53,6 +53,23 @@ function normalizeToken(value) {
   return clean(value, 100).toLowerCase().replace(/\s+/g, "_");
 }
 
+function normalizePreferredTime(value) {
+  const match = clean(value, 10).match(/^(\d{2}):(\d{2})$/);
+  if (!match) return null;
+  const hour = Number(match[1]);
+  const minute = Number(match[2]);
+  if (hour < 7 || hour > 21 || ![0, 15, 30, 45].includes(minute) || (hour === 21 && minute !== 0)) return null;
+  return `${String(hour).padStart(2, "0")}:${String(minute).padStart(2, "0")}`;
+}
+
+function displayPreferredTime(value) {
+  const normalized = normalizePreferredTime(value);
+  if (!normalized) return "Not provided";
+  const [hourText, minute] = normalized.split(":");
+  const hour = Number(hourText);
+  return `${hour % 12 || 12}:${minute} ${hour >= 12 ? "PM" : "AM"}`;
+}
+
 async function geocodeAddress(input) {
   const apiKey = String(process.env.GEOAPIFY_API_KEY || "34d895e9c6cd4d1faf0692f758aac8ac").trim();
   const url = new URL("https://api.geoapify.com/v1/geocode/search");
@@ -168,9 +185,13 @@ exports.handler = async function handler(event) {
       : null;
 
     const company = clean(input.company || input.business, 200);
+    const preferredPickupTime = normalizePreferredTime(input.preferred_pickup_time);
+    const preferredDeliveryTime = normalizePreferredTime(input.preferred_delivery_time);
     const instructionParts = [
       company ? `Company: ${company}` : "",
       clean(input.reference_number, 160) ? `Reference number: ${clean(input.reference_number, 160)}` : "",
+      preferredPickupTime ? `Preferred pickup time: ${displayPreferredTime(preferredPickupTime)}` : "",
+      preferredDeliveryTime ? `Deliver by time: ${displayPreferredTime(preferredDeliveryTime)}` : "",
       clean(input.pickup_contact_name, 160) ? `Pickup contact: ${clean(input.pickup_contact_name, 160)}` : "",
       clean(input.pickup_contact_phone, 80) ? `Pickup contact phone: ${clean(input.pickup_contact_phone, 80)}` : "",
       clean(input.pickup_instructions, 2000) ? `Pickup instructions: ${clean(input.pickup_instructions, 2000)}` : "",
@@ -307,7 +328,9 @@ exports.handler = async function handler(event) {
               <strong>Email:</strong> ${show(payload.customer_email)}<br>
               <strong>Company:</strong> ${show(company)}</p>
               <p><strong>Pickup:</strong> ${show(payload.pickup_address)}<br>
-              <strong>Delivery:</strong> ${show(payload.delivery_address)}</p>
+              <strong>Preferred pickup time:</strong> ${show(displayPreferredTime(preferredPickupTime))}<br>
+              <strong>Delivery:</strong> ${show(payload.delivery_address)}<br>
+              <strong>Deliver by time:</strong> ${show(displayPreferredTime(preferredDeliveryTime))}</p>
               <p><strong>Vehicle:</strong> ${show(payload.vehicle_type)}<br>
               <strong>Delivery speed:</strong> ${show(payload.delivery_speed)}<br>
               <strong>Service level:</strong> ${show(payload.service_level)}<br>
@@ -340,7 +363,7 @@ exports.handler = async function handler(event) {
               subject: needsReview ? "MG Express received your quote request" : `Your MG Express quote is ${customerPrice ? `$${customerPrice.toFixed(2)}` : "ready"}`,
               html: needsReview
                 ? `<h2>We received your delivery request</h2><p>Thank you, ${show(payload.customer_name)}. Dispatch is reviewing the details and will contact you shortly.</p>`
-                : `<h2>Your MG Express quote is ready</h2><p><strong>Quote:</strong> ${show(quoteNumber)}<br><strong>Total:</strong> $${customerPrice.toFixed(2)}</p>${checkoutUrl ? `<p><a href="${htmlEscape(checkoutUrl)}">Pay securely online</a></p>` : "<p>Dispatch will send your secure payment link shortly.</p>"}`
+                : `<h2>Your MG Express quote is ready</h2><p><strong>Quote:</strong> ${show(quoteNumber)}<br><strong>Total:</strong> $${customerPrice.toFixed(2)}<br><strong>Preferred pickup:</strong> ${show(displayPreferredTime(preferredPickupTime))}<br><strong>Deliver by:</strong> ${show(displayPreferredTime(preferredDeliveryTime))}</p>${checkoutUrl ? `<p><a href="${htmlEscape(checkoutUrl)}">Pay securely online</a></p>` : "<p>Dispatch will send your secure payment link shortly.</p>"}`
             })
           });
           if (!customerEmailResponse.ok) {
