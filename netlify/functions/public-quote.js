@@ -286,7 +286,7 @@ exports.handler = async function handler(event) {
       weight: nullable(input.weight || packageWeight, 100),
       special_instructions: instructionParts.length ? instructionParts.join("\n") : null,
       approved_price: needsReview ? null : customerPrice,
-      customer_charge: needsReview ? null : customerPrice,
+      customer_charge: needsReview ? 0 : customerPrice,
       payment_status: needsReview ? null : "waiting_payment",
 
       return_required: returnRequired,
