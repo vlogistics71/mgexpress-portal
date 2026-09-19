@@ -116,6 +116,10 @@ exports.handler = async function handler(event) {
   try {
     const input = JSON.parse(event.body || "{}");
 
+    if (clean(input.website, 200)) {
+      return response(201, { ok: true, message: "Quote request received." }, origin);
+    }
+
     const customerName = clean(input.customer_name || input.name, 160);
     const customerPhone = clean(input.customer_phone || input.phone, 80);
     const pickupAddress = clean(input.pickup_address || input.pickup, 500);
@@ -166,6 +170,7 @@ exports.handler = async function handler(event) {
     const company = clean(input.company || input.business, 200);
     const instructionParts = [
       company ? `Company: ${company}` : "",
+      clean(input.reference_number, 160) ? `Reference number: ${clean(input.reference_number, 160)}` : "",
       clean(input.pickup_contact_name, 160) ? `Pickup contact: ${clean(input.pickup_contact_name, 160)}` : "",
       clean(input.pickup_contact_phone, 80) ? `Pickup contact phone: ${clean(input.pickup_contact_phone, 80)}` : "",
       clean(input.pickup_instructions, 2000) ? `Pickup instructions: ${clean(input.pickup_instructions, 2000)}` : "",
