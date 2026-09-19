@@ -1,4 +1,8 @@
-const { supabaseRequest, toJsonResponse } = require("./_shared");
+const {
+  createStripeCheckoutSession,
+  supabaseRequest,
+  toJsonResponse
+} = require("./_shared");
 
 const ALLOWED_ORIGINS = new Set([
   "https://migenteexpress.com",
@@ -26,6 +30,72 @@ function clean(value, max = 1000) {
 function nullable(value, max = 1000) {
   const text = clean(value, max);
   return text || null;
+}
+
+const PRICE_CHART = Object.freeze({
+  car: { base: 25, mileage: 1.45, minimum: 35 },
+  suv: { base: 25, mileage: 1.45, minimum: 35 },
+  cargo_van: { base: 35, mileage: 1.90, minimum: 50 },
+  sprinter_van: { base: 50, mileage: 2.50, minimum: 75 },
+  box_truck: { base: 75, mileage: 3.25, minimum: 110 }
+});
+
+const SPEED_MULTIPLIERS = Object.freeze({
+  next_day: 0.90,
+  "6_hr": 0.95,
+  "5_hr": 1,
+  "4_hr": 1,
+  "3_hr": 1.15,
+  "2_hr": 1.30
+});
+
+function normalizeToken(value) {
+  return clean(value, 100).toLowerCase().replace(/\s+/g, "_");
+}
+
+async function geocodeAddress(input) {
+  const apiKey = String(process.env.GEOAPIFY_API_KEY || "34d895e9c6cd4d1faf0692f758aac8ac").trim();
+  const url = new URL("https://api.geoapify.com/v1/geocode/search");
+  url.searchParams.set("text", input);
+  url.searchParams.set("format", "json");
+  url.searchParams.set("limit", "1");
+  url.searchParams.set("filter", "rect:-109.06,36.99,-102.04,41.00|countrycode:us");
+  url.searchParams.set("apiKey", apiKey);
+  const result = await fetch(url);
+  if (!result.ok) throw new Error("Address lookup failed.");
+  const payload = await result.json();
+  const match = Array.isArray(payload.results) ? payload.results[0] : null;
+  const lat = Number(match?.lat);
+  const lon = Number(match?.lon);
+  if (!Number.isFinite(lat) || !Number.isFinite(lon)) throw new Error("Address could not be located.");
+  return { lat, lon };
+}
+
+async function calculateRouteMiles(pickup, delivery) {
+  const apiKey = String(process.env.GEOAPIFY_API_KEY || "34d895e9c6cd4d1faf0692f758aac8ac").trim();
+  const [start, finish] = await Promise.all([geocodeAddress(pickup), geocodeAddress(delivery)]);
+  const url = new URL("https://api.geoapify.com/v1/routing");
+  url.searchParams.set("waypoints", `${start.lat},${start.lon}|${finish.lat},${finish.lon}`);
+  url.searchParams.set("mode", "drive");
+  url.searchParams.set("units", "imperial");
+  url.searchParams.set("format", "json");
+  url.searchParams.set("apiKey", apiKey);
+  const result = await fetch(url);
+  if (!result.ok) throw new Error("Route calculation failed.");
+  const payload = await result.json();
+  const miles = Number(payload?.results?.[0]?.distance);
+  if (!Number.isFinite(miles) || miles <= 0) throw new Error("Route mileage was unavailable.");
+  return Math.round(miles * 10) / 10;
+}
+
+function calculateCustomerPrice({ vehicleType, deliverySpeed, serviceLevel, miles }) {
+  const rate = PRICE_CHART[normalizeToken(vehicleType)];
+  const speedMultiplier = SPEED_MULTIPLIERS[normalizeToken(deliverySpeed)];
+  if (!rate || !speedMultiplier || !Number.isFinite(miles) || miles <= 0) return null;
+  let multiplier = speedMultiplier;
+  if (normalizeToken(serviceLevel) === "stat") multiplier = Math.max(multiplier, 1.50);
+  const calculated = Math.max(rate.minimum, (rate.base + miles * rate.mileage) * multiplier);
+  return Math.ceil(calculated / 5) * 5;
 }
 
 exports.handler = async function handler(event) {
@@ -110,6 +180,30 @@ exports.handler = async function handler(event) {
       clean(input.details, 3000)
     ].filter(Boolean);
 
+    const pickupRouteAddress = [pickupAddress, input.pickup_city, input.pickup_state || "CO", input.pickup_zip].filter(Boolean).join(", ");
+    const deliveryRouteAddress = [deliveryAddress, input.delivery_city, input.delivery_state || "CO", input.delivery_zip].filter(Boolean).join(", ");
+    let routeMiles = null;
+    let routeError = null;
+    try {
+      routeMiles = await calculateRouteMiles(pickupRouteAddress, deliveryRouteAddress);
+    } catch (error) {
+      routeError = error;
+      console.error("public quote route calculation failed", { message: error?.message });
+    }
+
+    const customerPrice = calculateCustomerPrice({
+      vehicleType: input.vehicle_type,
+      deliverySpeed: input.delivery_speed,
+      serviceLevel,
+      miles: routeMiles
+    });
+    const needsReview = Boolean(
+      routeError || !customerPrice || routeMiles > 300 ||
+      ["pallet", "special"].includes(jobCategory) ||
+      normalizeToken(input.package_weight) === "custom"
+    );
+    if (routeMiles) instructionParts.push(`Calculated route miles: ${routeMiles}`);
+
     const payload = {
       customer_name: customerName,
       customer_email: nullable(input.customer_email || input.email, 200),
@@ -136,6 +230,9 @@ exports.handler = async function handler(event) {
       package_type: nullable(input.package_type, 160),
       weight: nullable(input.weight || input.package_weight, 100),
       special_instructions: instructionParts.length ? instructionParts.join("\n") : null,
+      approved_price: needsReview ? null : customerPrice,
+      customer_charge: needsReview ? null : customerPrice,
+      payment_status: needsReview ? null : "waiting_payment",
 
       return_required: returnRequired,
       return_location_type: returnLocationType,
@@ -145,7 +242,7 @@ exports.handler = async function handler(event) {
       return_zip: returnRequired && returnLocationType === "different_location" ? nullable(input.return_zip, 20) : null,
 
       request_source: "website",
-      status: "new"
+      status: needsReview ? "new" : "waiting_payment"
     };
 
     const created = await supabaseRequest("quotes", {
@@ -155,6 +252,22 @@ exports.handler = async function handler(event) {
     });
 
     const quote = Array.isArray(created) ? created[0] : created;
+
+    let checkoutUrl = "";
+    if (!needsReview && quote?.id && customerPrice) {
+      try {
+        const checkout = await createStripeCheckoutSession({
+          quote: { ...quote, customer_email: payload.customer_email, customer_name: payload.customer_name },
+          amountCents: Math.round(customerPrice * 100),
+          siteUrl: "https://migenteexpress.com",
+          successUrl: `https://migenteexpress.com/payment-success.html?quote_id=${encodeURIComponent(quote.id)}&session_id={CHECKOUT_SESSION_ID}`,
+          cancelUrl: "https://migenteexpress.com/#quote"
+        });
+        checkoutUrl = String(checkout?.url || "");
+      } catch (checkoutError) {
+        console.error("public quote checkout creation failed", { message: checkoutError?.message });
+      }
+    }
 
     // Quote persistence is the primary operation. Email is intentionally best-effort:
     // a notification failure must never cause a successfully saved quote to fail.
@@ -192,7 +305,9 @@ exports.handler = async function handler(event) {
               <strong>Delivery:</strong> ${show(payload.delivery_address)}</p>
               <p><strong>Vehicle:</strong> ${show(payload.vehicle_type)}<br>
               <strong>Delivery speed:</strong> ${show(payload.delivery_speed)}<br>
-              <strong>Service level:</strong> ${show(payload.service_level)}</p>
+              <strong>Service level:</strong> ${show(payload.service_level)}<br>
+              <strong>Route miles:</strong> ${show(routeMiles)}<br>
+              <strong>Customer quote:</strong> ${customerPrice ? `$${customerPrice.toFixed(2)}` : "Dispatch review required"}</p>
               <p><strong>Special instructions:</strong><br>${show(payload.special_instructions).replaceAll("\n", "<br>")}</p>
               <p><a href="https://portal.migenteexpress.com/">Open MG Express Dispatch Portal</a></p>
             `
@@ -205,6 +320,27 @@ exports.handler = async function handler(event) {
             status: emailResponse.status,
             body: emailError.slice(0, 500)
           });
+        }
+
+        if (payload.customer_email) {
+          const customerEmailResponse = await fetch("https://api.resend.com/emails", {
+            method: "POST",
+            headers: {
+              "Authorization": `Bearer ${resendApiKey}`,
+              "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+              from: "MG Express Quotes <quotes@notify.migenteexpress.com>",
+              to: [payload.customer_email],
+              subject: needsReview ? "MG Express received your quote request" : `Your MG Express quote is ${customerPrice ? `$${customerPrice.toFixed(2)}` : "ready"}`,
+              html: needsReview
+                ? `<h2>We received your delivery request</h2><p>Thank you, ${show(payload.customer_name)}. Dispatch is reviewing the details and will contact you shortly.</p>`
+                : `<h2>Your MG Express quote is ready</h2><p><strong>Quote:</strong> ${show(quoteNumber)}<br><strong>Total:</strong> $${customerPrice.toFixed(2)}</p>${checkoutUrl ? `<p><a href="${htmlEscape(checkoutUrl)}">Pay securely online</a></p>` : "<p>Dispatch will send your secure payment link shortly.</p>"}`
+            })
+          });
+          if (!customerEmailResponse.ok) {
+            console.error("customer quote email failed", { status: customerEmailResponse.status });
+          }
         }
       } catch (emailError) {
         console.error("quote notification email failed", {
@@ -219,7 +355,13 @@ exports.handler = async function handler(event) {
       ok: true,
       id: quote?.id || null,
       job_number: quote?.job_number || null,
-      message: "Quote request received. MG Express will contact you shortly."
+      quote_status: needsReview ? "review" : "instant",
+      amount: needsReview ? null : customerPrice,
+      amount_label: needsReview ? null : new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(customerPrice),
+      checkout_url: checkoutUrl || null,
+      message: needsReview
+        ? "Quote request received. Dispatch will review the details and contact you shortly."
+        : "Your instant quote is ready."
     }, origin);
   } catch (error) {
     console.error("public-quote error", {
