@@ -80,6 +80,11 @@
   status = 200
 
 [[redirects]]
+  from = "/api/request-quote-review"
+  to = "/.netlify/functions/request-quote-review"
+  status = 200
+
+[[redirects]]
   from = "/api/public-driver-application"
   to = "/.netlify/functions/public-driver-application"
   status = 200
