@@ -1165,17 +1165,22 @@
               </div>
 
               <div class="field">
+                <label for="piece_count">Number of Pieces / Boxes</label>
+                <input id="piece_count" name="piece_count" type="number" inputmode="numeric" min="1" max="100" step="1" value="1" required>
+                <div class="hint">First 2 included; each additional piece is $4.</div>
+              </div>
+
+              <div class="field">
                 <label for="package_type">Package Type / Description</label>
                 <input id="package_type" name="package_type">
               </div>
 
               <div class="field">
-                <label for="package_weight">Estimated Weight</label>
-                <select id="package_weight" name="package_weight">
-                  <option value="">Select weight</option>
-                  <option value="Under 10 lbs">Under 10 lbs</option>
-                  <option value="Under 50 lbs" selected>Under 50 lbs</option>
-                  <option value="Under 100 lbs">Under 100 lbs</option>
+                <label for="package_weight">Estimated Total Weight</label>
+                <select id="package_weight" name="package_weight" required>
+                  <option value="under_50_lbs" selected>Under 50 lbs</option>
+                  <option value="50_to_75_lbs">50–75 lbs</option>
+                  <option value="over_75_lbs">Over 75 lbs (+$8)</option>
                   <option value="custom">Custom</option>
                 </select>
               </div>
@@ -1500,6 +1505,13 @@
       const waitBlocks = Math.max(0, Number(document.getElementById("pricingWaitBlocks").value) || 0);
       const handling = Math.max(0, Number(document.getElementById("pricingSpecialHandling").value) || 0);
       const tolls = Math.max(0, Number(document.getElementById("pricingTolls").value) || 0);
+      const pieceCount = Number(form.piece_count.value);
+      if (!Number.isInteger(pieceCount) || pieceCount < 1 || pieceCount > 100) {
+        throw new Error("Number of pieces must be a whole number from 1 to 100.");
+      }
+      const additionalPieces = Math.max(0, pieceCount - 2);
+      const extraPieceFee = additionalPieces * 4;
+      const heavyWeightFee = clean(form.package_weight.value) === "over_75_lbs" ? 8 : 0;
       let multiplier = PRICE_SPEED_MULTIPLIERS[speed];
       if (clean(form.service_level.value) === "stat") multiplier = Math.max(multiplier, 1.50);
       if (document.getElementById("pricingAfterHours").value === "yes") multiplier += 0.20;
@@ -1510,6 +1522,7 @@
       let recommended = Math.max(rate.minimum, (rate.base + miles * rate.mileage) * multiplier + fees);
       if (clean(form.return_required.value) === "true") recommended += Math.max(rate.minimum, rate.base + miles * rate.mileage);
       recommended = Math.ceil(recommended / 5) * 5;
+      recommended += extraPieceFee + heavyWeightFee;
       const driverPay = Math.ceil(Math.max(rate.driverMinimum, recommended * 0.55));
 
       form.approved_price.value = recommended.toFixed(2);
@@ -1517,7 +1530,11 @@
       elements.pricingRecommended.textContent = money(recommended);
       elements.pricingDriverPay.textContent = money(driverPay);
       updatePricingMargin();
-      setPricingStatus(`${miles.toFixed(1)} route miles · ${money(rate.base)} base · ${money(rate.mileage)}/mile · dispatch approval required`);
+      const packageFeeSummary = [
+        additionalPieces ? `${additionalPieces} extra piece${additionalPieces === 1 ? "" : "s"}: ${money(extraPieceFee)}` : "",
+        heavyWeightFee ? `over 75 lbs: ${money(heavyWeightFee)}` : ""
+      ].filter(Boolean).join(" · ");
+      setPricingStatus(`${miles.toFixed(1)} route miles · ${money(rate.base)} base · ${money(rate.mileage)}/mile${packageFeeSummary ? " · " + packageFeeSummary : ""} · dispatch approval required`);
     }
 
     function toCurrencyEditValue(input) {
@@ -3161,7 +3178,11 @@
       }
 
       if (elements.packageWeight) {
-        elements.packageWeight.value = "Under 50 lbs";
+        elements.packageWeight.value = "under_50_lbs";
+      }
+
+      if (elements.createJobForm.piece_count) {
+        elements.createJobForm.piece_count.value = "1";
       }
 
       if (elements.packageWeightCustom) {
@@ -3384,6 +3405,10 @@
       const deliveryContactName = String(data.get("delivery_contact_name") || "").trim();
       const deliveryContactPhone = String(data.get("delivery_contact_phone") || "").trim();
       const deliveryInstructions = String(data.get("delivery_instructions") || "").trim();
+      const pieceCount = Number(data.get("piece_count"));
+      if (!Number.isInteger(pieceCount) || pieceCount < 1 || pieceCount > 100) {
+        throw new Error("Number of pieces must be a whole number from 1 to 100.");
+      }
       const packageWeightSelection = String(data.get("package_weight") || "").trim();
       const packageWeightCustom = String(data.get("package_weight_custom") || "").trim();
       const packageWeight = clean(packageWeightSelection) === "custom"
@@ -3402,7 +3427,10 @@
       if (pickupContactName) billingMeta.push("Pickup Contact: " + pickupContactName);
       if (pickupContactPhone) billingMeta.push("Pickup Contact Phone: " + pickupContactPhone);
       if (deliveryContactPhone) billingMeta.push("Delivery Contact Phone: " + deliveryContactPhone);
-      if (packageWeight) billingMeta.push("Weight: " + packageWeight);
+      billingMeta.push("Pieces / Boxes: " + pieceCount);
+      if (pieceCount > 2) billingMeta.push("Additional Piece Fee: $" + ((pieceCount - 2) * 4).toFixed(2));
+      if (clean(packageWeightSelection) === "over_75_lbs") billingMeta.push("Over-75-lb Fee: $8.00");
+      if (packageWeight) billingMeta.push("Weight: " + packageWeight.replaceAll("_", " "));
       if (referenceNumber) billingMeta.push("Reference #: " + referenceNumber);
       if (pickupInstructions) instructions.push("Pickup Instructions: " + pickupInstructions);
       if (deliveryInstructions) instructions.push("Delivery Instructions: " + deliveryInstructions);
