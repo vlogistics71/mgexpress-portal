@@ -153,6 +153,7 @@ exports.handler = async function handler(event) {
       return response(201, { ok: true, message: "Quote request received." }, origin);
     }
 
+    const requestSource = clean(input.request_source, 50) === "voice" ? "voice" : "website";
     const customerName = clean(input.customer_name || input.name, 160);
     const customerPhone = clean(input.customer_phone || input.phone, 80);
     const pickupAddress = clean(input.pickup_address || input.pickup, 500);
@@ -251,6 +252,7 @@ exports.handler = async function handler(event) {
       packageFees
     });
     const needsReview = Boolean(
+      requestSource === "voice" ||
       routeError || !customerPrice || routeMiles > 300 ||
       ["pallet", "special"].includes(jobCategory) ||
       normalizeToken(input.package_weight) === "custom"
@@ -294,7 +296,7 @@ exports.handler = async function handler(event) {
       return_suite_floor: returnRequired && returnLocationType === "different_location" ? nullable(input.return_suite_floor, 120) : null,
       return_zip: returnRequired && returnLocationType === "different_location" ? nullable(input.return_zip, 20) : null,
 
-      request_source: "website",
+      request_source: requestSource,
       status: needsReview ? "new" : "waiting_payment"
     };
 
@@ -392,10 +394,16 @@ exports.handler = async function handler(event) {
             body: JSON.stringify({
               from: "MG Express Quotes <quotes@notify.migenteexpress.com>",
               to: [payload.customer_email],
-              subject: needsReview ? "MG Express received your quote request" : `Your MG Express quote is ${customerPrice ? `$${customerPrice.toFixed(2)}` : "ready"}`,
-              html: needsReview
-                ? `<h2>We received your delivery request</h2><p>Thank you, ${show(payload.customer_name)}. Dispatch is reviewing the details and will contact you shortly.</p>`
-                : `<h2>Your MG Express quote is ready</h2><p><strong>Quote:</strong> ${show(quoteNumber)}<br><strong>Pieces / boxes:</strong> ${pieceCount}<br><strong>Additional-piece fee:</strong> ${packageFees.extraPieceFee.toFixed(2)}<br><strong>Over-75-lb fee:</strong> ${packageFees.heavyWeightFee.toFixed(2)}<br><strong>Total:</strong> ${customerPrice.toFixed(2)}<br><strong>Preferred pickup:</strong> ${show(displayPreferredTime(preferredPickupTime))}<br><strong>Deliver by:</strong> ${show(displayPreferredTime(preferredDeliveryTime))}</p>${checkoutUrl ? `<p><a href="${htmlEscape(checkoutUrl)}">Pay securely online</a></p>` : "<p>Dispatch will send your secure payment link shortly.</p>"}<p style="font-size:13px;line-height:1.5;color:#666"><strong>Pricing notice:</strong> This quote is based on the information submitted. The final price may change for wait time, additional packages, stops or trips, incorrect or incomplete addresses, a different vehicle requirement, stairs or limited access, tolls, parking, or other service changes. Dispatch will confirm any adjustment before an additional charge is made.</p>`
+              subject: requestSource === "voice" && customerPrice
+                ? `Your preliminary MG Express quote is ${customerPrice.toFixed(2)}`
+                : needsReview
+                  ? "MG Express received your quote request"
+                  : `Your MG Express quote is ${customerPrice ? `${customerPrice.toFixed(2)}` : "ready"}`,
+              html: requestSource === "voice" && customerPrice
+                ? `<h2>Your preliminary MG Express quote</h2><p>Thank you, ${show(payload.customer_name)}. Based on the information provided during your call, the preliminary price is <strong>${customerPrice.toFixed(2)}</strong>.</p><p><strong>Quote:</strong> ${show(quoteNumber)}<br><strong>Pieces / boxes:</strong> ${pieceCount}<br><strong>Additional-piece fee:</strong> ${packageFees.extraPieceFee.toFixed(2)}<br><strong>Over-75-lb fee:</strong> ${packageFees.heavyWeightFee.toFixed(2)}<br><strong>Preferred pickup:</strong> ${show(displayPreferredTime(preferredPickupTime))}<br><strong>Deliver by:</strong> ${show(displayPreferredTime(preferredDeliveryTime))}</p><p>Dispatch will review the request and email the final approved quote and secure payment link.</p><p style="font-size:13px;line-height:1.5;color:#666"><strong>Pricing notice:</strong> This preliminary quote is based on the information provided during the call and may change after dispatch review.</p>`
+                : needsReview
+                  ? `<h2>We received your delivery request</h2><p>Thank you, ${show(payload.customer_name)}. Dispatch is reviewing the details and will contact you shortly.</p>`
+                  : `<h2>Your MG Express quote is ready</h2><p><strong>Quote:</strong> ${show(quoteNumber)}<br><strong>Pieces / boxes:</strong> ${pieceCount}<br><strong>Additional-piece fee:</strong> ${packageFees.extraPieceFee.toFixed(2)}<br><strong>Over-75-lb fee:</strong> ${packageFees.heavyWeightFee.toFixed(2)}<br><strong>Total:</strong> ${customerPrice.toFixed(2)}<br><strong>Preferred pickup:</strong> ${show(displayPreferredTime(preferredPickupTime))}<br><strong>Deliver by:</strong> ${show(displayPreferredTime(preferredDeliveryTime))}</p>${checkoutUrl ? `<p><a href="${htmlEscape(checkoutUrl)}">Pay securely online</a></p>` : "<p>Dispatch will send your secure payment link shortly.</p>"}<p style="font-size:13px;line-height:1.5;color:#666"><strong>Pricing notice:</strong> This quote is based on the information submitted. The final price may change for wait time, additional packages, stops or trips, incorrect or incomplete addresses, a different vehicle requirement, stairs or limited access, tolls, parking, or other service changes. Dispatch will confirm any adjustment before an additional charge is made.</p>`
             })
           });
           if (!customerEmailResponse.ok) {
@@ -419,14 +427,18 @@ exports.handler = async function handler(event) {
       id: quote?.id || null,
       job_number: quote?.job_number || null,
       quote_status: needsReview ? "review" : "instant",
-      amount: needsReview ? null : customerPrice,
-      amount_label: needsReview ? null : new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(customerPrice),
+      amount: requestSource === "voice" && customerPrice ? customerPrice : (needsReview ? null : customerPrice),
+      amount_label: requestSource === "voice" && customerPrice
+        ? new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(customerPrice)
+        : (needsReview ? null : new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(customerPrice)),
       checkout_url: checkoutUrl || null,
       review_token: quote?.id ? createReviewToken(quote.id) : null,
       customer_email_sent: customerEmailSent,
-      message: needsReview
-        ? "Quote request received. Dispatch will review the details and contact you shortly."
-        : "Your instant quote is ready."
+      message: requestSource === "voice" && customerPrice
+        ? `The preliminary quote is ${new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(customerPrice)}. Dispatch approval is required.`
+        : needsReview
+          ? "Quote request received. Dispatch will review the details and contact you shortly."
+          : "Your instant quote is ready."
     }, origin);
   } catch (error) {
     console.error("public-quote error", {
