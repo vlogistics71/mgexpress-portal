@@ -296,7 +296,7 @@ exports.handler = async function handler(event) {
       return_suite_floor: returnRequired && returnLocationType === "different_location" ? nullable(input.return_suite_floor, 120) : null,
       return_zip: returnRequired && returnLocationType === "different_location" ? nullable(input.return_zip, 20) : null,
 
-      request_source: requestSource,
+      request_source: requestSource === "voice" ? "website" : requestSource,
       status: needsReview ? "new" : "waiting_payment"
     };
 
