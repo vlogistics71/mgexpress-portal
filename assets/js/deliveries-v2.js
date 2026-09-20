@@ -72,6 +72,8 @@
     editJobCategory: document.getElementById("editJobCategory"),
     editVehicleType: document.getElementById("editVehicleType"),
     editDeliverySpeed: document.getElementById("editDeliverySpeed"),
+    editPreferredPickupTime: document.getElementById("editPreferredPickupTime"),
+    editPreferredDeliveryTime: document.getElementById("editPreferredDeliveryTime"),
     editDeliveryType: document.getElementById("editDeliveryType"),
     editServiceLevel: document.getElementById("editServiceLevel"),
     editPackageType: document.getElementById("editPackageType"),
@@ -156,13 +158,54 @@
     return hour * 60 + Number(match[2] || 0);
   }
 
+  function timeValueFromLabel(value) {
+    const minutes = clockMinutes(value);
+    if (minutes == null) return "";
+    return String(Math.floor(minutes / 60)).padStart(2, "0") + ":" + String(minutes % 60).padStart(2, "0");
+  }
+
+  function editTimeLabel(value) {
+    const [hourText, minute] = String(value || "").split(":");
+    const hour = Number(hourText);
+    if (!Number.isFinite(hour)) return "";
+    return String(hour % 12 || 12) + ":" + minute + " " + (hour >= 12 ? "PM" : "AM");
+  }
+
+  function populateEditTimeOptions() {
+    [elements.editPreferredPickupTime, elements.editPreferredDeliveryTime].forEach(select => {
+      if (!select || select.options.length > 1) return;
+      for (let minutes = 7 * 60; minutes <= 21 * 60; minutes += 15) {
+        const hour = Math.floor(minutes / 60);
+        const minute = minutes % 60;
+        const value = String(hour).padStart(2, "0") + ":" + String(minute).padStart(2, "0");
+        select.add(new Option(editTimeLabel(value), value));
+      }
+      select.addEventListener("change", syncEditRequestedWindow);
+    });
+  }
+
   function inferEditSpeed(instructions) {
-    const start = clockMinutes(instructionValue(instructions, "Preferred pickup time"));
-    const finish = clockMinutes(instructionValue(instructions, "Deliver by time"));
-    if (start == null || finish == null) return "";
-    let minutes = finish - start;
+    const startValue = elements.editPreferredPickupTime?.value || timeValueFromLabel(instructionValue(instructions, "Preferred pickup time"));
+    const finishValue = elements.editPreferredDeliveryTime?.value || timeValueFromLabel(instructionValue(instructions, "Deliver by time"));
+    if (!startValue || !finishValue) return "";
+    const [sh, sm] = startValue.split(":").map(Number);
+    const [eh, em] = finishValue.split(":").map(Number);
+    let minutes = eh * 60 + em - (sh * 60 + sm);
     if (minutes <= 0) minutes += 1440;
+    if (minutes > 360) return "next_day";
     return String(Math.max(2, Math.min(6, Math.ceil(minutes / 60)))) + "_hr";
+  }
+
+  function syncEditRequestedWindow() {
+    if (elements.editDeliverySpeed) {
+      elements.editDeliverySpeed.value = inferEditSpeed(elements.editSpecialInstructions?.value);
+    }
+  }
+
+  function replaceInstructionLine(text, label, value) {
+    const lines = String(text || "").split("\n").filter(line => !line.toLowerCase().startsWith(label.toLowerCase() + ":"));
+    if (value) lines.unshift(label + ": " + value);
+    return lines.filter(Boolean).join("\n");
   }
 
   function normalizeEditWeight(value) {
@@ -175,6 +218,7 @@
   function calculateEditRecommendedPrice() {
     const vehicle = normalizePriceToken(elements.editVehicleType?.value);
     const rate = EDIT_PRICE_CHART[vehicle];
+    syncEditRequestedWindow();
     const speed = elements.editDeliverySpeed?.value || inferEditSpeed(elements.editSpecialInstructions?.value);
     const speedMultiplier = EDIT_SPEED_MULTIPLIERS[speed];
     const miles = Number(elements.editPriceMiles?.value);
@@ -185,7 +229,7 @@
       return;
     }
     if (!speedMultiplier) {
-      elements.editPriceResult.textContent = "Choose a delivery speed first.";
+      elements.editPriceResult.textContent = "Choose pickup and delivery times first.";
       return;
     }
     if (!Number.isFinite(miles) || miles <= 0) {
@@ -901,7 +945,7 @@
     elements.editDeliveryInstructions.value = delivery.delivery_instructions || "";
     elements.editJobCategory.value = clean(delivery.job_category) || "general";
     elements.editVehicleType.value = delivery.vehicle_type || "";
-    elements.editDeliverySpeed.value = delivery.delivery_speed || "";
+    elements.editDeliverySpeed.value = "";
     elements.editDeliveryType.value = delivery.delivery_type || "";
     elements.editServiceLevel.value = delivery.service_level || "";
     elements.editPackageType.value = delivery.package_type || "";
@@ -910,6 +954,9 @@
     elements.editPackageWeight.value = normalizedWeight;
     elements.editPieceCount.value = String(Math.max(1, Number.parseInt(instructionValue(instructions, "Pieces / boxes") || "1", 10) || 1));
     elements.editSpecialInstructions.value = instructions;
+    elements.editPreferredPickupTime.value = timeValueFromLabel(instructionValue(instructions, "Preferred pickup time"));
+    elements.editPreferredDeliveryTime.value = timeValueFromLabel(instructionValue(instructions, "Deliver by time"));
+    syncEditRequestedWindow();
     elements.editPriceMiles.value = instructionValue(instructions, "Calculated route miles") || instructionValue(instructions, "Estimated miles") || "";
     elements.editPriceAdditionalStops.value = "0";
     elements.editPriceWaitBlocks.value = "0";
@@ -918,7 +965,7 @@
     elements.editPriceAfterHours.value = "false";
     elements.editPriceWeekend.value = "false";
     elements.editPriceResult.textContent = "Enter or confirm the route details, then calculate.";
-    if (!elements.editDeliverySpeed.value) elements.editDeliverySpeed.value = inferEditSpeed(instructions);
+
     elements.editReturnRequired.value = clean(delivery.return_required) === "true" || delivery.return_required === true ? "true" : "false";
     elements.editReturnLocationType.value = delivery.return_location_type || "same_as_pickup";
     elements.editReturnTiming.value = delivery.return_timing || "immediate";
@@ -1010,6 +1057,11 @@
     const returnRequired = clean(elements.editReturnRequired?.value || "false") === "true";
     const returnLocationType = String(elements.editReturnLocationType?.value || "same_as_pickup").trim() || "same_as_pickup";
 
+    syncEditRequestedWindow();
+    let updatedInstructions = String(elements.editSpecialInstructions?.value || "").trim();
+    updatedInstructions = replaceInstructionLine(updatedInstructions, "Deliver by time", elements.editPreferredDeliveryTime?.value ? editTimeLabel(elements.editPreferredDeliveryTime.value) : "");
+    updatedInstructions = replaceInstructionLine(updatedInstructions, "Preferred pickup time", elements.editPreferredPickupTime?.value ? editTimeLabel(elements.editPreferredPickupTime.value) : "");
+
     const payload = {
       customer_name: customerName,
       customer_email: String(elements.editCustomerEmail?.value || "").trim() || null,
@@ -1027,7 +1079,7 @@
       delivery_type: String(elements.editDeliveryType?.value || "").trim() || null,
       service_level: String(elements.editServiceLevel?.value || "").trim() || null,
       package_type: String(elements.editPackageType?.value || "").trim() || null,
-      special_instructions: String(elements.editSpecialInstructions?.value || "").trim() || null,
+      special_instructions: updatedInstructions || null,
       return_required: returnRequired,
       return_location_type: returnRequired ? returnLocationType : null,
       return_timing: returnRequired ? String(elements.editReturnTiming?.value || "immediate").trim() || "immediate" : null,
@@ -1880,6 +1932,8 @@
         closeModal(elements.editJobModal);
       }
     });
+
+    populateEditTimeOptions();
 
     if (elements.editCalculatePriceBtn) {
       elements.editCalculatePriceBtn.addEventListener("click", calculateEditRecommendedPrice);
