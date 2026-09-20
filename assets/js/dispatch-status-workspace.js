@@ -1954,10 +1954,22 @@ function openJobDetails(jobId, readOnly = false) {
   const paymentIsPaid = clean(job.payment_status) === "paid";
   const hasPaymentEmail = Boolean(String(job.customer_email || "").trim());
   const hasPaymentPhone = Boolean(String(job.customer_phone || "").trim());
+  const paymentWaiting = clean(job.payment_status) === "waiting_payment" || clean(job.status) === "waiting_payment";
+  const preliminaryPrice = Number(job.approved_price ?? job.customer_charge ?? 0);
+  const preliminaryPriceValue = Number.isFinite(preliminaryPrice) && preliminaryPrice > 0 ? preliminaryPrice.toFixed(2) : "";
 
   let primaryAction = "";
-  if (stage === "pending_approval") {
-    primaryAction = `<button class="btn primary" type="button" data-send-invoice="${escapeHtml(String(job.id))}">Send Invoice</button>`;
+  if (stage === "pending_approval" && !paymentWaiting) {
+    primaryAction = `
+      <section style="width:100%;padding:16px;border:1px solid #cfded7;border-radius:14px;background:#f5fbf8;">
+        <strong style="display:block;color:#075b43;margin-bottom:8px;">Approve Final Quote</strong>
+        <label style="display:block;font-weight:700;margin-bottom:6px;" for="finalQuotePrice-${escapeHtml(String(job.id))}">Final customer price</label>
+        <input id="finalQuotePrice-${escapeHtml(String(job.id))}" data-final-quote-price="${escapeHtml(String(job.id))}" type="number" min="0.01" max="100000" step="0.01" inputmode="decimal" value="${escapeHtml(preliminaryPriceValue)}" placeholder="0.00" style="width:100%;margin-bottom:10px;">
+        <button class="btn primary" type="button" data-approve-send-payment="${escapeHtml(String(job.id))}" ${hasPaymentEmail ? "" : "disabled"}>Approve &amp; Send Payment Link</button>
+        <div class="hint" style="margin-top:8px;">${hasPaymentEmail ? "The final quote and secure Stripe payment link will be emailed to the customer." : "Add the customer email before approving this quote."}</div>
+      </section>`;
+  } else if (stage === "pending_approval") {
+    primaryAction = `<button class="btn primary" type="button" data-resend-payment-link="${escapeHtml(String(job.id))}" data-payment-mode="email">Resend Payment Link</button>`;
   } else if (stage === "ready_to_dispatch") {
     primaryAction = `<button class="btn primary" type="button" data-assign-job="${escapeHtml(String(job.id))}">Assign Driver</button>`;
   } else if (stage === "assigned") {
@@ -3012,6 +3024,60 @@ function sendPaymentLinkByText(jobId) {
   }
 }
 
+async function approveAndSendPayment(jobId, button) {
+  const job = getRowById(jobId);
+  if (!job) {
+    showToast("Selected quote not found", "error");
+    return;
+  }
+
+  const input = document.querySelector('[data-final-quote-price="' + String(jobId) + '"]');
+  const finalAmount = Number(String(input?.value || "").trim());
+  if (!Number.isFinite(finalAmount) || finalAmount <= 0 || finalAmount > 100000) {
+    showToast("Enter a valid final customer price between $0.01 and $100,000.", "error");
+    input?.focus();
+    return;
+  }
+  if (!String(job.customer_email || "").trim()) {
+    showToast("Add the customer email before approving this quote.", "error");
+    return;
+  }
+
+  const confirmed = window.confirm("Approve " + (job.job_number || "this quote") + " for " + money(finalAmount) + " and email the payment link?");
+  if (!confirmed) return;
+
+  setButtonLoading(button, true, "Approving...", "Approve & Send Payment Link");
+  try {
+    const sessionResult = await client.auth.getSession();
+    const accessToken = sessionResult?.data?.session?.access_token;
+    if (!accessToken) throw new Error("Please sign in again to approve this quote.");
+
+    const response = await fetch(PAYMENT_LINK_ENDPOINT, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: "Bearer " + accessToken
+      },
+      body: JSON.stringify({
+        quote_id: jobId,
+        final_amount: finalAmount,
+        mode: "email"
+      })
+    });
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.error || "Unable to approve and send the payment link.");
+    if (!data.sent) throw new Error((data.errors || ["The payment email was not sent."]).join(" "));
+
+    await loadRows();
+    openJobDetails(jobId, false);
+    showToast("Final quote " + data.amount_label + " approved and payment email sent.", "success");
+  } catch (error) {
+    showToast(error.message || "Unable to approve and send the payment link.", "error");
+  } finally {
+    setButtonLoading(button, false, "Approving...", "Approve & Send Payment Link");
+  }
+}
+
 async function resendPaymentLink(jobId, mode) {
   const job = getRowById(jobId);
   if (!job) {
@@ -3432,6 +3498,12 @@ function handleDocumentClick(event) {
   const sendPayEmail = target.closest("[data-send-payment-email]");
   if (sendPayEmail) {
     sendPaymentLinkByEmail(sendPayEmail.getAttribute("data-send-payment-email"));
+    return;
+  }
+
+  const approvePayment = target.closest("[data-approve-send-payment]");
+  if (approvePayment) {
+    approveAndSendPayment(approvePayment.getAttribute("data-approve-send-payment"), approvePayment);
     return;
   }
 
