@@ -76,7 +76,17 @@
     editServiceLevel: document.getElementById("editServiceLevel"),
     editPackageType: document.getElementById("editPackageType"),
     editPackageWeight: document.getElementById("editPackageWeight"),
+    editPieceCount: document.getElementById("editPieceCount"),
     editSpecialInstructions: document.getElementById("editSpecialInstructions"),
+    editPriceMiles: document.getElementById("editPriceMiles"),
+    editPriceAdditionalStops: document.getElementById("editPriceAdditionalStops"),
+    editPriceWaitBlocks: document.getElementById("editPriceWaitBlocks"),
+    editPriceHandlingFee: document.getElementById("editPriceHandlingFee"),
+    editPriceTolls: document.getElementById("editPriceTolls"),
+    editPriceAfterHours: document.getElementById("editPriceAfterHours"),
+    editPriceWeekend: document.getElementById("editPriceWeekend"),
+    editCalculatePriceBtn: document.getElementById("editCalculatePriceBtn"),
+    editPriceResult: document.getElementById("editPriceResult"),
     editReturnRequired: document.getElementById("editReturnRequired"),
     editReturnLocationType: document.getElementById("editReturnLocationType"),
     editReturnTiming: document.getElementById("editReturnTiming"),
@@ -110,6 +120,100 @@
 
   function clean(value) {
     return String(value || "").trim().toLowerCase();
+  }
+
+  const EDIT_PRICE_CHART = Object.freeze({
+    car: { base: 25, mileage: 1.45, minimum: 35 },
+    suv: { base: 25, mileage: 1.45, minimum: 35 },
+    cargo_van: { base: 35, mileage: 1.90, minimum: 50 },
+    sprinter_van: { base: 50, mileage: 2.50, minimum: 75 },
+    box_truck: { base: 75, mileage: 3.25, minimum: 110 }
+  });
+
+  const EDIT_SPEED_MULTIPLIERS = Object.freeze({
+    next_day: 0.90,
+    "6_hr": 0.95,
+    "5_hr": 1,
+    "4_hr": 1,
+    "3_hr": 1.15,
+    "2_hr": 1.30
+  });
+
+  function normalizePriceToken(value) {
+    return String(value || "").trim().toLowerCase().replace(/[^a-z0-9]+/g, "_").replace(/^_|_$/g, "");
+  }
+
+  function instructionValue(text, label) {
+    const match = String(text || "").match(new RegExp("^" + label + "\\s*:\\s*(.+)$", "im"));
+    return match ? match[1].trim() : "";
+  }
+
+  function clockMinutes(value) {
+    const match = String(value || "").trim().match(/^(\d{1,2})(?::(\d{2}))?\s*(AM|PM)$/i);
+    if (!match) return null;
+    let hour = Number(match[1]) % 12;
+    if (match[3].toUpperCase() === "PM") hour += 12;
+    return hour * 60 + Number(match[2] || 0);
+  }
+
+  function inferEditSpeed(instructions) {
+    const start = clockMinutes(instructionValue(instructions, "Preferred pickup time"));
+    const finish = clockMinutes(instructionValue(instructions, "Deliver by time"));
+    if (start == null || finish == null) return "";
+    let minutes = finish - start;
+    if (minutes <= 0) minutes += 1440;
+    return String(Math.max(2, Math.min(6, Math.ceil(minutes / 60)))) + "_hr";
+  }
+
+  function normalizeEditWeight(value) {
+    const token = normalizePriceToken(value);
+    if (token.includes("over_75") || token.includes("over_100") || token === "50_100_lbs") return "over_75_lbs";
+    if (token.includes("50_to_75") || token === "50_75_lbs") return "50_to_75_lbs";
+    return value ? "under_50_lbs" : "";
+  }
+
+  function calculateEditRecommendedPrice() {
+    const vehicle = normalizePriceToken(elements.editVehicleType?.value);
+    const rate = EDIT_PRICE_CHART[vehicle];
+    const speed = elements.editDeliverySpeed?.value || inferEditSpeed(elements.editSpecialInstructions?.value);
+    const speedMultiplier = EDIT_SPEED_MULTIPLIERS[speed];
+    const miles = Number(elements.editPriceMiles?.value);
+    const pieces = Math.max(1, Math.min(100, Number.parseInt(elements.editPieceCount?.value || "1", 10) || 1));
+
+    if (!rate) {
+      elements.editPriceResult.textContent = "Choose a vehicle type first.";
+      return;
+    }
+    if (!speedMultiplier) {
+      elements.editPriceResult.textContent = "Choose a delivery speed first.";
+      return;
+    }
+    if (!Number.isFinite(miles) || miles <= 0) {
+      elements.editPriceResult.textContent = "Enter the route miles first.";
+      return;
+    }
+
+    if (elements.editDeliverySpeed && !elements.editDeliverySpeed.value) elements.editDeliverySpeed.value = speed;
+    const serviceLevel = normalizePriceToken(elements.editServiceLevel?.value);
+    let multiplier = serviceLevel === "stat" ? Math.max(speedMultiplier, 1.50) : speedMultiplier;
+    if (elements.editPriceAfterHours?.value === "true") multiplier += 0.20;
+    if (elements.editPriceWeekend?.value === "true") multiplier += 0.15;
+    multiplier = Math.min(multiplier, 1.60);
+
+    const stops = Math.max(0, Number(elements.editPriceAdditionalStops?.value) || 0) * 12;
+    const wait = Math.max(0, Number(elements.editPriceWaitBlocks?.value) || 0) * 15;
+    const handling = Math.max(0, Number(elements.editPriceHandlingFee?.value) || 0);
+    const tolls = Math.max(0, Number(elements.editPriceTolls?.value) || 0);
+    const pieceFee = Math.max(0, pieces - 2) * 4;
+    const weightFee = normalizeEditWeight(elements.editPackageWeight?.value) === "over_75_lbs" ? 8 : 0;
+
+    let calculated = Math.max(rate.minimum, (rate.base + miles * rate.mileage) * multiplier);
+    if (elements.editReturnRequired?.value === "true") {
+      calculated += Math.max(rate.minimum, rate.base + miles * rate.mileage);
+    }
+    const recommended = Math.ceil((calculated + stops + wait + handling + tolls) / 5) * 5 + pieceFee + weightFee;
+    elements.editApprovedPrice.value = recommended.toFixed(2);
+    elements.editPriceResult.textContent = "Recommended customer price: $" + recommended.toFixed(2) + " (includes $" + pieceFee.toFixed(2) + " piece fee and $" + weightFee.toFixed(2) + " weight fee).";
   }
 
   function readInitialTabFromUrl() {
@@ -801,8 +905,20 @@
     elements.editDeliveryType.value = delivery.delivery_type || "";
     elements.editServiceLevel.value = delivery.service_level || "";
     elements.editPackageType.value = delivery.package_type || "";
-    elements.editPackageWeight.value = delivery.package_weight || delivery.weight || "";
-    elements.editSpecialInstructions.value = delivery.special_instructions || "";
+    const instructions = delivery.special_instructions || "";
+    const normalizedWeight = normalizeEditWeight(delivery.package_weight || delivery.weight || instructionValue(instructions, "Estimated total weight"));
+    elements.editPackageWeight.value = normalizedWeight;
+    elements.editPieceCount.value = String(Math.max(1, Number.parseInt(instructionValue(instructions, "Pieces / boxes") || "1", 10) || 1));
+    elements.editSpecialInstructions.value = instructions;
+    elements.editPriceMiles.value = instructionValue(instructions, "Calculated route miles") || instructionValue(instructions, "Estimated miles") || "";
+    elements.editPriceAdditionalStops.value = "0";
+    elements.editPriceWaitBlocks.value = "0";
+    elements.editPriceHandlingFee.value = "0";
+    elements.editPriceTolls.value = "0";
+    elements.editPriceAfterHours.value = "false";
+    elements.editPriceWeekend.value = "false";
+    elements.editPriceResult.textContent = "Enter or confirm the route details, then calculate.";
+    if (!elements.editDeliverySpeed.value) elements.editDeliverySpeed.value = inferEditSpeed(instructions);
     elements.editReturnRequired.value = clean(delivery.return_required) === "true" || delivery.return_required === true ? "true" : "false";
     elements.editReturnLocationType.value = delivery.return_location_type || "same_as_pickup";
     elements.editReturnTiming.value = delivery.return_timing || "immediate";
@@ -1764,6 +1880,10 @@
         closeModal(elements.editJobModal);
       }
     });
+
+    if (elements.editCalculatePriceBtn) {
+      elements.editCalculatePriceBtn.addEventListener("click", calculateEditRecommendedPrice);
+    }
 
     elements.editJobForm.addEventListener("submit", saveEditedJob);
 
