@@ -230,7 +230,7 @@
       getClient();
 
     try {
-      await client.auth.signOut();
+      await client.auth.signOut({ scope: "local" });
     } finally {
       if (settings.clearStorage) {
         localStorage.clear();
