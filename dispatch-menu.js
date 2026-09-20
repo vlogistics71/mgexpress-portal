@@ -84,7 +84,7 @@
   document.getElementById("dispatchMenuClose").addEventListener("click", closeMenu);
   document.getElementById("dispatchMenuSignOut").addEventListener("click", async function(){
     this.disabled=true; this.textContent="Signing Out...";
-    try { const client=window.mgDispatchClient||window.mgSupabaseClient||window.client; if(client?.auth?.signOut) await client.auth.signOut(); }
+    try { const client=window.mgDispatchClient||window.mgSupabaseClient||window.mgSupabase||window.client; if(client?.auth?.signOut) await client.auth.signOut({ scope: "local" }); }
     catch(error){ console.error("MG Express sign-out error:",error); }
     finally { localStorage.clear(); sessionStorage.clear(); window.location.replace(routeUrl("/index.html")+"?loggedout=1"); }
   });
