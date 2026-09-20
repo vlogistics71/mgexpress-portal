@@ -398,7 +398,12 @@
       const role = String(profileResult.data.role || "").toLowerCase();
 
       if (role === "driver") {
-        location.replace("/driver.html");
+        // Driver accounts do not use dispatch MFA. Clear the session on the
+        // dispatch origin before sending the driver to the separate portal.
+        await client.auth.signOut({ scope: "local" });
+        localStorage.clear();
+        sessionStorage.clear();
+        location.replace("https://drivers.migenteexpress.com/");
         return;
       }
 
