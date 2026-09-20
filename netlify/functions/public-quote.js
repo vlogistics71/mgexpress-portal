@@ -285,7 +285,7 @@ exports.handler = async function handler(event) {
       package_type: nullable(input.package_type, 160),
       weight: nullable(input.weight || packageWeight, 100),
       special_instructions: instructionParts.length ? instructionParts.join("\n") : null,
-      approved_price: needsReview ? null : customerPrice,
+      approved_price: requestSource === "voice" && customerPrice ? customerPrice : (needsReview ? null : customerPrice),
       customer_charge: needsReview ? 0 : customerPrice,
       payment_status: needsReview ? null : "waiting_payment",
 
