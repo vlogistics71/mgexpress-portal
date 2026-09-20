@@ -1102,24 +1102,20 @@
                   <option value="">Choose vehicle</option>
                   <option value="Car" selected>Car</option>
                   <option value="SUV">SUV</option>
-                  <option value="Cargo Van">Cargo Van</option>
                   <option value="Sprinter Van">Sprinter Van</option>
                   <option value="Box Truck">Box Truck</option>
                 </select>
               </div>
+              <div class="field">
+                <label for="preferred_pickup_time">Preferred Pickup Time</label>
+                <select id="preferred_pickup_time" name="preferred_pickup_time" required><option value="">Select pickup time</option></select>
+              </div>
 
               <div class="field">
-                <label for="delivery_speed">Delivery Speed</label>
-                <select id="delivery_speed" name="delivery_speed">
-                  <option value="">Choose speed</option>
-                  <option value="2_hr">2 Hour</option>
-                  <option value="3_hr">3 Hour</option>
-                  <option value="4_hr" selected>4 Hour</option>
-                  <option value="5_hr">5 Hour</option>
-                  <option value="6_hr">6 Hour</option>
-                  <option value="next_day">Next Day</option>
-                </select>
+                <label for="preferred_delivery_time">Deliver By Time</label>
+                <select id="preferred_delivery_time" name="preferred_delivery_time" required><option value="">Select delivery time</option></select>
               </div>
+              <input id="delivery_speed" name="delivery_speed" type="hidden">
 
               <div class="field">
                 <label for="job_category">Job Category</label>
@@ -1128,7 +1124,6 @@
                   <option value="legal">Legal</option>
                   <option value="general" selected>General</option>
                   <option value="pallet">Pallet</option>
-                  <option value="special">Special</option>
                 </select>
               </div>
 
@@ -1492,13 +1487,54 @@
       elements.pricingMargin.textContent = (((price - pay) / price) * 100).toFixed(1) + "%";
     }
 
+    function requestedTimeLabel(value) {
+      const [hourText, minute] = String(value || "").split(":");
+      const hour = Number(hourText);
+      if (!Number.isFinite(hour)) return "";
+      return String(hour % 12 || 12) + ":" + minute + " " + (hour >= 12 ? "PM" : "AM");
+    }
+
+    function requestedSpeedFromWindow() {
+      const form = elements.createJobForm;
+      const start = form?.preferred_pickup_time?.value;
+      const finish = form?.preferred_delivery_time?.value;
+      if (!start || !finish) return "";
+      const [sh, sm] = start.split(":").map(Number);
+      const [eh, em] = finish.split(":").map(Number);
+      let minutes = eh * 60 + em - (sh * 60 + sm);
+      if (minutes <= 0) minutes += 1440;
+      if (minutes > 360) return "next_day";
+      return String(Math.max(2, Math.min(6, Math.ceil(minutes / 60)))) + "_hr";
+    }
+
+    function syncRequestedJobWindow() {
+      if (elements.createJobForm?.delivery_speed) {
+        elements.createJobForm.delivery_speed.value = requestedSpeedFromWindow();
+      }
+    }
+
+    function populateRequestedJobTimes() {
+      ["preferred_pickup_time", "preferred_delivery_time"].forEach(name => {
+        const select = elements.createJobForm?.elements[name];
+        if (!select || select.options.length > 1) return;
+        for (let minutes = 7 * 60; minutes <= 21 * 60; minutes += 15) {
+          const hour = Math.floor(minutes / 60);
+          const minute = minutes % 60;
+          const value = String(hour).padStart(2, "0") + ":" + String(minute).padStart(2, "0");
+          select.add(new Option(requestedTimeLabel(value), value));
+        }
+        select.addEventListener("change", syncRequestedJobWindow);
+      });
+    }
+
     function calculateRecommendedJobPrice() {
       const form = elements.createJobForm;
       const rate = PRICE_CHART[normalizedPriceVehicle(form.vehicle_type.value)];
+      syncRequestedJobWindow();
       const speed = String(form.delivery_speed.value || "");
       const miles = Number(elements.estimatedMiles?.value || 0);
       if (!rate) throw new Error("Choose a vehicle before calculating.");
-      if (!PRICE_SPEED_MULTIPLIERS[speed]) throw new Error("Choose a delivery speed before calculating.");
+      if (!PRICE_SPEED_MULTIPLIERS[speed]) throw new Error("Choose pickup and delivery times before calculating.");
       if (!Number.isFinite(miles) || miles <= 0) throw new Error("Select both route addresses or enter the driving miles.");
 
       const extraStops = Math.max(0, Number(document.getElementById("pricingExtraStops").value) || 0);
@@ -3432,6 +3468,10 @@
       if (clean(packageWeightSelection) === "over_75_lbs") billingMeta.push("Over-75-lb Fee: $8.00");
       if (packageWeight) billingMeta.push("Weight: " + packageWeight.replaceAll("_", " "));
       if (referenceNumber) billingMeta.push("Reference #: " + referenceNumber);
+      const preferredPickupTime = String(data.get("preferred_pickup_time") || "").trim();
+      const preferredDeliveryTime = String(data.get("preferred_delivery_time") || "").trim();
+      if (preferredPickupTime) instructions.push("Preferred pickup time: " + requestedTimeLabel(preferredPickupTime));
+      if (preferredDeliveryTime) instructions.push("Deliver by time: " + requestedTimeLabel(preferredDeliveryTime));
       if (pickupInstructions) instructions.push("Pickup Instructions: " + pickupInstructions);
       if (deliveryInstructions) instructions.push("Delivery Instructions: " + deliveryInstructions);
 
@@ -3449,7 +3489,7 @@
         delivery_zip: String(data.get("delivery_zip") || "").trim() || null,
         delivery_recipient_name: deliveryContactName || null,
         vehicle_type: String(data.get("vehicle_type") || "").trim() || null,
-        delivery_speed: String(data.get("delivery_speed") || "").trim() || null,
+        delivery_speed: requestedSpeedFromWindow() || null,
         job_category: normalizeCategory(data.get("job_category")),
         delivery_type: String(data.get("delivery_type") || "").trim() || null,
         service_level: String(data.get("service_level") || "").trim() || null,
@@ -3770,6 +3810,9 @@
         state.mileageRouting.userOverridden = true;
       });
     }
+
+    populateRequestedJobTimes();
+    syncRequestedJobWindow();
 
     elements.calculateJobPrice?.addEventListener("click", () => {
       try {
