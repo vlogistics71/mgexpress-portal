@@ -79,7 +79,7 @@ function deliverySpeedFromWindow(pickupTime, deliveryTime) {
   const [deliveryHour, deliveryMinute] = delivery.split(":").map(Number);
   let minutes = deliveryHour * 60 + deliveryMinute - (pickupHour * 60 + pickupMinute);
   if (minutes <= 0) minutes += 24 * 60;
-  if (minutes > 6 * 60) return "next_day";
+  
   return String(Math.max(2, Math.min(6, Math.ceil(minutes / 60)))) + "_hr";
 }
 
