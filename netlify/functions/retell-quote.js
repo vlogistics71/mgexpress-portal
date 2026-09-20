@@ -50,7 +50,7 @@ function normalizeVehicle(value) {
   if (!text) return "Car";
   if (text.includes("box")) return "Box Truck";
   if (text.includes("sprinter")) return "Sprinter Van";
-  if (text.includes("cargo") || text.includes("van")) return "Cargo Van";
+  if (text.includes("cargo") || text.includes("van")) return "Sprinter Van";
   if (text.includes("suv")) return "SUV";
   return "Car";
 }
