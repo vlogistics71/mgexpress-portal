@@ -71,6 +71,18 @@ function displayPreferredTime(value) {
   return `${hour % 12 || 12}:${minute} ${hour >= 12 ? "PM" : "AM"}`;
 }
 
+function deliverySpeedFromWindow(pickupTime, deliveryTime) {
+  const pickup = normalizePreferredTime(pickupTime);
+  const delivery = normalizePreferredTime(deliveryTime);
+  if (!pickup || !delivery) return null;
+  const [pickupHour, pickupMinute] = pickup.split(":").map(Number);
+  const [deliveryHour, deliveryMinute] = delivery.split(":").map(Number);
+  let minutes = deliveryHour * 60 + deliveryMinute - (pickupHour * 60 + pickupMinute);
+  if (minutes <= 0) minutes += 24 * 60;
+  if (minutes > 6 * 60) return "next_day";
+  return String(Math.max(2, Math.min(6, Math.ceil(minutes / 60)))) + "_hr";
+}
+
 function createReviewToken(quoteId) {
   return crypto
     .createHmac("sha256", String(process.env.SUPABASE_SERVICE_ROLE_KEY || ""))
@@ -210,6 +222,7 @@ exports.handler = async function handler(event) {
     const packageFees = calculatePackageFees(pieceCount, packageWeight);
     const preferredPickupTime = normalizePreferredTime(input.preferred_pickup_time);
     const preferredDeliveryTime = normalizePreferredTime(input.preferred_delivery_time);
+    const deliverySpeed = normalizeToken(input.delivery_speed) || deliverySpeedFromWindow(preferredPickupTime, preferredDeliveryTime);
     const instructionParts = [
       company ? `Company: ${company}` : "",
       clean(input.reference_number, 160) ? `Reference number: ${clean(input.reference_number, 160)}` : "",
@@ -246,7 +259,7 @@ exports.handler = async function handler(event) {
 
     const customerPrice = calculateCustomerPrice({
       vehicleType: input.vehicle_type,
-      deliverySpeed: input.delivery_speed,
+      deliverySpeed,
       serviceLevel,
       miles: routeMiles,
       packageFees
@@ -278,7 +291,7 @@ exports.handler = async function handler(event) {
       delivery_recipient_name: nullable(input.delivery_recipient_name || input.delivery_contact_name, 160),
 
       vehicle_type: nullable(input.vehicle_type, 100),
-      delivery_speed: nullable(input.delivery_speed, 100),
+      delivery_speed: nullable(deliverySpeed, 100),
       job_category: jobCategory,
       delivery_type: deliveryType,
       service_level: serviceLevel,
