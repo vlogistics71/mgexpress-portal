@@ -1503,7 +1503,7 @@
       const [eh, em] = finish.split(":").map(Number);
       let minutes = eh * 60 + em - (sh * 60 + sm);
       if (minutes <= 0) minutes += 1440;
-      if (minutes > 360) return "next_day";
+      
       return String(Math.max(2, Math.min(6, Math.ceil(minutes / 60)))) + "_hr";
     }
 
