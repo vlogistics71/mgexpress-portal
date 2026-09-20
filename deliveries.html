@@ -540,7 +540,7 @@
               <div class="edit-field"><label for="editDeliveryType">Delivery Type</label><select id="editDeliveryType" name="delivery_type"><option value="">Choose type</option><option value="business_to_business">Business to Business</option><option value="business_to_residential">Business to Residential</option><option value="residential_to_business">Residential to Business</option><option value="residential_to_residential">Residential to Residential</option></select></div>
               <div class="edit-field"><label for="editServiceLevel">Service Level</label><select id="editServiceLevel" name="service_level"><option value="">Choose level</option><option value="standard">Standard</option><option value="priority">Priority</option><option value="stat">STAT</option><option value="scheduled">Scheduled</option><option value="on_demand">On Demand</option></select></div>
               <div class="edit-field"><label for="editPackageType">Package Type</label><select id="editPackageType" name="package_type"><option value="">Choose package</option><option value="Documents">Documents</option><option value="Medical Supplies">Medical Supplies</option><option value="Auto Parts">Auto Parts</option><option value="Small Package">Small Package</option><option value="Medium Package">Medium Package</option><option value="Large Package">Large Package</option><option value="Other">Other</option></select></div>
-              <div class="edit-field"><label for="editPackageWeight">Approximate Weight</label><select id="editPackageWeight" name="package_weight"><option value="">Choose weight</option><option value="Under 10 lbs">Under 10 lbs</option><option value="10-25 lbs">10-25 lbs</option><option value="25-50 lbs">25-50 lbs</option><option value="50-100 lbs">50-100 lbs</option><option value="Over 100 lbs">Over 100 lbs</option></select></div>
+              <div class="edit-field"><label for="editPackageWeight">Estimated Total Weight</label><select id="editPackageWeight" name="package_weight"><option value="">Choose weight</option><option value="under_50_lbs">Under 50 lbs</option><option value="50_to_75_lbs">50–75 lbs</option><option value="over_75_lbs">Over 75 lbs (+$8)</option></select></div>\n              <div class="edit-field"><label for="editPieceCount">Pieces / Boxes</label><input id="editPieceCount" type="number" min="1" max="100" step="1" value="1"></div>
               <div class="edit-field full"><label for="editSpecialInstructions">Special Instructions</label><textarea id="editSpecialInstructions" name="special_instructions" rows="4"></textarea></div>
             </div>
           </section>
@@ -559,7 +559,18 @@
 
           <section class="edit-section">
             <h4 class="edit-section-title">Billing</h4>
-            <div class="edit-grid two-up">
+            <div class="edit-grid three-up">
+              <div class="edit-field"><label for="editPriceMiles">Route Miles</label><input id="editPriceMiles" type="number" min="0.1" step="0.1" placeholder="Miles"></div>
+              <div class="edit-field"><label for="editPriceAdditionalStops">Additional Stops</label><input id="editPriceAdditionalStops" type="number" min="0" step="1" value="0"></div>
+              <div class="edit-field"><label for="editPriceWaitBlocks">Wait After First 15 Minutes</label><select id="editPriceWaitBlocks"><option value="0">None</option><option value="1">15 minutes</option><option value="2">30 minutes</option><option value="3">45 minutes</option><option value="4">60 minutes</option></select></div>
+              <div class="edit-field"><label for="editPriceHandlingFee">Special Handling Fee</label><input id="editPriceHandlingFee" type="number" min="0" step="1" value="0"></div>
+              <div class="edit-field"><label for="editPriceTolls">Tolls / Parking</label><input id="editPriceTolls" type="number" min="0" step="1" value="0"></div>
+              <div class="edit-field"><label for="editPriceAfterHours">After Hours</label><select id="editPriceAfterHours"><option value="false">No</option><option value="true">Yes (+20%)</option></select></div>
+              <div class="edit-field"><label for="editPriceWeekend">Weekend</label><select id="editPriceWeekend"><option value="false">No</option><option value="true">Yes (+15%)</option></select></div>
+              <div class="edit-field full">
+                <button class="action-btn secondary" id="editCalculatePriceBtn" type="button">Calculate Recommended Price</button>
+                <div id="editPriceResult" style="margin-top:12px;font-weight:800;color:#065f46" aria-live="polite">Enter or confirm the route details, then calculate.</div>
+              </div>
               <div class="edit-field"><label for="editApprovedPrice">Total Amount Billed to Customer</label><input id="editApprovedPrice" name="approved_price" type="text" inputmode="decimal" placeholder="0.00"></div>
             </div>
           </section>
