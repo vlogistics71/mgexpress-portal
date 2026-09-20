@@ -477,23 +477,19 @@
 									<option value="">Choose vehicle</option>
 									<option>Car</option>
 									<option>SUV</option>
-									<option>Cargo Van</option>
 									<option>Sprinter Van</option>
 									<option>Box Truck</option>
 								</select>
 							</div>
 							<div class="field">
-								<label for="delivery_speed">Delivery Speed</label>
-								<select id="delivery_speed" name="delivery_speed">
-									<option value="">Choose speed</option>
-									<option value="2_hr">2 Hour</option>
-									<option value="3_hr">3 Hour</option>
-									<option value="4_hr">4 Hour</option>
-									<option value="5_hr">5 Hour</option>
-									<option value="6_hr">6 Hour</option>
-									<option value="next_day">Next Day</option>
-								</select>
+								<label for="preferred_pickup_time">Preferred Pickup Time</label>
+								<select id="preferred_pickup_time" name="preferred_pickup_time" required><option value="">Select pickup time</option></select>
 							</div>
+							<div class="field">
+								<label for="preferred_delivery_time">Deliver By Time</label>
+								<select id="preferred_delivery_time" name="preferred_delivery_time" required><option value="">Select delivery time</option></select>
+							</div>
+							<input id="delivery_speed" name="delivery_speed" type="hidden">
 							<div class="field">
 								<label for="job_category">Job Category</label>
 								<select id="job_category" name="job_category">
@@ -501,7 +497,6 @@
 									<option value="medical">Medical</option>
 									<option value="legal">Legal</option>
 									<option value="pallet">Pallet</option>
-									<option value="special">Special</option>
 								</select>
 							</div>
 							<div class="field">
@@ -521,7 +516,6 @@
 									<option value="standard">Standard</option>
 									<option value="priority">Priority</option>
 									<option value="stat">STAT</option>
-									<option value="scheduled">Scheduled</option>
 									<option value="on_demand">On Demand</option>
 								</select>
 							</div>
@@ -588,7 +582,7 @@
 								<div class="field"><label for="approved_price">Approved Customer Price</label><input id="approved_price" name="approved_price" type="number" min="0" step="0.01" inputmode="decimal" placeholder="Calculate or enter price" required></div>
 								<div class="field"><label for="driver_pay">Driver Pay</label><input id="driver_pay" name="driver_pay" type="number" min="0" step="0.01" inputmode="decimal" placeholder="Calculate or enter pay" required></div>
 							</div>
-							<div id="pricingStatus" class="pricing-status">Enter addresses, vehicle, speed, and miles—or let route lookup calculate miles.</div>
+							<div id="pricingStatus" class="pricing-status">Enter addresses, vehicle, requested times, and miles—or let route lookup calculate miles.</div>
 							<details>
 								<summary><strong>View MG Express price chart</strong></summary>
 								<div class="price-table-wrap"><table class="price-table">
@@ -722,6 +716,42 @@
 			return Math.round((meters / 1609.344) * 10) / 10;
 		}
 
+		function timeLabel(value) {
+			const [hourText, minute] = String(value || "").split(":");
+			const hour = Number(hourText);
+			if (!Number.isFinite(hour)) return "";
+			return String(hour % 12 || 12) + ":" + minute + " " + (hour >= 12 ? "PM" : "AM");
+		}
+
+		function speedFromRequestedWindow() {
+			const start = requestForm.preferred_pickup_time.value;
+			const finish = requestForm.preferred_delivery_time.value;
+			if (!start || !finish) return "";
+			const [sh, sm] = start.split(":").map(Number);
+			const [eh, em] = finish.split(":").map(Number);
+			let minutes = eh * 60 + em - (sh * 60 + sm);
+			if (minutes <= 0) minutes += 1440;
+			if (minutes > 360) return "next_day";
+			return String(Math.max(2, Math.min(6, Math.ceil(minutes / 60)))) + "_hr";
+		}
+
+		function syncRequestedWindow() {
+			requestForm.delivery_speed.value = speedFromRequestedWindow();
+		}
+
+		function populateTimeOptions() {
+			["preferred_pickup_time", "preferred_delivery_time"].forEach(name => {
+				const select = requestForm.elements[name];
+				for (let minutes = 7 * 60; minutes <= 21 * 60; minutes += 15) {
+					const hour = Math.floor(minutes / 60);
+					const minute = minutes % 60;
+					const value = String(hour).padStart(2, "0") + ":" + String(minute).padStart(2, "0");
+					select.add(new Option(timeLabel(value), value));
+				}
+				select.addEventListener("change", syncRequestedWindow);
+			});
+		}
+
 		async function calculatePrice() {
 			const vehicleKey = normalizeVehicle(requestForm.vehicle_type.value);
 			const rate = PRICE_CHART[vehicleKey];
@@ -812,6 +842,7 @@
 			}
 		});
 		driverPayInput.addEventListener("input", () => approvedPriceInput.dispatchEvent(new Event("input")));
+		populateTimeOptions();
 		syncReturnFields();
 
 		requestForm.addEventListener("submit", async event => {
@@ -826,6 +857,15 @@
 
 			try {
 				const body = Object.fromEntries(new FormData(requestForm).entries());
+				syncRequestedWindow();
+				body.delivery_speed = requestForm.delivery_speed.value || null;
+				const timingNotes = [
+					body.preferred_pickup_time ? "Preferred pickup time: " + timeLabel(body.preferred_pickup_time) : "",
+					body.preferred_delivery_time ? "Deliver by time: " + timeLabel(body.preferred_delivery_time) : ""
+				].filter(Boolean);
+				body.special_instructions = timingNotes.concat(body.special_instructions || "").filter(Boolean).join("\n") || null;
+				delete body.preferred_pickup_time;
+				delete body.preferred_delivery_time;
 				body.approved_price = Number(body.approved_price);
 				body.driver_pay = Number(body.driver_pay);
 				body.estimated_miles = body.estimated_miles === "" ? null : Number(body.estimated_miles);
