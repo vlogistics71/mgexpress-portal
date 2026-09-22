@@ -1560,7 +1560,7 @@
       let deliverySubtotal = Math.max(rate.minimum, (rate.base + miles * rate.mileage) * multiplier);
       if (clean(form.return_required.value) === "true") deliverySubtotal += Math.max(rate.minimum, rate.base + miles * rate.mileage);
       let recommended = deliverySubtotal * (1 - INTRODUCTORY_DISCOUNT) + fees;
-      recommended = Math.ceil(recommended / 5) * 5;
+      recommended = Math.round(recommended * 100) / 100;
       recommended += extraPieceFee + heavyWeightFee;
       const driverPay = Math.ceil(Math.max(rate.driverMinimum, recommended * 0.55));
 
