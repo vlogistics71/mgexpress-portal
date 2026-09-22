@@ -431,7 +431,15 @@
 							</div>
 							<div class="field full">
 								<label for="pickup_instructions">Pickup Instructions</label>
-								<textarea id="pickup_instructions" name="pickup_instructions" rows="3"></textarea>
+								<input id="pickup_instructions" name="pickup_instructions" list="pickupInstructionOptions" placeholder="Choose or type instructions">
+								<datalist id="pickupInstructionOptions">
+									<option value="Dock">
+									<option value="Front Door">
+									<option value="Loading Area">
+									<option value="Reception / Front Desk">
+									<option value="Hand to Customer">
+									<option value="Call Upon Arrival">
+								</datalist>
 							</div>
 						</div>
 					</section>
@@ -462,7 +470,16 @@
 							</div>
 							<div class="field full">
 								<label for="delivery_instructions">Delivery Instructions</label>
-								<textarea id="delivery_instructions" name="delivery_instructions" rows="3"></textarea>
+								<input id="delivery_instructions" name="delivery_instructions" list="deliveryInstructionOptions" placeholder="Choose or type instructions">
+								<datalist id="deliveryInstructionOptions">
+									<option value="Dock">
+									<option value="Front Door">
+									<option value="Loading Area">
+									<option value="Reception / Front Desk">
+									<option value="Hand to Customer">
+									<option value="Call Upon Arrival">
+									<option value="Leave at Door">
+								</datalist>
 							</div>
 						</div>
 					</section>
@@ -493,10 +510,10 @@
 							<div class="field">
 								<label for="job_category">Job Category</label>
 								<select id="job_category" name="job_category">
-									<option value="general">General</option>
-									<option value="medical">Medical</option>
-									<option value="legal">Legal</option>
-									<option value="pallet">Pallet</option>
+									<option value="general">General (Boxes)</option>
+									<option value="medical">Medical (Labs / Coolers)</option>
+									<option value="legal">Legal (Serve / Paperwork)</option>
+									<option value="pallet">Pallet (Van Job)</option>
 								</select>
 							</div>
 							<div class="field">
@@ -509,16 +526,7 @@
 									<option value="residential_to_residential">Residential to Residential</option>
 								</select>
 							</div>
-							<div class="field">
-								<label for="service_level">Service Level</label>
-								<select id="service_level" name="service_level">
-									<option value="">Choose level</option>
-									<option value="standard">Standard</option>
-									<option value="priority">Priority</option>
-									<option value="stat">STAT</option>
-									<option value="on_demand">On Demand</option>
-								</select>
-							</div>
+							<input id="service_level" name="service_level" type="hidden" value="">
 							<div class="field">
 								<label for="package_type">Package Type</label>
 								<select id="package_type" name="package_type">
