@@ -124,6 +124,8 @@
     return String(value || "").trim().toLowerCase();
   }
 
+  const INTRODUCTORY_DISCOUNT = 0.14;
+
   const EDIT_PRICE_CHART = Object.freeze({
     car: { base: 25, mileage: 1.45, minimum: 35 },
     suv: { base: 25, mileage: 1.45, minimum: 35 },
@@ -251,13 +253,14 @@
     const pieceFee = Math.max(0, pieces - 2) * 4;
     const weightFee = normalizeEditWeight(elements.editPackageWeight?.value) === "over_75_lbs" ? 8 : 0;
 
-    let calculated = Math.max(rate.minimum, (rate.base + miles * rate.mileage) * multiplier);
+    let deliverySubtotal = Math.max(rate.minimum, (rate.base + miles * rate.mileage) * multiplier);
     if (elements.editReturnRequired?.value === "true") {
-      calculated += Math.max(rate.minimum, rate.base + miles * rate.mileage);
+      deliverySubtotal += Math.max(rate.minimum, rate.base + miles * rate.mileage);
     }
-    const recommended = Math.ceil((calculated + stops + wait + handling + tolls) / 5) * 5 + pieceFee + weightFee;
+    const discountedDeliverySubtotal = deliverySubtotal * (1 - INTRODUCTORY_DISCOUNT);
+    const recommended = Math.ceil((discountedDeliverySubtotal + stops + wait + handling + tolls) / 5) * 5 + pieceFee + weightFee;
     elements.editApprovedPrice.value = recommended.toFixed(2);
-    elements.editPriceResult.textContent = "Recommended customer price: $" + recommended.toFixed(2) + " (includes $" + pieceFee.toFixed(2) + " piece fee and $" + weightFee.toFixed(2) + " weight fee).";
+    elements.editPriceResult.textContent = "Recommended customer price: $" + recommended.toFixed(2) + " (14% introductory discount applied; includes $" + pieceFee.toFixed(2) + " piece fee and $" + weightFee.toFixed(2) + " weight fee).";
   }
 
   function readInitialTabFromUrl() {
