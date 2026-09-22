@@ -142,7 +142,7 @@ function calculateCustomerPrice({ vehicleType, deliverySpeed, serviceLevel, mile
   if (normalizeToken(serviceLevel) === "stat") multiplier = Math.max(multiplier, 1.50);
   const calculated = Math.max(rate.minimum, (rate.base + miles * rate.mileage) * multiplier);
   const discountedDeliveryPrice = calculated * (1 - INTRODUCTORY_DISCOUNT);
-  const basePrice = Math.ceil(discountedDeliveryPrice / 5) * 5;
+  const basePrice = Math.round(discountedDeliveryPrice * 100) / 100;
   return basePrice + packageFees.total;
 }
 
