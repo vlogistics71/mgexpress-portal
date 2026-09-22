@@ -665,6 +665,8 @@
 		const approvedPriceInput = document.getElementById("approved_price");
 		const driverPayInput = document.getElementById("driver_pay");
 
+		const INTRODUCTORY_DISCOUNT = 0.14;
+
 		const PRICE_CHART = Object.freeze({
 			car: { base: 25, mileage: 1.45, minimum: 35, driverMinimum: 20 },
 			suv: { base: 25, mileage: 1.45, minimum: 35, driverMinimum: 20 },
@@ -780,8 +782,9 @@
 			multiplier = Math.min(multiplier, 1.60);
 
 			const extraFees = extraStops * 12 + waitBlocks * 15 + specialHandling + tollsParking;
-			let recommended = Math.max(rate.minimum, (rate.base + miles * rate.mileage) * multiplier + extraFees);
-			if (String(requestForm.return_required.value) === "true") recommended += Math.max(rate.minimum, rate.base + miles * rate.mileage);
+			let deliverySubtotal = Math.max(rate.minimum, (rate.base + miles * rate.mileage) * multiplier);
+			if (String(requestForm.return_required.value) === "true") deliverySubtotal += Math.max(rate.minimum, rate.base + miles * rate.mileage);
+			let recommended = deliverySubtotal * (1 - INTRODUCTORY_DISCOUNT) + extraFees;
 			recommended = Math.ceil(recommended / 5) * 5;
 			const driverPay = Math.ceil(Math.max(rate.driverMinimum, recommended * 0.55));
 			const margin = ((recommended - driverPay) / recommended) * 100;
@@ -792,7 +795,7 @@
 			document.getElementById("suggestedDriverPay").textContent = money(driverPay);
 			document.getElementById("estimatedMargin").textContent = margin.toFixed(1) + "%";
 			approvedPriceInput.classList.add("price-approved");
-			setPricingStatus(`${miles.toFixed(1)} route miles · ${money(rate.base)} base · ${money(rate.mileage)}/mile · dispatch approval required`);
+			setPricingStatus(`${miles.toFixed(1)} route miles · 14% introductory discount applied · dispatch approval required`);
 		}
 
 		function syncReturnFields() {
