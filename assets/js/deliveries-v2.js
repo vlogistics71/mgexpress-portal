@@ -258,7 +258,7 @@
       deliverySubtotal += Math.max(rate.minimum, rate.base + miles * rate.mileage);
     }
     const discountedDeliverySubtotal = deliverySubtotal * (1 - INTRODUCTORY_DISCOUNT);
-    const recommended = Math.ceil((discountedDeliverySubtotal + stops + wait + handling + tolls) / 5) * 5 + pieceFee + weightFee;
+    const recommended = Math.round((discountedDeliverySubtotal + stops + wait + handling + tolls + pieceFee + weightFee) * 100) / 100;
     elements.editApprovedPrice.value = recommended.toFixed(2);
     elements.editPriceResult.textContent = "Recommended customer price: $" + recommended.toFixed(2) + " (14% introductory discount applied; includes $" + pieceFee.toFixed(2) + " piece fee and $" + weightFee.toFixed(2) + " weight fee).";
   }
