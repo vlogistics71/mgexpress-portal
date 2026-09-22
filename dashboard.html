@@ -1428,6 +1428,8 @@
       format: "json"
     });
 
+    const INTRODUCTORY_DISCOUNT = 0.14;
+
     const PRICE_CHART = Object.freeze({
       car: { base: 25, mileage: 1.45, minimum: 35, driverMinimum: 20 },
       suv: { base: 25, mileage: 1.45, minimum: 35, driverMinimum: 20 },
@@ -1555,8 +1557,9 @@
       multiplier = Math.min(multiplier, 1.60);
 
       const fees = extraStops * 12 + waitBlocks * 15 + handling + tolls;
-      let recommended = Math.max(rate.minimum, (rate.base + miles * rate.mileage) * multiplier + fees);
-      if (clean(form.return_required.value) === "true") recommended += Math.max(rate.minimum, rate.base + miles * rate.mileage);
+      let deliverySubtotal = Math.max(rate.minimum, (rate.base + miles * rate.mileage) * multiplier);
+      if (clean(form.return_required.value) === "true") deliverySubtotal += Math.max(rate.minimum, rate.base + miles * rate.mileage);
+      let recommended = deliverySubtotal * (1 - INTRODUCTORY_DISCOUNT) + fees;
       recommended = Math.ceil(recommended / 5) * 5;
       recommended += extraPieceFee + heavyWeightFee;
       const driverPay = Math.ceil(Math.max(rate.driverMinimum, recommended * 0.55));
@@ -1570,7 +1573,7 @@
         additionalPieces ? `${additionalPieces} extra piece${additionalPieces === 1 ? "" : "s"}: ${money(extraPieceFee)}` : "",
         heavyWeightFee ? `over 75 lbs: ${money(heavyWeightFee)}` : ""
       ].filter(Boolean).join(" · ");
-      setPricingStatus(`${miles.toFixed(1)} route miles · ${money(rate.base)} base · ${money(rate.mileage)}/mile${packageFeeSummary ? " · " + packageFeeSummary : ""} · dispatch approval required`);
+      setPricingStatus(`${miles.toFixed(1)} route miles · 14% introductory discount applied${packageFeeSummary ? " · " + packageFeeSummary : ""} · dispatch approval required`);
     }
 
     function toCurrencyEditValue(input) {
