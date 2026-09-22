@@ -516,10 +516,10 @@ function normalizeJobCategory(value) {
 
 function jobCategoryLabel(value) {
   const map = {
-    medical: "Medical",
-    pallet: "Pallet",
-    legal: "Legal",
-    general: "General",
+    medical: "Medical (Labs / Coolers)",
+    pallet: "Pallet (Van Job)",
+    legal: "Legal (Serve / Paperwork)",
+    general: "General (Boxes)",
     special: "Special"
   };
 
