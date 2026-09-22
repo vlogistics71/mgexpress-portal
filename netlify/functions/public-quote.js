@@ -33,6 +33,8 @@ function nullable(value, max = 1000) {
   return text || null;
 }
 
+const INTRODUCTORY_DISCOUNT = 0.14;
+
 const PRICE_CHART = Object.freeze({
   car: { base: 25, mileage: 1.45, minimum: 35 },
   suv: { base: 25, mileage: 1.45, minimum: 35 },
@@ -139,7 +141,8 @@ function calculateCustomerPrice({ vehicleType, deliverySpeed, serviceLevel, mile
   let multiplier = speedMultiplier;
   if (normalizeToken(serviceLevel) === "stat") multiplier = Math.max(multiplier, 1.50);
   const calculated = Math.max(rate.minimum, (rate.base + miles * rate.mileage) * multiplier);
-  const basePrice = Math.ceil(calculated / 5) * 5;
+  const discountedDeliveryPrice = calculated * (1 - INTRODUCTORY_DISCOUNT);
+  const basePrice = Math.ceil(discountedDeliveryPrice / 5) * 5;
   return basePrice + packageFees.total;
 }
 
