@@ -790,10 +790,10 @@
   function localJobCategoryLabel(value) {
     const normalized = helpers.normalizeCategory(value);
     const map = {
-      medical: "Medical",
-      legal: "Legal",
-      general: "General",
-      pallet: "Pallet",
+      medical: "Medical (Labs / Coolers)",
+      legal: "Legal (Serve / Paperwork)",
+      general: "General (Boxes)",
+      pallet: "Pallet (Van Job)",
       special: "Special"
     };
     return map[normalized] || "General";
