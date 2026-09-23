@@ -519,7 +519,7 @@ function jobCategoryLabel(value) {
     medical: "Medical (Labs / Coolers)",
     pallet: "Pallet (Van Job)",
     legal: "Legal (Serve / Paperwork)",
-    general: "General (Boxes)",
+    general: "General (Boxes / Other)",
     special: "Special"
   };
 
