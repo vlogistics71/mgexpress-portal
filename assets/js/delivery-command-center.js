@@ -792,7 +792,7 @@
     const map = {
       medical: "Medical (Labs / Coolers)",
       legal: "Legal (Serve / Paperwork)",
-      general: "General (Boxes)",
+      general: "General (Boxes / Other)",
       pallet: "Pallet (Van Job)",
       special: "Special"
     };
