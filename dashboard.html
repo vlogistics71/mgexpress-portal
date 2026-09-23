@@ -1137,7 +1137,7 @@
               <div class="field">
                 <label for="job_category">Job Category</label>
                 <select id="job_category" name="job_category">
-                  <option value="general" selected>General (Boxes)</option>
+                  <option value="general" selected>General (Boxes / Other)</option>
                   <option value="medical">Medical (Labs / Coolers)</option>
                   <option value="legal">Legal (Serve / Paperwork)</option>
                   <option value="pallet">Pallet (Van Job)</option>
@@ -1175,16 +1175,17 @@
 
               <div class="field">
                 <label for="package_type">Package Type / Description</label>
-                <input id="package_type" name="package_type">
+                <input id="package_type" name="package_type" placeholder="Example: 1 box, 5 × 5 × 5 in">
               </div>
 
               <div class="field">
                 <label for="package_weight">Estimated Total Weight</label>
                 <select id="package_weight" name="package_weight" required>
-                  <option value="under_50_lbs" selected>Under 50 lbs</option>
-                  <option value="50_to_75_lbs">50–75 lbs</option>
-                  <option value="over_75_lbs">Over 75 lbs (+$8)</option>
-                  <option value="custom">Custom</option>
+                  <option value="2_to_20_lbs" selected>2–20 lbs</option>
+                  <option value="25_to_50_lbs">25–50 lbs</option>
+                  <option value="55_to_75_lbs">55–75 lbs</option>
+                  <option value="over_75_lbs">75–100 lbs (+$8)</option>
+                  <option value="custom">Custom / Needs Review</option>
                 </select>
               </div>
 
