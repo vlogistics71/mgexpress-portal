@@ -1163,9 +1163,11 @@
           '</div></section>'+
           '<section class="details-card"><h4>Server Assignment</h4><div class="details-card-body">'+detailsBlock("Assigned Server",assignedServer)+
           '<div class="details-inline-actions"><button class="action-btn" type="button" id="processServeAssignBtn">'+(delivery.assigned_driver_id ? "Change Server" : "Assign Server")+'</button></div></div></section>'+
-          '<section class="details-card"><h4>Attempt History</h4><div class="details-card-body"><div id="processServeAttemptHistory" class="sheet-note">Loading attempts...</div><div class="details-inline-actions" style="margin-top:14px"><button class="action-btn" type="button" id="processServeLogAttemptBtn">Log Attempt</button></div></div></section>';
+          '<section class="details-card"><h4>Attempt History</h4><div class="details-card-body"><div id="processServeAttemptHistory" class="sheet-note">Loading attempts...</div><div class="details-inline-actions" style="margin-top:14px"><button class="action-btn" type="button" id="processServeLogAttemptBtn">Log Attempt</button></div></div></section>'+
+          '<section class="details-card"><h4>Return / Proof of Service</h4><div class="details-card-body"><div class="sheet-note">Generate a reviewable draft from the case details and the successful service attempt. Review all information before signing or filing with the court.</div><div class="details-inline-actions" style="margin-top:14px"><button class="action-btn" type="button" id="processServeRosBtn">Generate ROS Draft</button></div></div></section>';
         document.getElementById("processServeAssignBtn")?.addEventListener("click",()=>openAssignModal(delivery));
         document.getElementById("processServeLogAttemptBtn")?.addEventListener("click",()=>logProcessServeAttempt(serve,delivery));
+        document.getElementById("processServeRosBtn")?.addEventListener("click",()=>generateProcessServeRosDraft(serve,delivery));
         loadProcessServeAttempts(serve.id);
       });
       return;
@@ -1253,6 +1255,48 @@
     `;
   }
 
+
+  async function generateProcessServeRosDraft(serve, delivery) {
+    const { data: attempts, error } = await client.from("process_serve_attempts").select("*").eq("process_serve_id", serve.id).order("attempted_at", { ascending: false });
+    if (error) { showToast("Unable to load service attempts.", "error"); return; }
+    const successful = (attempts || []).find(a => ["served_personal","served_substitute"].includes(a.outcome));
+    if (!successful) {
+      showToast("A successful service attempt is required before generating an ROS draft.", "error");
+      return;
+    }
+    const serverName = driverNameById(delivery.assigned_driver_id) || "Server name required";
+    const servedAt = successful.attempted_at ? new Date(successful.attempted_at) : null;
+    const date = servedAt && !Number.isNaN(servedAt.getTime()) ? servedAt.toLocaleDateString() : "-";
+    const time = servedAt && !Number.isNaN(servedAt.getTime()) ? servedAt.toLocaleTimeString([], {hour:"numeric",minute:"2-digit"}) : "-";
+    const method = successful.outcome === "served_personal" ? "Personal Service" : "Substitute Service";
+    const w = window.open("", "_blank");
+    if (!w) { showToast("Please allow pop-ups to open the ROS draft.", "error"); return; }
+    const esc = escapeHtml;
+    w.document.write(`<!doctype html><html><head><meta charset="utf-8"><title>ROS Draft - ${esc(delivery.job_number||"Process Serve")}</title>
+    <style>body{font-family:Arial,sans-serif;color:#17211d;max-width:820px;margin:36px auto;padding:0 24px;line-height:1.45}h1{margin-bottom:4px}.draft{border:2px solid #b42318;background:#fff4f2;padding:10px 14px;font-weight:700;margin:18px 0}.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px 24px}.field{border-bottom:1px solid #bcc8c3;padding:8px 0}.label{font-size:11px;text-transform:uppercase;color:#65736d;font-weight:700}.value{font-size:15px;margin-top:3px}.full{grid-column:1/-1}.declaration{margin-top:28px;border-top:2px solid #17211d;padding-top:18px}.sig{margin-top:50px;display:grid;grid-template-columns:1fr 180px;gap:30px}.line{border-top:1px solid #17211d;padding-top:5px}.actions{margin:20px 0}@media print{.actions{display:none}body{margin:0}}</style></head><body>
+    <div class="actions"><button onclick="window.print()">Print / Save as PDF</button></div>
+    <h1>Return / Proof of Service</h1><div>MG Express • Process Serve ${esc(delivery.job_number||"")}</div>
+    <div class="draft">DRAFT — REVIEW BEFORE SIGNING OR FILING</div>
+    <div class="grid">
+      <div class="field"><div class="label">Court</div><div class="value">${esc(serve.court_name||"-")}</div></div>
+      <div class="field"><div class="label">Case Number</div><div class="value">${esc(serve.case_number||"-")}</div></div>
+      <div class="field"><div class="label">Plaintiff / Petitioner</div><div class="value">${esc(serve.plaintiff_petitioner||"-")}</div></div>
+      <div class="field"><div class="label">Defendant / Respondent</div><div class="value">${esc(serve.defendant_respondent||"-")}</div></div>
+      <div class="field full"><div class="label">Documents Served</div><div class="value">${esc(serve.documents_to_serve||"Review and identify documents actually served")}</div></div>
+      <div class="field"><div class="label">Person Served</div><div class="value">${esc(serve.person_to_serve||"-")}</div></div>
+      <div class="field"><div class="label">Method</div><div class="value">${esc(method)}</div></div>
+      <div class="field full"><div class="label">Service Location</div><div class="value">${esc(serve.service_address||"-")}</div></div>
+      <div class="field"><div class="label">Date Served</div><div class="value">${esc(date)}</div></div>
+      <div class="field"><div class="label">Time Served</div><div class="value">${esc(time)}</div></div>
+      <div class="field"><div class="label">Server</div><div class="value">${esc(serverName)}</div></div>
+      <div class="field"><div class="label">GPS</div><div class="value">${successful.latitude!=null ? esc(Number(successful.latitude).toFixed(6)+", "+Number(successful.longitude).toFixed(6)) : "Not captured"}</div></div>
+      <div class="field full"><div class="label">Attempt Notes</div><div class="value">${esc(successful.notes||"None")}</div></div>
+    </div>
+    <div class="declaration"><strong>Server declaration — review before signature</strong><p>I declare that the information above accurately reflects the service I performed. Complete any court-required affidavit or declaration language and confirm all required fields before filing.</p></div>
+    <div class="sig"><div class="line">Server Signature</div><div class="line">Date</div></div>
+    </body></html>`);
+    w.document.close();
+  }
 
   function attemptOutcomeLabel(value) {
     return String(value || "").replaceAll("_", " ").replace(/\\b\\w/g, m => m.toUpperCase());
