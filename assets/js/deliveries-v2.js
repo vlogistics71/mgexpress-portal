@@ -1139,7 +1139,7 @@
 
     const isProcessServe = clean(delivery.job_category) === "legal" && String(delivery.job_number || "").startsWith("PS-");
     if (isProcessServe) {
-      elements.deliveryDetailsTitle.textContent = delivery.job_number || "Process Serve Details";
+      elements.deliveryDetailsTitle.textContent = "Process Serve Details";
       elements.deliveryDetailsSubtitle.textContent = "Process Serve • Loading legal details...";
       elements.deliveryDetailsBody.innerHTML = '<section class="details-card"><h4>Process Serve</h4><div class="details-card-body"><div class="empty" style="min-height:100px;padding:0;place-items:start;text-align:left;"><div><div class="empty-title">Loading case information...</div></div></div></div></section>';
       client.from("process_serves").select("*").eq("job_id", delivery.id).maybeSingle().then(({data:serve,error}) => {
@@ -1163,8 +1163,10 @@
           '</div></section>'+
           '<section class="details-card"><h4>Server Assignment</h4><div class="details-card-body">'+detailsBlock("Assigned Server",assignedServer)+
           '<div class="details-inline-actions"><button class="action-btn" type="button" id="processServeAssignBtn">'+(delivery.assigned_driver_id ? "Change Server" : "Assign Server")+'</button></div></div></section>'+
-          '<section class="details-card"><h4>Attempt History</h4><div class="details-card-body"><div class="sheet-note">No service attempts logged yet.</div></div></section>';
+          '<section class="details-card"><h4>Attempt History</h4><div class="details-card-body"><div id="processServeAttemptHistory" class="sheet-note">Loading attempts...</div><div class="details-inline-actions" style="margin-top:14px"><button class="action-btn" type="button" id="processServeLogAttemptBtn">Log Attempt</button></div></div></section>';
         document.getElementById("processServeAssignBtn")?.addEventListener("click",()=>openAssignModal(delivery));
+        document.getElementById("processServeLogAttemptBtn")?.addEventListener("click",()=>logProcessServeAttempt(serve,delivery));
+        loadProcessServeAttempts(serve.id);
       });
       return;
     }
@@ -1249,6 +1251,46 @@
         </div>
       </section>
     `;
+  }
+
+
+  function attemptOutcomeLabel(value) {
+    return String(value || "").replaceAll("_", " ").replace(/\\b\\w/g, m => m.toUpperCase());
+  }
+
+  async function loadProcessServeAttempts(processServeId) {
+    const box = document.getElementById("processServeAttemptHistory");
+    if (!box) return;
+    const { data, error } = await client.from("process_serve_attempts").select("*").eq("process_serve_id", processServeId).order("attempted_at", { ascending: false });
+    if (error) { box.textContent = "Unable to load attempts."; return; }
+    if (!data?.length) { box.textContent = "No service attempts logged yet."; return; }
+    box.className = "";
+    box.innerHTML = data.map(a => '<div style="padding:12px 0;border-bottom:1px solid #dfe8e4"><strong>'+escapeHtml(attemptOutcomeLabel(a.outcome))+'</strong><div style="margin-top:5px">'+escapeHtml(formatDateTime(a.attempted_at))+'</div>'+(a.notes?'<div style="margin-top:5px">'+escapeHtml(a.notes)+'</div>':'')+(a.latitude!=null?'<div style="margin-top:5px;color:#68756f;font-size:12px">GPS captured • accuracy '+escapeHtml(Math.round(a.gps_accuracy_meters||0))+' m</div>':'')+'</div>').join("");
+  }
+
+  async function logProcessServeAttempt(serve, delivery) {
+    const outcomes = { "1":"served_personal","2":"served_substitute","3":"posted","4":"refused","5":"no_answer","6":"bad_address","7":"unable_to_serve","8":"other" };
+    const choice = window.prompt("Attempt outcome:\\n1 Personal Service\\n2 Substitute Service\\n3 Posted\\n4 Refused\\n5 No Answer\\n6 Bad Address\\n7 Unable to Serve\\n8 Other\\n\\nEnter 1-8:");
+    if (!choice || !outcomes[String(choice).trim()]) return;
+    const notes = window.prompt("Attempt notes (optional):") || "";
+    let coords = null;
+    if (navigator.geolocation) {
+      try {
+        coords = await new Promise((resolve,reject)=>navigator.geolocation.getCurrentPosition(p=>resolve(p.coords),reject,{enableHighAccuracy:true,timeout:12000,maximumAge:0}));
+      } catch (_error) {
+        const proceed = window.confirm("GPS could not be captured. Log this attempt without GPS?");
+        if (!proceed) return;
+      }
+    }
+    const session = (await client.auth.getSession()).data?.session;
+    if (!session?.user) { showToast("Your session expired. Please sign in again.", "error"); return; }
+    const payload = { process_serve_id:serve.id, job_id:delivery.id, attempted_by:session.user.id, outcome:outcomes[String(choice).trim()], notes:notes.trim()||null, latitude:coords?.latitude??null, longitude:coords?.longitude??null, gps_accuracy_meters:coords?.accuracy??null };
+    const { error } = await client.from("process_serve_attempts").insert(payload);
+    if (error) { showToast(error.message || "Unable to log attempt.", "error"); return; }
+    const served = ["served_personal","served_substitute"].includes(payload.outcome);
+    await client.from("process_serves").update({ serve_status: served ? "served" : "attempted", updated_at:new Date().toISOString() }).eq("id",serve.id);
+    showToast("Service attempt logged.", "success");
+    await openDeliveryDetails(delivery.id);
   }
 
   async function openDeliveryDetails(deliveryId) {
