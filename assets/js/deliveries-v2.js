@@ -1137,6 +1137,38 @@
       return;
     }
 
+    const isProcessServe = clean(delivery.job_category) === "legal" && String(delivery.job_number || "").startsWith("PS-");
+    if (isProcessServe) {
+      elements.deliveryDetailsTitle.textContent = delivery.job_number || "Process Serve Details";
+      elements.deliveryDetailsSubtitle.textContent = "Process Serve • Loading legal details...";
+      elements.deliveryDetailsBody.innerHTML = '<section class="details-card"><h4>Process Serve</h4><div class="details-card-body"><div class="empty" style="min-height:100px;padding:0;place-items:start;text-align:left;"><div><div class="empty-title">Loading case information...</div></div></div></div></section>';
+      client.from("process_serves").select("*").eq("job_id", delivery.id).maybeSingle().then(({data:serve,error}) => {
+        if (error || !serve) {
+          elements.deliveryDetailsSubtitle.textContent = "Process Serve • " + getStatusLabel(delivery);
+          elements.deliveryDetailsBody.innerHTML = '<section class="details-card"><h4>Process Serve</h4><div class="details-card-body">'+detailsBlock("Job Number",delivery.job_number)+detailsBlock("Status",getStatusLabel(delivery))+detailsBlock("Service Address",delivery.delivery_address || delivery.pickup_address || "-")+'<div class="sheet-note">Legal case details could not be loaded.</div></div></section>';
+          return;
+        }
+        const assignedDriverName = driverNameById(delivery.assigned_driver_id);
+        const assignedServer = delivery.assigned_driver_id ? (assignedDriverName || "Server Assigned") : "Unassigned";
+        const deadline = serve.service_deadline ? formatDateTime(serve.service_deadline) : "-";
+        const serveStatus = String(serve.serve_status || "new").replaceAll("_"," ").replace(/\\b\\w/g,m=>m.toUpperCase());
+        elements.deliveryDetailsSubtitle.textContent = "Process Serve • " + serveStatus;
+        elements.deliveryDetailsBody.innerHTML =
+          '<section class="details-card"><h4>Case & Service</h4><div class="details-card-body">'+
+          detailsBlock("Job Number",delivery.job_number)+detailsBlock("Serve Status",serveStatus)+detailsBlock("Case Number",serve.case_number || "-")+
+          detailsBlock("Court",serve.court_name || "-")+detailsBlock("Plaintiff / Petitioner",serve.plaintiff_petitioner || "-")+
+          detailsBlock("Defendant / Respondent",serve.defendant_respondent || "-")+detailsBlock("Person to Serve",serve.person_to_serve || "-")+
+          detailsBlock("Service Address",serve.service_address || "-")+detailsBlock("Serve By / Deadline",deadline)+
+          detailsBlock("Documents to Serve",serve.documents_to_serve || "-")+detailsBlock("Special Instructions",serve.special_instructions || "-")+
+          '</div></section>'+
+          '<section class="details-card"><h4>Server Assignment</h4><div class="details-card-body">'+detailsBlock("Assigned Server",assignedServer)+
+          '<div class="details-inline-actions"><button class="action-btn" type="button" id="processServeAssignBtn">'+(delivery.assigned_driver_id ? "Change Server" : "Assign Server")+'</button></div></div></section>'+
+          '<section class="details-card"><h4>Attempt History</h4><div class="details-card-body"><div class="sheet-note">No service attempts logged yet.</div></div></section>';
+        document.getElementById("processServeAssignBtn")?.addEventListener("click",()=>openAssignModal(delivery));
+      });
+      return;
+    }
+
     const route = [delivery.pickup_address, delivery.delivery_address].filter(Boolean).join(" → ");
     const assignedDriverName = driverNameById(delivery.assigned_driver_id);
     const assignedDriver = delivery.assigned_driver_id ? (assignedDriverName || "Driver Assigned") : "Unassigned";
