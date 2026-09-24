@@ -1113,6 +1113,50 @@
     }
   }
 
+  async function loadProcessServeDocuments(serve, delivery) {
+    const box = document.getElementById("processServeDocuments");
+    if (!box) return;
+    const result = await client.from("process_serve_documents").select("*").eq("process_serve_id", serve.id).order("created_at", {ascending:true});
+    if (result.error) { box.innerHTML = '<div class="sheet-note">'+escapeHtml(result.error.message)+'</div>'; return; }
+    const docs = result.data || [];
+    box.innerHTML = docs.length ? docs.map(doc =>
+      '<div style="padding:10px 0;border-bottom:1px solid #e3ebe7"><strong>📄 '+escapeHtml(doc.file_name)+'</strong><div class="details-inline-actions" style="margin-top:8px"><button class="action-btn" type="button" data-open-serve-doc="'+escapeHtml(doc.id)+'">Open PDF</button><button class="action-btn" type="button" data-remove-serve-doc="'+escapeHtml(doc.id)+'">Remove</button></div></div>'
+    ).join("") : '<div class="sheet-note">No PDF documents uploaded yet.</div>';
+    box.querySelectorAll("[data-open-serve-doc]").forEach(btn => btn.addEventListener("click", () => openProcessServeDocument(docs.find(d=>d.id===btn.dataset.openServeDoc))));
+    box.querySelectorAll("[data-remove-serve-doc]").forEach(btn => btn.addEventListener("click", () => removeProcessServeDocument(docs.find(d=>d.id===btn.dataset.removeServeDoc),serve,delivery)));
+  }
+
+  async function openProcessServeDocument(doc) {
+    if (!doc?.storage_path) return;
+    const result = await client.storage.from("process-serve-documents").createSignedUrl(doc.storage_path, 300);
+    if (result.error) { showToast(result.error.message || "Unable to open PDF.","error"); return; }
+    window.open(result.data.signedUrl,"_blank");
+  }
+
+  async function uploadProcessServeDocument(serve, delivery) {
+    const input = document.getElementById("processServeDocumentInput");
+    const file = input?.files?.[0];
+    if (!file) { showToast("Choose a PDF first.","error"); return; }
+    if (file.type !== "application/pdf" || file.size > 26214400) { showToast("File must be a PDF and 25 MB or less.","error"); return; }
+    const safeName = String(file.name || "serve-document.pdf").replace(/[^a-zA-Z0-9._-]+/g,"-");
+    const path = serve.id+"/"+Date.now()+"-"+safeName;
+    const upload = await client.storage.from("process-serve-documents").upload(path,file,{contentType:"application/pdf",cacheControl:"3600",upsert:false});
+    if (upload.error) { showToast(upload.error.message,"error"); return; }
+    const row = await client.from("process_serve_documents").insert({process_serve_id:serve.id,job_id:delivery.id,file_name:file.name,storage_path:path,mime_type:"application/pdf",file_size_bytes:file.size,uploaded_by:state.session?.user?.id}).select("id").single();
+    if (row.error) { await client.storage.from("process-serve-documents").remove([path]); showToast(row.error.message,"error"); return; }
+    input.value=""; showToast("Serve PDF uploaded.","success"); await loadProcessServeDocuments(serve,delivery);
+  }
+
+  async function removeProcessServeDocument(doc, serve, delivery) {
+    if (!doc?.id) return;
+    if (!window.confirm("Remove "+doc.file_name+" from this Process Serve?")) return;
+    const removed = await client.storage.from("process-serve-documents").remove([doc.storage_path]);
+    if (removed.error) { showToast(removed.error.message,"error"); return; }
+    const row = await client.from("process_serve_documents").delete().eq("id",doc.id);
+    if (row.error) { showToast(row.error.message,"error"); return; }
+    showToast("Serve PDF removed.","success"); await loadProcessServeDocuments(serve,delivery);
+  }
+
   function renderDeliveryDetailsModal(delivery, message = "") {
     if (!elements.deliveryDetailsBody) {
       return;
@@ -1161,11 +1205,14 @@
           detailsBlock("Service Address",serve.service_address || "-")+detailsBlock("Serve By / Deadline",deadline)+
           detailsBlock("Documents to Serve",serve.documents_to_serve || "-")+detailsBlock("Special Instructions",serve.special_instructions || "-")+
           '</div></section>'+
+          '<section class="details-card"><h4>Serve Documents</h4><div class="details-card-body"><div class="sheet-note">Upload the PDF papers the assigned server needs for this serve. PDFs are private to staff and the assigned server.</div><input id="processServeDocumentInput" type="file" accept="application/pdf,.pdf" style="margin-top:12px"><div class="details-inline-actions" style="margin-top:10px"><button class="action-btn" type="button" id="processServeUploadDocumentBtn">Upload PDF</button></div><div id="processServeDocuments" style="margin-top:12px">Loading documents...</div></div></section>'+
           '<section class="details-card"><h4>Server Assignment</h4><div class="details-card-body">'+detailsBlock("Assigned Server",assignedServer)+
           '<div class="details-inline-actions"><button class="action-btn" type="button" id="processServeAssignBtn">'+(delivery.assigned_driver_id ? "Change Server" : "Assign Server")+'</button></div></div></section>'+
           '<section class="details-card"><h4>Attempt History</h4><div class="details-card-body"><div id="processServeAttemptHistory" class="sheet-note">Loading attempts...</div><div class="details-inline-actions" style="margin-top:14px"><button class="action-btn" type="button" id="processServeLogAttemptBtn">Log Attempt</button></div></div></section>'+
           '<section class="details-card"><h4>Return / Proof of Service</h4><div class="details-card-body"><div class="sheet-note">Generate a reviewable draft from the case details and the successful service attempt. Review all information before signing or filing with the court.</div><div class="details-inline-actions" style="margin-top:14px"><button class="action-btn" type="button" id="processServeRosBtn">Generate ROS Draft</button></div></div></section>';
-        document.getElementById("processServeAssignBtn")?.addEventListener("click",()=>openAssignModal(delivery));
+        document.getElementById("processServeUploadDocumentBtn")?.addEventListener("click",()=>uploadProcessServeDocument(serve,delivery));
+                document.getElementById("processServeAssignBtn")?.addEventListener("click",()=>openAssignModal(delivery));
+        loadProcessServeDocuments(serve,delivery);
         document.getElementById("processServeLogAttemptBtn")?.addEventListener("click",()=>logProcessServeAttempt(serve,delivery));
         document.getElementById("processServeRosBtn")?.addEventListener("click",()=>generateProcessServeRosDraft(serve,delivery));
         loadProcessServeAttempts(serve.id);
