@@ -1311,8 +1311,8 @@
       let permissionState="prompt";
       try{if(navigator.permissions){permissionState=(await navigator.permissions.query({name:"geolocation"})).state}}catch(_e){}
       if(permissionState==="denied"){
-        await showLocationPermissionHelp("Location is blocked for MG Express. In Chrome, tap the site controls icon beside the address, open Permissions, and change Location to Allow. Then return here and tap Capture GPS again.");
-        status.textContent="Location blocked — allow it in Chrome site permissions.";
+        const proceed=await showLocationPermissionHelp("Location is currently blocked for MG Express. Chrome does not let a website turn a blocked permission back on. Tap Continue, then use the site controls icon beside the address → Permissions → Location → Allow. Return here and tap Capture GPS again.");
+        status.textContent=proceed ? "Open Chrome site controls → Permissions → Location → Allow." : "Location remains blocked.";
         return;
       }
       if(permissionState==="prompt"){
