@@ -1187,7 +1187,7 @@
     const workflowButtons = readOnlyMode ? "" : workflowActionButtons(delivery);
     const documentButtons = documentActionButtons(delivery);
 
-    elements.deliveryDetailsTitle.textContent = delivery.job_number || "Delivery Details";
+    elements.deliveryDetailsTitle.textContent = isProcessServeDelivery(delivery) ? "Process Serve Details" : (delivery.job_number || "Delivery Details");
     elements.deliveryDetailsSubtitle.textContent = `${delivery.customer_name || delivery.company_name || "Customer"} • ${getStatusLabel(delivery)}`;
     elements.deliveryDetailsBody.innerHTML = `
       <section class="details-card">
