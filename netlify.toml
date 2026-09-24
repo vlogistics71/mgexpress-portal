@@ -12,7 +12,7 @@
     X-Content-Type-Options = "nosniff"
     X-Frame-Options = "DENY"
     Referrer-Policy = "strict-origin-when-cross-origin"
-    Permissions-Policy = "camera=(self), geolocation=(), microphone=(), payment=(self)"
+    Permissions-Policy = "camera=(self), geolocation=(self), microphone=(), payment=(self)"
     Content-Security-Policy-Report-Only = "default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https:; connect-src 'self' https://dczlucwfjayymlwbzzdi.supabase.co wss://dczlucwfjayymlwbzzdi.supabase.co https://api.geoapify.com https://api.stripe.com; frame-src https://js.stripe.com https://hooks.stripe.com; object-src 'none'; base-uri 'self'; frame-ancestors 'none'; form-action 'self' https://checkout.stripe.com"
 
 [[redirects]]
