@@ -1269,28 +1269,51 @@
   }
 
   async function logProcessServeAttempt(serve, delivery) {
-    const outcomes = { "1":"served_personal","2":"served_substitute","3":"posted","4":"refused","5":"no_answer","6":"bad_address","7":"unable_to_serve","8":"other" };
-    const choice = window.prompt("Attempt outcome:\\n1 Personal Service\\n2 Substitute Service\\n3 Posted\\n4 Refused\\n5 No Answer\\n6 Bad Address\\n7 Unable to Serve\\n8 Other\\n\\nEnter 1-8:");
-    if (!choice || !outcomes[String(choice).trim()]) return;
-    const notes = window.prompt("Attempt notes (optional):") || "";
-    let coords = null;
-    if (navigator.geolocation) {
-      try {
-        coords = await new Promise((resolve,reject)=>navigator.geolocation.getCurrentPosition(p=>resolve(p.coords),reject,{enableHighAccuracy:true,timeout:12000,maximumAge:0}));
-      } catch (_error) {
-        const proceed = window.confirm("GPS could not be captured. Log this attempt without GPS?");
-        if (!proceed) return;
-      }
-    }
-    const session = (await client.auth.getSession()).data?.session;
-    if (!session?.user) { showToast("Your session expired. Please sign in again.", "error"); return; }
-    const payload = { process_serve_id:serve.id, job_id:delivery.id, attempted_by:session.user.id, outcome:outcomes[String(choice).trim()], notes:notes.trim()||null, latitude:coords?.latitude??null, longitude:coords?.longitude??null, gps_accuracy_meters:coords?.accuracy??null };
-    const { error } = await client.from("process_serve_attempts").insert(payload);
-    if (error) { showToast(error.message || "Unable to log attempt.", "error"); return; }
-    const served = ["served_personal","served_substitute"].includes(payload.outcome);
-    await client.from("process_serves").update({ serve_status: served ? "served" : "attempted", updated_at:new Date().toISOString() }).eq("id",serve.id);
-    showToast("Service attempt logged.", "success");
-    await openDeliveryDetails(delivery.id);
+    const existing = document.getElementById("processServeAttemptSheet");
+    if (existing) existing.remove();
+    const wrap = document.createElement("div");
+    wrap.id = "processServeAttemptSheet";
+    wrap.style.cssText = "position:fixed;inset:0;z-index:2000;background:rgba(10,20,16,.62);display:flex;align-items:flex-end;justify-content:center;padding:0";
+    wrap.innerHTML = '<div style="background:#fff;width:min(720px,100%);max-height:92vh;overflow:auto;border-radius:24px 24px 0 0;padding:22px 18px 28px">'+
+      '<div style="display:flex;justify-content:space-between;align-items:center;gap:12px"><div><div style="font-size:13px;font-weight:900;color:#087455;text-transform:uppercase">Process Serve</div><h3 style="font-size:28px;margin:4px 0">Log Attempt</h3></div><button id="psAttemptClose" type="button" style="border:0;background:#eef4f1;border-radius:12px;width:44px;height:44px;font-size:24px">×</button></div>'+
+      '<div style="margin-top:18px;font-weight:900">Attempt Outcome</div>'+
+      '<div id="psOutcomes" style="display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-top:10px">'+
+      [["served_personal","Personal Service"],["served_substitute","Substitute Service"],["posted","Posted"],["refused","Refused"],["no_answer","No Answer"],["bad_address","Bad Address"],["unable_to_serve","Unable to Serve"],["other","Other"]].map(([v,l])=>'<button type="button" data-outcome="'+v+'" style="min-height:52px;border:1px solid #cad8d2;background:#fff;border-radius:13px;font-weight:900;padding:10px">'+l+'</button>').join("")+
+      '</div><label style="display:grid;gap:7px;margin-top:18px;font-weight:900">Attempt Notes<textarea id="psAttemptNotes" placeholder="What happened at the address?" style="min-height:100px;border:1px solid #cad8d2;border-radius:13px;padding:12px;font:inherit;resize:vertical"></textarea></label>'+
+      '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:16px"><div style="background:#f4f7f6;border-radius:13px;padding:12px"><strong>Date & Time</strong><div id="psAttemptTime" style="margin-top:5px"></div></div><div style="background:#f4f7f6;border-radius:13px;padding:12px"><strong>GPS</strong><div id="psGpsStatus" style="margin-top:5px">Not captured</div></div></div>'+
+      '<button id="psCaptureGps" type="button" style="width:100%;margin-top:12px;min-height:50px;border:1px solid #087455;background:#fff;color:#087455;border-radius:13px;font-weight:900">📍 Capture GPS</button>'+
+      '<label style="display:block;margin-top:12px"><span style="display:block;font-weight:900;margin-bottom:7px">Photo Evidence <span style="font-weight:400;color:#68756f">(optional)</span></span><input id="psAttemptPhoto" type="file" accept="image/*" capture="environment" style="width:100%;border:1px solid #cad8d2;border-radius:13px;padding:12px"></label>'+
+      '<div id="psAttemptMessage" style="margin-top:10px;font-weight:800"></div><button id="psSaveAttempt" type="button" style="width:100%;margin-top:16px;min-height:56px;border:0;background:#087455;color:#fff;border-radius:14px;font-size:17px;font-weight:900">Save Attempt</button></div>';
+    document.body.appendChild(wrap);
+    let outcome="", coords=null;
+    document.getElementById("psAttemptTime").textContent = new Date().toLocaleString();
+    const close=()=>wrap.remove();
+    document.getElementById("psAttemptClose").onclick=close;
+    wrap.addEventListener("click",e=>{if(e.target===wrap)close()});
+    document.getElementById("psOutcomes").addEventListener("click",e=>{
+      const b=e.target.closest("[data-outcome]"); if(!b)return; outcome=b.dataset.outcome;
+      document.querySelectorAll("#psOutcomes [data-outcome]").forEach(x=>{x.style.background="#fff";x.style.color="#17221e"});
+      b.style.background="#064f3b";b.style.color="#fff";
+    });
+    document.getElementById("psCaptureGps").onclick=async()=>{
+      const status=document.getElementById("psGpsStatus");status.textContent="Capturing...";
+      if(!navigator.geolocation){status.textContent="GPS unavailable";return}
+      try{coords=await new Promise((resolve,reject)=>navigator.geolocation.getCurrentPosition(p=>resolve(p.coords),reject,{enableHighAccuracy:true,timeout:12000,maximumAge:0}));status.textContent="Captured • ±"+Math.round(coords.accuracy||0)+" m";}
+      catch(_e){status.textContent="Could not capture GPS";}
+    };
+    document.getElementById("psSaveAttempt").onclick=async()=>{
+      const message=document.getElementById("psAttemptMessage"),btn=document.getElementById("psSaveAttempt");
+      if(!outcome){message.textContent="Select an attempt outcome.";return}
+      btn.disabled=true;btn.textContent="Saving...";
+      try{
+        const session=(await client.auth.getSession()).data?.session;if(!session?.user)throw new Error("Your session expired. Please sign in again.");
+        const payload={process_serve_id:serve.id,job_id:delivery.id,attempted_by:session.user.id,outcome,notes:document.getElementById("psAttemptNotes").value.trim()||null,latitude:coords?.latitude??null,longitude:coords?.longitude??null,gps_accuracy_meters:coords?.accuracy??null};
+        const {error}=await client.from("process_serve_attempts").insert(payload);if(error)throw error;
+        const served=["served_personal","served_substitute"].includes(outcome);
+        await client.from("process_serves").update({serve_status:served?"served":"attempted",updated_at:new Date().toISOString()}).eq("id",serve.id);
+        close();showToast("Service attempt logged.","success");await openDeliveryDetails(delivery.id);
+      }catch(err){message.textContent=err.message||"Unable to save attempt.";btn.disabled=false;btn.textContent="Save Attempt";}
+    };
   }
 
   async function openDeliveryDetails(deliveryId) {
