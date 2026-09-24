@@ -1265,7 +1265,12 @@
     if (error) { box.textContent = "Unable to load attempts."; return; }
     if (!data?.length) { box.textContent = "No service attempts logged yet."; return; }
     box.className = "";
-    box.innerHTML = data.map(a => '<div style="padding:12px 0;border-bottom:1px solid #dfe8e4"><strong>'+escapeHtml(attemptOutcomeLabel(a.outcome))+'</strong><div style="margin-top:5px">'+escapeHtml(formatDateTime(a.attempted_at))+'</div>'+(a.notes?'<div style="margin-top:5px">'+escapeHtml(a.notes)+'</div>':'')+(a.latitude!=null?'<div style="margin-top:5px;color:#68756f;font-size:12px">GPS captured • accuracy '+escapeHtml(Math.round(a.gps_accuracy_meters||0))+' m</div>':'')+'</div>').join("");
+    box.innerHTML = data.map(a => '<div style="padding:12px 0;border-bottom:1px solid #dfe8e4"><strong>'+escapeHtml(attemptOutcomeLabel(a.outcome))+'</strong><div style="margin-top:5px">'+escapeHtml(formatDateTime(a.attempted_at))+'</div>'+(a.notes?'<div style="margin-top:5px">'+escapeHtml(a.notes)+'</div>':'')+(a.latitude!=null?'<div style="margin-top:5px;color:#68756f;font-size:12px">GPS captured • accuracy '+escapeHtml(Math.round(a.gps_accuracy_meters||0))+' m</div>':'')+(a.photo_path?'<button type="button" data-evidence-path="'+escapeHtml(a.photo_path)+'" style="margin-top:8px;border:1px solid #087455;background:#fff;color:#087455;border-radius:10px;padding:8px 11px;font-weight:800">View Photo Evidence</button>':'')+'</div>').join("");
+    box.querySelectorAll("[data-evidence-path]").forEach(btn=>btn.addEventListener("click",async()=>{
+      const {data,error}=await client.storage.from("process-serve-evidence").createSignedUrl(btn.dataset.evidencePath,300);
+      if(error||!data?.signedUrl){showToast("Unable to open photo evidence.","error");return}
+      window.open(data.signedUrl,"_blank");
+    }));
   }
 
   async function logProcessServeAttempt(serve, delivery) {
@@ -1341,8 +1346,22 @@
       btn.disabled=true;btn.textContent="Saving...";
       try{
         const session=(await client.auth.getSession()).data?.session;if(!session?.user)throw new Error("Your session expired. Please sign in again.");
-        const payload={process_serve_id:serve.id,job_id:delivery.id,attempted_by:session.user.id,outcome,notes:document.getElementById("psAttemptNotes").value.trim()||null,latitude:coords?.latitude??null,longitude:coords?.longitude??null,gps_accuracy_meters:coords?.accuracy??null};
-        const {error}=await client.from("process_serve_attempts").insert(payload);if(error)throw error;
+        const photo=document.getElementById("psAttemptPhoto")?.files?.[0]||null;
+        let photoPath=null;
+        if(photo){
+          if(!["image/jpeg","image/png","image/webp"].includes(photo.type))throw new Error("Photo must be JPG, PNG, or WebP.");
+          if(photo.size>10485760)throw new Error("Photo must be smaller than 10 MB.");
+          const ext=(photo.name.split(".").pop()||"jpg").toLowerCase().replace(/[^a-z0-9]/g,"");
+          photoPath=serve.id+"/"+Date.now()+"-"+session.user.id+"."+ext;
+          const upload=await client.storage.from("process-serve-evidence").upload(photoPath,photo,{cacheControl:"3600",upsert:false,contentType:photo.type});
+          if(upload.error)throw upload.error;
+        }
+        const payload={process_serve_id:serve.id,job_id:delivery.id,attempted_by:session.user.id,outcome,notes:document.getElementById("psAttemptNotes").value.trim()||null,latitude:coords?.latitude??null,longitude:coords?.longitude??null,gps_accuracy_meters:coords?.accuracy??null,photo_path:photoPath};
+        const {error}=await client.from("process_serve_attempts").insert(payload);
+        if(error){
+          if(photoPath)await client.storage.from("process-serve-evidence").remove([photoPath]);
+          throw error;
+        }
         const served=["served_personal","served_substitute"].includes(outcome);
         await client.from("process_serves").update({serve_status:served?"served":"attempted",updated_at:new Date().toISOString()}).eq("id",serve.id);
         close();showToast("Service attempt logged.","success");await openDeliveryDetails(delivery.id);
