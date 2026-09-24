@@ -1295,9 +1295,31 @@
       document.querySelectorAll("#psOutcomes [data-outcome]").forEach(x=>{x.style.background="#fff";x.style.color="#17221e"});
       b.style.background="#064f3b";b.style.color="#fff";
     });
+    async function showLocationPermissionHelp(message) {
+      return new Promise(resolve=>{
+        const old=document.getElementById("psLocationHelp");if(old)old.remove();
+        const box=document.createElement("div");box.id="psLocationHelp";box.style.cssText="position:fixed;inset:0;z-index:2200;background:rgba(10,20,16,.68);display:flex;align-items:center;justify-content:center;padding:22px";
+        box.innerHTML='<div style="background:#fff;width:min(440px,100%);border-radius:20px;padding:24px"><div style="font-size:38px">📍</div><h3 style="font-size:25px;margin:8px 0">Allow Location</h3><p style="line-height:1.5;margin:0 0 18px">'+escapeHtml(message)+'</p><button id="psAllowLocation" style="width:100%;min-height:54px;border:0;border-radius:13px;background:#087455;color:#fff;font-size:16px;font-weight:900">Allow Location</button><button id="psLocationCancel" style="width:100%;min-height:48px;border:0;background:#fff;font-weight:800;margin-top:6px">Not Now</button></div>';
+        document.body.appendChild(box);
+        document.getElementById("psAllowLocation").onclick=()=>{box.remove();resolve(true)};
+        document.getElementById("psLocationCancel").onclick=()=>{box.remove();resolve(false)};
+      });
+    }
     document.getElementById("psCaptureGps").onclick=async()=>{
-      const status=document.getElementById("psGpsStatus");status.textContent="Capturing...";
-      if(!navigator.geolocation){status.textContent="GPS unavailable";return}
+      const status=document.getElementById("psGpsStatus");
+      if(!navigator.geolocation){status.textContent="GPS unavailable on this device";return}
+      let permissionState="prompt";
+      try{if(navigator.permissions){permissionState=(await navigator.permissions.query({name:"geolocation"})).state}}catch(_e){}
+      if(permissionState==="denied"){
+        await showLocationPermissionHelp("Location is blocked for MG Express. In Chrome, tap the site controls icon beside the address, open Permissions, and change Location to Allow. Then return here and tap Capture GPS again.");
+        status.textContent="Location blocked — allow it in Chrome site permissions.";
+        return;
+      }
+      if(permissionState==="prompt"){
+        const ok=await showLocationPermissionHelp("MG Express uses your location to verify where this service attempt occurred. Tap Allow Location, then choose Allow when your phone asks for permission.");
+        if(!ok)return;
+      }
+      status.textContent="Capturing...";
       try{
         coords=await new Promise((resolve,reject)=>navigator.geolocation.getCurrentPosition(p=>resolve(p.coords),reject,{enableHighAccuracy:true,timeout:20000,maximumAge:0}));
         status.textContent="Captured • ±"+Math.round(coords.accuracy||0)+" m";
@@ -1315,6 +1337,7 @@
     document.getElementById("psSaveAttempt").onclick=async()=>{
       const message=document.getElementById("psAttemptMessage"),btn=document.getElementById("psSaveAttempt");
       if(!outcome){message.textContent="Select an attempt outcome.";return}
+      if(!coords){message.textContent="GPS is required. Tap Capture GPS before saving this attempt.";return}
       btn.disabled=true;btn.textContent="Saving...";
       try{
         const session=(await client.auth.getSession()).data?.session;if(!session?.user)throw new Error("Your session expired. Please sign in again.");
