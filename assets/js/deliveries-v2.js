@@ -1357,17 +1357,8 @@
     document.getElementById("psCaptureGps").onclick=async()=>{
       const status=document.getElementById("psGpsStatus");
       if(!navigator.geolocation){status.textContent="GPS unavailable on this device";return}
-      let permissionState="prompt";
-      try{if(navigator.permissions){permissionState=(await navigator.permissions.query({name:"geolocation"})).state}}catch(_e){}
-      if(permissionState==="denied"){
-        const proceed=await showLocationPermissionHelp("Location is currently blocked for MG Express. Chrome does not let a website turn a blocked permission back on. Tap Continue, then use the site controls icon beside the address → Permissions → Location → Allow. Return here and tap Capture GPS again.");
-        status.textContent=proceed ? "Open Chrome site controls → Permissions → Location → Allow." : "Location remains blocked.";
-        return;
-      }
-      if(permissionState==="prompt"){
-        const ok=await showLocationPermissionHelp("MG Express uses your location to verify where this service attempt occurred. Tap Allow Location, then choose Allow when your phone asks for permission.");
-        if(!ok)return;
-      }
+      // Let the browser geolocation API make the authoritative permission request.
+      // Some Android Chrome versions can report a stale Permissions API state.
       status.textContent="Capturing...";
       try{
         coords=await new Promise((resolve,reject)=>navigator.geolocation.getCurrentPosition(p=>resolve(p.coords),reject,{enableHighAccuracy:true,timeout:20000,maximumAge:0}));
@@ -1377,9 +1368,12 @@
           coords=await new Promise((resolve,reject)=>navigator.geolocation.getCurrentPosition(p=>resolve(p.coords),reject,{enableHighAccuracy:false,timeout:15000,maximumAge:60000}));
           status.textContent="Captured • ±"+Math.round(coords.accuracy||0)+" m";
         } catch(error) {
-          const messages={1:"Location permission is blocked. Tap the lock/site settings in Chrome and allow Location.",2:"Your phone could not determine a location. Turn on Location/GPS and try again.",3:"GPS timed out. Move near a window or outdoors and try again."};
+          const messages={1:"Location permission was denied for this site.",2:"Your phone could not determine a location. Turn on Location/GPS and try again.",3:"GPS timed out. Move near a window or outdoors and try again."};
           status.textContent=messages[error?.code]||"Could not capture GPS. Check Chrome location permission and phone Location settings.";
-          console.warn("[Process Serve GPS]",{code:error?.code,message:error?.message,secure:window.isSecureContext});
+          if(error?.code===1){
+            await showLocationPermissionHelp("Chrome denied location access for this site. Check the site controls beside the address and allow Location, then tap Capture GPS again.");
+          }
+          console.warn("[Process Serve GPS]",{code:error?.code,message:error?.message,secure:window.isSecureContext,origin:window.location.origin});
         }
       }
     };
