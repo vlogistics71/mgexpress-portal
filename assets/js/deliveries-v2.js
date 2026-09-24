@@ -1209,12 +1209,13 @@
           '<section class="details-card"><h4>Server Assignment</h4><div class="details-card-body">'+detailsBlock("Assigned Server",assignedServer)+
           '<div class="details-inline-actions"><button class="action-btn" type="button" id="processServeAssignBtn">'+(delivery.assigned_driver_id ? "Change Server" : "Assign Server")+'</button></div></div></section>'+
           '<section class="details-card"><h4>Attempt History</h4><div class="details-card-body"><div id="processServeAttemptHistory" class="sheet-note">Loading attempts...</div><div class="details-inline-actions" style="margin-top:14px"><button class="action-btn" type="button" id="processServeLogAttemptBtn">Log Attempt</button></div></div></section>'+
-          '<section class="details-card"><h4>Return / Proof of Service</h4><div class="details-card-body"><div class="sheet-note">Generate a reviewable draft from the case details and the successful service attempt. Review all information before signing or filing with the court.</div><div class="details-inline-actions" style="margin-top:14px"><button class="action-btn" type="button" id="processServeRosBtn">Generate ROS Draft</button></div></div></section>';
+          '<section class="details-card"><h4>Return / Proof of Service</h4><div class="details-card-body"><div class="sheet-note">Generate a reviewable draft from the successful service attempt. After reviewing the ROS, mark the serve complete when your filing/review work is finished.</div><div class="details-inline-actions" style="margin-top:14px"><button class="action-btn" type="button" id="processServeRosBtn">Generate ROS Draft</button>'+(serve.serve_status==="ros_pending"?'<button class="action-btn" type="button" id="processServeCompleteBtn">Mark Complete</button>':'')+'</div></div></section>';
         document.getElementById("processServeUploadDocumentBtn")?.addEventListener("click",()=>uploadProcessServeDocument(serve,delivery));
                 document.getElementById("processServeAssignBtn")?.addEventListener("click",()=>openAssignModal(delivery));
         loadProcessServeDocuments(serve,delivery);
         document.getElementById("processServeLogAttemptBtn")?.addEventListener("click",()=>logProcessServeAttempt(serve,delivery));
         document.getElementById("processServeRosBtn")?.addEventListener("click",()=>generateProcessServeRosDraft(serve,delivery));
+        document.getElementById("processServeCompleteBtn")?.addEventListener("click",()=>completeProcessServe(serve,delivery));
         loadProcessServeAttempts(serve.id);
       });
       return;
@@ -1302,6 +1303,19 @@
     `;
   }
 
+
+  async function completeProcessServe(serve, delivery) {
+    if (!window.confirm("Mark this Process Serve complete? Do this after the ROS has been reviewed and any required filing steps are finished.")) return;
+    const servedAttempt = await client.from("process_serve_attempts").select("id").eq("process_serve_id",serve.id).in("outcome",["served_personal","served_substitute"]).limit(1);
+    if (servedAttempt.error || !servedAttempt.data?.length) { showToast("A successful service attempt is required before completion.","error"); return; }
+    const result = await client.from("process_serves").update({serve_status:"complete",updated_at:new Date().toISOString()}).eq("id",serve.id);
+    if (result.error) { showToast(result.error.message || "Unable to complete Process Serve.","error"); return; }
+    const jobResult = await client.from("quotes").update({status:"completed",completed_at:new Date().toISOString()}).eq("id",delivery.id);
+    if (jobResult.error) { showToast("Serve was completed, but the linked job status could not be updated.","error"); return; }
+    showToast("Process Serve marked complete.","success");
+    await refreshDeliveries({keepSelection:delivery.id});
+    await openDeliveryDetails(delivery.id);
+  }
 
   async function generateProcessServeRosDraft(serve, delivery) {
     const { data: attempts, error } = await client.from("process_serve_attempts").select("*").eq("process_serve_id", serve.id).order("attempted_at", { ascending: false });
@@ -1448,7 +1462,7 @@
           throw error;
         }
         const served=["served_personal","served_substitute"].includes(outcome);
-        await client.from("process_serves").update({serve_status:served?"served":"attempted",updated_at:new Date().toISOString()}).eq("id",serve.id);
+        await client.from("process_serves").update({serve_status:served?"ros_pending":"attempted",updated_at:new Date().toISOString()}).eq("id",serve.id);
         close();showToast("Service attempt logged.","success");await openDeliveryDetails(delivery.id);
       }catch(err){message.textContent=err.message||"Unable to save attempt.";btn.disabled=false;btn.textContent="Save Attempt";}
     };
