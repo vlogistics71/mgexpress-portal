@@ -2,9 +2,10 @@
 <html lang="en">
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Process Serves | MG Express</title>
+<title>Process Serves | MG Express</title><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="assets/js/config.js"></script>
 <style>
 *{box-sizing:border-box}body{margin:0;background:#f4f7f6;color:#17221e;font-family:Arial,sans-serif}.topbar{background:#064f3b;color:white;padding:22px}.topbar-inner{max-width:1180px;margin:auto}.brand{font-size:25px;font-weight:900}.brand span{color:#ff665c}.wrap{max-width:1180px;margin:28px auto;padding:0 18px}.head{display:flex;justify-content:space-between;gap:16px;align-items:center;flex-wrap:wrap}.eyebrow{font-size:13px;font-weight:900;color:#087455;text-transform:uppercase;letter-spacing:.08em}h1{font-size:36px;margin:5px 0}.new{border:0;border-radius:13px;background:#087455;color:white;padding:15px 20px;font-size:16px;font-weight:900;cursor:pointer}.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin:24px 0}.card,.panel{background:white;border:1px solid #dfe8e4;border-radius:18px;padding:20px}.num{font-size:30px;font-weight:900;margin-top:7px}.tabs{display:flex;gap:8px;overflow:auto;margin-bottom:16px}.tab{white-space:nowrap;border:1px solid #d7e3df;background:white;border-radius:999px;padding:10px 14px;font-weight:800}.empty{text-align:center;padding:50px 15px;color:#66736e}.empty strong{display:block;color:#17221e;font-size:20px;margin-bottom:8px}@media(max-width:700px){.stats{grid-template-columns:1fr 1fr}h1{font-size:30px}}
+.modal{position:fixed;inset:0;background:rgba(10,20,16,.6);display:none;align-items:flex-start;justify-content:center;padding:20px;z-index:1000;overflow:auto}.modal.open{display:flex}.sheet{width:min(760px,100%);background:#fff;border-radius:20px;padding:22px;margin:auto}.sheet-head{display:flex;justify-content:space-between;gap:12px;align-items:center}.close{border:0;background:#eef4f1;border-radius:12px;width:44px;height:44px;font-size:24px}.grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:18px}.field{display:grid;gap:6px}.field.full{grid-column:1/-1}.field label{font-size:13px;font-weight:900}.field input,.field textarea{width:100%;border:1px solid #cad8d2;border-radius:11px;padding:12px;font:inherit}.field textarea{min-height:90px;resize:vertical}.actions{display:flex;justify-content:flex-end;gap:10px;margin-top:18px}.cancel{border:1px solid #cad8d2;background:#fff;border-radius:12px;padding:13px 17px;font-weight:900}.save{border:0;background:#087455;color:#fff;border-radius:12px;padding:13px 17px;font-weight:900}.msg{margin-top:12px;font-weight:800;font-size:14px}.serve-list{display:grid;gap:10px}.serve-row{border:1px solid #dfe8e4;border-radius:14px;padding:14px}.serve-row strong{font-size:17px}.serve-meta{color:#66736e;margin-top:5px;font-size:13px}@media(max-width:700px){.grid{grid-template-columns:1fr}.field.full{grid-column:auto}}
 </style>
 </head>
 <body>
@@ -14,6 +15,42 @@
 <section class="stats"><div class="card">Active<div class="num" id="activeCount">0</div></div><div class="card">Served<div class="num" id="servedCount">0</div></div><div class="card">ROS Pending<div class="num" id="rosCount">0</div></div><div class="card">Completed<div class="num" id="completeCount">0</div></div></section>
 <section class="panel"><div class="tabs"><button class="tab">Active Serves</button><button class="tab">Attempts</button><button class="tab">Served</button><button class="tab">Unserved</button><button class="tab">ROS Pending</button><button class="tab">Completed</button></div><div class="empty"><strong>No process serves yet</strong>Create your first serve assignment to get started.</div></section>
 </main>
+<div class="modal" id="serveModal"><div class="sheet"><div class="sheet-head"><div><div class="eyebrow">New Assignment</div><h2 style="margin:4px 0">New Process Serve</h2></div><button class="close" id="closeServe" type="button">×</button></div>
+<form id="serveForm"><div class="grid">
+<div class="field"><label>Court Name</label><input name="court_name"></div><div class="field"><label>Case Number</label><input name="case_number"></div>
+<div class="field"><label>Plaintiff / Petitioner</label><input name="plaintiff_petitioner"></div><div class="field"><label>Defendant / Respondent</label><input name="defendant_respondent"></div>
+<div class="field"><label>Person to Serve *</label><input name="person_to_serve" required></div><div class="field"><label>Serve By / Deadline</label><input name="service_deadline" type="datetime-local"></div>
+<div class="field full"><label>Service Address *</label><input name="service_address" required></div>
+<div class="field full"><label>Documents to Serve</label><textarea name="documents_to_serve" placeholder="Summons, complaint, subpoena, notice, etc."></textarea></div>
+<div class="field full"><label>Special Instructions</label><textarea name="special_instructions"></textarea></div>
+</div><div class="msg" id="formMsg"></div><div class="actions"><button class="cancel" id="cancelServe" type="button">Cancel</button><button class="save" id="saveServe" type="submit">Create Serve</button></div></form></div></div>
 <script src="dispatch-menu.js"></script>
-<script>document.getElementById("newServe").addEventListener("click",()=>alert("New Process Serve form is the next build step."));</script>
+<script>
+const sb=window.mgSupabase, modal=document.getElementById("serveModal"), form=document.getElementById("serveForm"), msg=document.getElementById("formMsg");
+function showModal(){modal.classList.add("open")} function hideModal(){modal.classList.remove("open");msg.textContent=""}
+document.getElementById("newServe").onclick=showModal; document.getElementById("closeServe").onclick=hideModal; document.getElementById("cancelServe").onclick=hideModal;
+modal.addEventListener("click",e=>{if(e.target===modal)hideModal()});
+async function loadServes(){
+ const {data,error}=await sb.from("process_serves").select("id,person_to_serve,case_number,service_address,serve_status,service_deadline").order("created_at",{ascending:false});
+ if(error){console.error(error);return}
+ const active=data.filter(x=>!["complete"].includes(x.serve_status)), served=data.filter(x=>x.serve_status==="served"), ros=data.filter(x=>x.serve_status==="ros_pending"), complete=data.filter(x=>x.serve_status==="complete");
+ activeCount.textContent=active.length;servedCount.textContent=served.length;rosCount.textContent=ros.length;completeCount.textContent=complete.length;
+ const box=document.querySelector(".empty"); if(!data.length)return;
+ box.className="serve-list";box.innerHTML=data.map(x=>'<div class="serve-row"><strong>'+escapeHtml(x.person_to_serve)+'</strong><div class="serve-meta">'+escapeHtml((x.case_number||"No case number")+" • "+x.serve_status.replaceAll("_"," ").toUpperCase())+'</div><div class="serve-meta">'+escapeHtml(x.service_address)+'</div></div>').join("");
+}
+function escapeHtml(v){return String(v??"").replace(/[&<>"']/g,ch=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[ch]))}
+form.addEventListener("submit",async e=>{e.preventDefault();const btn=document.getElementById("saveServe");btn.disabled=true;btn.textContent="Creating...";
+ try{
+  const fd=new FormData(form), address=String(fd.get("service_address")||"").trim(), person=String(fd.get("person_to_serve")||"").trim();
+  const jobNumber="PS-"+Date.now().toString().slice(-8);
+  const {data:job,error:jobErr}=await sb.from("quotes").insert({job_number:jobNumber,customer_name:"Process Serve",pickup_address:address,delivery_address:address,job_category:"legal",status:"new",request_source:"dispatch",special_instructions:String(fd.get("special_instructions")||"").trim()||null}).select("id").single();
+  if(jobErr)throw jobErr;
+  const deadline=fd.get("service_deadline"); const payload={job_id:job.id,court_name:fd.get("court_name")||null,case_number:fd.get("case_number")||null,plaintiff_petitioner:fd.get("plaintiff_petitioner")||null,defendant_respondent:fd.get("defendant_respondent")||null,person_to_serve:person,service_address:address,documents_to_serve:fd.get("documents_to_serve")||null,service_deadline:deadline?new Date(deadline).toISOString():null,special_instructions:fd.get("special_instructions")||null};
+  const {error}=await sb.from("process_serves").insert(payload);if(error)throw error;
+  form.reset();hideModal();await loadServes();
+ }catch(err){console.error(err);msg.textContent="Could not create serve: "+(err.message||"Unknown error");}
+ finally{btn.disabled=false;btn.textContent="Create Serve";}
+});
+loadServes();
+</script>
 </body></html>
