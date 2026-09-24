@@ -7,7 +7,7 @@
     "/dashboard.html", "/deliveries.html", "/pending-approval.html", "/ready-to-dispatch.html",
     "/assigned.html", "/closed-today.html", "/customer.html", "/leads.html", "/driver.html",
     "/driver-onboarding.html", "/payroll.html", "/invoices.html", "/Reports.html", "/history.html",
-    "/settings.html", "/index.html"
+    "/settings.html", "/process-serves.html", "/index.html"
   ]);
 
   function routeUrl(path) {
@@ -18,6 +18,7 @@
   const pages = [
     { href: routeUrl("/dashboard.html"), label: "Dashboard", icon: "🏠" },
     { href: routeUrl("/deliveries.html"), label: "Deliveries", icon: "📋" },
+    { href: routeUrl("/process-serves.html"), label: "Process Serves", icon: "⚖️" },
     { href: routeUrl("/customer.html"), label: "Customers", icon: "👥" },
     { href: routeUrl("/leads.html"), label: "Leads", icon: "🎯" },
     { href: routeUrl("/driver.html"), label: "Drivers", icon: "🚚" },
