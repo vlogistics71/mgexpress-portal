@@ -1298,8 +1298,19 @@
     document.getElementById("psCaptureGps").onclick=async()=>{
       const status=document.getElementById("psGpsStatus");status.textContent="Capturing...";
       if(!navigator.geolocation){status.textContent="GPS unavailable";return}
-      try{coords=await new Promise((resolve,reject)=>navigator.geolocation.getCurrentPosition(p=>resolve(p.coords),reject,{enableHighAccuracy:true,timeout:12000,maximumAge:0}));status.textContent="Captured • ±"+Math.round(coords.accuracy||0)+" m";}
-      catch(_e){status.textContent="Could not capture GPS";}
+      try{
+        coords=await new Promise((resolve,reject)=>navigator.geolocation.getCurrentPosition(p=>resolve(p.coords),reject,{enableHighAccuracy:true,timeout:20000,maximumAge:0}));
+        status.textContent="Captured • ±"+Math.round(coords.accuracy||0)+" m";
+      } catch(firstError) {
+        try {
+          coords=await new Promise((resolve,reject)=>navigator.geolocation.getCurrentPosition(p=>resolve(p.coords),reject,{enableHighAccuracy:false,timeout:15000,maximumAge:60000}));
+          status.textContent="Captured • ±"+Math.round(coords.accuracy||0)+" m";
+        } catch(error) {
+          const messages={1:"Location permission is blocked. Tap the lock/site settings in Chrome and allow Location.",2:"Your phone could not determine a location. Turn on Location/GPS and try again.",3:"GPS timed out. Move near a window or outdoors and try again."};
+          status.textContent=messages[error?.code]||"Could not capture GPS. Check Chrome location permission and phone Location settings.";
+          console.warn("[Process Serve GPS]",{code:error?.code,message:error?.message,secure:window.isSecureContext});
+        }
+      }
     };
     document.getElementById("psSaveAttempt").onclick=async()=>{
       const message=document.getElementById("psAttemptMessage"),btn=document.getElementById("psSaveAttempt");
