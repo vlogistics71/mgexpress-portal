@@ -969,7 +969,25 @@
     `;
   }
 
+  function renderBillingSummary() {
+    const unpaid = invoices.filter(invoice => !isPaid(invoice));
+    const balance = unpaid.reduce((sum, invoice) => sum + Number(invoice.amount || 0), 0);
+    const unbilled = jobs.filter(job => isCompleted(job) && normalize(job.payment_status) === "account_billing");
+    const paid = invoices.filter(invoice => isPaid(invoice));
+    let nextDate = "—";
+    if (customerAccount.billing_eligibility === "biweekly" && customerAccount.billing_status === "approved") {
+      const next = new Date(customerAccount.billing_approved_at || new Date());
+      const today = new Date();
+      while (next <= today) next.setDate(next.getDate() + 14);
+      nextDate = formatDate(next.toISOString());
+    }
+    const values = { currentBalance: money(balance), unbilledDeliveryCount: unbilled.length, nextInvoiceDate: nextDate, paidInvoiceCount: paid.length };
+    Object.entries(values).forEach(([id, value]) => { const el = document.getElementById(id); if (el) el.textContent = value; });
+  }
+
   function renderPortal() {
+    renderBillingSummary();
+
     const quoteJobs =
       jobs.filter(isQuote);
 
