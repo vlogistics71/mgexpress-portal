@@ -969,7 +969,36 @@
     `;
   }
 
+  function renderBillingSummary() {
+    const unpaid = invoices.filter(invoice => !isPaid(invoice));
+    const balance = unpaid.reduce((sum, invoice) => sum + Number(invoice.amount || 0), 0);
+    const unbilled = jobs.filter(job => isCompleted(job) && normalize(job.payment_status) === "account_billing");
+    const paid = invoices.filter(invoice => isPaid(invoice));
+    let nextDate = "—";
+    if (customerAccount.billing_eligibility === "biweekly" && customerAccount.billing_status === "approved") {
+      const biweeklyInvoices = invoices
+        .filter(invoice => normalize(invoice.invoice_type) === "biweekly" && invoice.billing_period_end)
+        .sort((a, b) => String(b.billing_period_end).localeCompare(String(a.billing_period_end)));
+      const anchorValue = biweeklyInvoices.length
+        ? biweeklyInvoices[0].billing_period_end
+        : customerAccount.billing_approved_at;
+      if (anchorValue) {
+        const anchorRaw = String(anchorValue).slice(0, 10);
+        const next = new Date(anchorRaw + "T12:00:00");
+        next.setDate(next.getDate() + 14);
+        const today = new Date();
+        today.setHours(12, 0, 0, 0);
+        while (next <= today) next.setDate(next.getDate() + 14);
+        nextDate = formatDate(next.toISOString());
+      }
+    }
+    const values = { currentBalance: money(balance), unbilledDeliveryCount: unbilled.length, nextInvoiceDate: nextDate, paidInvoiceCount: paid.length };
+    Object.entries(values).forEach(([id, value]) => { const el = document.getElementById(id); if (el) el.textContent = value; });
+  }
+
   function renderPortal() {
+    renderBillingSummary();
+
     const quoteJobs =
       jobs.filter(isQuote);
 

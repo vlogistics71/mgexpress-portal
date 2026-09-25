@@ -433,6 +433,9 @@
 
   function getCategoryClass(category) {
     const value = clean(category);
+    if (value === "auto_parts") {
+      return "category-auto-parts";
+    }
     if (value === "medical") {
       return "category-medical";
     }
@@ -450,6 +453,9 @@
 
   function getCategoryLabel(category) {
     const value = clean(category);
+    if (value === "auto_parts") {
+      return "Auto Parts";
+    }
     if (value === "medical") {
       return "Medical";
     }
@@ -1178,6 +1184,37 @@
           </div>
         </section>
       `;
+      return;
+    }
+
+    const isAutoParts = clean(delivery.job_category) === "auto_parts";
+    if (isAutoParts) {
+      elements.deliveryDetailsTitle.textContent = "Auto Parts Delivery";
+      elements.deliveryDetailsSubtitle.textContent = "Auto Parts • " + getStatusLabel(delivery);
+      elements.deliveryDetailsBody.innerHTML = '<section class="details-card"><h4>Parts Pickup</h4><div class="details-card-body">'+detailsBlock("Job Number",delivery.job_number)+detailsBlock("Pickup",delivery.pickup_address || "-")+detailsBlock("Delivery",delivery.delivery_address || "-")+'<div class="sheet-note">PO / RO and part details: '+escapeHtml(delivery.billing_notes || delivery.special_instructions || 'Not provided')+'</div><div style="margin-top:12px"><input id="autoPartsFileInput" type="file" accept="application/pdf,image/*,.pdf"><select id="autoPartsAttachmentType"><option value="document">PO / RO Document</option><option value="pickup_photo">Pickup Photo</option><option value="delivery_photo">Delivery Photo</option></select><button class="action-btn" id="autoPartsUploadBtn" type="button">Upload File</button><div id="autoPartsFiles" class="sheet-note" style="margin-top:8px">Loading attachments...</div></div><div class="sheet-note">Driver proof is stored separately for this job.</div><label style="display:block;margin-top:12px"><input id="autoPartsPickupConfirmed" type="checkbox"> Parts verified at pickup</label><input id="autoPartsDeliveredTo" placeholder="Delivered to / recipient name" style="width:100%;margin-top:12px;padding:10px"><textarea id="autoPartsProofNotes" placeholder="Pickup or delivery notes" style="width:100%;margin-top:12px;padding:10px"></textarea><div id="autoPartsProofSummary" class="sheet-note" style="margin-top:12px">Loading proof status...</div><div class="details-inline-actions" style="margin-top:12px"><button class="action-btn" id="autoPartsSaveProofBtn" type="button">Save Parts Proof</button></div></div></section>';
+      client.from("auto_parts_delivery_proof").select("*").eq("job_id",delivery.id).maybeSingle().then(({data}) => {
+        const check=document.getElementById("autoPartsPickupConfirmed"); const recipient=document.getElementById("autoPartsDeliveredTo"); const notes=document.getElementById("autoPartsProofNotes");
+        if(check) check.checked=Boolean(data?.pickup_confirmed); if(recipient) recipient.value=data?.delivered_to||""; if(notes) notes.value=data?.notes||"";
+        const summary=document.getElementById("autoPartsProofSummary");
+        if(summary) summary.innerHTML='<strong>Proof Status</strong><br>Parts verified: '+(data?.pickup_confirmed?"Yes":"No")+'<br>Pickup verified: '+escapeHtml(data?.pickup_confirmed_at?formatDateTime(data.pickup_confirmed_at):"Pending")+'<br>Delivered to: '+escapeHtml(data?.delivered_to||"Pending")+'<br>Delivery confirmed: '+escapeHtml(data?.delivery_confirmed_at?formatDateTime(data.delivery_confirmed_at):"Pending");
+      });
+      async function loadAutoPartsAttachments() {
+        const box=document.getElementById("autoPartsFiles"); if(!box)return;
+        const res=await client.from("auto_parts_attachments").select("*").eq("job_id",delivery.id).order("created_at",{ascending:true});
+        if(res.error){box.textContent=res.error.message;return;} const rows=res.data||[];
+        box.innerHTML=rows.length?rows.map(x=>'<button class="action-btn" type="button" data-ap-file="'+escapeHtml(x.id)+'">'+escapeHtml(x.file_name)+'</button>').join(" "):"No files uploaded.";
+        box.querySelectorAll("[data-ap-file]").forEach(btn=>btn.addEventListener("click",async()=>{const row=rows.find(x=>x.id===btn.dataset.apFile);const signed=await client.storage.from("auto-parts-files").createSignedUrl(row.storage_path,300);if(signed.error){showToast(signed.error.message,"error");return;}window.open(signed.data.signedUrl,"_blank");}));
+      }
+      document.getElementById("autoPartsUploadBtn")?.addEventListener("click",async()=>{const input=document.getElementById("autoPartsFileInput");const file=input?.files?.[0];if(!file){showToast("Choose a PDF or photo first.","error");return;}if(file.size>26214400){showToast("File must be 25 MB or less.","error");return;}const type=document.getElementById("autoPartsAttachmentType")?.value||"document";const safe=String(file.name||"file").replace(/[^a-zA-Z0-9._-]+/g,"-");const path=delivery.id+"/"+Date.now()+"-"+safe;const up=await client.storage.from("auto-parts-files").upload(path,file,{contentType:file.type||"application/octet-stream",upsert:false});if(up.error){showToast(up.error.message,"error");return;}const row=await client.from("auto_parts_attachments").insert({job_id:delivery.id,file_name:file.name,storage_path:path,mime_type:file.type,attachment_type:type,uploaded_by:state.session?.user?.id});if(row.error){await client.storage.from("auto-parts-files").remove([path]);showToast(row.error.message,"error");return;}input.value="";showToast("File uploaded.","success");await loadAutoPartsAttachments();});
+      loadAutoPartsAttachments();
+      document.getElementById("autoPartsSaveProofBtn")?.addEventListener("click", async () => {
+        const pickupConfirmed=Boolean(document.getElementById("autoPartsPickupConfirmed")?.checked);
+        const deliveredTo=String(document.getElementById("autoPartsDeliveredTo")?.value||"").trim()||null;
+        const notes=String(document.getElementById("autoPartsProofNotes")?.value||"").trim()||null;
+        const now=new Date().toISOString();
+        const result=await client.from("auto_parts_delivery_proof").upsert({job_id:delivery.id,pickup_confirmed:pickupConfirmed,pickup_confirmed_at:pickupConfirmed?now:null,delivered_to:deliveredTo,delivery_confirmed_at:deliveredTo?now:null,notes,updated_at:now},{onConflict:"job_id"});
+        if(result.error){showToast(result.error.message||"Unable to save parts proof.","error");return;} showToast("Auto parts proof saved.","success");
+      });
       return;
     }
 

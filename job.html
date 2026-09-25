@@ -1159,7 +1159,7 @@
       const jobResult =
         await client
           .from("quotes")
-          .select("id,job_number,assigned_driver_id,status,customer_name,pickup_address,delivery_address,driver_pay,driver_acceptance_status,driver_workflow_status,driver_accepted_at,driver_rejected_at,en_route_pickup_at,picked_up_at,en_route_delivery_at,pod_recipient_name,created_at,completed_at,delivery_photo_uploaded_at")
+          .select("id,job_number,assigned_driver_id,status,customer_name,pickup_address,pickup_suite_floor,pickup_city,pickup_state,pickup_zip,delivery_address,delivery_suite_floor,delivery_city,delivery_state,delivery_zip,driver_pay,driver_acceptance_status,driver_workflow_status,driver_accepted_at,driver_rejected_at,en_route_pickup_at,picked_up_at,en_route_delivery_at,pod_recipient_name,created_at,completed_at,delivery_photo_uploaded_at,job_category,billing_notes,special_instructions")
           .order(
             "created_at",
             {
@@ -1383,6 +1383,7 @@
             <div class="workflow-card-meta">
               Status: ${escapeHtml(workflowStatusLabel(job))}
             </div>
+            ${cleanStatus(job.job_category) === "auto_parts" ? '<div class="workflow-card-meta"><strong>Auto Parts Delivery</strong><br>'+escapeHtml(job.billing_notes || job.special_instructions || "Verify PO / RO and parts before leaving pickup.")+'</div><div class="workflow-button-row"><button class="workflow-button" type="button" data-auto-parts-proof="'+escapeHtml(String(job.id))+'">Verify Parts</button><label class="workflow-button">Pickup Photo<input hidden type="file" accept="image/*" capture="environment" data-auto-parts-photo="pickup_photo" data-job-id="'+escapeHtml(String(job.id))+'"></label><label class="workflow-button">Delivery Photo<input hidden type="file" accept="image/*" capture="environment" data-auto-parts-photo="delivery_photo" data-job-id="'+escapeHtml(String(job.id))+'"></label></div>' : ""}
             <div class="workflow-button-row">
               ${workflowButtons.join("")}
             </div>
@@ -1394,6 +1395,24 @@
     async function updateDriverWorkflow(job, action) {
       const now = new Date().toISOString();
       const payload = {};
+      const isAutoParts = cleanStatus(job.job_category) === "auto_parts";
+
+      if (isAutoParts && action === "pickup_complete") {
+        const [proofResult, photoResult] = await Promise.all([
+          client.from("auto_parts_delivery_proof").select("pickup_confirmed").eq("job_id", job.id).maybeSingle(),
+          client.from("auto_parts_attachments").select("id").eq("job_id", job.id).eq("attachment_type", "pickup_photo").limit(1)
+        ]);
+        if (proofResult.error) throw proofResult.error;
+        if (photoResult.error) throw photoResult.error;
+        if (!proofResult.data?.pickup_confirmed) {
+          window.alert("Verify the PO / RO and parts before marking pickup complete.");
+          return;
+        }
+        if (!photoResult.data?.length) {
+          window.alert("Add a pickup photo before marking pickup complete.");
+          return;
+        }
+      }
 
       if (action === "accept") {
         payload.driver_acceptance_status = "accepted";
@@ -1414,13 +1433,32 @@
         payload.en_route_delivery_at = now;
       } else if (action === "complete_delivery") {
         const podRecipient = window.prompt("Enter the POD recipient name", job.pod_recipient_name || "");
-
-        if (podRecipient === null) {
+        if (podRecipient === null) return;
+        const recipient = podRecipient.trim();
+        if (isAutoParts && !recipient) {
+          window.alert("A recipient name is required for Auto Parts deliveries.");
           return;
         }
-
+        if (isAutoParts) {
+          const [proofResult, deliveryPhotoResult] = await Promise.all([
+            client.from("auto_parts_delivery_proof").select("pickup_confirmed").eq("job_id", job.id).maybeSingle(),
+            client.from("auto_parts_attachments").select("id").eq("job_id", job.id).eq("attachment_type", "delivery_photo").limit(1)
+          ]);
+          if (proofResult.error) throw proofResult.error;
+          if (deliveryPhotoResult.error) throw deliveryPhotoResult.error;
+          if (!proofResult.data?.pickup_confirmed) {
+            window.alert("Parts verification is required before completing this delivery.");
+            return;
+          }
+          if (!deliveryPhotoResult.data?.length) {
+            window.alert("Add a delivery photo before completing this delivery.");
+            return;
+          }
+          const proofUpdate = await client.from("auto_parts_delivery_proof").upsert({job_id:job.id,pickup_confirmed:true,delivered_to:recipient,delivery_confirmed_at:now,updated_at:now},{onConflict:"job_id"});
+          if (proofUpdate.error) throw proofUpdate.error;
+        }
         payload.driver_workflow_status = "delivered";
-        payload.pod_recipient_name = podRecipient.trim() || null;
+        payload.pod_recipient_name = recipient || null;
         payload.status = "delivered";
         payload.completed_at = now;
       }
@@ -1571,9 +1609,37 @@
           .join("");
     }
 
-    document
-      .getElementById("driverWorkflowBox")
-      .addEventListener("click", async function (event) {
+    document.getElementById("driverWorkflowBox").addEventListener("change", async function (event) {
+      const input = event.target.closest("[data-auto-parts-photo]");
+      if (!input) return;
+      const file = input.files?.[0]; if (!file) return;
+      if (file.size > 26214400) { window.alert("Photo must be 25 MB or less."); input.value=""; return; }
+      const jobId=input.getAttribute("data-job-id"); const type=input.getAttribute("data-auto-parts-photo");
+      const safe=String(file.name||"photo.jpg").replace(/[^a-zA-Z0-9._-]+/g,"-");
+      const path=jobId+"/"+Date.now()+"-"+safe;
+      const upload=await client.storage.from("auto-parts-files").upload(path,file,{contentType:file.type||"image/jpeg",upsert:false});
+      if(upload.error){window.alert(upload.error.message);input.value="";return;}
+      const row=await client.from("auto_parts_attachments").insert({job_id:jobId,file_name:file.name||safe,storage_path:path,mime_type:file.type||"image/jpeg",attachment_type:type});
+      if(row.error){await client.storage.from("auto-parts-files").remove([path]);window.alert(row.error.message);input.value="";return;}
+      window.alert(type==="pickup_photo"?"Pickup photo saved.":"Delivery photo saved."); input.value="";
+    });
+
+    document.getElementById("driverWorkflowBox").addEventListener("click", async function (event) {
+      const proofButton = event.target.closest("[data-auto-parts-proof]");
+      if (proofButton) {
+        const jobId = proofButton.getAttribute("data-auto-parts-proof");
+        const job = jobs.find(item => String(item.id) === String(jobId));
+        if (!job) return;
+        const confirmed = window.confirm("Confirm the PO / RO and parts match the work order. Press OK after verifying the parts.");
+        if (!confirmed) return;
+        const now = new Date().toISOString();
+        const proof = await client.from("auto_parts_delivery_proof").upsert({job_id:job.id,pickup_confirmed:true,pickup_confirmed_at:now,updated_at:now},{onConflict:"job_id"});
+        if (proof.error) throw proof.error;
+        window.alert("Parts verified. Pickup proof has been saved. Photos/documents can be added from the Auto Parts work order.");
+        await loadDriverData();
+        return;
+      }
+
         const button = event.target.closest("[data-workflow-action]");
 
         if (!button) {

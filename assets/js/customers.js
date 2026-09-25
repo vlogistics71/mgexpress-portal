@@ -835,6 +835,14 @@
                 ? "disabled"
                 : "";
 
+            const biweeklyApproved = customer.billing_eligibility === "biweekly" && customer.billing_status === "approved";
+            const billingBadge = biweeklyApproved
+              ? `<span class="customer-badge recurring">Biweekly Billing</span>`
+              : customer.billing_status === "suspended"
+                ? `<span class="customer-badge">Billing Suspended</span>`
+                : `<span class="customer-badge">Pay Now</span>`;
+            const billingButtonLabel = biweeklyApproved ? "Suspend Biweekly Billing" : "Approve Biweekly Billing";
+
             return `
               <article
                 class="customer-card"
@@ -917,6 +925,7 @@
                     ${recurringBadge}
                     ${portalBadge}
                     ${inviteBadge}
+                    ${billingBadge}
                   </div>
                 </div>
 
@@ -960,6 +969,14 @@
                     ${inviteDisabled}
                   >
                     ${inviteButtonLabel}
+                  </button>
+
+                  <button
+                    class="customer-action-button"
+                    type="button"
+                    data-toggle-billing="${escapeHtml(customer.id)}"
+                  >
+                    ${billingButtonLabel}
                   </button>
 
                   <button
@@ -1504,6 +1521,19 @@
     await loadCustomerData();
   }
 
+  async function toggleBiweeklyBilling(customerId) {
+    const customer = findCustomer(customerId);
+    if (!customer) throw new Error("Customer record was not found.");
+    const approved = customer.billing_eligibility === "biweekly" && customer.billing_status === "approved";
+    const payload = approved
+      ? { billing_eligibility: "pay_now", billing_status: "suspended", billing_suspended_at: new Date().toISOString() }
+      : { billing_eligibility: "biweekly", billing_status: "approved", billing_cycle_days: 14, billing_approved_at: new Date().toISOString(), billing_suspended_at: null };
+    const result = await client.from("customer_portal_accounts").update(payload).eq("id", customerId);
+    if (result.error) throw result.error;
+    setPageMessage(approved ? "Biweekly billing suspended. Customer returned to Pay Now." : "Biweekly billing approved for this customer on a 14-day cycle.", "success");
+    await loadCustomerData();
+  }
+
   async function sendPortalInvite(
     customerId
   ) {
@@ -1733,6 +1763,21 @@
             originalText;
         }
 
+        return;
+      }
+
+      const billingButton = event.target.closest("[data-toggle-billing]");
+      if (billingButton) {
+        const originalText = billingButton.textContent;
+        billingButton.disabled = true;
+        billingButton.textContent = "Updating...";
+        try {
+          await toggleBiweeklyBilling(billingButton.dataset.toggleBilling);
+        } catch (error) {
+          setPageMessage(error.message || "Unable to update billing terms.", "error");
+          billingButton.disabled = false;
+          billingButton.textContent = originalText;
+        }
         return;
       }
 

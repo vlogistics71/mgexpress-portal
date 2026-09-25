@@ -1138,6 +1138,7 @@
                 <label for="job_category">Job Category</label>
                 <select id="job_category" name="job_category">
                   <option value="general" selected>General (Boxes / Other)</option>
+                  <option value="auto_parts">Auto Parts Delivery</option>
                   <option value="medical">Medical (Labs / Coolers)</option>
                   <option value="legal">Legal (Serve / Paperwork)</option>
                   <option value="pallet">Pallet (Van Job)</option>
@@ -1199,6 +1200,15 @@
                 <input id="estimated_miles" name="estimated_miles" type="number" min="0" step="0.1">
                 <div class="hint">Driving miles calculated automatically</div>
                 <div id="estimatedMilesStatus" class="address-autocomplete-message" aria-live="polite"></div>
+              </div>
+
+              <div class="field full" id="autoPartsFields" hidden>
+                <div class="form-grid three-up">
+                  <div class="field"><label for="auto_parts_po_ro">PO / RO Number</label><input id="auto_parts_po_ro" name="auto_parts_po_ro" placeholder="PO, RO, invoice, or reference"></div>
+                  <div class="field"><label for="auto_parts_ready">Part Ready?</label><select id="auto_parts_ready" name="auto_parts_ready"><option value="yes">Yes — ready for pickup</option><option value="no">No / confirm first</option></select></div>
+                  <div class="field"><label for="auto_parts_service">Parts Service</label><select id="auto_parts_service" name="auto_parts_service"><option value="standard">Standard</option><option value="asap">ASAP / Priority</option></select></div>
+                  <div class="field full"><label for="auto_parts_description">Part Description</label><input id="auto_parts_description" name="auto_parts_description" placeholder="Example: alternator, tire, bumper, transmission part"></div>
+                </div>
               </div>
 
               <div class="field full">
@@ -2330,7 +2340,7 @@
 
     function normalizeCategory(value) {
       const category = clean(value);
-      if (["medical", "legal", "pallet", "special"].includes(category)) {
+      if (["medical", "legal", "pallet", "special", "auto_parts"].includes(category)) {
         return category;
       }
       return "general";
@@ -3156,6 +3166,12 @@
       }
     }
 
+    function syncAutoPartsFieldsVisibility() {
+      const wrap = document.getElementById("autoPartsFields");
+      if (!wrap || !elements.createJobForm?.job_category) return;
+      wrap.hidden = clean(elements.createJobForm.job_category.value) !== "auto_parts";
+    }
+
     function syncPackageWeightCustomVisibility() {
       if (!elements.packageWeight || !elements.packageWeightCustomField || !elements.packageWeightCustom) {
         return;
@@ -3256,6 +3272,7 @@
       syncReturnDetailsVisibility();
       syncScheduledFieldsVisibility();
       syncPackageWeightCustomVisibility();
+      syncAutoPartsFieldsVisibility();
 
       if (clearMessage) {
         setCreateJobMessage("", "");
@@ -3463,6 +3480,10 @@
         ? packageWeightCustom
         : packageWeightSelection;
       const referenceNumber = String(data.get("reference_number") || "").trim();
+      const autoPartsPoRo = String(data.get("auto_parts_po_ro") || "").trim();
+      const autoPartsReady = String(data.get("auto_parts_ready") || "").trim();
+      const autoPartsService = String(data.get("auto_parts_service") || "").trim();
+      const autoPartsDescription = String(data.get("auto_parts_description") || "").trim();
       const internalNotes = String(data.get("special_instructions") || "").trim();
 
       if (clean(packageWeightSelection) === "custom" && !packageWeightCustom) {
@@ -3480,6 +3501,13 @@
       if (clean(packageWeightSelection) === "over_75_lbs") billingMeta.push("Over-75-lb Fee: $8.00");
       if (packageWeight) billingMeta.push("Weight: " + packageWeight.replaceAll("_", " "));
       if (referenceNumber) billingMeta.push("Reference #: " + referenceNumber);
+      if (normalizeCategory(data.get("job_category")) === "auto_parts") {
+        billingMeta.push("Service: Auto Parts Delivery");
+        if (autoPartsPoRo) billingMeta.push("PO / RO #: " + autoPartsPoRo);
+        if (autoPartsDescription) billingMeta.push("Part: " + autoPartsDescription);
+        if (autoPartsReady) billingMeta.push("Part Ready: " + (autoPartsReady === "yes" ? "Yes" : "No / confirm first"));
+        if (autoPartsService) billingMeta.push("Parts Service: " + (autoPartsService === "asap" ? "ASAP / Priority" : "Standard"));
+      }
       const preferredPickupTime = String(data.get("preferred_pickup_time") || "").trim();
       const preferredDeliveryTime = String(data.get("preferred_delivery_time") || "").trim();
       if (preferredPickupTime) instructions.push("Preferred pickup time: " + requestedTimeLabel(preferredPickupTime));
@@ -3670,6 +3698,47 @@
         }
 
         const savedJob = insertResult.data || null;
+
+        let approvedBiweeklyAccount = false;
+        if (savedJob?.customer_account_id) {
+          const accountResult = await client
+            .from("customer_portal_accounts")
+            .select("billing_eligibility,billing_status,billing_cycle_days")
+            .eq("id", savedJob.customer_account_id)
+            .maybeSingle();
+
+          if (accountResult.error) {
+            console.error("Unable to verify customer billing terms", accountResult.error);
+          } else {
+            const account = accountResult.data;
+            approvedBiweeklyAccount =
+              account?.billing_eligibility === "biweekly" &&
+              account?.billing_status === "approved" &&
+              Number(account?.billing_cycle_days || 0) === 14;
+          }
+        }
+
+        if (approvedBiweeklyAccount && savedJob?.id) {
+          const billingUpdate = await client
+            .from("quotes")
+            .update({
+              payment_status: "account_billing",
+              status: "ready",
+              invoice_delivery_method: "biweekly",
+              billing_notes: [savedJob.billing_notes, "Approved biweekly customer account — 14-day billing cycle."]
+                .filter(Boolean)
+                .join("\\n")
+            })
+            .eq("id", savedJob.id)
+            .select("*")
+            .maybeSingle();
+
+          if (billingUpdate.error) {
+            throw billingUpdate.error;
+          }
+          Object.assign(savedJob, billingUpdate.data || {});
+        }
+
         console.log("SAVED JOB", savedJob);
         console.log("SAVED CUSTOMER CHARGE", savedJob?.customer_charge);
 
@@ -3691,7 +3760,10 @@
           customer_phone: String(elements.createJobForm.customer_phone?.value || "").trim()
         };
 
-        if (savedJob?.id) {
+        if (approvedBiweeklyAccount) {
+          paymentContext.payment_status_label = "Biweekly Account";
+          paymentContext.checkout_url = "";
+        } else if (savedJob?.id) {
           try {
             const checkoutResult = await createStripeCheckoutForJob(savedJob.id);
             paymentContext = {
@@ -3839,6 +3911,9 @@
     elements.refreshButton.addEventListener("click", () => {
       resetCreateJobForm({ clearMessage: true });
     });
+
+    elements.createJobForm.job_category?.addEventListener("change", syncAutoPartsFieldsVisibility);
+    syncAutoPartsFieldsVisibility();
 
     elements.createJobForm.addEventListener("submit", createJob);
     if (elements.createJobForm?.approved_price) {

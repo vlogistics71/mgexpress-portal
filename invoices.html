@@ -664,6 +664,8 @@
         <h1>Invoices</h1>
       </div>
 
+      <button class="refresh-button" id="generateBiweeklyButton" type="button">Generate Biweekly</button>
+
       <button
         class="refresh-button"
         id="refreshButton"
@@ -1250,6 +1252,64 @@
       return session;
     }
 
+    async function generateBiweeklyInvoices() {
+      setPageMessage("Generating eligible 14-day invoices...", "success");
+      const [accountResult, jobResult, linkResult] = await Promise.all([
+        client.from("customer_portal_accounts").select("*").eq("billing_eligibility", "biweekly").eq("billing_status", "approved"),
+        client.from("quotes").select("*").eq("payment_status", "account_billing"),
+        client.from("invoice_jobs").select("job_id")
+      ]);
+      if (accountResult.error) throw accountResult.error;
+      if (jobResult.error) throw jobResult.error;
+      if (linkResult.error) throw linkResult.error;
+      const alreadyInvoiced = new Set((linkResult.data || []).map(row => String(row.job_id)));
+      let created = 0;
+      for (const account of accountResult.data || []) {
+        const eligible = (jobResult.data || []).filter(job =>
+          String(job.customer_account_id || "") === String(account.id) &&
+          ["delivered", "completed"].includes(cleanStatus(job.status)) &&
+          !alreadyInvoiced.has(String(job.id))
+        );
+        if (!eligible.length) continue;
+        const dates = eligible.map(job => new Date(job.completed_at || job.updated_at || job.created_at)).filter(date => !Number.isNaN(date.getTime())).sort((a,b) => a-b);
+        if (!dates.length) continue;
+        const periodStart = dates[0];
+        const periodEnd = new Date(periodStart); periodEnd.setDate(periodEnd.getDate() + 13);
+        const now = new Date();
+        if (now < periodEnd) continue;
+        const periodJobs = eligible.filter(job => new Date(job.completed_at || job.updated_at || job.created_at) <= periodEnd);
+        const amount = periodJobs.reduce((sum, job) => sum + resolveCustomerAmount(job, null), 0);
+        if (!(amount > 0)) continue;
+        const invoiceNumber = "BW-" + localDateString(periodEnd).replaceAll("-", "") + "-" + String(account.id).slice(0, 6).toUpperCase();
+        const due = new Date(periodEnd); due.setDate(due.getDate() + 14);
+        const invoiceResult = await client.from("invoices").insert({
+          invoice_number: invoiceNumber,
+          customer_account_id: account.id,
+          customer_name: account.company_name || account.customer_name,
+          customer_email: account.email,
+          amount,
+          payment_status: "unpaid",
+          due_date: localDateString(due),
+          billing_period_start: localDateString(periodStart),
+          billing_period_end: localDateString(periodEnd),
+          billing_cycle_days: 14,
+          invoice_type: "biweekly"
+        }).select("*").single();
+        if (invoiceResult.error) throw invoiceResult.error;
+        const links = periodJobs.map(job => ({ invoice_id: invoiceResult.data.id, job_id: job.id, amount: resolveCustomerAmount(job, null) }));
+        const linkInsert = await client.from("invoice_jobs").insert(links);
+        if (linkInsert.error) {
+          await client.from("invoices").delete().eq("id", invoiceResult.data.id);
+          throw linkInsert.error;
+        }
+        await client.from("quotes").update({ payment_status: "invoiced" }).in("id", periodJobs.map(job => job.id));
+        created += 1;
+      }
+      setPageMessage(created ? `Created ${created} biweekly invoice${created === 1 ? "" : "s"}.` : "No completed 14-day billing periods are ready yet.", "success");
+      await loadInvoices();
+        await suspendOverdueBiweeklyAccounts();
+    }
+
     async function loadInvoices() {
       invoiceList.innerHTML = `
         <div class="empty">
@@ -1606,6 +1666,26 @@
       setEditMessage("", "");
     }
 
+    async function suspendOverdueBiweeklyAccounts() {
+      const today = localDateString(new Date());
+      const overdue = invoices.filter(invoice =>
+        cleanStatus(invoice.invoice_type) === "biweekly" &&
+        cleanStatus(invoice.payment_status || invoice.status) !== "paid" &&
+        invoice.due_date &&
+        String(invoice.due_date).slice(0, 10) < today &&
+        invoice.customer_account_id
+      );
+      const accountIds = [...new Set(overdue.map(invoice => invoice.customer_account_id).filter(Boolean))];
+      if (!accountIds.length) return 0;
+      const result = await client.from("customer_portal_accounts").update({
+        billing_eligibility: "pay_now",
+        billing_status: "suspended",
+        billing_suspended_at: new Date().toISOString()
+      }).in("id", accountIds).eq("billing_status", "approved");
+      if (result.error) throw result.error;
+      return accountIds.length;
+    }
+
     async function updateInvoiceStatus(
       invoiceId,
       newStatus
@@ -1615,7 +1695,13 @@
           .from("invoices")
           .update({
             payment_status:
-              newStatus
+              newStatus,
+            paid_at:
+              cleanStatus(newStatus) === "paid"
+                ? new Date().toISOString()
+                : null,
+            updated_at:
+              new Date().toISOString()
           })
           .eq("id", invoiceId)
           .select("*")
@@ -1623,6 +1709,42 @@
 
       if (result.error) {
         throw result.error;
+      }
+
+      const invoiceRecord = result.data || {};
+      if (cleanStatus(invoiceRecord.invoice_type) === "biweekly") {
+        const linksResult = await client
+          .from("invoice_jobs")
+          .select("job_id")
+          .eq("invoice_id", invoiceId);
+
+        if (linksResult.error) {
+          throw linksResult.error;
+        }
+
+        const linkedJobIds = (linksResult.data || [])
+          .map(link => link.job_id)
+          .filter(Boolean);
+
+        if (linkedJobIds.length) {
+          const jobsResult = await client
+            .from("quotes")
+            .update({
+              payment_status: newStatus === "paid" ? "paid" : "invoiced"
+            })
+            .in("id", linkedJobIds);
+
+          if (jobsResult.error) {
+            throw jobsResult.error;
+          }
+
+          linkedJobIds.forEach(jobId => {
+            if (jobsById[String(jobId)]) {
+              jobsById[String(jobId)].payment_status =
+                newStatus === "paid" ? "paid" : "invoiced";
+            }
+          });
+        }
       }
 
       const index =
@@ -2075,6 +2197,13 @@
       "change",
       renderInvoices
     );
+
+    document.getElementById("generateBiweeklyButton").addEventListener("click", async function () {
+      this.disabled = true;
+      try { await generateBiweeklyInvoices(); }
+      catch (error) { setPageMessage(error.message || "Unable to generate biweekly invoices.", "error"); }
+      finally { this.disabled = false; }
+    });
 
     document
       .getElementById("refreshButton")
