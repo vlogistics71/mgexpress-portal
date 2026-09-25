@@ -3698,6 +3698,46 @@
         }
 
         const savedJob = insertResult.data || null;
+
+        let approvedBiweeklyAccount = false;
+        if (savedJob?.customer_account_id) {
+          const accountResult = await client
+            .from("customer_portal_accounts")
+            .select("billing_eligibility,billing_status,billing_cycle_days")
+            .eq("id", savedJob.customer_account_id)
+            .maybeSingle();
+
+          if (accountResult.error) {
+            console.error("Unable to verify customer billing terms", accountResult.error);
+          } else {
+            const account = accountResult.data;
+            approvedBiweeklyAccount =
+              account?.billing_eligibility === "biweekly" &&
+              account?.billing_status === "approved" &&
+              Number(account?.billing_cycle_days || 0) === 14;
+          }
+        }
+
+        if (approvedBiweeklyAccount && savedJob?.id) {
+          const billingUpdate = await client
+            .from("quotes")
+            .update({
+              payment_status: "account_billing",
+              invoice_delivery_method: "biweekly",
+              billing_notes: [savedJob.billing_notes, "Approved biweekly customer account — 14-day billing cycle."]
+                .filter(Boolean)
+                .join("\\n")
+            })
+            .eq("id", savedJob.id)
+            .select("*")
+            .maybeSingle();
+
+          if (billingUpdate.error) {
+            throw billingUpdate.error;
+          }
+          Object.assign(savedJob, billingUpdate.data || {});
+        }
+
         console.log("SAVED JOB", savedJob);
         console.log("SAVED CUSTOMER CHARGE", savedJob?.customer_charge);
 
@@ -3719,7 +3759,10 @@
           customer_phone: String(elements.createJobForm.customer_phone?.value || "").trim()
         };
 
-        if (savedJob?.id) {
+        if (approvedBiweeklyAccount) {
+          paymentContext.payment_status_label = "Biweekly Account";
+          paymentContext.checkout_url = "";
+        } else if (savedJob?.id) {
           try {
             const checkoutResult = await createStripeCheckoutForJob(savedJob.id);
             paymentContext = {
