@@ -1187,6 +1187,26 @@
       return;
     }
 
+    const isAutoParts = clean(delivery.job_category) === "auto_parts";
+    if (isAutoParts) {
+      elements.deliveryDetailsTitle.textContent = "Auto Parts Delivery";
+      elements.deliveryDetailsSubtitle.textContent = "Auto Parts • " + getStatusLabel(delivery);
+      elements.deliveryDetailsBody.innerHTML = '<section class="details-card"><h4>Parts Pickup</h4><div class="details-card-body">'+detailsBlock("Job Number",delivery.job_number)+detailsBlock("Pickup",delivery.pickup_address || "-")+detailsBlock("Delivery",delivery.delivery_address || "-")+'<div class="sheet-note">PO / RO and part details are shown in Billing Notes / instructions. Driver proof is stored separately for this job.</div><label style="display:block;margin-top:12px"><input id="autoPartsPickupConfirmed" type="checkbox"> Parts verified at pickup</label><input id="autoPartsDeliveredTo" placeholder="Delivered to / recipient name" style="width:100%;margin-top:12px;padding:10px"><textarea id="autoPartsProofNotes" placeholder="Pickup or delivery notes" style="width:100%;margin-top:12px;padding:10px"></textarea><div class="details-inline-actions" style="margin-top:12px"><button class="action-btn" id="autoPartsSaveProofBtn" type="button">Save Parts Proof</button></div></div></section>';
+      client.from("auto_parts_delivery_proof").select("*").eq("job_id",delivery.id).maybeSingle().then(({data}) => {
+        const check=document.getElementById("autoPartsPickupConfirmed"); const recipient=document.getElementById("autoPartsDeliveredTo"); const notes=document.getElementById("autoPartsProofNotes");
+        if(check) check.checked=Boolean(data?.pickup_confirmed); if(recipient) recipient.value=data?.delivered_to||""; if(notes) notes.value=data?.notes||"";
+      });
+      document.getElementById("autoPartsSaveProofBtn")?.addEventListener("click", async () => {
+        const pickupConfirmed=Boolean(document.getElementById("autoPartsPickupConfirmed")?.checked);
+        const deliveredTo=String(document.getElementById("autoPartsDeliveredTo")?.value||"").trim()||null;
+        const notes=String(document.getElementById("autoPartsProofNotes")?.value||"").trim()||null;
+        const now=new Date().toISOString();
+        const result=await client.from("auto_parts_delivery_proof").upsert({job_id:delivery.id,pickup_confirmed:pickupConfirmed,pickup_confirmed_at:pickupConfirmed?now:null,delivered_to:deliveredTo,delivery_confirmed_at:deliveredTo?now:null,notes,updated_at:now},{onConflict:"job_id"});
+        if(result.error){showToast(result.error.message||"Unable to save parts proof.","error");return;} showToast("Auto parts proof saved.","success");
+      });
+      return;
+    }
+
     const isProcessServe = clean(delivery.job_category) === "legal" && String(delivery.job_number || "").startsWith("PS-");
     if (isProcessServe) {
       elements.deliveryDetailsTitle.textContent = "Process Serve Details";
