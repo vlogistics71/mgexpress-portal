@@ -1307,6 +1307,7 @@
       }
       setPageMessage(created ? `Created ${created} biweekly invoice${created === 1 ? "" : "s"}.` : "No completed 14-day billing periods are ready yet.", "success");
       await loadInvoices();
+        await suspendOverdueBiweeklyAccounts();
     }
 
     async function loadInvoices() {
@@ -1663,6 +1664,26 @@
       );
 
       setEditMessage("", "");
+    }
+
+    async function suspendOverdueBiweeklyAccounts() {
+      const today = localDateString(new Date());
+      const overdue = invoices.filter(invoice =>
+        cleanStatus(invoice.invoice_type) === "biweekly" &&
+        cleanStatus(invoice.payment_status || invoice.status) !== "paid" &&
+        invoice.due_date &&
+        String(invoice.due_date).slice(0, 10) < today &&
+        invoice.customer_account_id
+      );
+      const accountIds = [...new Set(overdue.map(invoice => invoice.customer_account_id).filter(Boolean))];
+      if (!accountIds.length) return 0;
+      const result = await client.from("customer_portal_accounts").update({
+        billing_eligibility: "pay_now",
+        billing_status: "suspended",
+        billing_suspended_at: new Date().toISOString()
+      }).in("id", accountIds).eq("billing_status", "approved");
+      if (result.error) throw result.error;
+      return accountIds.length;
     }
 
     async function updateInvoiceStatus(
