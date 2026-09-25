@@ -3723,6 +3723,7 @@
             .from("quotes")
             .update({
               payment_status: "account_billing",
+              status: "ready",
               invoice_delivery_method: "biweekly",
               billing_notes: [savedJob.billing_notes, "Approved biweekly customer account — 14-day billing cycle."]
                 .filter(Boolean)
