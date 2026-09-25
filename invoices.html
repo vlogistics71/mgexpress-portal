@@ -1695,7 +1695,13 @@
           .from("invoices")
           .update({
             payment_status:
-              newStatus
+              newStatus,
+            paid_at:
+              cleanStatus(newStatus) === "paid"
+                ? new Date().toISOString()
+                : null,
+            updated_at:
+              new Date().toISOString()
           })
           .eq("id", invoiceId)
           .select("*")
