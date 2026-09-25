@@ -1159,7 +1159,7 @@
       const jobResult =
         await client
           .from("quotes")
-          .select("id,job_number,assigned_driver_id,status,customer_name,pickup_address,delivery_address,driver_pay,driver_acceptance_status,driver_workflow_status,driver_accepted_at,driver_rejected_at,en_route_pickup_at,picked_up_at,en_route_delivery_at,pod_recipient_name,created_at,completed_at,delivery_photo_uploaded_at")
+          .select("id,job_number,assigned_driver_id,status,customer_name,pickup_address,pickup_suite_floor,pickup_city,pickup_state,pickup_zip,delivery_address,delivery_suite_floor,delivery_city,delivery_state,delivery_zip,driver_pay,driver_acceptance_status,driver_workflow_status,driver_accepted_at,driver_rejected_at,en_route_pickup_at,picked_up_at,en_route_delivery_at,pod_recipient_name,created_at,completed_at,delivery_photo_uploaded_at,job_category,billing_notes,special_instructions")
           .order(
             "created_at",
             {
