@@ -433,6 +433,9 @@
 
   function getCategoryClass(category) {
     const value = clean(category);
+    if (value === "auto_parts") {
+      return "category-auto-parts";
+    }
     if (value === "medical") {
       return "category-medical";
     }
@@ -450,6 +453,9 @@
 
   function getCategoryLabel(category) {
     const value = clean(category);
+    if (value === "auto_parts") {
+      return "Auto Parts";
+    }
     if (value === "medical") {
       return "Medical";
     }
