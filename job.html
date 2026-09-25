@@ -1383,6 +1383,7 @@
             <div class="workflow-card-meta">
               Status: ${escapeHtml(workflowStatusLabel(job))}
             </div>
+            ${cleanStatus(job.job_category) === "auto_parts" ? '<div class="workflow-card-meta"><strong>Auto Parts Delivery</strong><br>'+escapeHtml(job.billing_notes || job.special_instructions || "Verify PO / RO and parts before leaving pickup.")+'</div><div class="workflow-button-row"><button class="workflow-button" type="button" data-auto-parts-proof="'+escapeHtml(String(job.id))+'">Parts Proof / Photos</button></div>' : ""}
             <div class="workflow-button-row">
               ${workflowButtons.join("")}
             </div>
@@ -1571,9 +1572,22 @@
           .join("");
     }
 
-    document
-      .getElementById("driverWorkflowBox")
-      .addEventListener("click", async function (event) {
+    document.getElementById("driverWorkflowBox").addEventListener("click", async function (event) {
+      const proofButton = event.target.closest("[data-auto-parts-proof]");
+      if (proofButton) {
+        const jobId = proofButton.getAttribute("data-auto-parts-proof");
+        const job = jobs.find(item => String(item.id) === String(jobId));
+        if (!job) return;
+        const confirmed = window.confirm("Confirm the PO / RO and parts match the work order. Press OK after verifying the parts.");
+        if (!confirmed) return;
+        const now = new Date().toISOString();
+        const proof = await client.from("auto_parts_delivery_proof").upsert({job_id:job.id,pickup_confirmed:true,pickup_confirmed_at:now,updated_at:now},{onConflict:"job_id"});
+        if (proof.error) throw proof.error;
+        window.alert("Parts verified. Pickup proof has been saved. Photos/documents can be added from the Auto Parts work order.");
+        await loadDriverData();
+        return;
+      }
+
         const button = event.target.closest("[data-workflow-action]");
 
         if (!button) {
