@@ -1684,6 +1684,42 @@
         throw result.error;
       }
 
+      const invoiceRecord = result.data || {};
+      if (cleanStatus(invoiceRecord.invoice_type) === "biweekly") {
+        const linksResult = await client
+          .from("invoice_jobs")
+          .select("job_id")
+          .eq("invoice_id", invoiceId);
+
+        if (linksResult.error) {
+          throw linksResult.error;
+        }
+
+        const linkedJobIds = (linksResult.data || [])
+          .map(link => link.job_id)
+          .filter(Boolean);
+
+        if (linkedJobIds.length) {
+          const jobsResult = await client
+            .from("quotes")
+            .update({
+              payment_status: newStatus === "paid" ? "paid" : "invoiced"
+            })
+            .in("id", linkedJobIds);
+
+          if (jobsResult.error) {
+            throw jobsResult.error;
+          }
+
+          linkedJobIds.forEach(jobId => {
+            if (jobsById[String(jobId)]) {
+              jobsById[String(jobId)].payment_status =
+                newStatus === "paid" ? "paid" : "invoiced";
+            }
+          });
+        }
+      }
+
       const index =
         invoices.findIndex(
           invoice =>
