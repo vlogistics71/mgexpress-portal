@@ -1383,7 +1383,7 @@
             <div class="workflow-card-meta">
               Status: ${escapeHtml(workflowStatusLabel(job))}
             </div>
-            ${cleanStatus(job.job_category) === "auto_parts" ? '<div class="workflow-card-meta"><strong>Auto Parts Delivery</strong><br>'+escapeHtml(job.billing_notes || job.special_instructions || "Verify PO / RO and parts before leaving pickup.")+'</div><div class="workflow-button-row"><button class="workflow-button" type="button" data-auto-parts-proof="'+escapeHtml(String(job.id))+'">Parts Proof / Photos</button></div>' : ""}
+            ${cleanStatus(job.job_category) === "auto_parts" ? '<div class="workflow-card-meta"><strong>Auto Parts Delivery</strong><br>'+escapeHtml(job.billing_notes || job.special_instructions || "Verify PO / RO and parts before leaving pickup.")+'</div><div class="workflow-button-row"><button class="workflow-button" type="button" data-auto-parts-proof="'+escapeHtml(String(job.id))+'">Verify Parts</button><label class="workflow-button">Pickup Photo<input hidden type="file" accept="image/*" capture="environment" data-auto-parts-photo="pickup_photo" data-job-id="'+escapeHtml(String(job.id))+'"></label><label class="workflow-button">Delivery Photo<input hidden type="file" accept="image/*" capture="environment" data-auto-parts-photo="delivery_photo" data-job-id="'+escapeHtml(String(job.id))+'"></label></div>' : ""}
             <div class="workflow-button-row">
               ${workflowButtons.join("")}
             </div>
@@ -1592,6 +1592,21 @@
           })
           .join("");
     }
+
+    document.getElementById("driverWorkflowBox").addEventListener("change", async function (event) {
+      const input = event.target.closest("[data-auto-parts-photo]");
+      if (!input) return;
+      const file = input.files?.[0]; if (!file) return;
+      if (file.size > 26214400) { window.alert("Photo must be 25 MB or less."); input.value=""; return; }
+      const jobId=input.getAttribute("data-job-id"); const type=input.getAttribute("data-auto-parts-photo");
+      const safe=String(file.name||"photo.jpg").replace(/[^a-zA-Z0-9._-]+/g,"-");
+      const path=jobId+"/"+Date.now()+"-"+safe;
+      const upload=await client.storage.from("auto-parts-files").upload(path,file,{contentType:file.type||"image/jpeg",upsert:false});
+      if(upload.error){window.alert(upload.error.message);input.value="";return;}
+      const row=await client.from("auto_parts_attachments").insert({job_id:jobId,file_name:file.name||safe,storage_path:path,mime_type:file.type||"image/jpeg",attachment_type:type});
+      if(row.error){await client.storage.from("auto-parts-files").remove([path]);window.alert(row.error.message);input.value="";return;}
+      window.alert(type==="pickup_photo"?"Pickup photo saved.":"Delivery photo saved."); input.value="";
+    });
 
     document.getElementById("driverWorkflowBox").addEventListener("click", async function (event) {
       const proofButton = event.target.closest("[data-auto-parts-proof]");
