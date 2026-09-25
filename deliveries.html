@@ -99,8 +99,8 @@
     .card-main { display: grid; gap: 8px; min-width: 0; }
     .card-topline { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
     .category-dot { width: 10px; height: 10px; border-radius: 999px; background: #d7dde1; }
-    .category-medical { border-left-color: #c0392b; } .category-pallet { border-left-color: #8b5a2b; } .category-legal { border-left-color: #c49b00; } .category-general { border-left-color: #d7dde1; } .category-special { border-left-color: #d97706; }
-    .category-dot.category-medical { background: #c0392b; } .category-dot.category-pallet { background: #8b5a2b; } .category-dot.category-legal { background: #c49b00; } .category-dot.category-general { background: #d7dde1; } .category-dot.category-special { background: #d97706; }
+    .category-auto-parts { border-left-color: #245d9c; } .category-medical { border-left-color: #c0392b; } .category-pallet { border-left-color: #8b5a2b; } .category-legal { border-left-color: #c49b00; } .category-general { border-left-color: #d7dde1; } .category-special { border-left-color: #d97706; }
+    .category-dot.category-auto-parts { background: #245d9c; } .category-dot.category-medical { background: #c0392b; } .category-dot.category-pallet { background: #8b5a2b; } .category-dot.category-legal { background: #c49b00; } .category-dot.category-general { background: #d7dde1; } .category-dot.category-special { background: #d97706; }
     .badge, .mini-status {
       display: inline-flex; align-items: center; min-height: 24px; padding: 4px 8px; border-radius: 999px; background: #f4f7f9;
       color: var(--dark-green); font-size: 10px; font-weight: 900; letter-spacing: .04em; text-transform: uppercase;
@@ -534,7 +534,7 @@
           <section class="edit-section">
             <h4 class="edit-section-title">Service</h4>
             <div class="edit-grid three-up">
-              <div class="edit-field"><label for="editJobCategory">Job Category</label><select id="editJobCategory" name="job_category"><option value="general">General (Boxes / Other)</option><option value="medical">Medical (Labs / Coolers)</option><option value="legal">Legal (Serve / Paperwork)</option><option value="pallet">Pallet (Van Job)</option></select></div>
+              <div class="edit-field"><label for="editJobCategory">Job Category</label><select id="editJobCategory" name="job_category"><option value="general">General (Boxes / Other)</option><option value="auto_parts">Auto Parts Delivery</option><option value="medical">Medical (Labs / Coolers)</option><option value="legal">Legal (Serve / Paperwork)</option><option value="pallet">Pallet (Van Job)</option></select></div>
               <div class="edit-field"><label for="editVehicleType">Vehicle Type</label><select id="editVehicleType" name="vehicle_type"><option value="">Choose vehicle</option><option value="Car">Car</option><option value="SUV">SUV</option><option value="Sprinter Van">Sprinter Van</option><option value="Box Truck">Box Truck</option></select></div>
               <div class="edit-field"><label for="editPreferredPickupTime">Preferred Pickup Time</label><select id="editPreferredPickupTime"><option value="">Select pickup time</option></select></div>
               <div class="edit-field"><label for="editPreferredDeliveryTime">Deliver By Time</label><select id="editPreferredDeliveryTime"><option value="">Select delivery time</option></select></div>
