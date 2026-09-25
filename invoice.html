@@ -559,7 +559,8 @@
           pallet: "Pallet (Van Job)",
           legal: "Legal (Serve / Paperwork)",
           general: "General (Boxes / Other)",
-          special: "Special"
+          special: "Special",
+          auto_parts: "Auto Parts Delivery"
         };
         return map[clean(value)] || firstPresentValue([value]);
       }
@@ -699,6 +700,18 @@
         return result.data;
       }
 
+      async function loadGroupedInvoiceJobs(invoice) {
+        if (!invoice || clean(invoice.invoice_type) !== "biweekly") return [];
+        const links = await client.from("invoice_jobs").select("job_id,amount").eq("invoice_id", invoice.id).order("created_at", { ascending: true });
+        if (links.error) throw links.error;
+        const ids = (links.data || []).map(x => x.job_id);
+        if (!ids.length) return [];
+        const jobsResult = await client.from("quotes").select("*").in("id", ids);
+        if (jobsResult.error) throw jobsResult.error;
+        const byId = new Map((jobsResult.data || []).map(x => [String(x.id), x]));
+        return (links.data || []).map(link => ({ job: byId.get(String(link.job_id)), amount: Number(link.amount || 0) })).filter(x => x.job);
+      }
+
       async function loadLatestInvoiceForJob(quoteId) {
         try {
           const result = await client
@@ -720,12 +733,13 @@
         }
       }
 
-      function renderInvoice(job, invoice) {
+      function renderInvoice(job, invoice, groupedItems = []) {
         const jobNumber = firstPresentValue([job.job_number, "-"]);
         const invoiceNumber = resolveInvoiceNumber(job, invoice);
         const invoiceDate = formatDate(firstPresentValue([invoice && invoice.created_at, job.created_at, Date.now()]));
         const paymentStatus = paymentStatusLabel(firstPresentValue([job.payment_status, invoice && invoice.payment_status]));
-        const total = billingAmount(job);
+        const isBiweekly = clean(invoice && invoice.invoice_type) === "biweekly" && groupedItems.length > 0;
+        const total = isBiweekly ? groupedItems.reduce((sum, item) => sum + Number(item.amount || 0), 0) : billingAmount(job);
 
         const fromRows = [
           lineHtml("Company", firstPresentValue([window.MG_CONFIG && window.MG_CONFIG.companyName, "MG Express"])),
@@ -811,7 +825,7 @@
           + sectionHtml("Invoice Line Item",
             "<table class=\"invoice-table\">"
             + "<thead><tr><th>Description</th><th>Qty</th><th class=\"money\">Amount</th></tr></thead>"
-            + "<tbody><tr><td>" + escapeHtml(resolveDescription(job)) + "</td><td>1</td><td class=\"money\">" + escapeHtml(money(total)) + "</td></tr></tbody>"
+            + "<tbody>" + (isBiweekly ? groupedItems.map(item => "<tr><td>" + escapeHtml((item.job.job_number || "Job") + " • " + jobCategoryLabel(item.job.job_category) + " • " + (item.job.pickup_address || "-") + " → " + (item.job.delivery_address || "-")) + "</td><td>1</td><td class=\"money\">" + escapeHtml(money(item.amount)) + "</td></tr>").join("") : "<tr><td>" + escapeHtml(resolveDescription(job)) + "</td><td>1</td><td class=\"money\">" + escapeHtml(money(total)) + "</td></tr>") + "</tbody>"
             + "</table>"
             + "<div class=\"totals-grid\" style=\"margin-top:6px;\">" + totalsRows + "</div>"
           )
@@ -1051,7 +1065,8 @@
           state.hostedInvoiceLink = links.hostedInvoiceLink;
           state.paymentLink = links.paymentLink;
 
-          renderInvoice(state.quote, state.invoice);
+          const groupedItems = await loadGroupedInvoiceJobs(state.invoice);
+          renderInvoice(state.quote, state.invoice, groupedItems);
         } catch (error) {
           console.error("Unable to load invoice:", error);
           showError();
