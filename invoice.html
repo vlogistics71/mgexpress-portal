@@ -825,7 +825,7 @@
           + sectionHtml("Invoice Line Item",
             "<table class=\"invoice-table\">"
             + "<thead><tr><th>Description</th><th>Qty</th><th class=\"money\">Amount</th></tr></thead>"
-            + "<tbody>" + (isBiweekly ? groupedItems.map(item => "<tr><td>" + escapeHtml((item.job.job_number || "Job") + " • " + jobCategoryLabel(item.job.job_category) + " • " + (item.job.pickup_address || "-") + " → " + (item.job.delivery_address || "-")) + "</td><td>1</td><td class=\"money\">" + escapeHtml(money(item.amount)) + "</td></tr>").join("") : "<tr><td>" + escapeHtml(resolveDescription(job)) + "</td><td>1</td><td class=\"money\">" + escapeHtml(money(total)) + "</td></tr>") + "</tbody>"
+            + "<tbody>" + (isBiweekly ? groupedItems.map(item => { const serviceDate = firstPresentValue([item.job.completed_at,item.job.scheduled_date,item.job.created_at]); return "<tr><td>" + escapeHtml((item.job.job_number || "Job") + " • " + (hasValue(serviceDate) ? formatDate(serviceDate) + " • " : "") + jobCategoryLabel(item.job.job_category) + " • " + (item.job.pickup_address || "-") + " → " + (item.job.delivery_address || "-")) + "</td><td>1</td><td class=\"money\">" + escapeHtml(money(item.amount)) + "</td></tr>"; }).join("") : "<tr><td>" + escapeHtml(resolveDescription(job)) + "</td><td>1</td><td class=\"money\">" + escapeHtml(money(total)) + "</td></tr>") + "</tbody>"
             + "</table>"
             + "<div class=\"totals-grid\" style=\"margin-top:6px;\">" + totalsRows + "</div>"
           )
