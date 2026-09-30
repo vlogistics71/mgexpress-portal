@@ -332,6 +332,7 @@ module.exports = {
   parseAmountToCents,
   getSiteUrl,
   getStripeWebhookSecret,
+  getStripeSecretKey,
   sendResendEmail,
   sendTwilioSms,
   requireDispatchAccess,
