@@ -5,6 +5,7 @@ const client = supabase.createClient(
 
 const PAYMENT_LINK_ENDPOINT = "/api/send-payment-link";
 const SEND_INVOICE_EMAIL_ENDPOINT = "/api/send-invoice-email";
+const REFUND_PAYMENT_ENDPOINT = "/api/refund-payment";
 
 window.mgDispatchClient = client;
 
@@ -1951,7 +1952,9 @@ function openJobDetails(jobId, readOnly = false) {
 
   const statusValue = clean(job.status);
   const canDelete = ["new", "pending", "waiting_payment", "quoted", "quote"].includes(statusValue);
-  const paymentIsPaid = clean(job.payment_status) === "paid";
+  const paymentStatus = clean(job.payment_status);
+  const paymentIsPaid = paymentStatus === "paid";
+  const paymentCanRefund = ["paid", "partially_refunded"].includes(paymentStatus);
   const hasPaymentEmail = Boolean(String(job.customer_email || "").trim());
   const hasPaymentPhone = Boolean(String(job.customer_phone || "").trim());
   const paymentWaiting = clean(job.payment_status) === "waiting_payment" || clean(job.status) === "waiting_payment";
@@ -1984,6 +1987,10 @@ function openJobDetails(jobId, readOnly = false) {
     `<button class="menu-item" type="button" data-copy-payment-link="${escapeHtml(String(job.id))}">Copy Payment Link</button>`,
     `<button class="menu-item" type="button" data-mark-paid-manual="${escapeHtml(String(job.id))}">Mark Paid Manually</button>`
   ];
+
+  if (paymentCanRefund) {
+    menuActions.unshift(`<button class="menu-item" type="button" data-refund-payment="${escapeHtml(String(job.id))}">Issue Full or Partial Refund</button>`);
+  }
 
   if (!paymentIsPaid) {
     const paymentActions = [];
@@ -2666,6 +2673,7 @@ function normalizePaymentStatusLabel(value) {
     pending: "Payment Sent",
     paid: "Paid",
     received: "Paid",
+    partially_refunded: "Partially Refunded",
     refunded: "Refunded",
     failed: "Failed"
   };
@@ -3346,6 +3354,71 @@ async function markPaidManually(jobId) {
   }
 }
 
+async function issuePaymentRefund(jobId) {
+  const job = getRowById(jobId);
+  if (!job) {
+    showToast("Selected delivery not found", "error");
+    return;
+  }
+
+  const customerAmount = Number(job.customer_charge ?? job.approved_price ?? 0);
+  const choice = window.prompt(
+    `Refund ${job.job_number || "this job"}. Enter FULL for the remaining balance, or enter a dollar amount for a partial refund.\n\nOriginal customer amount: ${money(customerAmount)}`,
+    "FULL"
+  );
+  if (choice === null) return;
+
+  const normalizedChoice = String(choice).trim();
+  const isFull = normalizedChoice.toLowerCase() === "full";
+  const partialAmount = isFull ? null : Number(normalizedChoice.replace(/[$,]/g, ""));
+  if (!isFull && (!Number.isFinite(partialAmount) || partialAmount <= 0)) {
+    showToast("Enter FULL or a valid partial refund amount.", "error");
+    return;
+  }
+
+  const reason = window.prompt("Enter the required reason for this refund:", "");
+  if (reason === null) return;
+  if (!String(reason).trim()) {
+    showToast("A refund reason is required.", "error");
+    return;
+  }
+
+  const amountDescription = isFull ? "the full remaining payment" : money(partialAmount);
+  const confirmed = window.confirm(
+    `Issue a refund of ${amountDescription} for ${job.job_number || "this job"}?\n\nReason: ${String(reason).trim()}\n\nThis sends money back through Stripe and cannot be undone.`
+  );
+  if (!confirmed) return;
+
+  try {
+    const sessionResult = await client.auth.getSession();
+    const accessToken = sessionResult?.data?.session?.access_token;
+    if (!accessToken) throw new Error("Please sign in again before issuing a refund.");
+
+    const response = await fetch(REFUND_PAYMENT_ENDPOINT, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: "Bearer " + accessToken
+      },
+      body: JSON.stringify({
+        quote_id: job.id,
+        refund_type: isFull ? "full" : "partial",
+        amount: partialAmount,
+        reason: String(reason).trim(),
+        request_id: window.crypto?.randomUUID?.() || String(Date.now())
+      })
+    });
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok) throw new Error(data.error || "Unable to issue refund.");
+
+    await loadRows();
+    openJobDetails(jobId, false);
+    showToast(`${data.amount_label || "Refund"} issued successfully${data.customer_email_sent ? " and the customer was emailed" : ""}.`, "success");
+  } catch (error) {
+    showToast(error.message || "Unable to issue refund", "error");
+  }
+}
+
 function applyWorkspacePresentation() {
   if (!modeConfig.showCustomerSearch) {
     elements.customerSearchField.classList.add("hidden");
@@ -3525,6 +3598,12 @@ function handleDocumentClick(event) {
   const markPaidManualBtn = target.closest("[data-mark-paid-manual]");
   if (markPaidManualBtn) {
     markPaidManually(markPaidManualBtn.getAttribute("data-mark-paid-manual"));
+    return;
+  }
+
+  const refundPaymentBtn = target.closest("[data-refund-payment]");
+  if (refundPaymentBtn) {
+    issuePaymentRefund(refundPaymentBtn.getAttribute("data-refund-payment"));
     return;
   }
 
