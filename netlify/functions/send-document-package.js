@@ -102,14 +102,18 @@ async function buildInvoice(q) {
 
 function packedValue(q, labels) {
   const source = String(q.special_instructions || "");
+  const knownLabels = ["Delivery instructions","Pickup instructions","Pickup contact","Delivery contact","Estimated total weight","Pieces / boxes","Pieces","Preferred pickup time","Deliver by time","Company","Pickup company","Delivery company"];
   for (const label of labels) {
-    const marker = label.toLowerCase() + ":";
-    const lower = source.toLowerCase();
-    const at = lower.indexOf(marker);
+    const marker = label + ":";
+    const at = source.toLowerCase().indexOf(marker.toLowerCase());
     if (at < 0) continue;
-    const rest = source.slice(at + marker.length).trim();
-    const next = rest.search(/\\s+[A-Z][A-Za-z /-]{2,30}\\s*:/);
-    const value = (next >= 0 ? rest.slice(0, next) : rest).trim();
+    const valueStart = at + marker.length;
+    let valueEnd = source.length;
+    for (const nextLabel of knownLabels) {
+      const pos = source.toLowerCase().indexOf((nextLabel + ":").toLowerCase(), valueStart);
+      if (pos >= 0 && pos < valueEnd) valueEnd = pos;
+    }
+    const value = source.slice(valueStart, valueEnd).trim();
     if (value) return value;
   }
   return "";
