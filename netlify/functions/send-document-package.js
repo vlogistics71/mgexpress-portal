@@ -1,4 +1,6 @@
 const { PDFDocument, StandardFonts, rgb } = require("pdf-lib");
+const fs = require("fs");
+const path = require("path");
 const { loadQuoteById, requireDispatchAccess, sendResendEmail, toJsonResponse } = require("./_shared");
 
 const GREEN = rgb(0.02, 0.20, 0.16);
@@ -46,10 +48,18 @@ async function createDocument(title, subtitle, sections, options = {}) {
   const { width, height } = page.getSize();
   const margin = 42;
 
+  try {
+    const svg = fs.readFileSync(path.join(__dirname, "../../assets/images/mg-express-logo-2026.svg"), "utf8");
+    const match = svg.match(/data:image\\/jpeg;base64,([^"\\s]+)/i);
+    if (match) {
+      const logo = await pdf.embedJpg(Buffer.from(match[1], "base64"));
+      const scaled = logo.scaleToFit(118, 72);
+      page.drawImage(logo, { x: margin, y: height - 92, width: scaled.width, height: scaled.height });
+    }
+  } catch (error) { console.warn("PDF logo unavailable", error.message); }
+
   page.drawRectangle({ x: 0, y: height - 104, width, height: 104, color: GREEN });
-  page.drawText("MG", { x: margin, y: height - 63, size: 28, font: bold, color: rgb(1, 1, 1) });
-  page.drawText("EXPRESS", { x: margin + 54, y: height - 63, size: 28, font: bold, color: rgb(0.94, 0.18, 0.20) });
-  page.drawText("WE DELIVER FOR YOU", { x: margin, y: height - 84, size: 9, font: bold, color: rgb(1, 1, 1) });
+
   page.drawText(title, { x: width - margin - bold.widthOfTextAtSize(title, 22), y: height - 57, size: 22, font: bold, color: rgb(1, 1, 1) });
   page.drawText(clean(subtitle, ""), { x: width - margin - regular.widthOfTextAtSize(clean(subtitle, ""), 9), y: height - 77, size: 9, font: regular, color: rgb(1, 1, 1) });
 
@@ -87,24 +97,45 @@ async function buildInvoice(q) {
   ]);
 }
 
+function packedValue(q, labels) {
+  const source = String(q.special_instructions || "");
+  for (const label of labels) {
+    const marker = label.toLowerCase() + ":";
+    const lower = source.toLowerCase();
+    const at = lower.indexOf(marker);
+    if (at < 0) continue;
+    const rest = source.slice(at + marker.length).trim();
+    const next = rest.search(/\\s+[A-Z][A-Za-z /-]{2,30}\\s*:/);
+    const value = (next >= 0 ? rest.slice(0, next) : rest).trim();
+    if (value) return value;
+  }
+  return "";
+}
+function first(...values) { return values.find(v => v !== null && v !== undefined && String(v).trim()) || ""; }
+function contactLine(q, p) { const n=first(q[p+"_contact_name"],packedValue(q,[p==="pickup"?"Pickup contact":"Delivery contact"])); const ph=first(q[p+"_contact_phone"],packedValue(q,[p==="pickup"?"Pickup contact phone":"Delivery contact phone"])); return [n,ph].filter(Boolean).join(" - "); }
+function businessName(q,p) { return first(q[p+"_business_name"],q[p+"_company_name"],p==="pickup"?q.company_name:"",packedValue(q,[p==="pickup"?"Pickup company":"Delivery company",p==="pickup"?"Pickup business":"Delivery business"])); }
+function pieces(q) { return first(q.piece_count,q.package_quantity,q.quantity,packedValue(q,["Pieces / boxes","Pieces","Package count"])); }
+function weight(q) { return first(q.package_weight,q.estimated_weight,q.total_weight,packedValue(q,["Estimated total weight","Approx. weight","Weight"])); }
+function pickupTime(q) { return first(q.preferred_pickup_time,q.pickup_time,q.pickup_scheduled_at,q.pickup_at,packedValue(q,["Preferred pickup time","Pickup time"])); }
+function deliveryTime(q) { return first(q.preferred_delivery_time,q.delivery_time,q.delivery_scheduled_at,q.deliver_by,q.delivery_at,packedValue(q,["Deliver by time","Preferred delivery time","Delivery time"])); }
+
 async function buildBol(q) {
-  const instructions = [q.pickup_instructions && `Pickup: ${q.pickup_instructions}`, q.delivery_instructions && `Delivery: ${q.delivery_instructions}`, q.special_instructions].filter(Boolean).join(" | ");
+  const pi=first(q.pickup_instructions,packedValue(q,["Pickup instructions"])); const di=first(q.delivery_instructions,packedValue(q,["Delivery instructions"]));
   return createDocument("BILL OF LADING", `Job ${jobNumber(q)}`, [
-    { title: "Pickup / Shipper", rows: [["Address", q.pickup_address], ["Contact", [q.pickup_contact_name, q.pickup_contact_phone].filter(Boolean).join(" - ")]] },
-    { title: "Delivery / Consignee", rows: [["Address", q.delivery_address], ["Contact", [q.delivery_contact_name, q.delivery_contact_phone].filter(Boolean).join(" - ")]] },
-    { title: "Service Information", rows: [["Pickup Date/Time", formatDate(q.pickup_at || q.scheduled_at || q.created_at)], ["Vehicle", q.vehicle_type], ["Service Level", q.service_level], ["Category", q.job_category]] },
-    { title: "Package / Shipment", rows: [["Description", q.package_description || q.package_type], ["Pieces", q.piece_count], ["Approx. Weight", q.package_weight], ["Special Instructions", instructions || "None"]] }
+    {title:"Pickup / Shipper",rows:[["Company",businessName(q,"pickup")],["Address",q.pickup_address],["Suite / Floor",q.pickup_suite_floor],["City / State / ZIP",[q.pickup_city,q.pickup_state,q.pickup_zip].filter(Boolean).join(", ")],["Contact",contactLine(q,"pickup")],["Pickup Instructions",pi||"None"]]},
+    {title:"Delivery / Consignee",rows:[["Company",businessName(q,"delivery")],["Address",q.delivery_address],["Suite / Floor",q.delivery_suite_floor],["City / State / ZIP",[q.delivery_city,q.delivery_state,q.delivery_zip].filter(Boolean).join(", ")],["Contact",contactLine(q,"delivery")],["Delivery Instructions",di||"None"]]},
+    {title:"Service Information",rows:[["Job Number",jobNumber(q)],["Service Date",first(q.scheduled_date,q.service_date,formatDate(q.created_at))],["Pickup Time",pickupTime(q)],["Deliver By",deliveryTime(q)],["Estimated Miles",first(q.estimated_miles,q.miles)],["Vehicle",q.vehicle_type],["Category",q.job_category]]},
+    {title:"Package / Shipment",rows:[["Description",first(q.package_description,q.package_type)],["Pieces",pieces(q)],["Approx. Weight",weight(q)],["Reference",first(q.reference_number,q.po_number)]]}
   ]);
 }
-
 async function buildLabel(q) {
-  const deliveryBy = q.deliver_by || q.delivery_at || q.scheduled_delivery_at || q.preferred_delivery_time;
+  const pi=first(q.pickup_instructions,packedValue(q,["Pickup instructions"])); const di=first(q.delivery_instructions,packedValue(q,["Delivery instructions"]));
   return createDocument("DELIVERY LABEL", `Job ${jobNumber(q)}`, [
-    { title: "Delivery Identification", rows: [["Job Number", jobNumber(q)], ["Ready At", formatDate(q.pickup_at || q.scheduled_at || q.created_at)], ["Deliver By", formatDate(deliveryBy)]] },
-    { title: "From", rows: [["Pickup", q.pickup_address], ["Contact", [q.pickup_contact_name, q.pickup_contact_phone].filter(Boolean).join(" - ")]] },
-    { title: "To", rows: [["Delivery", q.delivery_address], ["Recipient", [q.delivery_contact_name, q.delivery_contact_phone].filter(Boolean).join(" - ")]] },
-    { title: "Package", rows: [["Description", q.package_description || q.package_type], ["Pieces", q.piece_count], ["Handling", q.delivery_instructions || q.special_instructions || "Standard courier handling"]] }
-  ], { landscape: true });
+    {title:"Delivery Identification",rows:[["Job Number",jobNumber(q)],["Service Date",first(q.scheduled_date,q.service_date,formatDate(q.created_at))],["Ready At",pickupTime(q)],["Deliver By",deliveryTime(q)],["Pieces",pieces(q)],["Approx. Weight",weight(q)]]},
+    {title:"From / Pickup",rows:[["Company",businessName(q,"pickup")],["Address",q.pickup_address],["Suite / Floor",q.pickup_suite_floor],["Contact",contactLine(q,"pickup")],["Instructions",pi||"None"]]},
+    {title:"To / Delivery",rows:[["Company",businessName(q,"delivery")],["Address",q.delivery_address],["Suite / Floor",q.delivery_suite_floor],["Recipient",contactLine(q,"delivery")],["Instructions",di||"None"]]},
+    {title:"Package",rows:[["Description",first(q.package_description,q.package_type)],["Pieces",pieces(q)],["Weight",weight(q)],["Reference",first(q.reference_number,q.po_number)]]}
+  ], {landscape:true});
 }
 
 exports.handler = async event => {
