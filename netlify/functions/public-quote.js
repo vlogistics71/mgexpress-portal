@@ -1,6 +1,5 @@
 const crypto = require("crypto");
 const {
-  createStripeCheckoutSession,
   supabaseRequest,
   toJsonResponse
 } = require("./_shared");
@@ -267,12 +266,8 @@ exports.handler = async function handler(event) {
       miles: routeMiles,
       packageFees
     });
-    const needsReview = Boolean(
-      requestSource === "voice" ||
-      routeError || !customerPrice || routeMiles > 300 ||
-      ["pallet", "special"].includes(jobCategory) ||
-      normalizeToken(input.package_weight) === "custom"
-    );
+    // All public requests require dispatch approval before payment.
+    const needsReview = true;
     if (routeMiles) instructionParts.push(`Calculated route miles: ${routeMiles}`);
 
     const payload = {
@@ -301,9 +296,9 @@ exports.handler = async function handler(event) {
       package_type: nullable(input.package_type, 160),
       weight: nullable(input.weight || packageWeight, 100),
       special_instructions: instructionParts.length ? instructionParts.join("\n") : null,
-      approved_price: requestSource === "voice" && customerPrice ? customerPrice : (needsReview ? null : customerPrice),
-      customer_charge: needsReview ? 0 : customerPrice,
-      payment_status: needsReview ? null : "waiting_payment",
+      approved_price: customerPrice || null,
+      customer_charge: 0,
+      payment_status: null,
 
       return_required: returnRequired,
       return_location_type: returnLocationType,
@@ -313,7 +308,7 @@ exports.handler = async function handler(event) {
       return_zip: returnRequired && returnLocationType === "different_location" ? nullable(input.return_zip, 20) : null,
 
       request_source: requestSource === "voice" ? "website" : requestSource,
-      status: needsReview ? "new" : "waiting_payment"
+      status: "new"
     };
 
     const created = await supabaseRequest("quotes", {
@@ -324,21 +319,8 @@ exports.handler = async function handler(event) {
 
     const quote = Array.isArray(created) ? created[0] : created;
 
-    let checkoutUrl = "";
-    if (!needsReview && quote?.id && customerPrice) {
-      try {
-        const checkout = await createStripeCheckoutSession({
-          quote: { ...quote, customer_email: payload.customer_email, customer_name: payload.customer_name },
-          amountCents: Math.round(customerPrice * 100),
-          siteUrl: "https://migenteexpress.com",
-          successUrl: `https://migenteexpress.com/payment-success.html?quote_id=${encodeURIComponent(quote.id)}&session_id={CHECKOUT_SESSION_ID}`,
-          cancelUrl: "https://migenteexpress.com/#quote"
-        });
-        checkoutUrl = String(checkout?.url || "");
-      } catch (checkoutError) {
-        console.error("public quote checkout creation failed", { message: checkoutError?.message });
-      }
-    }
+    // Dispatch creates Checkout later with "Approve & Send Payment Link".
+    const checkoutUrl = "";
 
     // Quote persistence is the primary operation. Email is intentionally best-effort:
     // a notification failure must never cause a successfully saved quote to fail.
@@ -442,19 +424,17 @@ exports.handler = async function handler(event) {
       ok: true,
       id: quote?.id || null,
       job_number: quote?.job_number || null,
-      quote_status: needsReview ? "review" : "instant",
-      amount: requestSource === "voice" && customerPrice ? customerPrice : (needsReview ? null : customerPrice),
-      amount_label: requestSource === "voice" && customerPrice
+      quote_status: "review",
+      amount: customerPrice || null,
+      amount_label: customerPrice
         ? new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(customerPrice)
-        : (needsReview ? null : new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(customerPrice)),
-      checkout_url: checkoutUrl || null,
+        : null,
+      checkout_url: null,
       review_token: quote?.id ? createReviewToken(quote.id) : null,
       customer_email_sent: customerEmailSent,
-      message: requestSource === "voice" && customerPrice
-        ? `The preliminary quote is ${new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(customerPrice)}. Dispatch approval is required.`
-        : needsReview
-          ? "Quote request received. Dispatch will review the details and contact you shortly."
-          : "Your instant quote is ready."
+      message: customerPrice
+        ? `Estimated quote: ${new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(customerPrice)}. Dispatch will confirm driver availability and email a secure payment link if approved. No payment has been taken.`
+        : "Quote request received. Dispatch will review the details and driver availability before sending a secure payment link. No payment has been taken."
     }, origin);
   } catch (error) {
     console.error("public-quote error", {
