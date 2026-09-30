@@ -212,9 +212,37 @@
 
   function normalizeEditWeight(value) {
     const token = normalizePriceToken(value);
-    if (token.includes("over_75") || token.includes("over_100") || token === "50_100_lbs") return "over_75_lbs";
-    if (token.includes("50_to_75") || token === "50_75_lbs") return "50_to_75_lbs";
-    return value ? "under_50_lbs" : "";
+    if (!token) return "";
+    if (token === "custom" || token.includes("needs_review")) return "custom";
+    if (token.includes("over_75") || token.includes("75_100") || token.includes("over_100")) return "over_75_lbs";
+    if (token.includes("55_to_75") || token.includes("50_to_75") || token === "50_75_lbs") return "55_to_75_lbs";
+    if (token.includes("25_to_50") || token.includes("21_to_50") || token.includes("under_50")) return "25_to_50_lbs";
+    if (token.includes("2_to_20") || token.includes("under_20") || token.includes("0_to_20")) return "2_to_20_lbs";
+    return "custom";
+  }
+
+  function firstInstructionValue(sources, labels) {
+    for (const source of sources) {
+      for (const label of labels) {
+        const value = instructionValue(source, label);
+        if (value) return value;
+      }
+    }
+    return "";
+  }
+
+  function stripEditMetadata(text) {
+    const labels = [
+      "Company", "Preferred pickup time", "Deliver by time", "Pieces / boxes", "Pieces / Boxes",
+      "Estimated total weight", "Weight", "Additional-piece fee", "Additional Piece Fee", "Over-75-lb fee",
+      "Pickup contact", "Pickup Contact", "Pickup contact phone", "Pickup Contact Phone", "Pickup instructions",
+      "Pickup Instructions", "Delivery contact", "Delivery Contact", "Delivery contact phone", "Delivery Contact Phone",
+      "Delivery instructions", "Delivery Instructions", "Estimated miles", "Calculated route miles"
+    ];
+    return String(text || "").split("\n").filter(line => {
+      const lower = line.trim().toLowerCase();
+      return !labels.some(label => lower.startsWith(label.toLowerCase() + ":"));
+    }).join("\n").trim();
   }
 
   function calculateEditRecommendedPrice() {
@@ -943,38 +971,42 @@
       return;
     }
 
+    const specialInstructions = String(delivery.special_instructions || "");
+    const billingNotes = String(delivery.billing_notes || "");
+    const sources = [specialInstructions, billingNotes];
+    const instruction = (...labels) => firstInstructionValue(sources, labels);
+
     elements.editJobId.value = String(delivery.id || "");
     elements.editCustomerName.value = delivery.customer_name || "";
-    elements.editCompanyName.value = delivery.company_name || delivery.customer_company || delivery.customer_business || "";
+    elements.editCompanyName.value = delivery.company_name || delivery.company || delivery.customer_company || delivery.customer_business || instruction("Company") || "";
     elements.editCustomerEmail.value = delivery.customer_email || "";
     elements.editCustomerPhone.value = delivery.customer_phone || "";
     elements.editPickupAddress.value = delivery.pickup_address || "";
     elements.editPickupSuiteFloor.value = delivery.pickup_suite_floor || "";
     elements.editPickupZip.value = delivery.pickup_zip || "";
-    elements.editPickupContactName.value = delivery.pickup_contact_name || "";
-    elements.editPickupContactPhone.value = delivery.pickup_contact_phone || "";
-    elements.editPickupInstructions.value = delivery.pickup_instructions || "";
+    elements.editPickupContactName.value = delivery.pickup_contact_name || instruction("Pickup contact", "Pickup Contact") || "";
+    elements.editPickupContactPhone.value = delivery.pickup_contact_phone || instruction("Pickup contact phone", "Pickup Contact Phone") || "";
+    elements.editPickupInstructions.value = delivery.pickup_instructions || instruction("Pickup instructions", "Pickup Instructions") || "";
     elements.editDeliveryAddress.value = delivery.delivery_address || "";
     elements.editDeliverySuiteFloor.value = delivery.delivery_suite_floor || "";
     elements.editDeliveryZip.value = delivery.delivery_zip || "";
-    elements.editDeliveryContactName.value = delivery.delivery_contact_name || delivery.delivery_recipient_name || delivery.pod_recipient_name || "";
-    elements.editDeliveryContactPhone.value = delivery.delivery_contact_phone || "";
-    elements.editDeliveryInstructions.value = delivery.delivery_instructions || "";
+    elements.editDeliveryContactName.value = delivery.delivery_contact_name || delivery.delivery_recipient_name || delivery.pod_recipient_name || instruction("Delivery contact", "Delivery Contact") || "";
+    elements.editDeliveryContactPhone.value = delivery.delivery_contact_phone || instruction("Delivery contact phone", "Delivery Contact Phone") || "";
+    elements.editDeliveryInstructions.value = delivery.delivery_instructions || instruction("Delivery instructions", "Delivery Instructions") || "";
     elements.editJobCategory.value = clean(delivery.job_category) || "general";
     elements.editVehicleType.value = delivery.vehicle_type || "";
     elements.editDeliverySpeed.value = "";
     elements.editDeliveryType.value = delivery.delivery_type || "";
     elements.editServiceLevel.value = delivery.service_level || "";
     elements.editPackageType.value = delivery.package_type || "";
-    const instructions = delivery.special_instructions || "";
-    const normalizedWeight = normalizeEditWeight(delivery.package_weight || delivery.weight || instructionValue(instructions, "Estimated total weight"));
+    const normalizedWeight = normalizeEditWeight(delivery.package_weight || delivery.weight || instruction("Estimated total weight", "Weight"));
     elements.editPackageWeight.value = normalizedWeight;
-    elements.editPieceCount.value = String(Math.max(1, Number.parseInt(instructionValue(instructions, "Pieces / boxes") || "1", 10) || 1));
-    elements.editSpecialInstructions.value = instructions;
-    elements.editPreferredPickupTime.value = timeValueFromLabel(instructionValue(instructions, "Preferred pickup time"));
-    elements.editPreferredDeliveryTime.value = timeValueFromLabel(instructionValue(instructions, "Deliver by time"));
+    elements.editPieceCount.value = String(Math.max(1, Number.parseInt(delivery.piece_count || delivery.package_quantity || delivery.quantity || instruction("Pieces / boxes", "Pieces / Boxes") || "1", 10) || 1));
+    elements.editSpecialInstructions.value = stripEditMetadata(specialInstructions);
+    elements.editPreferredPickupTime.value = timeValueFromLabel(delivery.preferred_pickup_time || instruction("Preferred pickup time"));
+    elements.editPreferredDeliveryTime.value = timeValueFromLabel(delivery.preferred_delivery_time || instruction("Deliver by time"));
     syncEditRequestedWindow();
-    elements.editPriceMiles.value = instructionValue(instructions, "Calculated route miles") || instructionValue(instructions, "Estimated miles") || "";
+    elements.editPriceMiles.value = delivery.estimated_miles || delivery.route_miles || delivery.calculated_route_miles || instruction("Calculated route miles", "Estimated miles") || "";
     elements.editPriceAdditionalStops.value = "0";
     elements.editPriceWaitBlocks.value = "0";
     elements.editPriceHandlingFee.value = "0";
@@ -1076,8 +1108,28 @@
 
     syncEditRequestedWindow();
     let updatedInstructions = String(elements.editSpecialInstructions?.value || "").trim();
+    const companyName = String(elements.editCompanyName?.value || "").trim();
+    const pickupContactName = String(elements.editPickupContactName?.value || "").trim();
+    const pickupContactPhone = String(elements.editPickupContactPhone?.value || "").trim();
+    const pickupInstructions = String(elements.editPickupInstructions?.value || "").trim();
+    const deliveryContactName = String(elements.editDeliveryContactName?.value || "").trim();
+    const deliveryContactPhone = String(elements.editDeliveryContactPhone?.value || "").trim();
+    const deliveryInstructions = String(elements.editDeliveryInstructions?.value || "").trim();
+    const packageWeight = String(elements.editPackageWeight?.value || "").trim();
+    const pieceCount = Math.max(1, Number.parseInt(elements.editPieceCount?.value || "1", 10) || 1);
+    const routeMiles = String(elements.editPriceMiles?.value || "").trim();
+    updatedInstructions = replaceInstructionLine(updatedInstructions, "Company", companyName);
     updatedInstructions = replaceInstructionLine(updatedInstructions, "Deliver by time", elements.editPreferredDeliveryTime?.value ? editTimeLabel(elements.editPreferredDeliveryTime.value) : "");
     updatedInstructions = replaceInstructionLine(updatedInstructions, "Preferred pickup time", elements.editPreferredPickupTime?.value ? editTimeLabel(elements.editPreferredPickupTime.value) : "");
+    updatedInstructions = replaceInstructionLine(updatedInstructions, "Pieces / boxes", String(pieceCount));
+    updatedInstructions = replaceInstructionLine(updatedInstructions, "Estimated total weight", packageWeight ? packageWeight.replaceAll("_", " ") : "");
+    updatedInstructions = replaceInstructionLine(updatedInstructions, "Pickup contact", pickupContactName);
+    updatedInstructions = replaceInstructionLine(updatedInstructions, "Pickup contact phone", pickupContactPhone);
+    updatedInstructions = replaceInstructionLine(updatedInstructions, "Pickup instructions", pickupInstructions);
+    updatedInstructions = replaceInstructionLine(updatedInstructions, "Delivery contact", deliveryContactName);
+    updatedInstructions = replaceInstructionLine(updatedInstructions, "Delivery contact phone", deliveryContactPhone);
+    updatedInstructions = replaceInstructionLine(updatedInstructions, "Delivery instructions", deliveryInstructions);
+    updatedInstructions = replaceInstructionLine(updatedInstructions, "Calculated route miles", routeMiles);
 
     const payload = {
       customer_name: customerName,
@@ -1105,6 +1157,26 @@
       return_zip: returnRequired && returnLocationType === "different_location" ? String(elements.editReturnZip?.value || "").trim() || null : null,
       approved_price: approvedPrice
     };
+
+    const existing = state.selectedDelivery || {};
+    const supportedValues = {
+      company_name: companyName || null,
+      company: companyName || null,
+      pickup_contact_name: pickupContactName || null,
+      pickup_contact_phone: pickupContactPhone || null,
+      pickup_instructions: pickupInstructions || null,
+      delivery_contact_name: deliveryContactName || null,
+      delivery_contact_phone: deliveryContactPhone || null,
+      delivery_instructions: deliveryInstructions || null,
+      package_weight: packageWeight || null,
+      piece_count: pieceCount,
+      estimated_miles: routeMiles ? Number(routeMiles) : null,
+      preferred_pickup_time: elements.editPreferredPickupTime?.value || null,
+      preferred_delivery_time: elements.editPreferredDeliveryTime?.value || null
+    };
+    Object.entries(supportedValues).forEach(([key, value]) => {
+      if (Object.prototype.hasOwnProperty.call(existing, key)) payload[key] = value;
+    });
 
     try {
       const result = await client
