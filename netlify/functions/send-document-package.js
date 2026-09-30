@@ -58,11 +58,11 @@ async function createDocument(title, subtitle, sections, options = {}) {
     const match = svg.match(/href=["']data:image\/jpeg;base64,([^"']+)["']/i);
     if (!match || !match[1]) throw new Error("Embedded JPEG not found in logo SVG");
     const logo = await pdf.embedJpg(Buffer.from(match[1].replace(/\\s+/g, ""), "base64"));
-    const scaled = logo.scaleToFit(115, 78);
-    page.drawImage(logo, { x: margin + 10, y: height - 117, width: scaled.width, height: scaled.height });
+    const scaled = logo.scaleToFit(82, 64);
+    page.drawImage(logo, { x: margin + 10, y: height - 110, width: scaled.width, height: scaled.height });
   } catch (error) { console.warn("PDF logo unavailable", error.message); }
 
-  page.drawText(title, { x: margin + 12, y: height - 88, size: 23, font: bold, color: rgb(0.05,0.05,0.05) });
+  page.drawText(title, { x: margin + 112, y: height - 88, size: 21, font: bold, color: rgb(0.05,0.05,0.05) });
   if (subtitle) page.drawText(clean(subtitle), { x: width - margin - 12 - regular.widthOfTextAtSize(clean(subtitle), 9), y: height - 55, size: 9, font: regular, color: rgb(0.15,0.15,0.15) });
 
   let y = height - 146;
