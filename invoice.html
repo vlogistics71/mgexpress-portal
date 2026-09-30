@@ -120,6 +120,8 @@
       color: var(--accent);
     }
 
+    .brand-logo { display:block; width:190px; max-height:72px; object-fit:contain; object-position:left center; margin-bottom:4px; }
+
     .doc-title {
       margin-top: 2px;
       font-size: 24px;
@@ -808,7 +810,7 @@
         invoiceDocument.innerHTML = ""
           + "<header class=\"invoice-header\">"
           + "  <div>"
-          + "    <div class=\"brand\">MG EXPRESS</div>"
+          + "    <img class=\"brand-logo\" src=\"https://migenteexpress.com/assets/migente-express-logo.png\" alt=\"MG Express\">"
           + "    <div class=\"doc-title\">INVOICE</div>"
           + "    <div class=\"doc-subtitle\">Courier and Delivery Services</div>"
           + "  </div>"
@@ -832,6 +834,7 @@
           + sectionHtml("Payment", "<div class=\"line\"><div class=\"label\">Customer Status</div><div class=\"value\">" + amountDueHtml + "</div></div>"
             + paymentLinkRow
           )
+          + sectionHtml("Service Classification", "<div class=\"line\"><div class=\"label\">Service</div><div class=\"value\">Courier / Delivery Service</div></div><div class=\"line\"><div class=\"label\">Tax Notice</div><div class=\"value\">Transportation services only. MG Express did not sell the transported property.</div></div>")
           + sectionHtml("Footer", "<div class=\"footer-grid\">" + footerRows + "</div>");
 
         statusText.textContent = "Invoice ready. Print / Save PDF is available. Automatic PDF attachments require server-side generation/send support.";
