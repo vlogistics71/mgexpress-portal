@@ -53,15 +53,11 @@ async function createDocument(title, subtitle, sections, options = {}) {
   page.drawRectangle({ x: margin, y: height - 126, width: contentWidth, height: 96, borderColor: rgb(0.12,0.12,0.12), borderWidth: 1 });
   try {
     const svg = fs.readFileSync(path.join(__dirname, "../../assets/images/mg-express-logo-2026.svg"), "utf8");
-    const marker = "data:image/jpeg;base64,";
-    const imageStart = svg.indexOf(marker);
-    const imageEnd = imageStart >= 0 ? svg.indexOf('"', imageStart) : -1;
-    const image64 = imageStart >= 0 && imageEnd > imageStart ? svg.slice(imageStart + marker.length, imageEnd) : "";
-    if (image64) {
-      const logo = await pdf.embedJpg(Buffer.from(image64, "base64"));
-      const scaled = logo.scaleToFit(126, 78);
-      page.drawImage(logo, { x: margin + 10, y: height - 117, width: scaled.width, height: scaled.height });
-    }
+    const match = svg.match(/href=["']data:image\/jpeg;base64,([^"']+)["']/i);
+    if (!match || !match[1]) throw new Error("Embedded JPEG not found in logo SVG");
+    const logo = await pdf.embedJpg(Buffer.from(match[1].replace(/\\s+/g, ""), "base64"));
+    const scaled = logo.scaleToFit(115, 78);
+    page.drawImage(logo, { x: margin + 10, y: height - 117, width: scaled.width, height: scaled.height });
   } catch (error) { console.warn("PDF logo unavailable", error.message); }
 
   page.drawText(title, { x: margin + 12, y: height - 88, size: 23, font: bold, color: rgb(0.05,0.05,0.05) });
