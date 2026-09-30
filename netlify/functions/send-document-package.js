@@ -122,6 +122,7 @@ exports.handler = async event => {
     const [invoice, bol, label] = await Promise.all([buildInvoice(quote), buildBol(quote), buildLabel(quote)]);
     const job = jobNumber(quote);
     const result = await sendResendEmail({
+      from: "MG Express Documents <documents@notify.migenteexpress.com>",
       to: email,
       subject: `MG Express delivery documents - ${job}`,
       html: `<div style="font-family:Arial,sans-serif;line-height:1.5;color:#17221e"><h2>Your MG Express delivery documents</h2><p>Attached are the invoice, Bill of Lading, and printable delivery label for job <strong>${job}</strong>.</p><p>Please print the delivery label and attach it securely to the package before pickup.</p><p>Thank you for choosing MG Express.</p></div>`,
