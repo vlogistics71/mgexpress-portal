@@ -655,8 +655,7 @@
           lineHtml("Description", firstPresentValue([quote.package_type])),
           lineHtml("Quantity", firstPresentValue([quote.package_quantity, quote.quantity, quote.item_quantity])),
           lineHtml("Approx Weight", firstPresentValue([quote.package_weight, quote.weight])),
-          lineHtml("Miles", firstPresentValue([quote.estimated_miles])),
-          lineHtml("Handling", firstPresentValue([quote.special_instructions]))
+          lineHtml("Miles", firstPresentValue([quote.estimated_miles]))
         ].join("");
 
         const hasReturn = returnRequiredFlag(quote.return_required);
