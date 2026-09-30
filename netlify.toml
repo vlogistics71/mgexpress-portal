@@ -123,3 +123,8 @@
   from = "/api/refund-payment"
   to = "/.netlify/functions/refund-payment"
   status = 200
+
+[[redirects]]
+  from = "/api/send-document-package"
+  to = "/.netlify/functions/send-document-package"
+  status = 200
