@@ -715,6 +715,10 @@
     return !isCancelled(delivery) && !isComplete(delivery);
   }
 
+  function canRefundPayment(delivery) {
+    return ["paid", "partially_refunded"].includes(clean(delivery.payment_status));
+  }
+
   function workflowActionButtons(delivery) {
     const id = escapeHtml(String(delivery.id || ""));
     const buttons = [];
@@ -735,6 +739,9 @@
     if (canCancelDelivery(delivery)) {
       buttons.push(`<button class="action-btn danger-btn" type="button" data-details-action="cancel" data-delivery-id="${id}">Cancel Delivery</button>`);
     }
+    if (canRefundPayment(delivery)) {
+      buttons.push(`<button class="action-btn danger-btn" type="button" data-details-action="refund" data-delivery-id="${id}">Issue Refund</button>`);
+    }
 
     return buttons.join("");
   }
@@ -747,6 +754,7 @@
     return `
       <button class="action-btn secondary${bolDisabled}" type="button" data-details-action="bol" data-delivery-id="${id}">View BOL</button>
       <button class="action-btn secondary${invoiceDisabled}" type="button" data-details-action="invoice" data-delivery-id="${id}">View Invoice</button>
+      <button class="action-btn secondary${invoiceDisabled}" type="button" data-details-action="email-documents" data-delivery-id="${id}">Email PDF Package</button>
     `;
   }
 
@@ -1997,6 +2005,71 @@
     window.open(`/invoice.html?id=${encodeURIComponent(id)}`, "_blank");
   }
 
+  async function dispatchAccessToken() {
+    const result = await client.auth.getSession();
+    const token = result?.data?.session?.access_token;
+    if (!token) throw new Error("Please sign in again to continue.");
+    return token;
+  }
+
+  async function issuePaymentRefund(delivery) {
+    const originalAmount = Number(delivery.customer_charge ?? delivery.approved_price ?? 0);
+    const choice = window.prompt(
+      `Refund ${delivery.job_number || "this job"}. Enter FULL for the remaining balance, or enter a dollar amount for a partial refund.\n\nOriginal customer amount: ${formatMoney(originalAmount)}`,
+      "FULL"
+    );
+    if (choice === null) return;
+
+    const normalized = String(choice).trim();
+    const isFull = normalized.toLowerCase() === "full";
+    const partialAmount = isFull ? null : Number(normalized.replace(/[$,]/g, ""));
+    if (!isFull && (!Number.isFinite(partialAmount) || partialAmount <= 0)) {
+      showToast("Enter FULL or a valid partial refund amount.", "error");
+      return;
+    }
+
+    const reason = window.prompt("Enter the required reason for this refund:", "");
+    if (reason === null) return;
+    if (!String(reason).trim()) {
+      showToast("A refund reason is required.", "error");
+      return;
+    }
+
+    const amountDescription = isFull ? "the full remaining payment" : formatMoney(partialAmount);
+    if (!window.confirm(`Issue a refund of ${amountDescription} for ${delivery.job_number || "this job"}?\n\nReason: ${String(reason).trim()}\n\nThis sends money back through Stripe and cannot be undone.`)) return;
+
+    const response = await fetch("/api/refund-payment", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: "Bearer " + await dispatchAccessToken() },
+      body: JSON.stringify({
+        quote_id: delivery.id,
+        refund_type: isFull ? "full" : "partial",
+        amount: partialAmount,
+        reason: String(reason).trim(),
+        request_id: window.crypto?.randomUUID?.() || String(Date.now())
+      })
+    });
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok) throw new Error(data.error || "Unable to issue refund.");
+    showToast(`${data.amount_label || "Refund"} issued successfully${data.customer_email_sent ? " and the customer was emailed" : ""}.`, "success");
+    await refreshDeliveries({ keepSelection: delivery.id });
+  }
+
+  async function emailDocumentPackage(delivery) {
+    const customerEmail = String(delivery.customer_email || "").trim();
+    if (!customerEmail) throw new Error("Add a customer email to this job before sending documents.");
+    if (!window.confirm(`Email the invoice, BOL, and printable delivery label to ${customerEmail}?`)) return;
+
+    const response = await fetch("/api/send-document-package", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: "Bearer " + await dispatchAccessToken() },
+      body: JSON.stringify({ quote_id: delivery.id })
+    });
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok) throw new Error(data.error || "Unable to email the document package.");
+    showToast(`Invoice, BOL, and delivery label emailed to ${data.sent_to || customerEmail}.`, "success");
+  }
+
   async function copyDeliveryLink(delivery) {
     const link = new URL(`bol.html?id=${encodeURIComponent(String(delivery.id || ""))}`, window.location.href).toString();
     try {
@@ -2063,6 +2136,11 @@
       return;
     }
 
+    if (action === "refund") {
+      issuePaymentRefund(delivery).catch(error => showToast(error.message || "Unable to issue refund.", "error"));
+      return;
+    }
+
     if (action === "bol") {
       openBol(delivery.id);
       return;
@@ -2070,6 +2148,11 @@
 
     if (action === "invoice") {
       openInvoice(delivery.id);
+      return;
+    }
+
+    if (action === "email-documents") {
+      emailDocumentPackage(delivery).catch(error => showToast(error.message || "Unable to email documents.", "error"));
     }
   }
 
