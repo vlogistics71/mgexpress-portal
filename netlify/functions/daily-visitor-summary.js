@@ -19,12 +19,12 @@ exports.handler = async () => {
   try {
     const since = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
     const rows = await supabaseRequest(
-      `website_page_views?select=viewed_at,path,referrer_host,session_hash&viewed_at=gte.${encodeURIComponent(since)}&order=viewed_at.desc&limit=10000`
+      `website_page_views?select=viewed_at,path,referrer_host,session_hash,device_type&viewed_at=gte.${encodeURIComponent(since)}&order=viewed_at.desc&limit=10000`
     );
     const views = Array.isArray(rows) ? rows : [];
     const visitors = new Set(views.map(row => row.session_hash)).size;
     const pages = ranked(views.map(row => row.path), "No page views");
-    const referrers = ranked(
+    const devices = ranked(views.map(row => row.device_type), "Unknown");\n    const referrers = ranked(
       views.map(row => row.referrer_host).filter(host => host && !/^(www\.)?migenteexpress\.com$/i.test(host)),
       "Direct / none"
     );
@@ -36,7 +36,7 @@ exports.handler = async () => {
     }).format(new Date());
 
     const pageHtml = pages.map(([name, count]) => `<li>${escapeHtml(name)} — ${count}</li>`).join("");
-    const referrerHtml = referrers.map(([name, count]) => `<li>${escapeHtml(name)} — ${count}</li>`).join("");
+    const referrerHtml = referrers.map(([name, count]) => `<li>${escapeHtml(name)} — ${count}</li>`).join("");\n    const deviceHtml = devices.map(([name, count]) => `<li>${escapeHtml(name)} — ${count}</li>`).join("");
     const text = [
       `MG Express website activity for ${reportDate}`,
       `Visitors: ${visitors}`,
@@ -45,7 +45,7 @@ exports.handler = async () => {
       "Top pages:",
       ...pages.map(([name, count]) => `- ${name}: ${count}`),
       "",
-      "Referrals:",
+      "Devices:",\n      ...devices.map(([name, count]) => `- ${name}: ${count}`),\n      "",\n      "Referrals:",
       ...referrers.map(([name, count]) => `- ${name}: ${count}`),
       "",
       "Counts are privacy-conscious estimates. Raw IP addresses are not stored."
@@ -59,7 +59,7 @@ exports.handler = async () => {
         <p>${escapeHtml(reportDate)}</p>
         <p><strong>Visitors:</strong> ${visitors}<br><strong>Page views:</strong> ${views.length}</p>
         <h3>Top pages</h3><ul>${pageHtml}</ul>
-        <h3>Referrals</h3><ul>${referrerHtml}</ul>
+        <h3>Devices</h3><ul>${deviceHtml}</ul>\n        <h3>Referrals</h3><ul>${referrerHtml}</ul>
         <p style="color:#666">Privacy note: raw IP addresses are not stored.</p>
       </div>`,
       text
