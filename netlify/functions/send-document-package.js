@@ -50,9 +50,12 @@ async function createDocument(title, subtitle, sections, options = {}) {
 
   try {
     const svg = fs.readFileSync(path.join(__dirname, "../../assets/images/mg-express-logo-2026.svg"), "utf8");
-    const marker = "data:image/jpeg;base64,";\n    const start = svg.indexOf(marker);\n    const end = start >= 0 ? svg.indexOf('"', start) : -1;\n    const match = start >= 0 && end > start ? svg.slice(start + marker.length, end) : "";
+    const marker = "data:image/jpeg;base64,";
+    const start = svg.indexOf(marker);
+    const end = start >= 0 ? svg.indexOf('"', start) : -1;
+    const match = start >= 0 && end > start ? svg.slice(start + marker.length, end) : "";
     if (match) {
-      const logo = await pdf.embedJpg(Buffer.from(match[1], "base64"));
+      const logo = await pdf.embedJpg(Buffer.from(match, "base64"));
       const scaled = logo.scaleToFit(118, 72);
       page.drawImage(logo, { x: margin, y: height - 92, width: scaled.width, height: scaled.height });
     }
