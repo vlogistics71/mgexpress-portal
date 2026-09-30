@@ -52,7 +52,9 @@ async function createDocument(title, subtitle, sections, options = {}) {
   // Match the dispatch portal print documents: white header, real logo, black rules.
   page.drawRectangle({ x: margin, y: height - 126, width: contentWidth, height: 96, borderColor: rgb(0.12,0.12,0.12), borderWidth: 1 });
   try {
-    const logoResponse = await fetch("https://portal.migenteexpress.com/assets/images/mg-express-logo-2026.svg");\n    if (!logoResponse.ok) throw new Error("Logo fetch failed: " + logoResponse.status);\n    const svg = await logoResponse.text();
+    const logoResponse = await fetch("https://portal.migenteexpress.com/assets/images/mg-express-logo-2026.svg");
+    if (!logoResponse.ok) throw new Error("Logo fetch failed: " + logoResponse.status);
+    const svg = await logoResponse.text();
     const match = svg.match(/href=["']data:image\/jpeg;base64,([^"']+)["']/i);
     if (!match || !match[1]) throw new Error("Embedded JPEG not found in logo SVG");
     const logo = await pdf.embedJpg(Buffer.from(match[1].replace(/\\s+/g, ""), "base64"));
