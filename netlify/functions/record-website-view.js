@@ -27,7 +27,7 @@ function cleanPath(value) {
   return raw.split("?")[0].split("#")[0].slice(0, 300) || "/";
 }
 
-function referrerHost(value) {
+function deviceType(userAgent) {\n  const ua = String(userAgent || "");\n  if (/ipad|tablet|kindle|silk|playbook|android(?!.*mobile)/i.test(ua)) return "Tablet";\n  if (/mobile|iphone|ipod|android/i.test(ua)) return "Mobile";\n  return "Desktop";\n}\n\nfunction referrerHost(value) {
   try {
     const url = new URL(String(value || ""));
     return url.hostname.slice(0, 200) || null;
