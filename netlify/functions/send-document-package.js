@@ -46,45 +46,46 @@ async function createDocument(title, subtitle, sections, options = {}) {
   const regular = await pdf.embedFont(StandardFonts.Helvetica);
   const bold = await pdf.embedFont(StandardFonts.HelveticaBold);
   const { width, height } = page.getSize();
-  const margin = 42;
+  const margin = 34;
+  const contentWidth = width - margin * 2;
 
+  // Match the dispatch portal print documents: white header, real logo, black rules.
+  page.drawRectangle({ x: margin, y: height - 126, width: contentWidth, height: 96, borderColor: rgb(0.12,0.12,0.12), borderWidth: 1 });
   try {
     const svg = fs.readFileSync(path.join(__dirname, "../../assets/images/mg-express-logo-2026.svg"), "utf8");
     const marker = "data:image/jpeg;base64,";
-    const start = svg.indexOf(marker);
-    const end = start >= 0 ? svg.indexOf('"', start) : -1;
-    const match = start >= 0 && end > start ? svg.slice(start + marker.length, end) : "";
-    if (match) {
-      const logo = await pdf.embedJpg(Buffer.from(match, "base64"));
-      const scaled = logo.scaleToFit(118, 72);
-      page.drawImage(logo, { x: margin, y: height - 92, width: scaled.width, height: scaled.height });
+    const imageStart = svg.indexOf(marker);
+    const imageEnd = imageStart >= 0 ? svg.indexOf('"', imageStart) : -1;
+    const image64 = imageStart >= 0 && imageEnd > imageStart ? svg.slice(imageStart + marker.length, imageEnd) : "";
+    if (image64) {
+      const logo = await pdf.embedJpg(Buffer.from(image64, "base64"));
+      const scaled = logo.scaleToFit(126, 78);
+      page.drawImage(logo, { x: margin + 10, y: height - 117, width: scaled.width, height: scaled.height });
     }
   } catch (error) { console.warn("PDF logo unavailable", error.message); }
 
-  page.drawRectangle({ x: 0, y: height - 104, width, height: 104, color: GREEN });
+  page.drawText(title, { x: margin + 12, y: height - 88, size: 23, font: bold, color: rgb(0.05,0.05,0.05) });
+  if (subtitle) page.drawText(clean(subtitle), { x: width - margin - 12 - regular.widthOfTextAtSize(clean(subtitle), 9), y: height - 55, size: 9, font: regular, color: rgb(0.15,0.15,0.15) });
 
-  page.drawText(title, { x: width - margin - bold.widthOfTextAtSize(title, 22), y: height - 57, size: 22, font: bold, color: rgb(1, 1, 1) });
-  page.drawText(clean(subtitle, ""), { x: width - margin - regular.widthOfTextAtSize(clean(subtitle, ""), 9), y: height - 77, size: 9, font: regular, color: rgb(1, 1, 1) });
-
-  let y = height - 132;
+  let y = height - 146;
   for (const section of sections) {
-    const estimated = 32 + section.rows.reduce((sum, row) => sum + Math.max(23, wrap(row[1], regular, 10, width - 230).length * 13), 0);
-    if (y - estimated < 42) break;
-    page.drawRectangle({ x: margin, y: y - 22, width: width - margin * 2, height: 22, color: LIGHT });
-    page.drawText(clean(section.title), { x: margin + 9, y: y - 15, size: 11, font: bold, color: GREEN });
-    y -= 32;
-    for (const [label, value] of section.rows) {
-      const lines = wrap(value, regular, 10, width - 230);
-      page.drawText(clean(label).toUpperCase(), { x: margin + 8, y, size: 9, font: bold, color: GRAY });
-      lines.forEach((line, index) => page.drawText(line, { x: margin + 165, y: y - index * 13, size: 10, font: regular, color: GREEN }));
-      y -= Math.max(23, lines.length * 13 + 7);
-      page.drawLine({ start: { x: margin + 8, y: y + 7 }, end: { x: width - margin - 8, y: y + 7 }, thickness: 0.4, color: rgb(0.82, 0.83, 0.81) });
+    const estimated = 30 + section.rows.reduce((sum,row)=>sum + Math.max(21, wrap(row[1],regular,9,width-220).length*12),0);
+    if (y - estimated < 35) break;
+    page.drawRectangle({ x: margin, y: y - 20, width: contentWidth, height: 20, borderColor: rgb(0.18,0.18,0.18), borderWidth: 0.8 });
+    page.drawText(clean(section.title).toUpperCase(), { x: margin + 8, y: y - 14, size: 10, font: bold, color: rgb(0.05,0.05,0.05) });
+    y -= 29;
+    for (const [label,value] of section.rows) {
+      const lines = wrap(value,regular,9,width-220);
+      page.drawText(clean(label).toUpperCase(), { x: margin + 8, y, size: 8, font: bold, color: rgb(0.15,0.15,0.15) });
+      (lines.length?lines:["-"]).forEach((line,i)=>page.drawText(line,{x:margin+150,y:y-i*11,size:9,font:regular,color:rgb(0.08,0.08,0.08)}));
+      const rowHeight=Math.max(20,(lines.length||1)*11+5);
+      page.drawLine({start:{x:margin+6,y:y-rowHeight+7},end:{x:width-margin-6,y:y-rowHeight+7},thickness:0.35,color:rgb(0.72,0.72,0.72)});
+      y-=rowHeight;
     }
-    y -= 8;
+    y-=8;
   }
-
-  page.drawText("MG Express | portal.migenteexpress.com", { x: margin, y: 22, size: 8, font: regular, color: GRAY });
-  page.drawText("Page 1 of 1", { x: width - margin - 42, y: 22, size: 8, font: regular, color: GRAY });
+  page.drawText("MG Express | portal.migenteexpress.com", { x: margin, y: 22, size: 7, font: regular, color: rgb(0.35,0.35,0.35) });
+  page.drawText("Page 1 of 1", { x: width-margin-45, y: 22, size: 7, font: regular, color: rgb(0.35,0.35,0.35) });
   return Buffer.from(await pdf.save());
 }
 
