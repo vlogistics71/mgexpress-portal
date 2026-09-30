@@ -2090,6 +2090,7 @@ function openJobDetails(jobId, readOnly = false) {
         <div class="kv"><strong>BOL Return</strong><span>${hasReturnRequired(job) ? "RETURN REQUIRED" : "No Return"}</span></div>
         <div class="form-actions">
           <button class="btn primary" type="button" id="viewBolBtn-${escapeHtml(String(job.id))}" data-view-bol="${escapeHtml(String(job.id))}">View BOL</button>
+          <button class="btn" type="button" data-view-delivery-label="${escapeHtml(String(job.id))}">Print Delivery Label</button>
         </div>
       </div>
     </details>
@@ -2626,6 +2627,15 @@ function openBolForJob(selectedDelivery) {
   }
 
   window.open("/bol.html?id=" + encodeURIComponent(id), "_blank");
+  return true;
+}
+
+function openDeliveryLabelForJob(selectedDelivery) {
+  if (!selectedDelivery || !selectedDelivery.id) {
+    showToast("Unable to open delivery label: selected delivery not found", "error");
+    return false;
+  }
+  window.open("/delivery-label.html?id=" + encodeURIComponent(String(selectedDelivery.id)), "_blank");
   return true;
 }
 
@@ -3494,6 +3504,14 @@ function handleDocumentClick(event) {
   const viewBol = target.closest("[data-view-bol]");
   if (viewBol) {
     handleViewBolClick(event, viewBol);
+    return;
+  }
+
+  const viewDeliveryLabel = target.closest("[data-view-delivery-label]");
+  if (viewDeliveryLabel) {
+    event.preventDefault();
+    event.stopPropagation();
+    openDeliveryLabelForJob(getRowById(viewDeliveryLabel.getAttribute("data-view-delivery-label")));
     return;
   }
 
