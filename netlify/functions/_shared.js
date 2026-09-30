@@ -233,7 +233,7 @@ async function createStripeCheckoutSession({ quote, amountCents, siteUrl, succes
   return json;
 }
 
-async function sendResendEmail({ to, subject, html, text, from }) {
+async function sendResendEmail({ to, subject, html, text, from, attachments }) {
   const apiKey = String(process.env.RESEND_API_KEY || "").trim();
   if (!apiKey) {
     return { configured: false };
@@ -250,7 +250,8 @@ async function sendResendEmail({ to, subject, html, text, from }) {
       to,
       subject,
       html,
-      text
+      text,
+      ...(Array.isArray(attachments) && attachments.length ? { attachments } : {})
     })
   });
 
