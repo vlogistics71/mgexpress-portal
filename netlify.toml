@@ -3,7 +3,7 @@
   publish = "."
 
 [functions."daily-visitor-summary"]
-  schedule = "0 14 * * *"
+  schedule = "0 12 * * *"
 
 [[headers]]
   for = "/*"
