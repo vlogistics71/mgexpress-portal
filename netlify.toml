@@ -118,3 +118,8 @@
   from = "/api/stripe-webhook"
   to = "/.netlify/functions/stripe-webhook"
   status = 200
+
+[[redirects]]
+  from = "/api/refund-payment"
+  to = "/.netlify/functions/refund-payment"
+  status = 200
