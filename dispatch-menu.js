@@ -7,7 +7,7 @@
     "/dashboard.html", "/deliveries.html", "/pending-approval.html", "/ready-to-dispatch.html",
     "/assigned.html", "/closed-today.html", "/customer.html", "/leads.html", "/driver.html",
     "/driver-onboarding.html", "/payroll.html", "/invoices.html", "/Reports.html", "/history.html",
-    "/settings.html", "/process-serves.html", "/index.html"
+    "/team.html", "/settings.html", "/process-serves.html", "/index.html"
   ]);
 
   function routeUrl(path) {
@@ -27,6 +27,7 @@
     { href: routeUrl("/invoices.html"), label: "Invoices", icon: "🧾" },
     { href: routeUrl("/Reports.html"), label: "Reports", icon: "📊" },
     { href: routeUrl("/history.html"), label: "Job History", icon: "📚" },
+    { href: routeUrl("/team.html"), label: "Team Management", icon: "👤" },
     { href: routeUrl("/settings.html"), label: "Settings", icon: "⚙️" }
   ];
 
