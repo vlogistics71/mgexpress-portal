@@ -1,0 +1,276 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Team Management | MG Express Dispatch</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="/assets/js/config.js"></script>
+  <script src="/assets/js/auth.js"></script>
+  <style>
+    :root{--bg:#eef3f1;--card:#fff;--ink:#17221e;--muted:#68756f;--line:#dfe8e4;--green:#087455;--green-dark:#064f3b;--coral:#ff665c;--danger:#9b2b2b;--warn:#8a6512}
+    *{box-sizing:border-box}body{margin:0;font-family:"Segoe UI",Arial,Helvetica,sans-serif;background:var(--bg);color:var(--ink)}
+    .topbar{padding:18px;background:var(--green-dark);color:#fff}.topbar-inner,.container{width:min(1120px,100%);margin:0 auto}.topbar-inner{display:flex;align-items:center;justify-content:space-between;gap:14px}
+    .brand{font-size:24px;font-weight:900;line-height:1.08}.brand span{color:var(--coral)}.staff-email{margin-top:5px;font-size:12px;opacity:.82}
+    .container{padding:26px 18px 70px}.heading{display:flex;align-items:end;justify-content:space-between;gap:16px;margin-bottom:18px}.eyebrow{margin-bottom:6px;color:var(--muted);font-size:13px;letter-spacing:.08em;text-transform:uppercase;font-weight:800}
+    h1{margin:0;font-size:clamp(30px,4.5vw,42px)}h2{margin:0 0 8px;font-size:21px}.sub{margin:7px 0 0;color:var(--muted);line-height:1.5}.panel{padding:18px;border:1px solid var(--line);border-radius:18px;background:var(--card);box-shadow:0 10px 25px rgba(20,37,30,.06);margin-bottom:16px}
+    .grid{display:grid;grid-template-columns:1.2fr 1.4fr .8fr auto;gap:12px;align-items:end}label{display:grid;gap:6px;color:var(--muted);font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.05em}input,select{width:100%;min-height:48px;padding:11px 12px;border:1px solid #cfdcd7;border-radius:11px;background:#fff;color:var(--ink);font:inherit}
+    button{min-height:46px;padding:10px 14px;border:0;border-radius:11px;background:var(--green);color:#fff;font-weight:900;cursor:pointer}button:disabled{opacity:.55;cursor:wait}.secondary{border:1px solid var(--line);background:#fff;color:var(--green-dark)}.danger{border:1px solid #efcccc;background:#fff0f0;color:var(--danger)}
+    .role-note{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:14px}.role-note div{padding:11px 12px;border-radius:12px;background:#f5f9f7;color:var(--muted);font-size:13px;line-height:1.4}.role-note strong{display:block;color:var(--green-dark);margin-bottom:3px}
+    .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:16px 0}.stat{padding:14px;border:1px solid var(--line);border-radius:14px;background:#fff}.stat strong{display:block;font-size:26px;color:var(--green-dark)}.stat span{font-size:12px;color:var(--muted);font-weight:800;text-transform:uppercase;letter-spacing:.05em}
+    .team-list{display:grid;gap:10px}.member{display:grid;grid-template-columns:minmax(220px,1.3fr) 150px 120px minmax(290px,1.4fr);gap:14px;align-items:center;padding:15px;border:1px solid var(--line);border-radius:15px;background:#fff}.member-name{font-size:17px;font-weight:900}.member-email,.member-meta{margin-top:3px;color:var(--muted);font-size:13px;overflow-wrap:anywhere}.badge{display:inline-flex;padding:6px 9px;border-radius:999px;font-size:12px;font-weight:900;text-transform:capitalize}.badge.active{background:#e6f6ef;color:#06543e}.badge.invited{background:#fff3cd;color:#725500}.badge.disabled{background:#fff0f0;color:var(--danger)}
+    .member-role select{min-height:42px}.actions{display:flex;flex-wrap:wrap;gap:7px;justify-content:flex-end}.actions button{min-height:40px;padding:8px 10px;font-size:12px}.empty{padding:24px;text-align:center;color:var(--muted)}.notice{margin-top:12px;padding:11px 12px;border-radius:11px;font-size:14px}.notice.success{background:#e6f6ef;color:#06543e}.notice.error{background:#fff0f0;color:var(--danger)}.hidden{display:none!important}
+    .access-denied{width:min(620px,100%);margin:60px auto;padding:28px;border-radius:18px;background:#fff;border:1px solid var(--line);text-align:center}.access-denied a{display:inline-flex;margin-top:14px;padding:11px 15px;border-radius:11px;background:var(--green);color:#fff;text-decoration:none;font-weight:900}
+    @media(max-width:900px){.grid{grid-template-columns:1fr 1fr}.grid button{width:100%}.role-note{grid-template-columns:1fr}.member{grid-template-columns:1fr 140px}.actions{grid-column:1/-1;justify-content:flex-start}}@media(max-width:560px){.grid,.stats,.member{grid-template-columns:1fr}.actions{grid-column:auto}.heading{align-items:start}.stat{padding:12px}}
+  </style>
+</head>
+<body>
+  <header class="topbar">
+    <div class="topbar-inner">
+      <div>
+        <div class="brand">MG <span>EXPRESS</span> DISPATCH</div>
+        <div class="staff-email" id="staffEmail"></div>
+      </div>
+    </div>
+  </header>
+
+  <main class="container" id="app" hidden>
+    <div class="heading">
+      <div>
+        <div class="eyebrow">Admin Only</div>
+        <h1>Team Management</h1>
+        <p class="sub">Give each dispatcher or staff member their own secure portal login.</p>
+      </div>
+    </div>
+
+    <section class="panel">
+      <h2>Add Team Member</h2>
+      <p class="sub">They will receive an email link to create their password.</p>
+      <form id="inviteForm" class="grid">
+        <label>Full Name<input id="fullName" name="full_name" autocomplete="name" required></label>
+        <label>Email<input id="email" name="email" type="email" autocomplete="email" required></label>
+        <label>Role
+          <select id="role" name="role">
+            <option value="dispatcher">Dispatcher</option>
+            <option value="staff">Staff</option>
+            <option value="admin">Admin</option>
+          </select>
+        </label>
+        <button id="inviteButton" type="submit">Send Invite</button>
+      </form>
+      <div id="inviteMessage"></div>
+      <div class="role-note">
+        <div><strong>Dispatcher</strong>Full dispatch access for jobs, customers, drivers, invoices, and daily operations.</div>
+        <div><strong>Staff</strong>Current staff access level for normal portal work. It does not include Team Management.</div>
+        <div><strong>Admin</strong>Full portal access plus permission to add, change, disable, and restore team accounts.</div>
+      </div>
+    </section>
+
+    <div class="stats">
+      <div class="stat"><strong id="totalCount">0</strong><span>Total Team</span></div>
+      <div class="stat"><strong id="activeCount">0</strong><span>Active</span></div>
+      <div class="stat"><strong id="invitedCount">0</strong><span>Invited</span></div>
+      <div class="stat"><strong id="disabledCount">0</strong><span>Disabled</span></div>
+    </div>
+
+    <section class="panel">
+      <div class="heading" style="margin-bottom:12px">
+        <div>
+          <h2>Portal Access</h2>
+          <p class="sub">Change roles, resend access links, or turn access off without sharing passwords.</p>
+        </div>
+        <button class="secondary" id="refreshButton" type="button">Refresh</button>
+      </div>
+      <div class="team-list" id="teamList"><div class="empty">Loading team members...</div></div>
+    </section>
+  </main>
+
+  <div id="denied" class="access-denied hidden">
+    <h1>Admin access required</h1>
+    <p class="sub">Only an MG Express Admin can open Team Management.</p>
+    <a href="/dashboard.html">Return to Dashboard</a>
+  </div>
+
+  <script src="/assets/js/menu.js"></script>
+  <script>
+    let authData = null;
+    let members = [];
+    let currentUserId = "";
+
+    function esc(value) {
+      const div = document.createElement("div");
+      div.textContent = value == null ? "" : String(value);
+      return div.innerHTML;
+    }
+
+    function formatDate(value) {
+      if (!value) return "Never";
+      const date = new Date(value);
+      if (Number.isNaN(date.getTime())) return "Never";
+      return date.toLocaleString([], { month: "short", day: "numeric", year: "numeric", hour: "numeric", minute: "2-digit" });
+    }
+
+    function titleRole(value) {
+      const role = String(value || "staff");
+      return role.charAt(0).toUpperCase() + role.slice(1);
+    }
+
+    function setMessage(target, message, type) {
+      target.className = "notice " + type;
+      target.textContent = message;
+    }
+
+    async function api(body) {
+      const response = await fetch("/api/manage-team", {
+        method: body ? "POST" : "GET",
+        headers: {
+          Authorization: "Bearer " + authData.session.access_token,
+          ...(body ? { "Content-Type": "application/json" } : {})
+        },
+        ...(body ? { body: JSON.stringify(body) } : {})
+      });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(data.error || "Unable to manage team access.");
+      return data;
+    }
+
+    function render() {
+      totalCount.textContent = members.length;
+      activeCount.textContent = members.filter(member => member.status === "active").length;
+      invitedCount.textContent = members.filter(member => member.status === "invited").length;
+      disabledCount.textContent = members.filter(member => member.status === "disabled").length;
+
+      if (!members.length) {
+        teamList.innerHTML = '<div class="empty">No team members yet.</div>';
+        return;
+      }
+
+      teamList.innerHTML = members.map(member => {
+        const isSelf = String(member.id) === String(currentUserId);
+        const disabled = member.status === "disabled";
+        const lastActivity = member.last_sign_in_at
+          ? "Last sign-in: " + formatDate(member.last_sign_in_at)
+          : (member.invited_at ? "Invite sent: " + formatDate(member.invited_at) : "No sign-in yet");
+
+        return (
+          '<article class="member" data-id="' + esc(member.id) + '">' +
+            '<div><div class="member-name">' + esc(member.full_name || "Team Member") + (isSelf ? " (You)" : "") + '</div>' +
+            '<div class="member-email">' + esc(member.email || "No email found") + '</div><div class="member-meta">' + esc(lastActivity) + '</div></div>' +
+            '<div><span class="badge ' + esc(member.status) + '">' + esc(member.status) + '</span></div>' +
+            '<div class="member-role"><select class="role-select" aria-label="Role for ' + esc(member.full_name || "team member") + '">' +
+              '<option value="dispatcher"' + (member.role === "dispatcher" ? " selected" : "") + '>Dispatcher</option>' +
+              '<option value="staff"' + (member.role === "staff" ? " selected" : "") + '>Staff</option>' +
+              '<option value="admin"' + (member.role === "admin" ? " selected" : "") + '>Admin</option>' +
+            '</select></div>' +
+            '<div class="actions">' +
+              '<button class="secondary save-role" type="button">Save Role</button>' +
+              '<button class="secondary resend" type="button">Send Access Link</button>' +
+              (disabled
+                ? '<button class="enable" type="button">Restore Access</button>'
+                : (isSelf ? "" : '<button class="danger disable" type="button">Disable Access</button>')) +
+            '</div>' +
+          '</article>'
+        );
+      }).join("");
+    }
+
+    async function loadMembers() {
+      teamList.innerHTML = '<div class="empty">Loading team members...</div>';
+      try {
+        const data = await api();
+        members = data.members || [];
+        currentUserId = data.current_user_id || authData.user.id;
+        render();
+      } catch (error) {
+        teamList.innerHTML = '<div class="notice error">' + esc(error.message) + '</div>';
+      }
+    }
+
+    inviteForm.addEventListener("submit", async event => {
+      event.preventDefault();
+      inviteButton.disabled = true;
+      inviteButton.textContent = "Sending...";
+      try {
+        const data = await api({
+          action: "invite",
+          full_name: fullName.value.trim(),
+          email: email.value.trim(),
+          role: role.value
+        });
+        setMessage(inviteMessage, data.message || "Team invitation sent.", "success");
+        inviteForm.reset();
+        role.value = "dispatcher";
+        await loadMembers();
+      } catch (error) {
+        setMessage(inviteMessage, error.message, "error");
+      } finally {
+        inviteButton.disabled = false;
+        inviteButton.textContent = "Send Invite";
+      }
+    });
+
+    teamList.addEventListener("click", async event => {
+      const button = event.target.closest("button");
+      if (!button) return;
+      const card = button.closest(".member");
+      const memberId = card?.dataset.id;
+      const member = members.find(item => String(item.id) === String(memberId));
+      if (!member) return;
+
+      let payload = null;
+      let confirmText = "";
+
+      if (button.classList.contains("save-role")) {
+        payload = { action: "update_role", member_id: memberId, role: card.querySelector(".role-select").value };
+      } else if (button.classList.contains("resend")) {
+        payload = { action: "resend", member_id: memberId };
+      } else if (button.classList.contains("disable")) {
+        confirmText = "Disable portal access for " + (member.full_name || member.email) + "?";
+        payload = { action: "disable", member_id: memberId };
+      } else if (button.classList.contains("enable")) {
+        payload = { action: "enable", member_id: memberId };
+      } else {
+        return;
+      }
+
+      if (confirmText && !window.confirm(confirmText)) return;
+
+      button.disabled = true;
+      const original = button.textContent;
+      button.textContent = "Working...";
+      try {
+        const data = await api(payload);
+        window.alert(data.message || "Team access updated.");
+        await loadMembers();
+      } catch (error) {
+        window.alert(error.message);
+      } finally {
+        button.disabled = false;
+        button.textContent = original;
+      }
+    });
+
+    refreshButton.addEventListener("click", loadMembers);
+
+    (async function init() {
+      try {
+        authData = await window.MG_AUTH.requireDispatch();
+        if (!authData) return;
+
+        if (authData.role !== "admin") {
+          denied.classList.remove("hidden");
+          return;
+        }
+
+        staffEmail.textContent = authData.user.email || "";
+        app.hidden = false;
+        await window.MG_MENU.initialize();
+        await loadMembers();
+      } catch (error) {
+        denied.classList.remove("hidden");
+        denied.querySelector(".sub").textContent = error.message || "Unable to verify Admin access.";
+      }
+    })();
+  </script>
+</body>
+</html>
