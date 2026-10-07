@@ -58,6 +58,12 @@
       icon: "📊"
     },
     {
+      href: "/team.html",
+      label: "Team Management",
+      icon: "👤",
+      adminOnly: true
+    },
+    {
       href: "/settings.html",
       label: "Settings",
       icon: "⚙️"
@@ -240,7 +246,7 @@
     document.head.appendChild(style);
   }
 
-  function buildMenuMarkup(userLabel) {
+  function buildMenuMarkup(userLabel, role) {
     const currentPage =
       currentPageName();
 
@@ -279,6 +285,7 @@
 
         <nav class="mg-menu-links">
           ${pages
+            .filter(page => !page.adminOnly || role === "admin")
             .map(page => {
               const pageName =
                 page.href
@@ -424,7 +431,7 @@
     ) {
       document.body.insertAdjacentHTML(
         "beforeend",
-        buildMenuMarkup(userLabel)
+        buildMenuMarkup(userLabel, authData?.role || settings.role || "")
       );
     }
 
