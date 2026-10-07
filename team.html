@@ -91,7 +91,6 @@
     <a href="/dashboard.html">Return to Dashboard</a>
   </div>
 
-  <script src="/assets/js/menu.js"></script>
   <script>
     let authData = null;
     let members = [];
@@ -264,7 +263,9 @@
 
         staffEmail.textContent = authData.user.email || "";
         app.hidden = false;
-        await window.MG_MENU.initialize();
+        window.dispatchEvent(new CustomEvent("mg-dispatch-ready", {
+          detail: { email: authData.user.email || "", role: authData.role }
+        }));
         await loadMembers();
       } catch (error) {
         denied.classList.remove("hidden");
@@ -272,5 +273,6 @@
       }
     })();
   </script>
+  <script src="/dispatch-menu.js"></script>
 </body>
 </html>
