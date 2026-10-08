@@ -163,11 +163,14 @@
           <div>${esc(x.phone || "No phone")}</div>
           <div class="small">${esc(x.email || "No email")}</div>
         </div>
-        <div class="actions"><button class="mini" data-edit="${x.id}">Open</button></div>
+        <div class="actions"><button class="mini" data-amanda="${esc(x.id)}" type="button">Amanda check</button><button class="mini" data-edit="${esc(x.id)}">Open</button></div>
       </article>`).join("") : '<div class="panel empty">No leads yet. Add the first MG Express prospect.</div>';
 
     $("list").querySelectorAll("[data-edit]").forEach(button => {
       button.onclick = () => openModal(button.dataset.edit);
+    });
+    $("list").querySelectorAll("[data-amanda]").forEach(button => {
+      button.onclick = () => checkAmanda(button.dataset.amanda, button);
     });
   }
 
@@ -250,6 +253,43 @@
     }
     leads = leads.filter(x => x.id !== id);
     render();
+  }
+
+  async function checkAmanda(leadId, button) {
+    if (!authData?.session?.access_token) {
+      setNotice("Dispatch session required. No call placed.", "warning");
+      return;
+    }
+    button.disabled = true;
+    setNotice("Checking Amanda AI sales eligibility. No calls will be placed.", "");
+    try {
+      const response = await fetch("/.netlify/functions/amanda-sales-preflight", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: "Bearer " + authData.session.access_token
+        },
+        body: JSON.stringify({ lead_id: leadId })
+      });
+      const report = await response.json();
+      if (!response.ok) throw new Error(report?.error || "Check could not be completed");
+      const labels = {
+        no_valid_us_phone: "Missing valid US phone",
+        lead_not_interested: "Lead marked not interested",
+        do_not_call: "On do-not-call list",
+        no_verified_phone_specific_ai_marketing_permission: "No approved AI-calling permission",
+        invalid_or_expired_permission: "Permission expired or invalid",
+        outbound_agent_not_connected: "Amanda provider not connected",
+        legal_and_provider_approval_pending: "Legal/provider approval pending",
+        dialing_disabled: "Dialing disabled"
+      };
+      const message = (report.blockers || []).map(x => labels[x] || x).join("; ");
+      setNotice("Amanda eligibility check: " + message + ". No call placed.", "warning");
+    } catch (error) {
+      setNotice("Amanda check unavailable: " + error.message + ". No call placed.", "warning");
+    } finally {
+      button.disabled = false;
+    }
   }
 
   async function initialize() {
