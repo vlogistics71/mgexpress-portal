@@ -394,8 +394,9 @@
         confirmed_customer_requested_email: true,
         approval_source: source
       });
-      await loadDatabase();
-      render();
+      try { await loadDatabase(); render(); } catch (reloadError) {
+        console.warn("Welcome sent but sales list refresh failed", reloadError);
+      }
       welcomeNotice("Welcome email and PDF sent to " + result.sent_to + ".", "success");
       setNotice("MG Express welcome packet sent to " + result.sent_to + ".", "success");
     } catch (error) {
