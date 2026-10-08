@@ -385,8 +385,129 @@
       .summary-grid { gap: 8px; }
       .card { grid-template-columns: minmax(0, 1fr) auto; }
       .details-summary { flex-direction: column; }
-      .details-action-grid { grid-template-columns: 1fr; }
-      .details-kv { grid-template-columns: 1fr; }
+
+      /* Compact mobile delivery details */
+      .delivery-details-panel {
+        height: 100dvh;
+        max-height: 100dvh;
+      }
+
+      .delivery-details-panel .modal-head {
+        padding: 10px 14px;
+        align-items: center;
+      }
+
+      .delivery-details-panel .modal-title {
+        font-size: 20px;
+        line-height: 1.05;
+      }
+
+      .delivery-details-panel .modal-subtitle {
+        margin-top: 3px;
+        font-size: 12px;
+      }
+
+      .delivery-details-panel .icon-btn {
+        min-width: 42px;
+        min-height: 42px;
+        border-radius: 11px;
+      }
+
+      .delivery-details-body {
+        padding: 10px 12px 18px;
+        gap: 9px;
+      }
+
+      .details-card {
+        padding: 11px 12px;
+        border-radius: 14px;
+        box-shadow: 0 4px 12px rgba(0,0,0,.035);
+      }
+
+      .details-card h4 {
+        margin-bottom: 8px;
+        font-size: 18px;
+        line-height: 1.1;
+      }
+
+      .details-card-body.compact-detail-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        column-gap: 14px;
+        row-gap: 9px;
+      }
+
+      .details-kv {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 2px;
+        min-width: 0;
+      }
+
+      .details-kv strong {
+        font-size: 10px;
+        line-height: 1.2;
+        letter-spacing: .07em;
+      }
+
+      .details-kv span {
+        min-width: 0;
+        font-size: 14px;
+        line-height: 1.32;
+        font-weight: 750;
+        overflow-wrap: anywhere;
+      }
+
+      .details-kv.detail-wide,
+      .details-kv.detail-wide-mobile {
+        grid-column: 1 / -1;
+      }
+
+      .details-notes-card .note-item {
+        padding: 8px 9px;
+        border: 1px solid #e4ece8;
+        border-radius: 10px;
+        background: #f8fbfa;
+      }
+
+      .details-notes-card .detail-wide.note-item {
+        padding: 9px 10px;
+      }
+
+      .payment-badge {
+        min-height: 26px;
+        padding: 5px 10px;
+        font-size: 12px;
+      }
+
+      .details-action-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 8px;
+      }
+
+      .details-action-grid .action-btn,
+      .details-action-grid .action-btn.secondary,
+      .details-action-grid .danger-btn {
+        min-height: 43px;
+        padding: 9px 8px;
+        border-radius: 11px;
+        font-size: 13px;
+        line-height: 1.15;
+      }
+
+      .sheet-note {
+        font-size: 12px;
+        line-height: 1.4;
+      }
+    }
+
+    @media (max-width: 390px) {
+      .details-card-body.compact-detail-grid {
+        column-gap: 10px;
+      }
+
+      .details-action-grid {
+        grid-template-columns: 1fr;
+      }
     }
   </style>
 </head>
