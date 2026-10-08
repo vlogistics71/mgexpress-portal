@@ -842,16 +842,117 @@
     renderWorkspaceSummary();
   }
 
-  function detailsRow(label, value) {
-    return `<div class="details-kv"><strong>${escapeHtml(label)}</strong><span>${value ? escapeHtml(value) : "-"}</span></div>`;
+  function hasDetailValue(value) {
+    return value !== null && value !== undefined && String(value).trim() !== "";
   }
 
-  function detailsBlock(label, value) {
-    return `<div class="details-kv"><strong>${escapeHtml(label)}</strong><span>${value ? escapeHtml(value) : "-"}</span></div>`;
+  function detailsRow(label, value, className = "") {
+    const classes = ["details-kv", className].filter(Boolean).join(" ");
+    return `<div class="${classes}"><strong>${escapeHtml(label)}</strong><span>${hasDetailValue(value) ? escapeHtml(value) : "-"}</span></div>`;
   }
 
-  function detailsBlockMarkup(label, markup) {
-    return `<div class="details-kv"><strong>${escapeHtml(label)}</strong><span>${markup || "-"}</span></div>`;
+  function detailsBlock(label, value, className = "") {
+    return detailsRow(label, value, className);
+  }
+
+  function optionalDetailsBlock(label, value, className = "") {
+    return hasDetailValue(value) ? detailsBlock(label, value, className) : "";
+  }
+
+  function detailsBlockMarkup(label, markup, className = "") {
+    const classes = ["details-kv", className].filter(Boolean).join(" ");
+    return `<div class="${classes}"><strong>${escapeHtml(label)}</strong><span>${markup || "-"}</span></div>`;
+  }
+
+  function formatDeliverySpeed(value) {
+    const raw = String(value || "").trim();
+    if (!raw) return "-";
+
+    const normalized = raw.toLowerCase().replace(/[-_]+/g, " ").replace(/\s+/g, " ").trim();
+    const hourMatch = normalized.match(/^(\d+(?:\.\d+)?)\s*(?:h|hr|hrs|hour|hours)$/);
+    if (hourMatch) {
+      const amount = hourMatch[1];
+      return `${amount} ${Number(amount) === 1 ? "Hour" : "Hours"}`;
+    }
+
+    return normalized.replace(/\b\w/g, character => character.toUpperCase());
+  }
+
+  function parseLabeledNotes(value) {
+    const result = {
+      deliveryInstructions: "",
+      pickupInstructions: "",
+      pickupContact: "",
+      weight: "",
+      pieces: "",
+      pickupTime: "",
+      deliverBy: "",
+      company: "",
+      other: []
+    };
+
+    const keyMap = new Map([
+      ["delivery instructions", "deliveryInstructions"],
+      ["pickup instructions", "pickupInstructions"],
+      ["pickup contact", "pickupContact"],
+      ["estimated total weight", "weight"],
+      ["estimated weight", "weight"],
+      ["weight", "weight"],
+      ["pieces / boxes", "pieces"],
+      ["pieces/boxes", "pieces"],
+      ["pieces", "pieces"],
+      ["preferred pickup time", "pickupTime"],
+      ["pickup time", "pickupTime"],
+      ["deliver by time", "deliverBy"],
+      ["deliver by", "deliverBy"],
+      ["company", "company"]
+    ]);
+
+    String(value || "")
+      .split(/\r?\n/)
+      .map(line => line.trim())
+      .filter(Boolean)
+      .forEach(line => {
+        const colonIndex = line.indexOf(":");
+        if (colonIndex < 0) {
+          result.other.push(line);
+          return;
+        }
+
+        const label = line.slice(0, colonIndex).trim().toLowerCase();
+        const detailValue = line.slice(colonIndex + 1).trim();
+        const key = keyMap.get(label);
+
+        if (key && detailValue) {
+          if (!result[key]) result[key] = detailValue;
+        } else {
+          result.other.push(line);
+        }
+      });
+
+    return result;
+  }
+
+  function structuredNotesForDelivery(delivery) {
+    const primary = parseLabeledNotes(delivery.special_instructions);
+    const billing = parseLabeledNotes(delivery.billing_notes);
+
+    const firstValue = (...values) => values.find(hasDetailValue) || "";
+
+    return {
+      deliveryInstructions: firstValue(primary.deliveryInstructions, delivery.delivery_instructions),
+      pickupInstructions: firstValue(primary.pickupInstructions, delivery.pickup_instructions),
+      pickupContact: firstValue(primary.pickupContact, billing.pickupContact),
+      weight: firstValue(primary.weight, billing.weight, delivery.weight),
+      pieces: firstValue(primary.pieces, billing.pieces),
+      pickupTime: firstValue(primary.pickupTime),
+      deliverBy: firstValue(primary.deliverBy),
+      company: firstValue(delivery.company, primary.company),
+      other: [
+        ...primary.other,
+        ...[delivery.notes, delivery.customer_notes, delivery.internal_dispatch_notes].filter(hasDetailValue)
+      ]
+    };
   }
 
   function paymentBadgeMarkup(value) {
@@ -1338,69 +1439,80 @@
       return;
     }
 
-    const route = [delivery.pickup_address, delivery.delivery_address].filter(Boolean).join(" → ");
     const assignedDriverName = driverNameById(delivery.assigned_driver_id);
     const assignedDriver = delivery.assigned_driver_id ? (assignedDriverName || "Driver Assigned") : "Unassigned";
-    const notes = [delivery.special_instructions, delivery.delivery_instructions, delivery.pickup_instructions, delivery.notes].filter(Boolean).join("\n\n");
+    const structuredNotes = structuredNotesForDelivery(delivery);
     const scheduledValue = scheduledDeliveryDateTime(delivery);
-        const showReturnService = hasReturnService(delivery);
+    const showReturnService = hasReturnService(delivery);
     const scheduledBlocks = clean(delivery.service_level) === "scheduled" && scheduledValue ? `
-          ${detailsBlock("Scheduled Delivery", formatDateOnly(scheduledValue))}
+          ${detailsBlock("Scheduled Date", formatDateOnly(scheduledValue))}
           ${detailsBlock("Scheduled Time", formatTimeOnly(scheduledValue))}
     ` : "";
     const readOnlyMode = state.readOnlyDetails || isComplete(delivery);
     const workflowButtons = readOnlyMode ? "" : workflowActionButtons(delivery);
     const documentButtons = documentActionButtons(delivery);
+    const completeMode = isComplete(delivery);
+
+    const notesMarkup = [
+      optionalDetailsBlock("Pickup Instructions", structuredNotes.pickupInstructions, "detail-wide note-item"),
+      optionalDetailsBlock("Delivery Instructions", structuredNotes.deliveryInstructions, "detail-wide note-item"),
+      optionalDetailsBlock("Pickup Contact", structuredNotes.pickupContact, "note-item"),
+      optionalDetailsBlock("Estimated Weight", structuredNotes.weight, "note-item"),
+      optionalDetailsBlock("Pieces / Boxes", structuredNotes.pieces, "note-item"),
+      optionalDetailsBlock("Pickup Time", structuredNotes.pickupTime, "note-item"),
+      optionalDetailsBlock("Deliver By", structuredNotes.deliverBy, "note-item"),
+      optionalDetailsBlock("Additional Notes", structuredNotes.other.join(" • "), "detail-wide note-item")
+    ].join("");
 
     elements.deliveryDetailsTitle.textContent = delivery.job_number || "Delivery Details";
     elements.deliveryDetailsSubtitle.textContent = `${delivery.customer_name || delivery.company_name || "Customer"} • ${getStatusLabel(delivery)}`;
     elements.deliveryDetailsBody.innerHTML = `
       <section class="details-card">
         <h4>Delivery</h4>
-        <div class="details-card-body">
+        <div class="details-card-body compact-detail-grid">
           ${detailsBlock("Job Number", delivery.job_number)}
-          ${detailsBlock("Customer", delivery.customer_name || delivery.company_name || "-")}
           ${detailsBlock("Status", getStatusLabel(delivery))}
+          ${detailsBlock("Customer", delivery.customer_name || delivery.company_name || "-", "detail-wide-mobile")}
+          ${optionalDetailsBlock("Company", structuredNotes.company)}
           ${detailsBlock("Category", getCategoryLabel(delivery.job_category))}
           ${detailsBlock("Vehicle", delivery.vehicle_type || "-")}
-          ${detailsBlock("Speed", delivery.delivery_speed || delivery.service_level || "-")}
+          ${detailsBlock("Speed", formatDeliverySpeed(delivery.delivery_speed || delivery.service_level))}
           ${scheduledBlocks}
-          ${detailsBlock("Reference", delivery.reference_number || "-")}
+          ${optionalDetailsBlock("Reference", delivery.reference_number)}
           ${detailsBlock("Assigned Driver", assignedDriver)}
           ${detailsBlock("Driver Pay", delivery.driver_pay != null && delivery.driver_pay !== "" ? formatMoney(delivery.driver_pay) : "-")}
           ${detailsBlockMarkup("Payment", paymentBadgeMarkup(delivery.payment_status))}
+          ${optionalDetailsBlock("Created By", delivery.created_by || delivery.created_by_email)}
           ${detailsBlock("Created", formatDateTime(delivery.created_at))}
           ${detailsBlock("Updated", formatDateTime(delivery.updated_at || delivery.modified_at || delivery.created_at))}
         </div>
       </section>
 
       <section class="details-card">
-        <h4>Completion</h4>
-        <div class="details-card-body">
-          ${detailsBlock("Completed", formatDateTime(delivery.completed_at || delivery.delivery_photo_uploaded_at))}
-          ${detailsBlock("POD Recipient", delivery.pod_recipient_name || "-")}
-          ${detailsBlock("Driver Workflow", delivery.driver_workflow_status || "-")}
-          ${detailsBlock("Driver Acceptance", delivery.driver_acceptance_status || "-")}
+        <h4>${completeMode ? "Completion" : "Driver Status"}</h4>
+        <div class="details-card-body compact-detail-grid">
+          ${completeMode ? optionalDetailsBlock("Completed", formatDateTime(delivery.completed_at || delivery.delivery_photo_uploaded_at)) : ""}
+          ${completeMode ? optionalDetailsBlock("POD Recipient", delivery.pod_recipient_name) : ""}
+          ${detailsBlock("Workflow", delivery.driver_workflow_status || "-")}
+          ${detailsBlock("Acceptance", delivery.driver_acceptance_status || "-")}
         </div>
       </section>
 
       <section class="details-card">
         <h4>Addresses</h4>
-        <div class="details-card-body">
-          ${detailsBlock("Route", route || "-")}
-          ${detailsBlock("Pickup", delivery.pickup_address)}
-          ${detailsBlock("Delivery", delivery.delivery_address)}
-          ${detailsBlock("Pickup Contact", [delivery.pickup_contact_name, delivery.pickup_contact_phone].filter(Boolean).join(" • "))}
-          ${detailsBlock("Delivery Contact", [delivery.delivery_contact_name, delivery.delivery_contact_phone].filter(Boolean).join(" • "))}
-          ${showReturnService ? `${detailsBlock("Return Required", "Yes")}${detailsBlock("Return Address", delivery.return_address || "-")}` : ""}
+        <div class="details-card-body compact-detail-grid">
+          ${detailsBlock("Pickup", delivery.pickup_address, "detail-wide")}
+          ${detailsBlock("Delivery", delivery.delivery_address, "detail-wide")}
+          ${optionalDetailsBlock("Pickup Contact", [delivery.pickup_contact_name, delivery.pickup_contact_phone].filter(Boolean).join(" • "), "detail-wide")}
+          ${optionalDetailsBlock("Delivery Contact", [delivery.delivery_contact_name, delivery.delivery_contact_phone].filter(Boolean).join(" • "), "detail-wide")}
+          ${showReturnService ? `${detailsBlock("Return Required", "Yes")}${detailsBlock("Return Address", delivery.return_address || "-", "detail-wide")}` : ""}
         </div>
       </section>
 
-      <section class="details-card">
-        <h4>Notes</h4>
-        <div class="details-card-body">
-          ${detailsBlock("Special Instructions", notes || "-")}
-          ${detailsBlock("Created By", delivery.created_by || delivery.created_by_email || "-")}
+      <section class="details-card details-notes-card">
+        <h4>Instructions & Job Notes</h4>
+        <div class="details-card-body compact-detail-grid">
+          ${notesMarkup || '<div class="sheet-note">No special instructions or package notes.</div>'}
         </div>
       </section>
 
