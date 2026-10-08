@@ -22,6 +22,7 @@
   let databaseReady = true;
   let welcomeStatusByLead = new Map();
   let welcomeLeadId = null;
+  let welcomeBusy = false;
 
   const $ = id => document.getElementById(id);
 
@@ -331,7 +332,7 @@
   }
 
   function closeWelcomeModal() {
-    if (!$("sendWelcome").disabled && !$("previewWelcome").disabled) {
+    if (!welcomeBusy) {
       $("welcomeBg").classList.remove("open");
       $("welcomeBg").setAttribute("aria-hidden", "true");
       welcomeLeadId = null;
@@ -358,6 +359,7 @@
   async function previewWelcome() {
     const button = $("previewWelcome");
     button.disabled = true;
+    welcomeBusy = true;
     welcomeNotice("Preparing your branded welcome PDF...", "");
     try {
       const pdf = await welcomeRequest("preview");
@@ -374,6 +376,7 @@
       welcomeNotice(error.message, "error");
     } finally {
       button.disabled = false;
+      welcomeBusy = false;
     }
   }
 
@@ -388,6 +391,8 @@
     if (!window.confirm("Send the MG Express welcome email and 2-page PDF to " + lead.email + "?")) return;
     $("sendWelcome").disabled = true;
     $("previewWelcome").disabled = true;
+    welcomeBusy = true;
+    let sent = false;
     welcomeNotice("Sending the welcome email once. Please do not close this window.", "");
     try {
       const result = await welcomeRequest("send", {
@@ -399,11 +404,13 @@
       }
       welcomeNotice("Welcome email and PDF sent to " + result.sent_to + ".", "success");
       setNotice("MG Express welcome packet sent to " + result.sent_to + ".", "success");
+      sent = true;
     } catch (error) {
       try { await loadDatabase(); render(); } catch (_) {}
       welcomeNotice(error.message, "error");
     } finally {
-      $("sendWelcome").disabled = false;
+      welcomeBusy = false;
+      $("sendWelcome").disabled = sent;
       $("previewWelcome").disabled = false;
     }
   }
