@@ -873,16 +873,197 @@
         padding: 18px;
       }
 
+      /* Compact Create Job workspace on phones */
+      .panel.create-section {
+        padding: 12px;
+        border-radius: 16px;
+      }
+
+      .create-section {
+        gap: 10px;
+      }
+
       .create-section-head {
         flex-direction: column;
+        gap: 8px;
+      }
+
+      .create-section-head .hint {
+        font-size: 11px;
+        line-height: 1.3;
       }
 
       .create-section-actions {
         width: 100%;
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 8px;
       }
 
       .create-section-actions .secondary-button {
         width: 100%;
+        min-height: 42px;
+        padding: 9px 10px;
+        border-radius: 11px;
+        font-size: 13px;
+      }
+
+      .create-section-body,
+      .job-form {
+        gap: 9px;
+      }
+
+      .job-form .form-group {
+        padding: 10px;
+        border-radius: 14px;
+        gap: 9px;
+      }
+
+      .job-form .form-group h3 {
+        font-size: 18px;
+        line-height: 1.1;
+        letter-spacing: 0;
+      }
+
+      .job-form .form-grid.two-up,
+      .job-form .form-grid.three-up {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        column-gap: 8px;
+        row-gap: 9px;
+      }
+
+      .job-form .field {
+        gap: 4px;
+      }
+
+      .job-form .field.full {
+        grid-column: 1 / -1;
+      }
+
+      .job-form .field label {
+        font-size: 10px;
+        line-height: 1.2;
+        letter-spacing: .06em;
+      }
+
+      .job-form .field input,
+      .job-form .field select,
+      .job-form .field textarea {
+        min-height: 43px;
+        margin-top: 0;
+        padding: 9px 10px;
+        border-radius: 10px;
+        font-size: 16px;
+        line-height: 1.2;
+      }
+
+      .job-form .field textarea {
+        min-height: 74px;
+        padding-top: 10px;
+      }
+
+      .job-form .field .hint,
+      .job-form .address-autocomplete-message {
+        margin-top: 1px;
+        font-size: 10px;
+        line-height: 1.25;
+      }
+
+      .lookup-results {
+        margin-top: 4px;
+      }
+
+      .lookup-confirm {
+        padding: 9px;
+        border-radius: 10px;
+      }
+
+      .pricing-assistant {
+        padding: 10px;
+        border-radius: 14px;
+        gap: 10px;
+      }
+
+      .pricing-head {
+        gap: 8px;
+      }
+
+      .pricing-head h4 {
+        font-size: 16px;
+      }
+
+      .pricing-head p {
+        margin-top: 3px;
+        font-size: 11px;
+        line-height: 1.3;
+      }
+
+      .pricing-button {
+        width: 100%;
+        min-height: 42px;
+        padding: 9px 12px;
+        border-radius: 10px;
+        font-size: 13px;
+      }
+
+      .pricing-results {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 6px;
+      }
+
+      .pricing-result {
+        min-width: 0;
+        padding: 8px 6px;
+        border-radius: 10px;
+      }
+
+      .pricing-result span {
+        font-size: 9px;
+        line-height: 1.15;
+      }
+
+      .pricing-result strong {
+        margin-top: 3px;
+        font-size: 16px;
+        line-height: 1.05;
+        overflow-wrap: anywhere;
+      }
+
+      .pricing-status {
+        font-size: 11px;
+        line-height: 1.3;
+      }
+
+      .rate-chart {
+        font-size: 11px;
+      }
+
+      .create-job-button {
+        min-height: 46px;
+        border-radius: 12px;
+        padding: 10px 14px;
+        font-size: 15px;
+      }
+
+      .return-details {
+        margin-top: 0;
+      }
+    }
+
+    @media (max-width: 370px) {
+      .job-form .form-grid.two-up,
+      .job-form .form-grid.three-up {
+        column-gap: 6px;
+      }
+
+      .job-form .field label {
+        font-size: 9px;
+      }
+
+      .job-form .field input,
+      .job-form .field select {
+        padding-left: 8px;
+        padding-right: 8px;
       }
     }
 
