@@ -20,6 +20,9 @@
   let client = null;
   let authData = null;
   let databaseReady = true;
+  let welcomeStatusByLead = new Map();
+  let welcomeLeadId = null;
+  let welcomeBusy = false;
 
   const $ = id => document.getElementById(id);
 
@@ -91,6 +94,10 @@
 
     if (result.error) throw result.error;
     leads = (result.data || []).map(toUi);
+    const welcomes = await client.from('sales_welcome_packets')
+      .select('lead_id,status,sent_at,recipient_email');
+    if (welcomes.error) throw welcomes.error;
+    welcomeStatusByLead = new Map((welcomes.data || []).map(x => [x.lead_id, x]));
   }
 
   async function migrateLocalLeads() {
@@ -163,7 +170,12 @@
           <div>${esc(x.phone || "No phone")}</div>
           <div class="small">${esc(x.email || "No email")}</div>
         </div>
-        <div class="actions"><button class="mini" data-amanda="${esc(x.id)}" type="button">Amanda check</button><button class="mini" data-edit="${esc(x.id)}">Open</button></div>
+        <div class="actions welcome-actions">
+          <button class="mini" data-amanda="${esc(x.id)}" type="button">Amanda check</button>
+          <button class="mini" data-welcome="${esc(x.id)}" type="button" ${welcomeStatusByLead.has(x.id) || !x.email || x.status === "Not Interested" ? "disabled" : ""}>${welcomeStatusByLead.has(x.id) ? (welcomeStatusByLead.get(x.id).status === "sent" ? "Welcome Sent" : "Welcome Review") : "Send Welcome Packet"}</button>
+          <button class="mini" data-edit="${esc(x.id)}">Open</button>
+        </div>
+        ${welcomeStatusByLead.has(x.id) ? `<div class="welcome-status ${welcomeStatusByLead.get(x.id).status === "sent" ? "" : "review"}">${welcomeStatusByLead.get(x.id).status === "sent" ? "Welcome emailed" : "Welcome delivery needs review"}</div>` : ""}
       </article>`).join("") : '<div class="panel empty">No leads yet. Add the first MG Express prospect.</div>';
 
     $("list").querySelectorAll("[data-edit]").forEach(button => {
@@ -171,6 +183,9 @@
     });
     $("list").querySelectorAll("[data-amanda]").forEach(button => {
       button.onclick = () => checkAmanda(button.dataset.amanda, button);
+    });
+    $("list").querySelectorAll("[data-welcome]").forEach(button => {
+      button.onclick = () => openWelcomeModal(button.dataset.welcome);
     });
   }
 
@@ -292,6 +307,114 @@
     }
   }
 
+
+  function welcomeNotice(message, kind) {
+    const box = $("welcomeNotice");
+    box.textContent = message || "";
+    box.className = "notice " + (kind || "");
+    box.hidden = !message;
+  }
+
+  function openWelcomeModal(leadId) {
+    const lead = leads.find(x => x.id === leadId);
+    if (!lead || !lead.email || lead.status === "Not Interested") return;
+    welcomeLeadId = lead.id;
+    $("welcomeBusiness").textContent = lead.business || "";
+    $("welcomeContact").textContent = lead.contact || "Not provided";
+    $("welcomeEmail").textContent = lead.email;
+    $("welcomePermissionSource").value = "";
+    $("welcomePermissionCheck").checked = false;
+    $("sendWelcome").disabled = false;
+    $("previewWelcome").disabled = false;
+    welcomeNotice("", "");
+    $("welcomeBg").classList.add("open");
+    $("welcomeBg").setAttribute("aria-hidden", "false");
+  }
+
+  function closeWelcomeModal() {
+    if (!welcomeBusy) {
+      $("welcomeBg").classList.remove("open");
+      $("welcomeBg").setAttribute("aria-hidden", "true");
+      welcomeLeadId = null;
+    }
+  }
+
+  async function welcomeRequest(action, extra = {}) {
+    const token = authData?.session?.access_token;
+    if (!token || !welcomeLeadId) throw Error("Your dispatch session has expired. Please log in again.");
+    const response = await fetch("/.netlify/functions/send-welcome-packet", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: "Bearer " + token
+      },
+      body: JSON.stringify({ action, lead_id: welcomeLeadId, ...extra })
+    });
+    if (action === "preview" && response.ok) return response.blob();
+    const json = await response.json().catch(() => ({}));
+    if (!response.ok) throw Error(json.error || "Welcome packet request failed.");
+    return json;
+  }
+
+  async function previewWelcome() {
+    const button = $("previewWelcome");
+    button.disabled = true;
+    welcomeBusy = true;
+    welcomeNotice("Preparing your branded welcome PDF...", "");
+    try {
+      const pdf = await welcomeRequest("preview");
+      const url = URL.createObjectURL(pdf);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = "MG-Express-Welcome-Packet.pdf";
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 30000);
+      welcomeNotice("Welcome PDF ready. No email was sent.", "success");
+    } catch (error) {
+      welcomeNotice(error.message, "error");
+    } finally {
+      button.disabled = false;
+      welcomeBusy = false;
+    }
+  }
+
+  async function sendWelcome() {
+    const lead = leads.find(x => x.id === welcomeLeadId);
+    if (!lead) return;
+    const source = $("welcomePermissionSource").value;
+    if (!$("welcomePermissionCheck").checked || !source) {
+      welcomeNotice("Confirm the customer's request and select how they requested the email.", "warning");
+      return;
+    }
+    if (!window.confirm("Send the MG Express welcome email and 2-page PDF to " + lead.email + "?")) return;
+    $("sendWelcome").disabled = true;
+    $("previewWelcome").disabled = true;
+    welcomeBusy = true;
+    let sent = false;
+    welcomeNotice("Sending the welcome email once. Please do not close this window.", "");
+    try {
+      const result = await welcomeRequest("send", {
+        confirmed_customer_requested_email: true,
+        approval_source: source
+      });
+      try { await loadDatabase(); render(); } catch (reloadError) {
+        console.warn("Welcome sent but sales list refresh failed", reloadError);
+      }
+      welcomeNotice("Welcome email and PDF sent to " + result.sent_to + ".", "success");
+      setNotice("MG Express welcome packet sent to " + result.sent_to + ".", "success");
+      sent = true;
+    } catch (error) {
+      try { await loadDatabase(); render(); } catch (_) {}
+      welcomeNotice(error.message, "error");
+    } finally {
+      welcomeBusy = false;
+      $("sendWelcome").disabled = sent;
+      $("previewWelcome").disabled = false;
+    }
+  }
+
   async function initialize() {
     try {
       authData = await window.MG_AUTH.requireDispatch();
@@ -305,6 +428,11 @@
     }
 
     $("newLead").onclick = () => openModal();
+    $("closeWelcome").onclick = closeWelcomeModal;
+    $("cancelWelcome").onclick = closeWelcomeModal;
+    $("welcomeBg").onclick = event => { if (event.target === $("welcomeBg")) closeWelcomeModal(); };
+    $("previewWelcome").onclick = previewWelcome;
+    $("sendWelcome").onclick = sendWelcome;
     $("close").onclick = closeModal;
     $("cancel").onclick = closeModal;
     $("modalBg").onclick = event => { if (event.target === $("modalBg")) closeModal(); };
