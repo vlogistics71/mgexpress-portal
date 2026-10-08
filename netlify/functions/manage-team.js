@@ -178,6 +178,7 @@ async function sendTeamAccessEmail({ email, fullName, role, actionLink, isNew })
   const safeLink = escapeHtml(actionLink);
 
   const result = await sendResendEmail({
+    from: "MG Express Dispatch <quotes@notify.migenteexpress.com>",
     to: [email],
     subject: isNew ? "Your MG Express Dispatch Portal invite" : "MG Express Dispatch Portal access",
     html:
