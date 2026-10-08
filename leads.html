@@ -16,6 +16,7 @@
     .notice{margin:0 0 16px;padding:13px 15px;border-radius:12px;background:#eef4f1;color:#40534b;font-weight:800}.notice.warning{background:#fff4d8;color:#765b12}.notice.success{background:#e7f5ef;color:#087455}
     .modal-bg{position:fixed;inset:0;background:rgba(8,25,20,.62);display:none;place-items:center;z-index:2000;padding:18px}.modal-bg.open{display:grid}.modal{background:#fff;width:min(720px,100%);max-height:90vh;overflow:auto;border-radius:18px;padding:22px}.modal-head{display:flex;justify-content:space-between;align-items:center}.close{border:0;background:#eef4f1;border-radius:10px;width:42px;height:42px;font-size:24px}.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:13px;margin-top:18px}.full{grid-column:1/-1}label{font-size:12px;font-weight:900;color:#52615b;display:block;margin-bottom:5px}.form-actions{display:flex;gap:10px;margin-top:18px}.danger{color:#9b2929}.note{font-size:12px;color:#6b7872;margin-top:10px}
     @media(max-width:760px){.stats{grid-template-columns:1fr 1fr}.toolbar{grid-template-columns:1fr}.lead{grid-template-columns:1fr}.form-grid{grid-template-columns:1fr}.full{grid-column:auto}.heading{align-items:flex-start}.actions{justify-content:flex-start}}
+    .welcome-actions{display:flex;gap:9px;align-items:center;flex-wrap:wrap}.welcome-status{display:inline-block;margin-top:7px;color:#0b7659;font-size:12px;font-weight:900}.welcome-status.review{color:#9a6412}.welcome-panel{margin-top:13px;padding:13px;border-radius:12px;background:#eff5f2}.welcome-panel p{margin:8px 0 0;font-size:13px}.welcome-info{padding:12px 14px;border:1px solid #dfe8e4;border-radius:12px;line-height:1.8;word-break:break-word}.welcome-info strong{color:#064f3b}.welcome-check{display:flex;align-items:flex-start;gap:9px;cursor:pointer;font-size:13px;line-height:1.45;margin:12px 0}.welcome-check input{width:20px;min-width:20px;margin:2px 0}.welcome-buttons{display:flex;gap:10px;flex-wrap:wrap}.welcome-buttons button{min-height:43px}.notice.error{background:#fff0ed;color:#912a26}
   </style>
 </head>
 <body>
@@ -49,6 +50,28 @@
     </div><div class="form-actions"><button class="primary" type="submit">Save Lead</button><button class="mini" type="button" id="cancel">Cancel</button><button class="mini danger" type="button" id="deleteBtn" style="display:none">Delete</button></div><div class="note">Leads are saved to the MG Express database when the sales_leads table is installed.</div></form>
   </div></div>
 
+
+  <div class="modal-bg" id="welcomeBg" aria-hidden="true"><div class="modal" role="dialog" aria-modal="true" aria-labelledby="welcomeTitle">
+    <div class="modal-head"><div><div class="eyebrow">Customer introduction</div><h2 id="welcomeTitle">Send Welcome Packet</h2></div><button class="close" id="closeWelcome" type="button" aria-label="Close">×</button></div>
+    <div class="welcome-panel"><strong>Two-page MG Express PDF + welcome email</strong><p>Preview the PDF first. An email is sent only after you confirm that the customer requested it and approve the exact saved recipient.</p></div>
+    <div class="welcome-info" style="margin-top:13px">
+      <div><strong>Business:</strong> <span id="welcomeBusiness"></span></div>
+      <div><strong>Contact:</strong> <span id="welcomeContact"></span></div>
+      <div><strong>Recipient:</strong> <span id="welcomeEmail"></span></div>
+    </div>
+    <p class="note">Email subject: Welcome to Mi Gente Express - [Business]</p>
+    <div style="margin-top:14px"><label for="welcomePermissionSource">How did the customer request this email?</label>
+      <select id="welcomePermissionSource" required><option value="">Select a source...</option><option value="phone">Phone conversation</option><option value="email">Email conversation</option><option value="in_person">In person</option><option value="website">Website request</option><option value="other">Other direct request</option></select>
+    </div>
+    <label class="welcome-check"><input type="checkbox" id="welcomePermissionCheck"> <span>I confirm the customer asked to receive a welcome email, I reviewed the recipient address, and I approve this send.</span></label>
+    <div class="welcome-buttons">
+      <button class="mini" type="button" id="previewWelcome">Preview PDF</button>
+      <button class="primary" type="button" id="sendWelcome">Send Welcome Email + PDF</button>
+      <button class="mini" type="button" id="cancelWelcome">Cancel</button>
+    </div>
+    <div class="notice" id="welcomeNotice" hidden role="status" style="margin-top:14px"></div>
+    <p class="note">The system sends one packet per lead; a delivery that needs review cannot be automatically resent. Amanda does not send emails or place calls without dispatch approval.</p>
+  </div></div>
   <script src="/assets/js/config.js"></script>
   <script src="/assets/js/auth.js"></script>
   <script src="/dispatch-menu.js"></script>
