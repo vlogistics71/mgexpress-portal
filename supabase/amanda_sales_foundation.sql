@@ -51,6 +51,7 @@ alter table public.sales_ai_dnc enable row level security;
 alter table public.sales_ai_call_events enable row level security;
 
 revoke all privileges on public.sales_ai_permissions, public.sales_ai_dnc, public.sales_ai_call_events from anon;
+revoke all privileges on public.sales_ai_permissions, public.sales_ai_dnc, public.sales_ai_call_events from authenticated;
 grant select on public.sales_ai_permissions, public.sales_ai_dnc, public.sales_ai_call_events to authenticated;
 grant insert on public.sales_ai_dnc to authenticated;
 grant select, insert, update, delete on public.sales_ai_permissions, public.sales_ai_dnc, public.sales_ai_call_events to service_role;
