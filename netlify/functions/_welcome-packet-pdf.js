@@ -1,7 +1,6 @@
 "use strict";
 const { PDFDocument, StandardFonts, rgb } = require("pdf-lib");
-const fs = require("fs");
-const path = require("path");
+const logoJpegBase64 = require("./_welcome-logo-data");
 
 const green = rgb(0.026, 0.275, 0.212);
 const deep = rgb(0.027, 0.153, 0.133);
@@ -52,22 +51,7 @@ function paragraph(page, text, font, size, x, y, width, leading, color) {
 }
 
 async function embedLogo(pdf) {
-  try {
-    let svg = "";
-    try {
-      svg = fs.readFileSync(path.join(__dirname, "..", "..", "assets", "images", "mg-express-logo-2026.svg"), "utf8");
-    } catch (_) {
-      const res = await fetch("https://portal.migenteexpress.com/assets/images/mg-express-logo-2026.svg", { signal: AbortSignal.timeout(4000) });
-      if (!res.ok) throw Error("Image unavailable");
-      svg = await res.text();
-    }
-    const match = svg.match(/(?:href|xlink:href)=["']data:image\/jpeg;base64,([^"']+)["']/i);
-    if (!match) return null;
-    return await pdf.embedJpg(Buffer.from(match[1].replace(/\s+/g, ""), "base64"));
-  } catch (error) {
-    console.warn("Welcome packet logo image could not load", { message: error.message });
-    return null;
-  }
+  return pdf.embedJpg(Buffer.from(logoJpegBase64, "base64"));
 }
 
 function header(page, fonts, logo, label, subtitle) {
