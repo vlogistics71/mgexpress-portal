@@ -612,6 +612,26 @@
       margin-top: 4px;
     }
 
+    .pricing-extra-subsection {
+      display: grid;
+      gap: 8px;
+      padding: 10px 0;
+      border-top: 1px solid #d9ebe4;
+    }
+
+    .pricing-extra-subsection:first-of-type {
+      border-top: 0;
+      padding-top: 2px;
+    }
+
+    .pricing-extra-subtitle {
+      color: var(--dark-green);
+      font-size: 12px;
+      font-weight: 900;
+      text-transform: uppercase;
+      letter-spacing: .04em;
+    }
+
     .create-actions {
       display: grid;
       gap: 10px;
@@ -1077,6 +1097,16 @@
         margin-top: 0;
       }
 
+      .pricing-extra-subsection {
+        gap: 7px;
+        padding: 8px 0;
+      }
+
+      .pricing-extra-subtitle {
+        font-size: 10px;
+        letter-spacing: .06em;
+      }
+
       .price-chart-details summary {
         padding: 4px 0;
         font-size: 14px;
@@ -1448,53 +1478,6 @@
           </section>
 
           <section class="form-group">
-            <h3>Return Service</h3>
-            <div class="form-grid two-up">
-              <div class="field">
-                <label for="return_required">Return Service</label>
-                <select id="return_required" name="return_required">
-                  <option value="false">No Return</option>
-                  <option value="true">Return Required</option>
-                </select>
-              </div>
-            </div>
-
-            <div id="returnDetails" class="form-grid two-up return-details" hidden>
-              <div class="field">
-                <label for="return_location_type">Return Location Type</label>
-                <select id="return_location_type" name="return_location_type">
-                  <option value="same_as_pickup">Same as Pickup</option>
-                  <option value="different_location">Different Location</option>
-                </select>
-              </div>
-
-              <div class="field">
-                <label for="return_timing">Return Timing</label>
-                <select id="return_timing" name="return_timing">
-                  <option value="immediate">Immediately After Delivery</option>
-                  <option value="later_today">Later Today</option>
-                  <option value="another_day">Another Day</option>
-                </select>
-              </div>
-
-              <div class="field full" data-return-different>
-                <label for="return_address">Return Address (when different)</label>
-                <input id="return_address" name="return_address" type="text" autocomplete="street-address">
-              </div>
-
-              <div class="field" data-return-different>
-                <label for="return_suite_floor">Return Suite / Floor</label>
-                <input id="return_suite_floor" name="return_suite_floor">
-              </div>
-
-              <div class="field" data-return-different>
-                <label for="return_zip">Return ZIP</label>
-                <input id="return_zip" name="return_zip">
-              </div>
-            </div>
-          </section>
-
-          <section class="form-group">
             <h3>AI Pricing Assistant</h3>
             <div class="pricing-assistant">
               <div class="pricing-head">
@@ -1517,13 +1500,64 @@
 
               <details class="pricing-extra-options" id="pricingExtraOptions" open>
                 <summary>Extra Pricing Options</summary>
-                <div class="form-grid three-up pricing-extra-grid">
+
+                <div class="pricing-extra-subsection">
+                  <div class="pricing-extra-subtitle">Return Service</div>
+                  <div class="form-grid two-up">
+                    <div class="field">
+                      <label for="return_required">Return Service</label>
+                      <select id="return_required" name="return_required">
+                        <option value="false">No Return</option>
+                        <option value="true">Return Required</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  <div id="returnDetails" class="form-grid two-up return-details" hidden>
+                    <div class="field">
+                      <label for="return_location_type">Return Location Type</label>
+                      <select id="return_location_type" name="return_location_type">
+                        <option value="same_as_pickup">Same as Pickup</option>
+                        <option value="different_location">Different Location</option>
+                      </select>
+                    </div>
+
+                    <div class="field">
+                      <label for="return_timing">Return Timing</label>
+                      <select id="return_timing" name="return_timing">
+                        <option value="immediate">Immediately After Delivery</option>
+                        <option value="later_today">Later Today</option>
+                        <option value="another_day">Another Day</option>
+                      </select>
+                    </div>
+
+                    <div class="field full" data-return-different>
+                      <label for="return_address">Return Address (when different)</label>
+                      <input id="return_address" name="return_address" type="text" autocomplete="street-address">
+                    </div>
+
+                    <div class="field" data-return-different>
+                      <label for="return_suite_floor">Return Suite / Floor</label>
+                      <input id="return_suite_floor" name="return_suite_floor">
+                    </div>
+
+                    <div class="field" data-return-different>
+                      <label for="return_zip">Return ZIP</label>
+                      <input id="return_zip" name="return_zip">
+                    </div>
+                  </div>
+                </div>
+
+                <div class="pricing-extra-subsection">
+                  <div class="pricing-extra-subtitle">Additional Charges</div>
+                  <div class="form-grid three-up pricing-extra-grid">
                   <div class="field"><label for="pricingExtraStops">Additional Stops</label><input id="pricingExtraStops" type="number" min="0" step="1" value="0"></div>
                   <div class="field"><label for="pricingWaitBlocks">Wait After First 15 Minutes</label><select id="pricingWaitBlocks"><option value="0">None</option><option value="1">15 minutes</option><option value="2">30 minutes</option><option value="3">45 minutes</option><option value="4">60 minutes</option></select></div>
                   <div class="field"><label for="pricingSpecialHandling">Special Handling Fee</label><input id="pricingSpecialHandling" type="number" min="0" step="1" value="0"></div>
                   <div class="field"><label for="pricingTolls">Tolls / Parking</label><input id="pricingTolls" type="number" min="0" step="0.01" value="0"></div>
                   <div class="field"><label for="pricingAfterHours">After Hours</label><select id="pricingAfterHours"><option value="no">No</option><option value="yes">Yes — add 20%</option></select></div>
                   <div class="field"><label for="pricingWeekend">Weekend</label><select id="pricingWeekend"><option value="no">No</option><option value="yes">Yes — add 15%</option></select></div>
+                  </div>
                 </div>
               </details>
 
