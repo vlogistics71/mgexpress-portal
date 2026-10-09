@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>MG Express | Amanda Call Reviews</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<link rel="stylesheet" href="/assets/css/dispatch.css">
+<style>
+*{box-sizing:border-box}
+body{margin:0;background:#f4f8f5;color:#1d322a;font-family:Arial,sans-serif}
+header{background:#064f3b;color:#fff;padding:18px 5%;font-size:21px;font-weight:900}
+header em{font-style:normal;color:#ff857a}
+main{max-width:1120px;margin:0 auto;padding:25px 17px 65px}
+h1{color:#064f3b;margin:6px 0 10px}
+p{line-height:1.5;color:#567065}
+.box{background:white;border:1px solid #d9e7e0;border-radius:14px;padding:17px;margin:12px 0}
+.notice{background:#edf4ee;padding:14px;border-radius:12px;color:#1c5a41}
+.notice.warn{background:#fff3da;color:#785b20}
+.toolbar{display:flex;gap:12px;flex-wrap:wrap;align-items:center;justify-content:space-between}
+a.button,button{display:inline-block;padding:10px 13px;background:#064f3b;color:#fff;border:0;border-radius:10px;text-decoration:none;font-size:13px;font-weight:800;cursor:pointer}
+button:disabled{opacity:.5;cursor:default}
+.item{display:grid;grid-template-columns:1.2fr .9fr 1.25fr;gap:16px;align-items:start}
+.name{font-size:17px;font-weight:900;color:#064f3b;word-break:break-word}
+.small{font-size:12px;color:#65766f;margin:6px 0;word-break:break-word}
+.chip{display:inline-block;font-size:11px;background:#e3f2e9;color:#136a46;border-radius:15px;font-weight:700;padding:6px 9px;margin:2px}
+.chip.warn{background:#ffe9e6;color:#a62922}
+strong{color:#24382f}
+label{font-weight:800;font-size:13px}
+#search{width:min(350px,100%);border:1px solid #c4d8cf;border-radius:10px;padding:12px;font:inherit}
+@media(max-width:800px){.item{grid-template-columns:1fr}.toolbar{align-items:stretch}}
+</style>
+</head>
+<body>
+<header>MG <em>EXPRESS</em> · DISPATCH</header>
+<main>
+<div class="toolbar"><div><div style="font-size:12px;color:#67776e;text-transform:uppercase;font-weight:800">Sales review</div><h1>Amanda Call Results</h1></div><a class="button" href="/leads.html">Back to Leads</a></div>
+<p>Securely received call-analysis results appear here after Retell webhook verification. Each record is for dispatch review; no emails, phone calls, or customer accounts are created automatically.</p>
+<div id="notice" class="notice warn" role="status">Loading saved call results…</div>
+<div class="toolbar" style="margin:15px 0"><input id="search" type="search" placeholder="Search company, contact, number, outcome"><button id="refresh">Refresh</button></div>
+<div id="results"></div>
+</main>
+<script src="/assets/js/config.js"></script>
+<script src="/assets/js/auth.js"></script>
+<script src="/dispatch-menu.js"></script>
+<script src="/assets/js/amanda-call-reviews.js"></script>
+</body></html>
