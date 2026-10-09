@@ -46,7 +46,7 @@
     $("journeyList").innerHTML = list.length ? list.map(l => {
       const j=data.journeys?.[l.id] || {};
       const n=Number(j.completed_orders || 0), eligible=n>=10, optout=l.status==="Not Interested";
-      const due=j.followup_due && j.followup_due <= new Date().toLocaleDateString("en-CA",{timeZone:"America/Denver"});
+      const due=Boolean(j.followup_due_now);
       const thankStatus=j.trial_thanks_status, offerStatus=j.account_offer_status;
       const progress=Math.min(100,n*10);
       return '<div class="panel lead" data-lead="'+esc(l.id)+'">'+
@@ -129,6 +129,7 @@
       const result=await api(active.operation,body);
       actionMessage(isLink?"Delivery linked. It counts after completion.":"Email confirmed sent to "+result.recipient_email+".");
       await reload();
+      pending=false;
       closeAction();
       notice(isLink?"Delivery linked. Counts update when delivery completes.":"Follow-up email sent with dispatch approval.",false);
     } catch(error) {
