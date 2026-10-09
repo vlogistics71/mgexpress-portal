@@ -67,6 +67,7 @@ function summarize(rows) {
       remaining_to_eligibility: Math.max(0,DONE_THRESHOLD-count),
       first_delivery_at: firstDate,
       followup_due: nextBusinessDate(firstDate),
+      followup_due_now: !!nextBusinessDate(firstDate) && nextBusinessDate(firstDate) <= localDate(new Date().toISOString()),
       trial_thanks_status: thank?.status || null,
       account_offer_status: offer?.status || null,
       welcome_status: packet?.status || null
