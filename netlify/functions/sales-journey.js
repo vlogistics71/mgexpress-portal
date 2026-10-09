@@ -109,7 +109,7 @@ exports.handler = async event => {
   try {
     if (event.httpMethod==="GET") {
       const rows=await getRows(), journeys=summarize(rows);
-      return toJsonResponse(200,{journeys,metrics:metrics(journeys),threshold:DONE_THRESHOLD, automatic_account_creation:false});
+      return toJsonResponse(200,{leads:rows.leads,journeys,metrics:metrics(journeys),threshold:DONE_THRESHOLD, automatic_account_creation:false});
     }
     let data;
     try {data=JSON.parse(event.body||"{}");}catch(_){return toJsonResponse(400,{error:"Invalid JSON"})}
