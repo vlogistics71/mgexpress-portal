@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>MG Express | Customer Follow-Ups</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<link rel="stylesheet" href="/assets/css/dispatch.css">
+<style>
+:root{--forest:#064f3b;--muted:#5d7268;--border:#dae7e0;--cream:#f6f8f6;--accent:#e7574e}
+*{box-sizing:border-box}body{margin:0;font-family:Arial,sans-serif;background:var(--cream);color:#183226}
+.top{background:var(--forest);color:white;padding:18px 5%}.brand{font-size:20px;font-weight:900}.brand span{color:#ff857e}
+main{max-width:1150px;margin:auto;padding:28px 18px 60px}.heading{display:flex;justify-content:space-between;gap:16px;align-items:center;flex-wrap:wrap}
+h1{font-size:27px;color:var(--forest);margin:6px 0}.eyebrow{letter-spacing:.08em;font-size:12px;font-weight:900;text-transform:uppercase;color:var(--muted)}
+p{line-height:1.55;color:var(--muted)}.cards{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:11px;margin:20px 0}.card,.panel{background:white;border:1px solid var(--border);border-radius:15px;padding:18px}.stat{font-size:29px;font-weight:900;color:var(--forest);margin-bottom:6px}.statlabel{font-size:12px;font-weight:800;color:var(--muted)}
+.toolbar{display:flex;gap:12px;align-items:center;justify-content:space-between;flex-wrap:wrap;margin-bottom:14px}
+input,select{padding:11px;border:1px solid #bed1c5;border-radius:9px;font:inherit;background:white;width:100%}
+.toolbar input{max-width:380px}.btn{padding:11px 14px;border:1px solid #9bb4a6;border-radius:10px;background:white;color:var(--forest);font-weight:800;cursor:pointer;font-size:13px;min-height:43px}.btn.primary{background:var(--forest);color:white;border-color:var(--forest)}
+.btn:disabled{opacity:.45;cursor:not-allowed}.lead{margin-bottom:10px;display:grid;grid-template-columns:1.35fr 1fr 1.3fr;gap:16px;align-items:center}
+.name{font-size:16px;font-weight:900;color:var(--forest);word-break:break-word}.detail{font-size:12px;color:var(--muted);margin-top:6px;word-break:break-word}
+.progress{height:9px;border-radius:99px;background:#e5ece7;overflow:hidden;margin:9px 0}.progress>span{height:100%;background:var(--forest);display:block}
+.chip{border-radius:15px;background:#e6f4ec;color:#146a46;font-size:11px;font-weight:800;padding:6px 9px;display:inline-block;margin:4px 6px 4px 0}
+.chip.warn{background:#fff1d9;color:#936008}.actions{display:flex;flex-wrap:wrap;gap:7px}.notice{padding:13px 17px;border-radius:11px;background:#edf5ef;color:#174e35;margin:16px 0;line-height:1.4}.notice.error{background:#fff1ee;color:#a12e25}
+.modal-bg{position:fixed;inset:0;background:#0b2319b8;display:none;place-items:center;padding:15px;z-index:2000}.modal-bg.open{display:grid}
+.modal{width:min(600px,100%);background:white;padding:23px;border-radius:17px;max-height:95vh;overflow:auto}
+.modal h2{margin:3px 0 12px;color:var(--forest)}.label{display:block;font-size:12px;font-weight:900;color:var(--muted);margin:12px 0 5px}
+.check{display:flex;gap:8px;align-items:flex-start;font-size:13px;line-height:1.4;cursor:pointer;margin:12px 0}.check input{width:19px;min-width:19px;margin:1px 0}
+.rowbuttons{display:flex;flex-wrap:wrap;gap:9px;margin-top:16px}
+@media(max-width:850px){.cards{grid-template-columns:repeat(2,minmax(0,1fr))}.lead{grid-template-columns:1fr}.actions{margin-top:3px}}
+</style>
+</head>
+<body>
+<header class="top"><div class="brand">MG <span>EXPRESS</span> · SALES</div></header>
+<main>
+<div class="heading"><div><div class="eyebrow">Dispatch & Sales</div><h1>Customer Follow-Ups</h1></div>
+  <a href="/leads.html" class="btn" style="text-decoration:none">← Leads</a></div>
+<p>Track first deliveries and invite customers to <strong>apply for a business account after 10 completed orders</strong>. No customer login is created automatically. Dispatch approves every follow-up email.</p>
+<div class="cards">
+ <div class="card"><div id="trialCount" class="stat">—</div><div class="statlabel">Businesses with a completed delivery</div></div>
+ <div class="card"><div id="followupCount" class="stat">—</div><div class="statlabel">First-delivery follow-ups due</div></div>
+ <div class="card"><div id="eligibleCount" class="stat">—</div><div class="statlabel">Eligible for account offer (10+)</div></div>
+ <div class="card"><div id="invitedCount" class="stat">—</div><div class="statlabel">Account offers emailed</div></div>
+</div>
+<div id="statusNotice" class="notice" role="status">Loading customer journey…</div>
+<div class="toolbar"><input id="filterLeads" placeholder="Search business or customer email" aria-label="Search leads"><button class="btn" id="refresh">Refresh</button></div>
+<div id="journeyList"></div>
+</main>
+<div class="modal-bg" id="actionBackdrop" aria-hidden="true">
+ <div class="modal" role="dialog" aria-modal="true" aria-labelledby="actionHeading">
+  <div class="eyebrow">MG Express Customer Journey</div><h2 id="actionHeading">Action</h2>
+  <div id="actionDescription" class="notice"></div>
+  <div id="linkWrap"><label class="label" for="jobReference">Delivery job number or ID</label><input id="jobReference" placeholder="e.g., MG-DELIVERY-1001"></div>
+  <div id="emailWrap" hidden><div class="label">Recipient email</div><strong id="actionRecipient"></strong>
+   <label class="label" for="permissionSource">How did the customer request this follow-up?</label>
+   <select id="permissionSource"><option value="">Select source...</option><option value="phone">Phone</option><option value="email">Email</option><option value="in_person">In person</option><option value="website">Website</option><option value="other">Other direct request</option></select>
+  </div>
+  <label class="check"><input type="checkbox" id="actionConfirmed"><span id="actionConfirmText">I verified this delivery belongs to the business.</span></label>
+  <div class="rowbuttons"><button class="btn primary" id="confirmAction">Confirm</button><button class="btn" id="cancelAction">Cancel</button></div>
+  <div id="actionMessage" class="notice" role="status" hidden></div>
+ </div>
+</div>
+<script src="/assets/js/config.js"></script>
+<script src="/assets/js/auth.js"></script>
+<script src="/dispatch-menu.js"></script>
+<script src="/assets/js/sales-followups.js"></script>
+</body>
+</html>
