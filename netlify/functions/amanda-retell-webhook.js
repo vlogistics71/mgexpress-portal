@@ -71,7 +71,9 @@ exports.handler = async function handler(event) {
   const id = String(process.env.RETELL_AMANDA_AGENT_ID || "").trim();
   // Fail closed until both secrets and an exact agent ID are configured in Netlify.
   if (!key || !id) return toJsonResponse(503, { error: "Amanda webhook not configured" });
-  const body = String(event.body || "");
+  const body = event.isBase64Encoded
+    ? Buffer.from(String(event.body || ""), "base64").toString("utf8")
+    : String(event.body || "");
   if (!body || Buffer.byteLength(body, "utf8") > 262144) {
     return toJsonResponse(413, { error: "Invalid payload size" });
   }
@@ -85,7 +87,7 @@ exports.handler = async function handler(event) {
 
   const call = payload?.call;
   if (!call || typeof call !== "object" || String(call.agent_id) !== id)
-    return toJsonResponse(204, { ignored: "other_agent" });
+    return { statusCode: 204, body: "" };
   if (payload.event !== "call_analyzed") return { statusCode: 204, body: "" };
   const callId = String(call.call_id || "");
   if (!CALL_ID.test(callId)) return toJsonResponse(400, { error: "Invalid call ID" });
