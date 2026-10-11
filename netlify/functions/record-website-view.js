@@ -27,7 +27,14 @@ function cleanPath(value) {
   return raw.split("?")[0].split("#")[0].slice(0, 300) || "/";
 }
 
-function deviceType(userAgent) {\n  const ua = String(userAgent || "");\n  if (/ipad|tablet|kindle|silk|playbook|android(?!.*mobile)/i.test(ua)) return "Tablet";\n  if (/mobile|iphone|ipod|android/i.test(ua)) return "Mobile";\n  return "Desktop";\n}\n\nfunction referrerHost(value) {
+function deviceType(userAgent) {
+  const ua = String(userAgent || "");
+  if (/ipad|tablet|kindle|silk|playbook|android(?!.*mobile)/i.test(ua)) return "Tablet";
+  if (/mobile|iphone|ipod|android/i.test(ua)) return "Mobile";
+  return "Desktop";
+}
+
+function referrerHost(value) {
   try {
     const url = new URL(String(value || ""));
     return url.hostname.slice(0, 200) || null;
@@ -77,7 +84,8 @@ exports.handler = async event => {
       body: JSON.stringify({
         path,
         referrer_host: referrerHost(body.referrer),
-        session_hash: sessionHash
+        session_hash: sessionHash,
+        device_type: deviceType(userAgent)
       })
     });
   }
