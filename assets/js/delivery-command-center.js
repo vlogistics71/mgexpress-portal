@@ -1707,32 +1707,6 @@
     throw probe.error;
   }
 
-  async function generateJobNumber() {
-    const result = await client
-      .from("quotes")
-      .select("job_number")
-      .order("created_at", { ascending: false })
-      .limit(250);
-
-    if (result.error) {
-      throw result.error;
-    }
-
-    let maxNumber = 0;
-    (result.data || []).forEach(row => {
-      const match = String(row.job_number || "").match(/(\d+)$/);
-      if (!match) {
-        return;
-      }
-      const numeric = Number(match[1]);
-      if (Number.isFinite(numeric) && numeric > maxNumber) {
-        maxNumber = numeric;
-      }
-    });
-
-    return "MGE-" + String(maxNumber + 1).padStart(5, "0");
-  }
-
   function validatePayload(payload) {
     if (!payload.customer_name) {
       return "Customer name is required.";
@@ -1901,7 +1875,8 @@
         payload.driver_workflow_status = null;
         payload.driver_accepted_at = null;
         payload.driver_rejected_at = null;
-        payload.job_number = await generateJobNumber();
+        payload.request_source = String(new FormData(elements.jobForm).get("request_source") || "dispatch").trim() === "call" ? "call" : "dispatch";
+        // Let the database assign the unique source-aware job number.
 
         const insertResult = await client.from("quotes").insert(payload).select("*").maybeSingle();
         if (insertResult.error) {
