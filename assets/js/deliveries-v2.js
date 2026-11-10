@@ -741,9 +741,14 @@
   }
 
   function requiresUnpricedCustomReview(delivery) {
+    // All public quotes need an explicit approved price; preliminary estimates
+    // are informational and cannot unlock payment or driver dispatch.
+    const publicSource = ["website","web","online","instant","voice","call","phone","customer_portal"]
+      .includes(String(delivery?.request_source || "").trim().toLowerCase());
     const notes = String(delivery?.internal_dispatch_notes || "");
-    return (notes.includes("CUSTOM QUOTE REQUIRED") || notes.includes("ADDRESS VERIFICATION REQUIRED")) &&
-      !(Number(delivery?.approved_price) > 0);
+    const flagged = notes.includes("CUSTOM QUOTE REQUIRED") ||
+      notes.includes("ADDRESS VERIFICATION REQUIRED");
+    return (publicSource || flagged) && !(Number(delivery?.approved_price) > 0);
   }
 
   function canMarkReady(delivery) {
@@ -1023,12 +1028,16 @@
   }
 
   function quotedPriceLabel(delivery) {
-    // The customer's request estimate is stored in approved_price. Do not
-    // confuse customer_charge = 0 (unpaid default) with a $0 quote.
-    const amount = delivery?.approved_price != null && delivery.approved_price !== ""
-      ? Number(delivery.approved_price)
-      : Number(delivery?.customer_charge);
-    return Number.isFinite(amount) && amount > 0 ? formatMoney(amount) : "Custom quote / dispatch review";
+    const final = Number(delivery?.approved_price);
+    if (delivery?.approved_price != null && Number.isFinite(final) && final > 0) {
+      return formatMoney(final) + " (dispatch approved)";
+    }
+    const preliminary = Number(delivery?.preliminary_quote_amount);
+    if (delivery?.preliminary_quote_amount != null && Number.isFinite(preliminary) && preliminary > 0) {
+      return formatMoney(preliminary) + " (preliminary, not approved)";
+    }
+    const priorCharge = Number(delivery?.customer_charge);
+    return Number.isFinite(priorCharge) && priorCharge > 0 ? formatMoney(priorCharge) : "Custom quote / dispatch review";
   }
 
   function quoteTypeLabel(delivery) {
@@ -1039,7 +1048,7 @@
   }
 
   function getCustomerCharge(delivery) {
-    const amount = Number(delivery?.approved_price ?? delivery?.customer_charge ?? 0);
+    const amount = Number(delivery?.approved_price ?? delivery?.preliminary_quote_amount ?? delivery?.customer_charge ?? 0);
     return Number.isFinite(amount) ? amount : 0;
   }
 
@@ -1197,7 +1206,14 @@
     elements.editReturnAddress.value = delivery.return_address || "";
     elements.editReturnSuiteFloor.value = delivery.return_suite_floor || "";
     elements.editReturnZip.value = delivery.return_zip || "";
-    elements.editApprovedPrice.value = delivery.approved_price ?? delivery.customer_charge ?? "";
+    elements.editApprovedPrice.value = delivery.approved_price ?? "";
+    const preview = Number(delivery.preliminary_quote_amount);
+    const isPreliminary = delivery.preliminary_quote_amount != null &&
+      Number.isFinite(preview) && preview > 0 && !Number(delivery.approved_price);
+    if (isPreliminary) {
+      elements.editPriceResult.textContent = "Preliminary estimate: " + formatMoney(preview) +
+        " (14% introductory delivery discount included). Verify route and availability before entering an approved final price.";
+    }
     toCurrencyDisplayValue(elements.editApprovedPrice);
     syncEditReturnFields();
   }
@@ -1580,6 +1596,9 @@
           ${detailsBlock("Assigned Driver", assignedDriver)}
           ${detailsBlock("Driver Pay", delivery.driver_pay != null && delivery.driver_pay !== "" ? formatMoney(delivery.driver_pay) : "-")}
           ${detailsBlock(quoteTypeLabel(delivery), quotedPriceLabel(delivery))}
+          ${optionalDetailsBlock("Pickup → Delivery Driving Miles", delivery.quoted_route_miles != null ? Number(delivery.quoted_route_miles).toFixed(1) + " mi" : "")}
+          ${optionalDetailsBlock("Introductory Discount", delivery.preliminary_quote_amount != null ? "14% of delivery charge applied" : "")}
+          ${optionalDetailsBlock("Dispatch Approval", requiresUnpricedCustomReview(delivery) ? "Required before payment or dispatch" : "")}
           ${detailsBlockMarkup("Payment", paymentBadgeMarkup(delivery.payment_status))}
           ${optionalDetailsBlock("Created By", delivery.created_by || delivery.created_by_email)}
           ${detailsBlock("Created", formatDateTime(delivery.created_at))}
@@ -2198,7 +2217,7 @@
       return;
     }
 
-    if (requiresUnpricedCustomReview(delivery)) throw new Error("Verify this out-of-area or uncertain-address job and enter an approved price first.");
+    if (requiresUnpricedCustomReview(delivery)) throw new Error("Dispatch must verify the route and explicitly approve the final price before releasing this job.");
     const confirmed = window.confirm(`Mark ${delivery.job_number || "this delivery"} as Ready to Dispatch?`);
     if (!confirmed) {
       return;
@@ -2225,7 +2244,7 @@
       return;
     }
 
-    if (requiresUnpricedCustomReview(delivery)) throw new Error("Custom quote requires dispatch verification and an approved price before payment.");
+    if (requiresUnpricedCustomReview(delivery)) throw new Error("Dispatch must explicitly approve the final price before recording payment.");
     const confirmed = window.confirm(`Confirm payment has been received for ${delivery.job_number || "this delivery"}?`);
     if (!confirmed) {
       return;
