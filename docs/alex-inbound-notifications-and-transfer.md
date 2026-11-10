@@ -3,7 +3,7 @@
 ## Deployment status
 - Webhook receiver, database schema, call-history page, and authenticated follow-up API are committed.
 - **Retell Alex agent setup and Netlify environment secrets must be configured before any live event can arrive.**
-- **The live transfer is not activated until the owner's direct destination number is verified and installed in the Retell Transfer Call tool.**
+- **The owner provided the private destination number; it is now stored in the restricted Supabase `inbound_call_settings` table for SMS routing and internal reference. The live transfer is NOT activated until this destination is entered in the Retell Alex Transfer Call tool and tested. Never publish it in source code or website HTML.**
 - Do not change the outbound sales agent, its webhook or its phone number. Do not replace an account-level webhook shared with other agents.
 
 ## Server URL for Alex only
@@ -20,7 +20,7 @@ The endpoint responds 503 if signing credentials/agent ID are missing; rejects i
 | `RETELL_ALEX_AGENT_ID` | Exact inbound "MG Express Quote Line" (Alex) agent ID |
 | `RESEND_API_KEY` | Existing email provider key; required for email alerts |
 | `MG_INBOUND_ALERT_EMAIL` | Optional override. Default: `info@migenteexpress.com` |
-| `MG_INBOUND_ALERT_PHONE` | Optional verified owner's phone in E.164; SMS only if Twilio is configured |
+| `MG_INBOUND_ALERT_PHONE` | Optional environment override; otherwise the private Supabase `inbound_call_settings.sms_alert_phone_e164` value is used. SMS also requires working Twilio credentials. |
 | `TWILIO_ACCOUNT_SID`, `TWILIO_AUTH_TOKEN`, `TWILIO_FROM_NUMBER` | Existing Twilio alert transport if you want SMS |
 
 **Do not set the owner's personal cell as the public website number.** Transfer destinations and SMS recipients are internal settings. Don't point Retell back to the same number answered by Alex, or the transferred call will loop. Redeploy Netlify after secrets are configured.
@@ -39,7 +39,7 @@ The endpoint responds 503 if signing credentials/agent ID are missing; rejects i
 
 ## Real-person transfer from Alex (needs Retell configuration + destination)
 
-1. In Alex's tools/flow, create a **Transfer Call** tool directed to the owner's verified personal cell number in international **E.164** format.
+1. In Alex's tools/flow, create a **Transfer Call** tool directed to the owner's verified personal cell number in international **E.164** format. Retrieve this number from the restricted `public.inbound_call_settings` configuration; enter it in the private Retell dashboard, not in a GitHub file. The owner's number was provided in the management conversation.
 2. Prefer **Warm Transfer** with human-answer detection and a short private summary ("MG Express caller requested a live person; here is the reason"). If your Retell version supports **Agentic Warm Transfer**, use `Cancel Transfer` on no answer to return caller to Alex.
 3. In the transfer tool's trigger/agent instruction:
    > If a caller asks for a real person, owner, manager or dispatcher, stop collecting quote details and say, "Absolutely. I'll try to connect you with our team now." Use the live-person transfer tool immediately. Don't claim the transfer succeeded until it actually connects. If the owner cannot take the call, apologize once, offer to take their callback number and what they need, and flag the call for urgent follow-up.
