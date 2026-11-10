@@ -6,7 +6,7 @@
   <title>Deliveries | MG Express Dispatch</title>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="assets/js/config.js"></script>
-  <script defer src="assets/js/deliveries-v2.js"></script>
+  <script defer src="assets/js/deliveries-v2.js?v=ios-delivery-details-20261110"></script>
   <style>
     * { box-sizing: border-box; }
     :root {
@@ -540,6 +540,89 @@
       .details-action-grid { grid-template-columns: 1fr; }
       .details-kv { grid-template-columns: 1fr; }
     }
+  
+    /* iPhone-inspired delivery detail sheet: layout only, no workflow changes */
+    .delivery-details-panel { background: #f2f2f7; }
+    .delivery-details-panel .modal-head {
+      background: #ffffff;
+      border-bottom: 1px solid #e6e6eb;
+    }
+    .delivery-details-panel .modal-head .eyebrow { color: #8b8b91; font-size: 11px; letter-spacing: .04em; }
+    .delivery-details-panel .modal-title { color: #0f4f32; overflow-wrap: anywhere; }
+    .delivery-details-panel .modal-subtitle { color: #75757b; }
+    .delivery-details-body { background: #f2f2f7; align-content: start; }
+    .delivery-details-body .details-card {
+      background: #ffffff;
+      border: 1px solid #e4e4ea;
+      border-radius: 20px;
+      padding: 19px;
+      box-shadow: 0 3px 12px rgba(20,20,30,.025);
+      min-width: 0;
+    }
+    .delivery-details-body .details-card h4 {
+      color: #1c1c1e;
+      font-size: 17px;
+      font-weight: 800;
+      letter-spacing: -.02em;
+      margin: 0 0 14px;
+    }
+    .delivery-details-body .details-kv { min-width: 0; }
+    .delivery-details-body .details-kv strong { color: #8b8b91; font-weight: 750; font-size: 11px; }
+    .delivery-details-body .details-kv span { color: #1c1c1e; min-width: 0; overflow-wrap: anywhere; }
+    .delivery-details-body .ios-order-hero { border-color: #e0ebe3; padding: 21px; }
+    .ios-hero-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; }
+    .ios-eyebrow { font-size: 11px; font-weight: 800; color: #61806c; letter-spacing: .07em; }
+    .ios-small-id { margin-top: 3px; font-size: 13px; font-weight: 650; color: #77777d; overflow-wrap: anywhere; }
+    .ios-status-pill { display: inline-flex; flex: none; max-width: 45%; padding: 7px 11px; border-radius: 999px; background: #e6f3e9; color: #17603a; font-size: 12px; font-weight: 750; text-align: center; line-height: 1.2; }
+    .ios-price-label { color: #77777d; font-size: 12px; margin-top: 22px; }
+    .ios-price { color: #0f4f32; font-size: clamp(29px, 7vw, 42px); font-weight: 850; letter-spacing: -.04em; line-height: 1.15; margin: 4px 0 13px; overflow-wrap: anywhere; }
+    .ios-payment-line { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; font-size: 12px; color: #75757b; }
+    .ios-payment-line .payment-badge { font-size: 10px; min-height: 23px; padding: 5px 9px; letter-spacing: 0; }
+    .ios-review-alert { background: #fff5e5; border-radius: 12px; color: #8b570e; padding: 11px 13px; margin-top: 15px; font-size: 13px; font-weight: 700; }
+    .ios-route-card { position: relative; }
+    .ios-stop { display: flex; gap: 13px; align-items: flex-start; }
+    .ios-stop-dot { flex: 0 0 12px; width: 12px; height: 12px; border-radius: 100%; background: #20a36b; margin-top: 6px; }
+    .ios-stop-delivery .ios-stop-dot { background: #ef9a38; }
+    .ios-stop-info { flex: 1; min-width: 0; }
+    .ios-stop-label { color: #30905b; font-size: 10px; font-weight: 850; letter-spacing: .09em; }
+    .ios-stop-delivery .ios-stop-label { color: #ad701e; }
+    .ios-stop-business { margin: 3px 0 1px; color: #1c1c1e; font-weight: 750; font-size: 14px; }
+    .ios-stop-address { margin-top: 3px; color: #1c1c1e; font-size: 15px; line-height: 1.4; font-weight: 700; overflow-wrap: anywhere; }
+    .ios-stop-time { color: #77777d; font-size: 13px; line-height: 1.5; margin-top: 5px; overflow-wrap: anywhere; }
+    .ios-route-connector { height: 21px; border-left: 2px dashed #d2d9d7; margin-left: 5px; margin-top: 6px; margin-bottom: 7px; }
+    .ios-return-route { padding: 12px; background: #f6f7f9; border-radius: 12px; margin-top: 14px; color: #44444a; font-size: 13px; overflow-wrap: anywhere; }
+    .ios-return-route strong { display: block; margin-bottom: 4px; }
+    .ios-customer-name { font-size: 18px; color: #1c1c1e; font-weight: 800; margin-bottom: 6px; overflow-wrap: anywhere; }
+    .ios-secondary-line { font-size: 13px; color: #73737a; margin-bottom: 12px; }
+    .ios-contact-row { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; padding: 11px 0; border-top: 1px solid #eeeef2; font-size: 14px; }
+    .ios-contact-row > span { color: #85858c; flex: 0 0 53px; }
+    .ios-contact-row .details-contact-link { text-align: right; color: #007aff; text-decoration: none; font-weight: 650; overflow-wrap: anywhere; min-width: 0; }
+    .ios-contact-row .details-muted { text-align: right; color: #8b8b91; }
+    .ios-order-card .compact-detail-grid, .ios-driver-card .compact-detail-grid { grid-template-columns: repeat(2,minmax(0,1fr)); gap: 13px 16px; }
+    .ios-more-details { margin-top: 18px; border-top: 1px solid #eeeef2; padding-top: 11px; }
+    .ios-more-details summary { cursor: pointer; color: #007aff; font-size: 13px; font-weight: 750; padding: 5px 0; }
+    .ios-more-details[open] summary { margin-bottom: 14px; }
+    .ios-more-details .details-card-body { padding-top: 10px; }
+    .delivery-details-body .details-notes-card .note-item { background: #f8f8fa; border-color: #ededf2; border-radius: 12px; }
+    @media (max-width: 720px) {
+      .delivery-details-panel .modal-head { padding: 14px 17px 12px; gap: 12px; }
+      .delivery-details-panel .modal-head .eyebrow { font-size: 11px; }
+      .delivery-details-panel .modal-title { font-size: clamp(18px,5vw,23px); line-height: 1.13; }
+      .delivery-details-panel .modal-subtitle { font-size: 12px; margin-top: 5px; }
+      .delivery-details-panel .icon-btn { width: 40px; min-width: 40px; height: 40px; min-height: 40px; border-radius: 13px; }
+      .delivery-details-body { padding: 14px 13px max(24px,env(safe-area-inset-bottom)); gap: 12px; }
+      .delivery-details-body .details-card { border-radius: 18px; padding: 17px; box-shadow: none; }
+      .delivery-details-body .details-card h4 { font-size: 17px; margin-bottom: 13px; }
+      .delivery-details-body .details-kv strong { font-size: 10px; letter-spacing: .04em; }
+      .delivery-details-body .details-kv span { font-size: 14px; line-height: 1.35; }
+      .delivery-details-body .details-action-grid { grid-template-columns: repeat(2,minmax(0,1fr)); gap: 9px; }
+    }
+    @media (max-width: 420px) {
+      .delivery-details-body .details-action-grid { grid-template-columns: 1fr; }
+      .ios-order-card .compact-detail-grid, .ios-driver-card .compact-detail-grid { column-gap: 12px; }
+      .ios-price { font-size: 33px; }
+    }
+
   </style>
 </head>
 <body>
