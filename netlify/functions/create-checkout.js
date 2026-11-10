@@ -31,7 +31,12 @@ exports.handler = async function handler(event) {
       return toJsonResponse(404, { error: "Job not found" });
     }
 
-    const amountValue = quote.customer_charge ?? quote.approved_price;
+    // A route estimate is never payment approval. A staff-reviewed final price
+    // must be recorded before creating any Stripe checkout session.
+    if (!(Number(quote.approved_price) > 0)) {
+      return toJsonResponse(409, { error: "Dispatch must approve the final price before creating a payment link." });
+    }
+    const amountValue = Number(quote.customer_charge) > 0 ? quote.customer_charge : quote.approved_price;
     const amountCents = parseAmountToCents(amountValue);
 
     if (!amountCents || amountCents <= 0) {
