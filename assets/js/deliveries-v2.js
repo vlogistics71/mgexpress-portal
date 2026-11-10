@@ -58,6 +58,7 @@
     editCustomerEmail: document.getElementById("editCustomerEmail"),
     editCustomerPhone: document.getElementById("editCustomerPhone"),
     editPickupAddress: document.getElementById("editPickupAddress"),
+    editPickupBusinessName: document.getElementById("editPickupBusinessName"),
     editPickupSuiteFloor: document.getElementById("editPickupSuiteFloor"),
     editPickupZip: document.getElementById("editPickupZip"),
     editPickupCity: document.getElementById("editPickupCity"),
@@ -66,6 +67,7 @@
     editPickupContactPhone: document.getElementById("editPickupContactPhone"),
     editPickupInstructions: document.getElementById("editPickupInstructions"),
     editDeliveryAddress: document.getElementById("editDeliveryAddress"),
+    editDeliveryBusinessName: document.getElementById("editDeliveryBusinessName"),
     editDeliverySuiteFloor: document.getElementById("editDeliverySuiteFloor"),
     editDeliveryZip: document.getElementById("editDeliveryZip"),
     editDeliveryCity: document.getElementById("editDeliveryCity"),
@@ -1150,6 +1152,7 @@
     elements.editCustomerEmail.value = delivery.customer_email || "";
     elements.editCustomerPhone.value = delivery.customer_phone || "";
     elements.editPickupAddress.value = delivery.pickup_address || "";
+    elements.editPickupBusinessName.value = delivery.pickup_business_name || "";
     elements.editPickupSuiteFloor.value = delivery.pickup_suite_floor || "";
     elements.editPickupZip.value = delivery.pickup_zip || "";
     elements.editPickupCity.value = delivery.pickup_city || "";
@@ -1158,6 +1161,7 @@
     elements.editPickupContactPhone.value = delivery.pickup_contact_phone || instruction("Pickup contact phone", "Pickup Contact Phone") || "";
     elements.editPickupInstructions.value = delivery.pickup_instructions || instruction("Pickup instructions", "Pickup Instructions") || "";
     elements.editDeliveryAddress.value = delivery.delivery_address || "";
+    elements.editDeliveryBusinessName.value = delivery.delivery_business_name || "";
     elements.editDeliverySuiteFloor.value = delivery.delivery_suite_floor || "";
     elements.editDeliveryZip.value = delivery.delivery_zip || "";
     elements.editDeliveryCity.value = delivery.delivery_city || "";
@@ -1320,11 +1324,13 @@
       customer_email: String(elements.editCustomerEmail?.value || "").trim() || null,
       customer_phone: String(elements.editCustomerPhone?.value || "").trim() || null,
       pickup_address: pickupAddress,
+      pickup_business_name: String(elements.editPickupBusinessName?.value || "").trim() || null,
       pickup_suite_floor: String(elements.editPickupSuiteFloor?.value || "").trim() || null,
       pickup_zip: String(elements.editPickupZip?.value || "").trim() || null,
       pickup_city: String(elements.editPickupCity?.value || "").trim() || null,
       pickup_state: String(elements.editPickupState?.value || "").trim().toUpperCase() || null,
       delivery_address: deliveryAddress,
+      delivery_business_name: String(elements.editDeliveryBusinessName?.value || "").trim() || null,
       delivery_suite_floor: String(elements.editDeliverySuiteFloor?.value || "").trim() || null,
       delivery_zip: String(elements.editDeliveryZip?.value || "").trim() || null,
       delivery_city: String(elements.editDeliveryCity?.value || "").trim() || null,
