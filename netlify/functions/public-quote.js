@@ -421,12 +421,16 @@ exports.handler = async function handler(event) {
               to: [payload.customer_email],
               subject: requestSource === "voice" && customerPrice
                 ? `Your preliminary MG Express quote is ${customerPrice.toFixed(2)}`
-                : needsReview
+                : needsCustomReview
+                  ? "MG Express custom quote request received"
+                  : needsReview
                   ? "MG Express received your quote request"
                   : `Your MG Express quote is ${customerPrice ? `${customerPrice.toFixed(2)}` : "ready"}`,
               html: requestSource === "voice" && customerPrice
                 ? `<h2>Your preliminary MG Express quote</h2><p>Thank you, ${show(payload.customer_name)}. Based on the information provided during your call, the preliminary price is <strong>${customerPrice.toFixed(2)}</strong>.</p><p><strong>Quote:</strong> ${show(quoteNumber)}<br><strong>Pieces / boxes:</strong> ${pieceCount}<br><strong>Additional-piece fee:</strong> ${packageFees.extraPieceFee.toFixed(2)}<br><strong>Over-75-lb fee:</strong> ${packageFees.heavyWeightFee.toFixed(2)}<br><strong>Preferred pickup:</strong> ${show(displayPreferredTime(preferredPickupTime))}<br><strong>Deliver by:</strong> ${show(displayPreferredTime(preferredDeliveryTime))}</p><p>Dispatch will review the request and email the final approved quote and secure payment link.</p><p style="font-size:13px;line-height:1.5;color:#666"><strong>Pricing notice:</strong> This preliminary quote is based on the information provided during the call and may change after dispatch review.</p>`
-                : needsReview
+                : needsCustomReview
+                  ? `<h2>We received your delivery request</h2><p>Thank you, ${show(payload.customer_name)}. ${outsideServiceArea ? "This route is outside our regular Denver metro service area." : "Your pickup or delivery address requires verification."} Dispatch will review your request as a custom quote and confirm whether service is available. No payment has been taken.</p><p><strong>Job:</strong> ${show(quoteNumber)}</p>`
+                  : needsReview
                   ? `<h2>We received your delivery request</h2><p>Thank you, ${show(payload.customer_name)}. Dispatch is reviewing the details and will contact you shortly.</p>`
                   : `<h2>Your MG Express quote is ready</h2><p><strong>Quote:</strong> ${show(quoteNumber)}<br><strong>Pieces / boxes:</strong> ${pieceCount}<br><strong>Additional-piece fee:</strong> ${packageFees.extraPieceFee.toFixed(2)}<br><strong>Over-75-lb fee:</strong> ${packageFees.heavyWeightFee.toFixed(2)}<br><strong>Total:</strong> ${customerPrice.toFixed(2)}<br><strong>Preferred pickup:</strong> ${show(displayPreferredTime(preferredPickupTime))}<br><strong>Deliver by:</strong> ${show(displayPreferredTime(preferredDeliveryTime))}</p>${checkoutUrl ? `<p><a href="${htmlEscape(checkoutUrl)}">Pay securely online</a></p>` : "<p>Dispatch will send your secure payment link shortly.</p>"}<p style="font-size:13px;line-height:1.5;color:#666"><strong>Pricing notice:</strong> This quote is based on the information submitted. The final price may change for wait time, additional packages, stops or trips, incorrect or incomplete addresses, a different vehicle requirement, stairs or limited access, tolls, parking, or other service changes. Dispatch will confirm any adjustment before an additional charge is made.</p>`
             })
