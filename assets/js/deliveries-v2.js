@@ -237,18 +237,30 @@
     return "";
   }
 
-  function stripEditMetadata(text) {
+  // Public quotes can include machine-generated pricing, address verification, and
+  // logistics metadata in special_instructions. None of these are customer notes.
+  function isGeneratedJobMetadataNote(line) {
+    const normalized = String(line || "").trim().toLowerCase();
     const labels = [
-      "Company", "Preferred pickup time", "Deliver by time", "Pieces / boxes", "Pieces / Boxes",
-      "Estimated total weight", "Weight", "Additional-piece fee", "Additional Piece Fee", "Over-75-lb fee",
-      "Pickup contact", "Pickup Contact", "Pickup contact phone", "Pickup Contact Phone", "Pickup instructions",
-      "Pickup Instructions", "Delivery contact", "Delivery Contact", "Delivery contact phone", "Delivery Contact Phone",
-      "Delivery instructions", "Delivery Instructions", "Estimated miles", "Calculated route miles"
+      "company", "pickup business", "delivery business", "reference number",
+      "preferred pickup time", "pickup time", "deliver by time", "deliver by",
+      "pieces / boxes", "pieces/boxes", "pieces", "estimated total weight", "estimated weight",
+      "weight", "additional-piece fee", "additional piece fee", "over-75-lb fee",
+      "pickup contact", "pickup contact phone", "pickup instructions",
+      "delivery contact", "delivery contact phone", "delivery instructions",
+      "estimated miles", "calculated route miles", "pickup-to-delivery driving miles",
+      "website delivery type", "preferred date", "service area", "address check",
+      "preliminary estimate after 14% delivery discount", "address verification required",
+      "custom quote required"
     ];
-    return String(text || "").split("\n").filter(line => {
-      const lower = line.trim().toLowerCase();
-      return !labels.some(label => lower.startsWith(label.toLowerCase() + ":"));
-    }).join("\n").trim();
+    return labels.some(label => normalized.startsWith(label + ":")) ||
+      normalized.startsWith("tentative pickup-to-delivery driving miles");
+  }
+
+  function stripEditMetadata(text) {
+    return String(text || "").split(/\r?\n/)
+      .filter(line => !isGeneratedJobMetadataNote(line))
+      .join("\n").trim();
   }
 
   function calculateEditRecommendedPrice() {
@@ -955,6 +967,7 @@
       .filter(Boolean)
       .forEach(line => {
         const colonIndex = line.indexOf(":");
+        if (isGeneratedJobMetadataNote(line)) return;
         if (colonIndex < 0) {
           result.other.push(line);
           return;
@@ -989,9 +1002,15 @@
       pickupTime: firstValue(primary.pickupTime),
       deliverBy: firstValue(primary.deliverBy),
       company: firstValue(delivery.company, primary.company),
+      // Internal dispatch flags belong in Dispatch Review, never in Additional Notes.
+      // Older web orders may contain system text in customer/dispatch note columns.
       other: [
         ...primary.other,
-        ...[delivery.notes, delivery.customer_notes, delivery.internal_dispatch_notes].filter(hasDetailValue)
+        ...[delivery.notes, delivery.customer_notes]
+          .filter(hasDetailValue)
+          .flatMap(value => String(value).split(/\r?\n/))
+          .map(line => line.trim())
+          .filter(line => line && !isGeneratedJobMetadataNote(line))
       ]
     };
   }
