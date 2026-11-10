@@ -237,16 +237,35 @@ function calculatePackageFees(pieceCount, packageWeight) {
   return { additionalPieces, extraPieceFee, heavyWeightFee, total: extraPieceFee + heavyWeightFee };
 }
 
-function calculateCustomerPrice({ vehicleType, deliverySpeed, serviceLevel, miles, packageFees }) {
+function calculatePriceBreakdown({ vehicleType, deliverySpeed, serviceLevel, miles, packageFees }) {
   const rate = PRICE_CHART[normalizeToken(vehicleType)];
   const speedMultiplier = SPEED_MULTIPLIERS[normalizeToken(deliverySpeed)];
   if (!rate || !speedMultiplier || !Number.isFinite(miles) || miles <= 0) return null;
   let multiplier = speedMultiplier;
   if (normalizeToken(serviceLevel) === "stat") multiplier = Math.max(multiplier, 1.50);
-  const calculated = Math.max(rate.minimum, (rate.base + miles * rate.mileage) * multiplier);
-  const discountedDeliveryPrice = calculated * (1 - INTRODUCTORY_DISCOUNT);
-  const basePrice = Math.round(discountedDeliveryPrice * 100) / 100;
-  return basePrice + packageFees.total;
+  const round = value => Math.round(value * 100) / 100;
+  const mileageCharge = round(miles * rate.mileage);
+  const deliveryBeforeDiscount = Math.max(rate.minimum, (rate.base + miles * rate.mileage) * multiplier);
+  const discountedDelivery = round(deliveryBeforeDiscount * (1 - INTRODUCTORY_DISCOUNT));
+  const discountAmount = round(deliveryBeforeDiscount - discountedDelivery);
+  return {
+    pickup_to_delivery_miles: miles,
+    mileage_rate: rate.mileage,
+    mileage_charge: mileageCharge,
+    base_fee: rate.base,
+    minimum_delivery_charge: rate.minimum,
+    speed_multiplier: multiplier,
+    delivery_before_discount: round(deliveryBeforeDiscount),
+    discount_percent: Math.round(INTRODUCTORY_DISCOUNT * 100),
+    discount_amount: discountAmount,
+    additional_pieces_fee: packageFees.extraPieceFee,
+    heavy_weight_fee: packageFees.heavyWeightFee,
+    package_fees: packageFees.total,
+    total: round(discountedDelivery + packageFees.total)
+  };
+}
+function calculateCustomerPrice(args) {
+  return calculatePriceBreakdown(args)?.total ?? null;
 }
 
 exports.handler = async function handler(event) {
@@ -401,19 +420,24 @@ exports.handler = async function handler(event) {
     const deliveryOutside = !!routeData && distanceMiles(LOCAL_COVERAGE_CENTER, routeData.finish) > LOCAL_COVERAGE_MILES;
     const outsideServiceArea = pickupOutside || deliveryOutside;
     const needsCustomReview = outsideServiceArea || addressNeedsVerification;
-    const customerPrice = needsCustomReview ? null : calculateCustomerPrice({
+    // A preliminary estimate is still helpful when the map returns driving miles
+    // but address components or the service area require dispatch approval.
+    // Never treat this estimated amount as payment approval.
+    const priceBreakdown = calculatePriceBreakdown({
       vehicleType: input.vehicle_type,
       deliverySpeed,
       serviceLevel,
       miles: routeMiles,
       packageFees
     });
+    const customerPrice = priceBreakdown?.total ?? null;
     // Every public request still requires dispatch approval before any payment.
     const needsReview = true;
-    if (routeMiles && !addressNeedsVerification) instructionParts.push(`Calculated route miles: ${routeMiles}`);
-    else if (routeMiles) instructionParts.push(`Tentative route miles (address verification required): ${routeMiles}`);
+    if (routeMiles && !addressNeedsVerification) instructionParts.push(`Pickup-to-delivery driving miles: ${routeMiles}`);
+    else if (routeMiles) instructionParts.push(`Tentative pickup-to-delivery driving miles (address verification required): ${routeMiles}`);
     if (outsideServiceArea) instructionParts.push("SERVICE AREA: Outside Denver metro 35-mile radius. CUSTOM DISPATCH QUOTE REQUIRED; do not auto-approve.");
     if (addressNeedsVerification) instructionParts.push("ADDRESS CHECK: Verify pickup and delivery street addresses and ZIP codes with customer before approval.");
+    if (customerPrice != null) instructionParts.push(`Preliminary estimate after 14% delivery discount: ${customerPrice.toFixed(2)} (NOT approved; subject to dispatch confirmation)`);
 
     const payload = {
       customer_name: customerName,
@@ -448,7 +472,10 @@ exports.handler = async function handler(event) {
         addressNeedsVerification ? "ADDRESS VERIFICATION REQUIRED: CUSTOM QUOTE" : "",
         ...verificationIssues
       ].filter(Boolean).join("\n") : null,
-      approved_price: customerPrice || null,
+      // Only a dispatch approval flow may set approved_price/customer_charge.
+      approved_price: null,
+      preliminary_quote_amount: customerPrice,
+      quoted_route_miles: routeMiles,
       customer_charge: 0,
       payment_status: null,
 
@@ -520,8 +547,10 @@ exports.handler = async function handler(event) {
               <strong>Estimated total weight:</strong> ${show(packageWeight.replaceAll("_", " "))}<br>
               <strong>Additional-piece fee:</strong> ${packageFees.extraPieceFee.toFixed(2)}<br>
               <strong>Over-75-lb fee:</strong> ${packageFees.heavyWeightFee.toFixed(2)}<br>
-              <strong>Route miles:</strong> ${show(routeMiles)}<br>
-              <strong>Customer quote:</strong> ${customerPrice ? `$${customerPrice.toFixed(2)}` : "Dispatch review required"}</p>
+              <strong>Pickup → drop-off driving miles:</strong> ${show(routeMiles)}<br>
+              <strong>Introductory discount:</strong> 14% of delivery charge<br>
+              <strong>Preliminary customer estimate (not approved):</strong> ${customerPrice != null ? `${customerPrice.toFixed(2)}` : "Dispatch calculation needed"}</p>
+              <p><strong>Dispatch approval required:</strong> No payment link has been created. ${needsCustomReview ? show(verificationIssues.join(" ") || "Route is outside our standard area.") : ""}</p>
               <p><strong>Special instructions:</strong><br>${show(payload.special_instructions).replaceAll("\n", "<br>")}</p>
               <p><a href="https://portal.migenteexpress.com/">Open MG Express Dispatch Portal</a></p>
             `
@@ -556,9 +585,9 @@ exports.handler = async function handler(event) {
               html: requestSource === "voice" && customerPrice
                 ? `<h2>Your preliminary MG Express quote</h2><p>Thank you, ${show(payload.customer_name)}. Based on the information provided during your call, the preliminary price is <strong>${customerPrice.toFixed(2)}</strong>.</p><p><strong>Quote:</strong> ${show(quoteNumber)}<br><strong>Pieces / boxes:</strong> ${pieceCount}<br><strong>Additional-piece fee:</strong> ${packageFees.extraPieceFee.toFixed(2)}<br><strong>Over-75-lb fee:</strong> ${packageFees.heavyWeightFee.toFixed(2)}<br><strong>Preferred pickup:</strong> ${show(displayPreferredTime(preferredPickupTime))}<br><strong>Deliver by:</strong> ${show(displayPreferredTime(preferredDeliveryTime))}</p><p>Dispatch will review the request and email the final approved quote and secure payment link.</p><p style="font-size:13px;line-height:1.5;color:#666"><strong>Pricing notice:</strong> This preliminary quote is based on the information provided during the call and may change after dispatch review.</p>`
                 : needsCustomReview
-                  ? `<h2>We received your delivery request</h2><p>Thank you, ${show(payload.customer_name)}. ${outsideServiceArea ? "This route is outside our regular Denver metro service area." : "Your pickup or delivery address requires verification."} Dispatch will review your request as a custom quote and confirm whether service is available. No payment has been taken.</p><p><strong>Job:</strong> ${show(quoteNumber)}</p>`
+                  ? `<h2>We received your delivery request</h2><p>Thank you, ${show(payload.customer_name)}. ${outsideServiceArea ? "This route is outside our regular Denver metro service area." : "Your pickup or delivery address requires verification."} ${customerPrice != null ? "Based on the mapped pickup-to-drop-off drive, your <strong>tentative estimate is ${customerPrice.toFixed(2)}</strong>, including the 14% introductory delivery discount. " : "Driving mileage was not available, so dispatch will prepare your price. "}Dispatch must verify the route, final pricing, and availability before requesting payment.</p><p><strong>Job:</strong> ${show(quoteNumber)}</p><p>${show(verificationIssues.join(" "))}</p><p>No payment has been taken.</p>`
                   : needsReview
-                  ? `<h2>We received your delivery request</h2><p>Thank you, ${show(payload.customer_name)}. Dispatch is reviewing the details and will contact you shortly.</p>`
+                  ? `<h2>We received your delivery request</h2><p>Thank you, ${show(payload.customer_name)}. Your preliminary estimate is ${customerPrice != null ? "<strong>$" + customerPrice.toFixed(2) + "</strong>" : "being prepared"}, including the 14% introductory discount on the delivery charge. Pickup-to-delivery driving miles: ${show(routeMiles)}. Dispatch will confirm the final charge and availability before sending any payment link.</p><p><strong>Job:</strong> ${show(quoteNumber)}</p>`
                   : `<h2>Your MG Express quote is ready</h2><p><strong>Quote:</strong> ${show(quoteNumber)}<br><strong>Pieces / boxes:</strong> ${pieceCount}<br><strong>Additional-piece fee:</strong> ${packageFees.extraPieceFee.toFixed(2)}<br><strong>Over-75-lb fee:</strong> ${packageFees.heavyWeightFee.toFixed(2)}<br><strong>Total:</strong> ${customerPrice.toFixed(2)}<br><strong>Preferred pickup:</strong> ${show(displayPreferredTime(preferredPickupTime))}<br><strong>Deliver by:</strong> ${show(displayPreferredTime(preferredDeliveryTime))}</p>${checkoutUrl ? `<p><a href="${htmlEscape(checkoutUrl)}">Pay securely online</a></p>` : "<p>Dispatch will send your secure payment link shortly.</p>"}<p style="font-size:13px;line-height:1.5;color:#666"><strong>Pricing notice:</strong> This quote is based on the information submitted. The final price may change for wait time, additional packages, stops or trips, incorrect or incomplete addresses, a different vehicle requirement, stairs or limited access, tolls, parking, or other service changes. Dispatch will confirm any adjustment before an additional charge is made.</p>`
             })
           });
@@ -586,20 +615,22 @@ exports.handler = async function handler(event) {
       outside_service_area: outsideServiceArea,
       address_verification_required: addressNeedsVerification,
       verification_issues: verificationIssues,
-      amount: customerPrice || null,
-      amount_label: customerPrice
+      amount: customerPrice,
+      provisional_estimate: needsCustomReview,
+      pricing_breakdown: priceBreakdown,
+      mileage_basis: "pickup_to_delivery_driving",
+      discount_percent: 14,
+      amount_label: customerPrice != null
         ? new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(customerPrice)
         : null,
       checkout_url: null,
       review_token: quote?.id ? createReviewToken(quote.id) : null,
       customer_email_sent: customerEmailSent,
       message: needsCustomReview
-        ? (outsideServiceArea
-            ? "This route is outside our regular Denver metro service area. Your request was sent to dispatch for a custom quote. Service is not confirmed and no payment has been taken."
-            : verificationIssues.join(" ") + " Dispatch will review the details before providing a quote. No payment has been taken.")
-        : customerPrice
-        ? `Estimated quote: ${new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(customerPrice)}. Dispatch will confirm driver availability and email a secure payment link if approved. No payment has been taken.`
-        : "Quote request received. Dispatch will review the details and driver availability before sending a secure payment link. No payment has been taken."
+        ? `${customerPrice != null ? "This is a tentative estimate using mapped driving miles between pickup and drop-off. " : "We could not calculate reliable driving miles, so dispatch will prepare your estimate. "}${verificationIssues.join(" ")}${outsideServiceArea ? " Route is outside our standard Denver metro coverage. " : " "}Dispatch must verify your route, availability and final price. No payment has been taken.`
+        : customerPrice != null
+        ? `Your preliminary estimate uses ${routeMiles} pickup-to-delivery driving miles and the 14% introductory delivery discount. Dispatch will confirm the final price and send a secure payment link only after approval. No payment has been taken.`
+        : "Driving mileage or pricing was unavailable. Dispatch will contact you with a manually calculated quote before requesting payment."
     }, origin);
   } catch (error) {
     console.error("public-quote error", {
