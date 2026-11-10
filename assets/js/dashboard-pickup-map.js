@@ -59,11 +59,13 @@
 
   function selectedJobs() {
     const filter = filterNode.value;
+    // Closed, cancelled and rejected orders are excluded from jobs before
+    // filtering, so no filter can reveal them on the pickup map.
     return jobs.filter(job => {
       const kind = statusKind(job);
-      return filter === "all" || (filter === "active" && kind !== "completed" && kind !== "cancelled")
-        || (filter === "completed" && kind === "completed")
-        || (filter === "cancelled" && kind === "cancelled");
+      return filter === "pending" ? kind === "pending"
+        : filter === "live" ? kind === "live"
+        : ["pending", "ready", "live"].includes(kind);
     });
   }
 
@@ -149,7 +151,7 @@
       return;
     }
     if (!list.length) {
-      statusNode.textContent = "No jobs in this filter.";
+      statusNode.textContent = "No active jobs in this filter.";
       return;
     }
     statusNode.textContent = waiting
@@ -201,7 +203,8 @@
   }
 
   async function update(data, options = {}) {
-    jobs = Array.isArray(data) ? data.filter(job => job && job.id) : [];
+    jobs = Array.isArray(data) ? data.filter(job => job && job.id
+      && ["pending", "ready", "live"].includes(statusKind(job))) : [];
     const current = ++revision;
     failedLookupKeys.clear();
     showVisibleJobs({recenter: Boolean(options.recenter)});
@@ -241,7 +244,7 @@
     map = window.L.map(container, {zoomControl: false, scrollWheelZoom: false, tap: true, preferCanvas: true})
       .setView([39.7392, -104.9903], 10);
     window.L.control.zoom({position: "topright"}).addTo(map);
-    window.L.tileLayer("https://maps.geoapify.com/v1/tile/dark-matter/{z}/{x}/{y}.png?apiKey={apiKey}", {
+    window.L.tileLayer("https://maps.geoapify.com/v1/tile/positron/{z}/{x}/{y}.png?apiKey={apiKey}", {
       apiKey: geoKey, maxZoom: 19,
       attribution: 'Powered by <a href="https://www.geoapify.com/">Geoapify</a> | © OpenMapTiles · © <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
     }).addTo(map);
