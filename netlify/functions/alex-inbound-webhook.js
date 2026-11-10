@@ -154,8 +154,11 @@ exports.handler = async function (event) {
   try { packet = JSON.parse(raw); } catch (_) { return toJsonResponse(400, { error: "Invalid JSON" }); }
   const call = packet?.call;
   const kind = String(packet?.event || "");
-  if (!EVENTS.has(kind) || !call || String(call.agent_id || "") !== agentId)
-    return { statusCode: 204, body: "" };
+  if (!EVENTS.has(kind) || !call) return { statusCode: 204, body: "" };
+  // Retell transfer events may contain only a call_id and no agent_id.
+  // In that case verify the call ID was previously recorded for Alex.
+  if (call.agent_id && String(call.agent_id) !== agentId) return { statusCode: 204, body: "" };
+  if (!call.agent_id && !kind.startsWith("transfer_")) return { statusCode: 204, body: "" };
   if (call.call_type && call.call_type !== "phone_call") return { statusCode: 204, body: "" };
   if (call.direction && call.direction !== "inbound") return { statusCode: 204, body: "" };
   const id = String(call.call_id || "");
@@ -163,6 +166,7 @@ exports.handler = async function (event) {
 
   try {
     const existing = (await rows("inbound_calls?select=*&provider_call_id=eq." + encodeQuery(id) + "&limit=1"))[0] || {};
+    if (!call.agent_id && existing.agent_id !== agentId) return { statusCode: 204, body: "" };
     const custom = call.call_analysis?.custom_analysis_data || {};
     const reportedHuman = boolField(custom, "human_requested") ??
       boolField(custom, "requested_live_person") ?? boolField(custom, "wants_human");
