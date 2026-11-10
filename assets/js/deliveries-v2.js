@@ -765,7 +765,11 @@
       buttons.push(`<button class="action-btn secondary" type="button" data-details-action="paid" data-delivery-id="${id}">Mark Paid</button>`);
     }
     if (canCancelDelivery(delivery)) {
-      buttons.push(`<button class="action-btn danger-btn" type="button" data-details-action="cancel" data-delivery-id="${id}">Cancel Delivery</button>`);
+      buttons.push(`<button class="action-btn danger-btn" type="button" data-details-action="cancel" data-delivery-id="${id}">Cancel & Notify Customer</button>`);
+    }
+    if (isCancelled(delivery) && delivery.exception_type === "service_cancellation" &&
+        String(delivery.exception_notes || "").includes("Email pending retry")) {
+      buttons.push(`<button class="action-btn danger-btn" type="button" data-details-action="retry-cancellation-email" data-delivery-id="${id}">Retry Cancellation Email</button>`);
     }
     if (canRefundPayment(delivery)) {
       buttons.push(`<button class="action-btn danger-btn" type="button" data-details-action="refund" data-delivery-id="${id}">Issue Refund</button>`);
@@ -1473,6 +1477,10 @@
           ${detailsBlock("Job Number", delivery.job_number)}
           ${detailsBlock("Status", getStatusLabel(delivery))}
           ${detailsBlock("Customer", delivery.customer_name || delivery.company_name || "-", "detail-wide-mobile")}
+          ${optionalDetailsBlock("Customer Email", delivery.customer_email)}
+          ${optionalDetailsBlock("Customer Phone", delivery.customer_phone)}
+          ${optionalDetailsBlock("Dispatch Review", String(delivery.internal_dispatch_notes || "").includes("CUSTOM QUOTE REQUIRED") ? "Outside service area — custom quote required" : String(delivery.internal_dispatch_notes || "").includes("ADDRESS VERIFICATION REQUIRED") ? "Address verification required" : "")}
+          ${optionalDetailsBlock("Cancellation Reason", delivery.exception_type === "service_cancellation" ? delivery.customer_visible_notes : "")}
           ${optionalDetailsBlock("Company", structuredNotes.company)}
           ${detailsBlock("Category", getCategoryLabel(delivery.job_category))}
           ${detailsBlock("Vehicle", delivery.vehicle_type || "-")}
@@ -2143,30 +2151,96 @@
     await refreshDeliveries({ keepSelection: deliveryId });
   }
 
-  async function cancelDelivery(deliveryId) {
-    const delivery = state.deliveries.find(item => String(item.id) === String(deliveryId));
-    if (!delivery) {
+  function openCancelNotificationModal(delivery, resendOnly = false) {
+    if (!delivery) return;
+    document.getElementById("mgCancelNotificationModal")?.remove();
+    const customerEmail = String(delivery.customer_email || "").trim();
+    if (!customerEmail) {
+      showToast("Add the verified customer email to the job before cancelling and notifying.", "error");
       return;
     }
-
-    const confirmed = window.confirm(`Cancel ${delivery.job_number || "this delivery"}?`);
-    if (!confirmed) {
-      return;
+    if (!document.getElementById("mgCancelNotificationStyles")) {
+      const styles = document.createElement("style");
+      styles.id = "mgCancelNotificationStyles";
+      styles.textContent = ".mg-cancel-backdrop{position:fixed;inset:0;z-index:6000;background:rgba(5,16,12,.72);display:flex;align-items:center;justify-content:center;padding:16px;overflow-y:auto}.mg-cancel-panel{background:white;color:#15241c;width:min(520px,100%);max-height:calc(100vh - 32px);overflow-y:auto;border-radius:18px;padding:25px;box-shadow:0 24px 60px #0005}.mg-cancel-panel h3{font-size:1.45rem;margin:0 0 10px}.mg-cancel-panel p{line-height:1.45}.mg-cancel-panel label{display:block;font-size:.91rem;font-weight:700;margin:15px 0 5px}.mg-cancel-panel input:not([type=checkbox]),.mg-cancel-panel select{width:100%;min-height:45px;padding:10px;border:1px solid #b5c7bc;border-radius:9px;font-size:1rem}.mg-cancel-panel .mg-cancel-verify{display:flex;gap:10px;align-items:flex-start;font-weight:500}.mg-cancel-panel .mg-cancel-verify input{margin-top:4px;flex:none}.mg-cancel-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:22px}.mg-cancel-actions button{flex:1;min-height:45px}.mg-cancel-error{color:#b42318;font-weight:700;margin-top:12px}.mg-cancel-target{background:#f2f7f3;padding:12px;border-radius:12px;overflow-wrap:anywhere}.mg-cancel-panel .mg-cancel-note{font-size:.85rem;color:#56685b}";
+      document.head.appendChild(styles);
     }
-
-    const result = await client
-      .from("quotes")
-      .update({ status: "cancelled" })
-      .eq("id", deliveryId)
-      .select("*")
-      .maybeSingle();
-
-    if (result.error) {
-      throw result.error;
-    }
-
-    showToast("Delivery cancelled.", "success");
-    await refreshDeliveries({ keepSelection: deliveryId });
+    const jobNumber = String(delivery.job_number || "");
+    const panel = document.createElement("div");
+    panel.id = "mgCancelNotificationModal";
+    panel.className = "mg-cancel-backdrop";
+    panel.innerHTML = `
+      <form class="mg-cancel-panel" role="dialog" aria-modal="true" aria-labelledby="mgCancelTitle">
+        <h3 id="mgCancelTitle">${resendOnly ? "Retry cancellation email" : "Cancel delivery & notify customer"}</h3>
+        <p class="mg-cancel-target"><strong>Job:</strong> ${escapeHtml(jobNumber)}<br><strong>Customer:</strong> ${escapeHtml(delivery.customer_name || "Not provided")}<br><strong>Phone:</strong> ${escapeHtml(delivery.customer_phone || "Not provided")}<br><strong>Email on file:</strong> ${escapeHtml(customerEmail)}</p>
+        ${resendOnly ? '<p>Dispatch recorded this cancellation, but the email did not send. Verify the recipient before retrying.</p>' : `
+        <label for="mgCancelReason">Why can't MG Express complete this delivery?</label>
+        <select id="mgCancelReason" required>
+          <option value="">Select a reason…</option>
+          <option value="out_of_service_area">Outside our service area</option>
+          <option value="no_driver_available">No driver available</option>
+          <option value="schedule_unavailable">Cannot meet requested schedule</option>
+          <option value="address_cannot_be_verified">Address could not be verified</option>
+          <option value="vehicle_unavailable">Required vehicle unavailable</option>
+          <option value="unable_to_accommodate">Unable to accommodate request</option>
+        </select>`}
+        <label for="mgCancelJob">Verify job number (enter ${escapeHtml(jobNumber)})</label>
+        <input id="mgCancelJob" autocomplete="off" required />
+        <label for="mgCancelEmail">Verify customer's email address</label>
+        <input id="mgCancelEmail" type="email" autocomplete="off" required />
+        <label class="mg-cancel-verify"><input id="mgCancelVerified" type="checkbox" required /><span>I checked this job and confirmed the recipient information before sending the cancellation notice.</span></label>
+        <p class="mg-cancel-note">This sends an email to the address saved on the job. It does not send a text. Paid or already-assigned jobs must be resolved before cancellation.</p>
+        <div class="mg-cancel-actions">
+          <button type="button" class="action-btn secondary" data-cancel-dismiss>Go Back</button>
+          <button type="submit" class="action-btn danger-btn" id="mgCancelConfirm">${resendOnly ? "Resend Email" : "Cancel Job & Send Email"}</button>
+        </div>
+        <div class="mg-cancel-error" id="mgCancelError" role="alert"></div>
+      </form>`;
+    document.body.appendChild(panel);
+    const form = panel.querySelector("form");
+    const errorBox = panel.querySelector("#mgCancelError");
+    const button = panel.querySelector("#mgCancelConfirm");
+    const dismiss = () => panel.remove();
+    panel.querySelector("[data-cancel-dismiss]").addEventListener("click", dismiss);
+    panel.addEventListener("click", event => { if (event.target === panel) dismiss(); });
+    form.addEventListener("submit", async event => {
+      event.preventDefault();
+      errorBox.textContent = "";
+      if (panel.querySelector("#mgCancelJob").value.trim() !== jobNumber ||
+          panel.querySelector("#mgCancelEmail").value.trim().toLowerCase() !== customerEmail.toLowerCase() ||
+          !panel.querySelector("#mgCancelVerified").checked) {
+        errorBox.textContent = "Please confirm the job number, email, and customer verification checkbox.";
+        return;
+      }
+      button.disabled = true;
+      button.textContent = "Processing…";
+      try {
+        const response = await fetch("/api/cancel-delivery-notify", {
+          method: "POST",
+          headers: { "Content-Type": "application/json", Authorization: "Bearer " + await dispatchAccessToken() },
+          body: JSON.stringify({
+            quote_id: delivery.id,
+            confirmed_job_number: jobNumber,
+            confirmed_customer_email: panel.querySelector("#mgCancelEmail").value.trim(),
+            confirm_customer_verified: true,
+            reason: resendOnly ? undefined : panel.querySelector("#mgCancelReason").value,
+            resend_only: resendOnly
+          })
+        });
+        const data = await response.json().catch(() => ({}));
+        if (!response.ok) throw new Error(data.error || "Cancellation request failed.");
+        dismiss();
+        showToast(data.message || "Cancellation saved.", data.email_sent ? "success" : "error");
+        await refreshDeliveries({ keepSelection: delivery.id });
+        await openDeliveryDetails(delivery.id);
+      } catch (error) {
+        errorBox.textContent = error.message || "Unable to cancel delivery.";
+      } finally {
+        button.disabled = false;
+        button.textContent = resendOnly ? "Resend Email" : "Cancel Job & Send Email";
+      }
+    });
+    panel.querySelector("#mgCancelJob").focus();
   }
 
   function openBol(deliveryId) {
@@ -2316,7 +2390,12 @@
     }
 
     if (action === "cancel") {
-      cancelDelivery(delivery.id).catch(error => showToast(error.message || "Unable to cancel delivery.", "error"));
+      openCancelNotificationModal(delivery);
+      return;
+    }
+
+    if (action === "retry-cancellation-email") {
+      openCancelNotificationModal(delivery, true);
       return;
     }
 
