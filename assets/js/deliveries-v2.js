@@ -1016,11 +1016,8 @@
     if (!city) incomplete.push("city");
     if (!state) incomplete.push("state");
     if (!zip) incomplete.push("ZIP");
-    return [
-      [line, suite].filter(Boolean).join(", "),
-      location,
-      incomplete.length ? "(Verify missing " + incomplete.join(", ") + ")" : ""
-    ].filter(Boolean).join(", ");
+    const complete = [[line, suite].filter(Boolean).join(", "), location].filter(Boolean).join(", ");
+    return complete + (incomplete.length ? " — Verify missing " + incomplete.join(", ") : "");
   }
 
   function quotedPriceLabel(delivery) {
