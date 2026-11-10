@@ -11,6 +11,8 @@
   <title>MG Express Dispatch</title>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="anonymous">
+  <script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin="anonymous"></script>
 
   <style>
     * {
@@ -1154,6 +1156,45 @@
         grid-template-columns: repeat(3, minmax(0, 1fr));
       }
     }
+
+    /* Interactive dashboard pickup map */
+    .pickup-map-panel { background:#ffffff; border:1px solid var(--line); border-radius:22px; margin-bottom:26px; padding:18px; box-shadow:0 9px 28px rgba(0,0,0,.045); }
+    .pickup-map-head { display:flex; flex-wrap:wrap; align-items:flex-start; justify-content:space-between; gap:12px; margin-bottom:14px; }
+    .pickup-map-head h2 { font-size:23px; color:var(--dark-green); font-weight:900; }
+    .pickup-map-head p { color:var(--muted); font-size:13px; margin:6px 0 0; line-height:1.35; }
+    .pickup-map-controls { display:flex; flex-wrap:wrap; gap:8px; align-items:center; }
+    .pickup-map-controls select,.pickup-map-controls button { border:1px solid #dce8e2; background:#f8fbfa; color:#0f4f32; min-height:40px; font:inherit; font-size:13px; font-weight:750; border-radius:12px; padding:8px 12px; cursor:pointer; }
+    .pickup-map-controls button:focus-visible,.pickup-map-controls select:focus-visible { outline:2px solid #0f8660; outline-offset:2px; }
+    #dispatchPickupMap { width:100%; height:435px; background:#1c2638; border-radius:18px; overflow:hidden; z-index:0; }
+    .pickup-map-footer { display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:8px 18px; padding:12px 3px 0; }
+    #dispatchPickupMapCount { color:var(--dark-green); font-size:13px; font-weight:850; }
+    #dispatchPickupMapStatus { color:var(--muted); font-size:12px; line-height:1.4; margin-top:3px; max-width:560px; }
+    .pickup-map-legend { display:flex; flex-wrap:wrap; align-items:center; gap:7px 11px; font-size:11px; color:var(--muted); }
+    .pickup-map-legend i { display:inline-block; width:10px; height:10px; border-radius:50%; margin-right:4px; vertical-align:middle; }
+    .pickup-map-legend .pending { background:#f2b84b; }.pickup-map-legend .live { background:#55b6f3; }.pickup-map-legend .ready { background:#2fca91; }.pickup-map-legend .closed { background:#aeb4bd; }
+    .mg-map-marker-icon { background:transparent; border:none; }
+    .mg-map-pin { display:flex; justify-content:center; align-items:center; width:39px; height:39px; background:#ffffff; color:#17392f; border:5px solid #2fca91; border-radius:50% 50% 50% 9px; transform:rotate(-45deg); box-shadow:0 3px 12px rgba(0,0,0,.45); font-size:13px; font-weight:900; }
+    .mg-map-pin::first-letter { letter-spacing:0; }
+    .mg-map-pin-pending { border-color:#f2b84b; }.mg-map-pin-ready { border-color:#2fca91; }.mg-map-pin-live { border-color:#55b6f3; }.mg-map-pin-completed { border-color:#aeb4bd; }.mg-map-pin-cancelled { border-color:#e97870; }
+    .mg-map-popup { min-width:205px; max-height:300px; overflow-y:auto; font-family:Arial,sans-serif; }
+    .mg-map-popup-label { color:#708078; font-size:10px; letter-spacing:.07em; font-weight:850; }
+    .mg-map-popup-address { font-size:14px; font-weight:800; color:#183c2c; margin:3px 0 11px; overflow-wrap:anywhere; }
+    .mg-map-popup-job { display:flex; justify-content:space-between; align-items:center; gap:8px; border-top:1px solid #edf1ee; padding:10px 0; }
+    .mg-map-popup-job strong { display:block; color:#1e2f25; font-size:12px; overflow-wrap:anywhere; }
+    .mg-map-popup-job small { display:block; font-size:11px; color:#7a807e; margin-top:3px; line-height:1.3; }
+    .mg-map-popup-job a { white-space:nowrap; background:#087455; color:#fff !important; padding:7px 10px; border-radius:9px; text-decoration:none; font-size:11px; font-weight:800; }
+    .pickup-map-panel .leaflet-control-zoom a { color:#0f4f32; }
+    .pickup-map-panel .leaflet-popup-content-wrapper { border-radius:15px; }
+    .pickup-map-panel .leaflet-control-attribution { font-size:9px; }
+    @media (max-width:700px) {
+      .pickup-map-panel { margin:0 0 22px; border-radius:20px; padding:13px; }
+      .pickup-map-head h2 { font-size:20px; }
+      .pickup-map-controls { width:100%; }
+      .pickup-map-controls select { flex:1; min-width:130px; }
+      #dispatchPickupMap { height:390px; border-radius:15px; }
+      .pickup-map-footer { padding:10px 2px 0; }
+      .pickup-map-legend { gap:6px 10px; }
+    }
   </style>
 </head>
 
@@ -1215,6 +1256,37 @@
       <div class="stat-card revenue-card" id="cardRevenueToday">
         <div class="stat-number" id="countRevenueToday">$0.00</div>
         <div class="stat-label">Today's Revenue</div>
+      </div>
+    </section>
+
+    <section class="pickup-map-panel" id="pickupMapSection" aria-labelledby="pickupMapTitle">
+      <div class="pickup-map-head">
+        <div>
+          <h2 id="pickupMapTitle">Pickup Map</h2>
+          <p>All MG Express pickup locations. Tap a pin to open its orders.</p>
+        </div>
+        <div class="pickup-map-controls">
+          <select id="dispatchPickupMapFilter" aria-label="Filter jobs shown on map">
+            <option value="all">All jobs</option>
+            <option value="active">Open jobs</option>
+            <option value="completed">Completed</option>
+            <option value="cancelled">Cancelled</option>
+          </select>
+          <button type="button" id="dispatchPickupMapReset" aria-label="Recenter the map on pickup locations">Fit pins</button>
+        </div>
+      </div>
+      <div id="dispatchPickupMap" role="region" aria-label="Interactive map of job pickup locations with zoom and clickable job pins"></div>
+      <div class="pickup-map-footer">
+        <div>
+          <div id="dispatchPickupMapCount" aria-live="polite">Loading pickup locations…</div>
+          <div id="dispatchPickupMapStatus" role="status">The map will load after dispatch signs in.</div>
+        </div>
+        <div class="pickup-map-legend" aria-label="Job marker colors">
+          <span><i class="pending"></i>Pending</span>
+          <span><i class="ready"></i>Ready</span>
+          <span><i class="live"></i>Live</span>
+          <span><i class="closed"></i>Completed</span>
+        </div>
       </div>
     </section>
 
@@ -4067,6 +4139,11 @@
 
       state.quotes = result.data || [];
       updateCounts();
+      if (window.MGDispatchPickupMap) {
+        window.MGDispatchPickupMap.update(state.quotes).catch(error => {
+          console.warn("[MG Pickup Map] Unable to update locations:", error);
+        });
+      }
     }
 
     async function loadDashboardData() {
@@ -4248,6 +4325,7 @@
       }
     })();
   </script>
+  <script src="/assets/js/dashboard-pickup-map.js?v=20261110a"></script>
   <script src="/dispatch-menu.js"></script>
 </body>
 </html>
