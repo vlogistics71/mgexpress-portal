@@ -55,10 +55,10 @@ exports.handler = async function (event) {
     if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
       return reply(409, { error: "This order has no valid customer email. Add or verify it before cancelling and notifying." });
     }
-    if (String(data.confirmed_job_number || "").trim() !== String(quote.job_number || "").trim() ||
-        String(data.confirmed_customer_email || "").trim().toLowerCase() !== email ||
-        data.confirm_customer_verified !== true) {
-      return reply(409, { error: "Customer verification failed. Confirm the job number and customer email shown in the order." });
+    // The authenticated dispatcher confirms the order in the modal. The recipient
+    // is always read from the stored quote, not re-entered or supplied by the browser.
+    if (data.confirm_customer_verified !== true) {
+      return reply(409, { error: "Confirm the cancellation using the checkbox before continuing." });
     }
 
     if (!process.env.RESEND_API_KEY) {
