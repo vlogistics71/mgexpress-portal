@@ -241,7 +241,7 @@
   }
 
   if (window.L && geoKey) {
-    map = window.L.map(container, {zoomControl: false, scrollWheelZoom: false, tap: true, preferCanvas: true})
+    map = window.L.map(container, {zoomControl: false, scrollWheelZoom: true, doubleClickZoom: true, touchZoom: true, tap: true, preferCanvas: true})
       .setView([39.7392, -104.9903], 10);
     window.L.control.zoom({position: "topright"}).addTo(map);
     // OSM Bright keeps the light background but draws roads and street labels
