@@ -87,10 +87,27 @@ function geocodeMatches(found, expected) {
   if (!found.postcode || !found.stateCode ||
       found.stateCode.toUpperCase() !== expected.state ||
       (found.countryCode && found.countryCode !== "us")) return false;
-  const foundCity = String(found.city || "").trim().toLowerCase();
-  if (!foundCity || foundCity.replace(/\s+/g," ") !== expected.city.toLowerCase()) return false;
-  if (!Number.isFinite(found.confidence) || found.confidence < 0.75) return false;
+  // Some valid postal addresses use a different municipal name from the
+  // geocoder. Exact building + street + state + ZIP are stronger identifiers.
+  // Confidence is used as a tie-breaker, never as the only address check.
+  if (Number.isFinite(found.confidence) && found.confidence < 0.55) return false;
   return true;
+}
+
+
+function describeAddressIssue(found, expected, label) {
+  if (!found) return label + " address could not be located on the map.";
+  const pieces = [];
+  if (found.postcode && found.postcode.slice(0,5) !== expected.zip.slice(0,5)) {
+    pieces.push("ZIP " + expected.zip + " does not match the suggested ZIP " + found.postcode);
+  }
+  if (found.city && found.city.toLowerCase() !== expected.city.toLowerCase() && pieces.length) {
+    pieces.push("suggested city is " + found.city);
+  }
+  if (pieces.length) {
+    return label + ": " + pieces.join("; ") + ". Please check the full address.";
+  }
+  return label + ": The street number or address could not be confirmed. Dispatch will verify it.";
 }
 
 const INTRODUCTORY_DISCOUNT = 0.14;
@@ -288,6 +305,17 @@ exports.handler = async function handler(event) {
     ]);
     const requestedDeliveryType = clean(input.delivery_type, 100);
     const deliveryType = allowedDeliveryTypes.has(requestedDeliveryType) ? requestedDeliveryType : null;
+    const pickupBusinessName = clean(input.pickup_business_name, 160);
+    const deliveryBusinessName = clean(input.delivery_business_name, 160);
+    if (requestSource === "website" && !deliveryType) {
+      return response(400, { error: "Select whether pickup and delivery are businesses or residences." }, origin);
+    }
+    if (requestSource === "website" && deliveryType?.startsWith("business_to_") && !pickupBusinessName) {
+      return response(400, { error: "Enter the pickup business name." }, origin);
+    }
+    if (requestSource === "website" && deliveryType?.endsWith("_to_business") && !deliveryBusinessName) {
+      return response(400, { error: "Enter the delivery business name." }, origin);
+    }
 
     const allowedServiceLevels = new Set(["routine", "priority", "stat", "scheduled", "on_demand"]);
     const requestedServiceLevel = clean(input.service_level, 100) || (legacyType === "Scheduled Route" ? "scheduled" : "on_demand");
@@ -318,6 +346,8 @@ exports.handler = async function handler(event) {
     const deliverySpeed = normalizeToken(input.delivery_speed) || deliverySpeedFromWindow(preferredPickupTime, preferredDeliveryTime);
     const instructionParts = [
       company ? `Company: ${company}` : "",
+      pickupBusinessName && deliveryType?.startsWith("business_to_") ? `Pickup business: ${pickupBusinessName}` : "",
+      deliveryBusinessName && deliveryType?.endsWith("_to_business") ? `Delivery business: ${deliveryBusinessName}` : "",
       clean(input.reference_number, 160) ? `Reference number: ${clean(input.reference_number, 160)}` : "",
       preferredPickupTime ? `Preferred pickup time: ${displayPreferredTime(preferredPickupTime)}` : "",
       preferredDeliveryTime ? `Deliver by time: ${displayPreferredTime(preferredDeliveryTime)}` : "",
@@ -355,9 +385,13 @@ exports.handler = async function handler(event) {
     // Never offer an automatic estimate for a street-only geocode, ambiguous house
     // number, mismatched city/ZIP or unavailable lookup. The quote can still be
     // saved for dispatch review if the customer supplied a complete typed address.
-    const addressNeedsVerification = !routeData ||
-      !geocodeMatches(routeData.start, pickupLocation) ||
-      !geocodeMatches(routeData.finish, deliveryLocation);
+    const pickupAddressVerified = !!routeData && geocodeMatches(routeData.start, pickupLocation);
+    const deliveryAddressVerified = !!routeData && geocodeMatches(routeData.finish, deliveryLocation);
+    const addressNeedsVerification = !pickupAddressVerified || !deliveryAddressVerified;
+    const verificationIssues = addressNeedsVerification ? [
+      !pickupAddressVerified ? describeAddressIssue(routeData?.start, pickupLocation, "Pickup") : null,
+      !deliveryAddressVerified ? describeAddressIssue(routeData?.finish, deliveryLocation, "Delivery") : null
+    ].filter(Boolean) : [];
     const pickupOutside = !!routeData && distanceMiles(LOCAL_COVERAGE_CENTER, routeData.start) > LOCAL_COVERAGE_MILES;
     const deliveryOutside = !!routeData && distanceMiles(LOCAL_COVERAGE_CENTER, routeData.finish) > LOCAL_COVERAGE_MILES;
     const outsideServiceArea = pickupOutside || deliveryOutside;
@@ -382,12 +416,14 @@ exports.handler = async function handler(event) {
       customer_phone: customerPhone,
 
       pickup_address: pickupLocation.street,
+      pickup_business_name: deliveryType?.startsWith("business_to_") ? nullable(pickupBusinessName, 160) : null,
       pickup_suite_floor: nullable(input.pickup_suite_floor, 120),
       pickup_city: pickupLocation.city,
       pickup_state: pickupLocation.state,
       pickup_zip: pickupLocation.zip,
 
       delivery_address: deliveryLocation.street,
+      delivery_business_name: deliveryType?.endsWith("_to_business") ? nullable(deliveryBusinessName, 160) : null,
       delivery_suite_floor: nullable(input.delivery_suite_floor, 120),
       delivery_city: deliveryLocation.city,
       delivery_state: deliveryLocation.state,
@@ -402,7 +438,11 @@ exports.handler = async function handler(event) {
       package_type: nullable(input.package_type, 160),
       weight: nullable(input.weight || packageWeight, 100),
       special_instructions: instructionParts.length ? instructionParts.join("\n") : null,
-      internal_dispatch_notes: needsCustomReview ? (outsideServiceArea ? "CUSTOM QUOTE REQUIRED: OUTSIDE SERVICE AREA" : "ADDRESS VERIFICATION REQUIRED: CUSTOM QUOTE") : null,
+      internal_dispatch_notes: needsCustomReview ? [
+        outsideServiceArea ? "CUSTOM QUOTE REQUIRED: OUTSIDE SERVICE AREA" : "",
+        addressNeedsVerification ? "ADDRESS VERIFICATION REQUIRED: CUSTOM QUOTE" : "",
+        ...verificationIssues
+      ].filter(Boolean).join("\n") : null,
       approved_price: customerPrice || null,
       customer_charge: 0,
       payment_status: null,
@@ -461,7 +501,9 @@ exports.handler = async function handler(event) {
               <p><strong>Customer:</strong> ${show(payload.customer_name)}<br>
               <strong>Phone:</strong> ${show(payload.customer_phone)}<br>
               <strong>Email:</strong> ${show(payload.customer_email)}<br>
-              <strong>Company:</strong> ${show(company)}</p>
+              <strong>Company:</strong> ${show(company)}<br>
+              <strong>Pickup business:</strong> ${show(payload.pickup_business_name)}<br>
+              <strong>Delivery business:</strong> ${show(payload.delivery_business_name)}</p>
               <p><strong>Pickup:</strong> ${show(pickupLocation.full)}<br>
               <strong>Preferred pickup time:</strong> ${show(displayPreferredTime(preferredPickupTime))}<br>
               <strong>Delivery:</strong> ${show(deliveryLocation.full)}<br>
@@ -538,6 +580,7 @@ exports.handler = async function handler(event) {
       quote_status: needsCustomReview ? "custom_review" : "review",
       outside_service_area: outsideServiceArea,
       address_verification_required: addressNeedsVerification,
+      verification_issues: verificationIssues,
       amount: customerPrice || null,
       amount_label: customerPrice
         ? new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(customerPrice)
@@ -548,7 +591,7 @@ exports.handler = async function handler(event) {
       message: needsCustomReview
         ? (outsideServiceArea
             ? "This route is outside our regular Denver metro service area. Your request was sent to dispatch for a custom quote. Service is not confirmed and no payment has been taken."
-            : "Your addresses need verification. Dispatch will review the details before providing a quote. No payment has been taken.")
+            : verificationIssues.join(" ") + " Dispatch will review the details before providing a quote. No payment has been taken.")
         : customerPrice
         ? `Estimated quote: ${new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(customerPrice)}. Dispatch will confirm driver availability and email a secure payment link if approved. No payment has been taken.`
         : "Quote request received. Dispatch will review the details and driver availability before sending a secure payment link. No payment has been taken."
