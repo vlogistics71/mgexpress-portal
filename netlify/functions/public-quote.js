@@ -33,6 +33,16 @@ function nullable(value, max = 1000) {
 }
 
 const INTRODUCTORY_DISCOUNT = 0.14;
+// Primary local coverage: 35-mile radius around downtown Denver.
+const LOCAL_COVERAGE_CENTER = { lat: 39.7392, lon: -104.9903 };
+const LOCAL_COVERAGE_MILES = 35;
+function distanceMiles(a, b) {
+  const radians = value => value * Math.PI / 180;
+  const dLat = radians(b.lat - a.lat);
+  const dLon = radians(b.lon - a.lon);
+  const h = Math.sin(dLat / 2) ** 2 + Math.cos(radians(a.lat)) * Math.cos(radians(b.lat)) * Math.sin(dLon / 2) ** 2;
+  return 3958.8 * 2 * Math.asin(Math.min(1, Math.sqrt(h)));
+}
 
 const PRICE_CHART = Object.freeze({
   car: { base: 25, mileage: 1.45, minimum: 35 },
@@ -106,7 +116,7 @@ async function geocodeAddress(input) {
   const lat = Number(match?.lat);
   const lon = Number(match?.lon);
   if (!Number.isFinite(lat) || !Number.isFinite(lon)) throw new Error("Address could not be located.");
-  return { lat, lon };
+  return { lat, lon, postcode: String(match?.postcode || '').trim(), resultType: String(match?.result_type || '').toLowerCase() };
 }
 
 async function calculateRouteMiles(pickup, delivery) {
@@ -123,7 +133,8 @@ async function calculateRouteMiles(pickup, delivery) {
   const payload = await result.json();
   const miles = Number(payload?.results?.[0]?.distance);
   if (!Number.isFinite(miles) || miles <= 0) throw new Error("Route mileage was unavailable.");
-  return Math.round(miles * 10) / 10;
+  return { miles: Math.round(miles * 10) / 10, start, finish };
+
 }
 
 function calculatePackageFees(pieceCount, packageWeight) {
@@ -251,24 +262,39 @@ exports.handler = async function handler(event) {
     const pickupRouteAddress = [pickupAddress, input.pickup_city, input.pickup_state || "CO", input.pickup_zip].filter(Boolean).join(", ");
     const deliveryRouteAddress = [deliveryAddress, input.delivery_city, input.delivery_state || "CO", input.delivery_zip].filter(Boolean).join(", ");
     let routeMiles = null;
+    let routeData = null;
     let routeError = null;
     try {
-      routeMiles = await calculateRouteMiles(pickupRouteAddress, deliveryRouteAddress);
+      routeData = await calculateRouteMiles(pickupRouteAddress, deliveryRouteAddress);
+      routeMiles = routeData.miles;
     } catch (error) {
       routeError = error;
       console.error("public quote route calculation failed", { message: error?.message });
     }
 
-    const customerPrice = calculateCustomerPrice({
+    const addressNeedsVerification = !routeData || [
+      [routeData.start, clean(input.pickup_zip, 20)],
+      [routeData.finish, clean(input.delivery_zip, 20)]
+    ].some(([found, requestedZip]) =>
+      ["city", "state", "county", "postcode", "country"].includes(found.resultType) ||
+      (requestedZip && found.postcode && requestedZip !== found.postcode)
+    );
+    const pickupOutside = !!routeData && distanceMiles(LOCAL_COVERAGE_CENTER, routeData.start) > LOCAL_COVERAGE_MILES;
+    const deliveryOutside = !!routeData && distanceMiles(LOCAL_COVERAGE_CENTER, routeData.finish) > LOCAL_COVERAGE_MILES;
+    const outsideServiceArea = pickupOutside || deliveryOutside;
+    const needsCustomReview = outsideServiceArea || addressNeedsVerification;
+    const customerPrice = needsCustomReview ? null : calculateCustomerPrice({
       vehicleType: input.vehicle_type,
       deliverySpeed,
       serviceLevel,
       miles: routeMiles,
       packageFees
     });
-    // All public requests require dispatch approval before payment.
+    // Every public request still requires dispatch approval before any payment.
     const needsReview = true;
     if (routeMiles) instructionParts.push(`Calculated route miles: ${routeMiles}`);
+    if (outsideServiceArea) instructionParts.push("SERVICE AREA: Outside Denver metro 35-mile radius. CUSTOM DISPATCH QUOTE REQUIRED; do not auto-approve.");
+    if (addressNeedsVerification) instructionParts.push("ADDRESS CHECK: Verify pickup and delivery street addresses and ZIP codes with customer before approval.");
 
     const payload = {
       customer_name: customerName,
@@ -296,6 +322,7 @@ exports.handler = async function handler(event) {
       package_type: nullable(input.package_type, 160),
       weight: nullable(input.weight || packageWeight, 100),
       special_instructions: instructionParts.length ? instructionParts.join("\n") : null,
+      internal_dispatch_notes: needsCustomReview ? (outsideServiceArea ? "CUSTOM QUOTE REQUIRED: OUTSIDE SERVICE AREA" : "ADDRESS VERIFICATION REQUIRED: CUSTOM QUOTE") : null,
       approved_price: customerPrice || null,
       customer_charge: 0,
       payment_status: null,
@@ -424,7 +451,9 @@ exports.handler = async function handler(event) {
       ok: true,
       id: quote?.id || null,
       job_number: quote?.job_number || null,
-      quote_status: "review",
+      quote_status: needsCustomReview ? "custom_review" : "review",
+      outside_service_area: outsideServiceArea,
+      address_verification_required: addressNeedsVerification,
       amount: customerPrice || null,
       amount_label: customerPrice
         ? new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(customerPrice)
@@ -432,7 +461,11 @@ exports.handler = async function handler(event) {
       checkout_url: null,
       review_token: quote?.id ? createReviewToken(quote.id) : null,
       customer_email_sent: customerEmailSent,
-      message: customerPrice
+      message: needsCustomReview
+        ? (outsideServiceArea
+            ? "This route is outside our regular Denver metro service area. Your request was sent to dispatch for a custom quote. Service is not confirmed and no payment has been taken."
+            : "Your addresses need verification. Dispatch will review the details before providing a quote. No payment has been taken.")
+        : customerPrice
         ? `Estimated quote: ${new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(customerPrice)}. Dispatch will confirm driver availability and email a secure payment link if approved. No payment has been taken.`
         : "Quote request received. Dispatch will review the details and driver availability before sending a secure payment link. No payment has been taken."
     }, origin);
