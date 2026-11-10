@@ -731,12 +731,18 @@
     return !isComplete(delivery) && !isCancelled(delivery) && (isReady(delivery) || isAssigned(delivery) || isRejected(delivery));
   }
 
+  function requiresUnpricedCustomReview(delivery) {
+    const notes = String(delivery?.internal_dispatch_notes || "");
+    return (notes.includes("CUSTOM QUOTE REQUIRED") || notes.includes("ADDRESS VERIFICATION REQUIRED")) &&
+      !(Number(delivery?.approved_price) > 0);
+  }
+
   function canMarkReady(delivery) {
-    return !isReady(delivery) && !isAssigned(delivery) && !isComplete(delivery) && !isCancelled(delivery) && !isRejected(delivery);
+    return !requiresUnpricedCustomReview(delivery) && !isReady(delivery) && !isAssigned(delivery) && !isComplete(delivery) && !isCancelled(delivery) && !isRejected(delivery);
   }
 
   function canMarkPaid(delivery) {
-    return clean(delivery.payment_status) !== "paid" && !isComplete(delivery) && !isCancelled(delivery);
+    return !requiresUnpricedCustomReview(delivery) && clean(delivery.payment_status) !== "paid" && !isComplete(delivery) && !isCancelled(delivery);
   }
 
   function canCancelDelivery(delivery) {
@@ -824,6 +830,7 @@
               <span class="category-dot ${categoryClass}"></span>
               <span class="badge">${escapeHtml(categoryLabel)}</span>
               <span class="badge ${statusClass}">${escapeHtml(statusLabel)}</span>
+              ${String(delivery.internal_dispatch_notes || "").includes("CUSTOM QUOTE REQUIRED") ? '<span class="badge return">Outside Area · Custom Quote</span>' : String(delivery.internal_dispatch_notes || "").includes("ADDRESS VERIFICATION REQUIRED") ? '<span class="badge return">Verify Address · Dispatch Review</span>' : ""}
               ${clean(delivery.return_required) === "true" || delivery.return_required === true ? '<span class="badge return">Return</span>' : ""}
             </div>
             <div class="job-number">${escapeHtml(delivery.job_number || "Delivery")}</div>
@@ -2105,6 +2112,7 @@
       return;
     }
 
+    if (requiresUnpricedCustomReview(delivery)) throw new Error("Verify this out-of-area or uncertain-address job and enter an approved price first.");
     const confirmed = window.confirm(`Mark ${delivery.job_number || "this delivery"} as Ready to Dispatch?`);
     if (!confirmed) {
       return;
@@ -2131,6 +2139,7 @@
       return;
     }
 
+    if (requiresUnpricedCustomReview(delivery)) throw new Error("Custom quote requires dispatch verification and an approved price before payment.");
     const confirmed = window.confirm(`Confirm payment has been received for ${delivery.job_number || "this delivery"}?`);
     if (!confirmed) {
       return;
