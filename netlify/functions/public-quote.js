@@ -32,6 +32,65 @@ function nullable(value, max = 1000) {
   return text || null;
 }
 
+
+const US_STATE_CODES = new Set("AL AK AZ AR CA CO CT DE FL GA HI ID IL IN IA KS KY LA ME MD MA MI MN MS MO MT NE NV NH NJ NM NY NC ND OH OK OR PA RI SC SD TN TX UT VT VA WA WV WI WY DC".split(" "));
+const STREET_SUFFIX = /\b(?:st(?:reet)?|rd|road|ave(?:nue)?|blvd|boulevard|ct|court|pl|place|dr|drive|ln|lane|way|cir(?:cle)?|ter(?:race)?|trl|trail|pkwy|parkway|hwy|highway|loop|pass|pike|plaza|sq|square|pt|point|run|path|aly|alley)\.?\b/i;
+const STREET_NUMBER = /^\d{1,6}[a-z]?(?:-\d{1,6}[a-z]?)?\s+/i;
+
+function addressFields(input, prefix) {
+  const street = clean(input[prefix + "_address"], 500).replace(/\s+/g, " ");
+  const city = clean(input[prefix + "_city"], 120).replace(/\s+/g, " ");
+  const stateInput = clean(input[prefix + "_state"], 40);
+  const state = /^colorado$/i.test(stateInput) ? "CO" : stateInput.toUpperCase();
+  const zip = clean(input[prefix + "_zip"], 20);
+  const label = prefix === "pickup" ? "Pickup" : "Delivery";
+  if (!STREET_NUMBER.test(street) || !STREET_SUFFIX.test(street)) {
+    throw new Error(label + " street must contain a building number, street name and type (for example, 123 Main St or 45 Oak Blvd).");
+  }
+  if (!/^[a-z][a-z .'-]{1,79}$/i.test(city)) {
+    throw new Error(label + " city is required. Enter the complete city name.");
+  }
+  if (!US_STATE_CODES.has(state)) {
+    throw new Error(label + " state is required. Use a two-letter state abbreviation such as CO.");
+  }
+  if (!/^\d{5}(?:-\d{4})?$/.test(zip)) {
+    throw new Error(label + " ZIP is required and must be 5 digits (or ZIP+4).");
+  }
+  return { street, city, state, zip,
+    full: [street, city, state + " " + zip].join(", ") };
+}
+function normStreet(value) {
+  return clean(value, 500).toLowerCase()
+    .replace(/\b(street|st)\b/g,"st")
+    .replace(/\b(road|rd)\b/g,"rd")
+    .replace(/\b(avenue|ave)\b/g,"ave")
+    .replace(/\b(boulevard|blvd)\b/g,"blvd")
+    .replace(/\b(court|ct)\b/g,"ct")
+    .replace(/\b(place|pl)\b/g,"pl")
+    .replace(/\b(drive|dr)\b/g,"dr")
+    .replace(/\b(lane|ln)\b/g,"ln")
+    .replace(/\b(circle|cir)\b/g,"cir")
+    .replace(/\b(parkway|pkwy)\b/g,"pkwy")
+    .replace(/[^a-z0-9]/g,"");
+}
+function geocodeMatches(found, expected) {
+  if (!found || !["building", "amenity"].includes(found.resultType)) return false;
+  if (String(found.housenumber || "").toLowerCase() !==
+      (expected.street.match(/^\S+/)?.[0] || "").toLowerCase()) return false;
+  if (!found.street || !normStreet(expected.street).endsWith(normStreet(found.street))) {
+    // Expected string can contain directional prefixes, so also compare the
+    // street name after removing the street number, without requiring a prefix match.
+    const enteredStreet = expected.street.replace(STREET_NUMBER, "").trim();
+    if (normStreet(enteredStreet) !== normStreet(found.street)) return false;
+  }
+  if (found.postcode && found.postcode.slice(0, 5) !== expected.zip.slice(0, 5)) return false;
+  if (!found.postcode || found.stateCode && found.stateCode.toUpperCase() !== expected.state) return false;
+  const foundCity = String(found.city || "").trim().toLowerCase();
+  if (!foundCity || foundCity.replace(/\s+/g," ") !== expected.city.toLowerCase()) return false;
+  if (Number.isFinite(found.confidence) && found.confidence < 0.75) return false;
+  return true;
+}
+
 const INTRODUCTORY_DISCOUNT = 0.14;
 // Primary local coverage: 35-mile radius around downtown Denver.
 const LOCAL_COVERAGE_CENTER = { lat: 39.7392, lon: -104.9903 };
@@ -116,7 +175,16 @@ async function geocodeAddress(input) {
   const lat = Number(match?.lat);
   const lon = Number(match?.lon);
   if (!Number.isFinite(lat) || !Number.isFinite(lon)) throw new Error("Address could not be located.");
-  return { lat, lon, postcode: String(match?.postcode || '').trim(), resultType: String(match?.result_type || '').toLowerCase() };
+  return {
+    lat, lon,
+    postcode: String(match?.postcode || "").trim(),
+    resultType: String(match?.result_type || "").toLowerCase(),
+    housenumber: String(match?.housenumber || "").trim(),
+    street: String(match?.street || "").trim(),
+    city: String(match?.city || match?.town || match?.village || match?.municipality || "").trim(),
+    stateCode: String(match?.state_code || "").trim(),
+    confidence: match?.rank?.confidence == null ? null : Number(match.rank.confidence)
+  };
 }
 
 async function calculateRouteMiles(pickup, delivery) {
@@ -190,6 +258,15 @@ exports.handler = async function handler(event) {
       }, origin);
     }
 
+    let pickupLocation;
+    let deliveryLocation;
+    try {
+      pickupLocation = addressFields({ ...input, pickup_address: pickupAddress }, "pickup");
+      deliveryLocation = addressFields({ ...input, delivery_address: deliveryAddress }, "delivery");
+    } catch (error) {
+      return response(400, { error: error.message }, origin);
+    }
+
     const legacyType = clean(input.type, 100);
     const categoryMap = {
       "Medical Courier": "medical",
@@ -259,8 +336,8 @@ exports.handler = async function handler(event) {
       clean(input.details, 3000)
     ].filter(Boolean);
 
-    const pickupRouteAddress = [pickupAddress, input.pickup_city, input.pickup_state || "CO", input.pickup_zip].filter(Boolean).join(", ");
-    const deliveryRouteAddress = [deliveryAddress, input.delivery_city, input.delivery_state || "CO", input.delivery_zip].filter(Boolean).join(", ");
+    const pickupRouteAddress = pickupLocation.full;
+    const deliveryRouteAddress = deliveryLocation.full;
     let routeMiles = null;
     let routeData = null;
     let routeError = null;
@@ -272,13 +349,12 @@ exports.handler = async function handler(event) {
       console.error("public quote route calculation failed", { message: error?.message });
     }
 
-    const addressNeedsVerification = !routeData || [
-      [routeData.start, clean(input.pickup_zip, 20)],
-      [routeData.finish, clean(input.delivery_zip, 20)]
-    ].some(([found, requestedZip]) =>
-      ["city", "state", "county", "postcode", "country"].includes(found.resultType) ||
-      (requestedZip && found.postcode && requestedZip !== found.postcode)
-    );
+    // Never offer an automatic estimate for a street-only geocode, ambiguous house
+    // number, mismatched city/ZIP or unavailable lookup. The quote can still be
+    // saved for dispatch review if the customer supplied a complete typed address.
+    const addressNeedsVerification = !routeData ||
+      !geocodeMatches(routeData.start, pickupLocation) ||
+      !geocodeMatches(routeData.finish, deliveryLocation);
     const pickupOutside = !!routeData && distanceMiles(LOCAL_COVERAGE_CENTER, routeData.start) > LOCAL_COVERAGE_MILES;
     const deliveryOutside = !!routeData && distanceMiles(LOCAL_COVERAGE_CENTER, routeData.finish) > LOCAL_COVERAGE_MILES;
     const outsideServiceArea = pickupOutside || deliveryOutside;
@@ -292,7 +368,8 @@ exports.handler = async function handler(event) {
     });
     // Every public request still requires dispatch approval before any payment.
     const needsReview = true;
-    if (routeMiles) instructionParts.push(`Calculated route miles: ${routeMiles}`);
+    if (routeMiles && !addressNeedsVerification) instructionParts.push(`Calculated route miles: ${routeMiles}`);
+    else if (routeMiles) instructionParts.push(`Tentative route miles (address verification required): ${routeMiles}`);
     if (outsideServiceArea) instructionParts.push("SERVICE AREA: Outside Denver metro 35-mile radius. CUSTOM DISPATCH QUOTE REQUIRED; do not auto-approve.");
     if (addressNeedsVerification) instructionParts.push("ADDRESS CHECK: Verify pickup and delivery street addresses and ZIP codes with customer before approval.");
 
@@ -301,17 +378,17 @@ exports.handler = async function handler(event) {
       customer_email: nullable(input.customer_email || input.email, 200),
       customer_phone: customerPhone,
 
-      pickup_address: pickupAddress,
+      pickup_address: pickupLocation.street,
       pickup_suite_floor: nullable(input.pickup_suite_floor, 120),
-      pickup_city: nullable(input.pickup_city, 120),
-      pickup_state: nullable(input.pickup_state, 80),
-      pickup_zip: nullable(input.pickup_zip, 20),
+      pickup_city: pickupLocation.city,
+      pickup_state: pickupLocation.state,
+      pickup_zip: pickupLocation.zip,
 
-      delivery_address: deliveryAddress,
+      delivery_address: deliveryLocation.street,
       delivery_suite_floor: nullable(input.delivery_suite_floor, 120),
-      delivery_city: nullable(input.delivery_city, 120),
-      delivery_state: nullable(input.delivery_state, 80),
-      delivery_zip: nullable(input.delivery_zip, 20),
+      delivery_city: deliveryLocation.city,
+      delivery_state: deliveryLocation.state,
+      delivery_zip: deliveryLocation.zip,
       delivery_recipient_name: nullable(input.delivery_recipient_name || input.delivery_contact_name, 160),
 
       vehicle_type: nullable(input.vehicle_type, 100),
@@ -382,9 +459,9 @@ exports.handler = async function handler(event) {
               <strong>Phone:</strong> ${show(payload.customer_phone)}<br>
               <strong>Email:</strong> ${show(payload.customer_email)}<br>
               <strong>Company:</strong> ${show(company)}</p>
-              <p><strong>Pickup:</strong> ${show(payload.pickup_address)}<br>
+              <p><strong>Pickup:</strong> ${show(pickupLocation.full)}<br>
               <strong>Preferred pickup time:</strong> ${show(displayPreferredTime(preferredPickupTime))}<br>
-              <strong>Delivery:</strong> ${show(payload.delivery_address)}<br>
+              <strong>Delivery:</strong> ${show(deliveryLocation.full)}<br>
               <strong>Deliver by time:</strong> ${show(displayPreferredTime(preferredDeliveryTime))}</p>
               <p><strong>Vehicle:</strong> ${show(payload.vehicle_type)}<br>
               <strong>Delivery speed:</strong> ${show(payload.delivery_speed)}<br>
