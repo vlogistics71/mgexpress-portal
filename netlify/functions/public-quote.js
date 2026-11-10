@@ -433,11 +433,9 @@ exports.handler = async function handler(event) {
     const customerPrice = priceBreakdown?.total ?? null;
     // Every public request still requires dispatch approval before any payment.
     const needsReview = true;
-    if (routeMiles && !addressNeedsVerification) instructionParts.push(`Pickup-to-delivery driving miles: ${routeMiles}`);
-    else if (routeMiles) instructionParts.push(`Tentative pickup-to-delivery driving miles (address verification required): ${routeMiles}`);
-    if (outsideServiceArea) instructionParts.push("SERVICE AREA: Outside Denver metro 35-mile radius. CUSTOM DISPATCH QUOTE REQUIRED; do not auto-approve.");
-    if (addressNeedsVerification) instructionParts.push("ADDRESS CHECK: Verify pickup and delivery street addresses and ZIP codes with customer before approval.");
-    if (customerPrice != null) instructionParts.push(`Preliminary estimate after 14% delivery discount: ${customerPrice.toFixed(2)} (NOT approved; subject to dispatch confirmation)`);
+    // Route miles and pricing have dedicated quote fields; address/service-area
+    // warnings belong in internal_dispatch_notes. Never mix automatically
+    // generated review diagnostics into customer Special/Additional Notes.
 
     const payload = {
       customer_name: customerName,
