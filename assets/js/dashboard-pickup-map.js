@@ -18,6 +18,7 @@
   let markerLayer = null;
   let map = null;
   let mapUsable = false;
+  const failedLookupKeys = new Set();
 
   function escapeHtml(value) {
     return String(value == null ? "" : value).replace(/[&<>"']/g, c => ({
@@ -84,13 +85,13 @@
   } catch (_error) { /* Continue without cache. */ }
 
   function storedPoint(job) {
-    const lat = Number(job?.pickup_lat ?? job?.pickup_latitude);
-    const lon = Number(job?.pickup_lon ?? job?.pickup_longitude);
-    if (Number.isFinite(lat) && Number.isFinite(lon) && lat >= -90 && lat <= 90 && lon >= -180 && lon <= 180
-        && job?.pickup_lat != null || false) {
-      return [lat, lon];
-    }
-    return null;
+    const latValue = job?.pickup_lat ?? job?.pickup_latitude;
+    const lonValue = job?.pickup_lon ?? job?.pickup_longitude;
+    if (latValue == null || lonValue == null || latValue === "" || lonValue === "") return null;
+    const lat = Number(latValue);
+    const lon = Number(lonValue);
+    return Number.isFinite(lat) && Number.isFinite(lon) && lat >= -90 && lat <= 90
+      && lon >= -180 && lon <= 180 ? [lat, lon] : null;
   }
 
   function pointForJob(job) {
@@ -167,7 +168,7 @@
       const key = addressKey(job);
       const point = pointForJob(job);
       if (!key || !point) {
-        if (key && !cache.has(key) && geoKey) waiting++;
+        if (key && !cache.has(key) && geoKey && !failedLookupKeys.has(key)) waiting++;
         else unlocated++;
         return;
       }
@@ -184,7 +185,7 @@
       const kind = priorities.find(k => localJobs.some(job => statusKind(job) === k)) || "pending";
       const icon = window.L.divIcon({
         className: "mg-map-marker-icon",
-        html: '<span class="mg-map-pin mg-map-pin-' + kind + '">' + localJobs.length + '</span>',
+        html: '<span class="mg-map-pin mg-map-pin-' + kind + '"><b class="mg-map-pin-count">' + localJobs.length + '</b></span>',
         iconSize: [40, 44], iconAnchor: [20, 42], popupAnchor: [0, -35]
       });
       window.L.marker(point, {icon, keyboard:true, title: localJobs.length + " pickup job" + (localJobs.length === 1 ? "" : "s")})
@@ -202,6 +203,7 @@
   async function update(data, options = {}) {
     jobs = Array.isArray(data) ? data.filter(job => job && job.id) : [];
     const current = ++revision;
+    failedLookupKeys.clear();
     showVisibleJobs({recenter: Boolean(options.recenter)});
     const pending = new Map();
     jobs.forEach(job => {
@@ -217,8 +219,10 @@
           const point = await locateAddress(key, job);
           if (current !== revision) return;
           cache.set(key, {point, at: Date.now()});
+          failedLookupKeys.delete(key);
         } catch (error) {
           if (current !== revision) return;
+          failedLookupKeys.add(key);
           console.warn("[MG Pickup Map] Address lookup failed:", String(error?.message || error));
           // Do not cache failures: allow refresh to retry when the provider recovers.
         }
@@ -254,7 +258,9 @@
     showVisibleJobs({recenter: true});
   });
   resetButton.addEventListener("click", () => {
-    if (mapUsable) showVisibleJobs({recenter:true});
+    if (!mapUsable) return;
+    if (selectedJobs().some(job => pointForJob(job))) showVisibleJobs({recenter:true});
+    else map.setView([39.7392, -104.9903], 10);
   });
 
   window.MGDispatchPickupMap = {update, recenter: () => showVisibleJobs({recenter:true})};
