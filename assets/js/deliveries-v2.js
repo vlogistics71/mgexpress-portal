@@ -2372,11 +2372,7 @@
           <option value="vehicle_unavailable">Required vehicle unavailable</option>
           <option value="unable_to_accommodate">Unable to accommodate request</option>
         </select>`}
-        <label for="mgCancelJob">Verify job number (enter ${escapeHtml(jobNumber)})</label>
-        <input id="mgCancelJob" autocomplete="off" required />
-        <label for="mgCancelEmail">Verify customer's email address</label>
-        <input id="mgCancelEmail" type="email" autocomplete="off" required />
-        <label class="mg-cancel-verify"><input id="mgCancelVerified" type="checkbox" required /><span>I checked this job and confirmed the recipient information before sending the cancellation notice.</span></label>
+        <label class="mg-cancel-verify"><input id="mgCancelVerified" type="checkbox" required /><span>I reviewed this order and confirm I want to ${resendOnly ? "resend the cancellation email" : "cancel this delivery and email the customer"} at the address on file.</span></label>
         <p class="mg-cancel-note">This sends an email to the address saved on the job. It does not send a text. Paid or already-assigned jobs must be resolved before cancellation.</p>
         <div class="mg-cancel-actions">
           <button type="button" class="action-btn secondary" data-cancel-dismiss>Go Back</button>
@@ -2394,10 +2390,12 @@
     form.addEventListener("submit", async event => {
       event.preventDefault();
       errorBox.textContent = "";
-      if (panel.querySelector("#mgCancelJob").value.trim() !== jobNumber ||
-          panel.querySelector("#mgCancelEmail").value.trim().toLowerCase() !== customerEmail.toLowerCase() ||
-          !panel.querySelector("#mgCancelVerified").checked) {
-        errorBox.textContent = "Please confirm the job number, email, and customer verification checkbox.";
+      if (!panel.querySelector("#mgCancelVerified").checked) {
+        errorBox.textContent = "Please check the confirmation box before continuing.";
+        return;
+      }
+      if (!resendOnly && !panel.querySelector("#mgCancelReason").value) {
+        errorBox.textContent = "Please select a cancellation reason.";
         return;
       }
       button.disabled = true;
@@ -2408,9 +2406,7 @@
           headers: { "Content-Type": "application/json", Authorization: "Bearer " + await dispatchAccessToken() },
           body: JSON.stringify({
             quote_id: delivery.id,
-            confirmed_job_number: jobNumber,
-            confirmed_customer_email: panel.querySelector("#mgCancelEmail").value.trim(),
-            confirm_customer_verified: true,
+            confirm_customer_verified: panel.querySelector("#mgCancelVerified").checked,
             reason: resendOnly ? undefined : panel.querySelector("#mgCancelReason").value,
             resend_only: resendOnly
           })
@@ -2428,7 +2424,7 @@
         button.textContent = resendOnly ? "Resend Email" : "Cancel Job & Send Email";
       }
     });
-    panel.querySelector("#mgCancelJob").focus();
+    (panel.querySelector("#mgCancelReason") || panel.querySelector("#mgCancelVerified"))?.focus();
   }
 
   function openBol(deliveryId) {
