@@ -524,33 +524,64 @@ exports.handler = async function handler(event) {
             from: "MG Express Quotes <quotes@notify.migenteexpress.com>",
             to: ["info@migenteexpress.com"],
             reply_to: payload.customer_email || undefined,
-            subject: `New MG Express Quote Request – ${quoteNumber}`,
+            subject: `New MG Express Order • ${quoteNumber}`,
             html: `
-              <h2>New MG Express Quote Request</h2>
-              <p><strong>Quote:</strong> ${show(quoteNumber)}</p>
-              <p><strong>Customer:</strong> ${show(payload.customer_name)}<br>
-              <strong>Phone:</strong> ${show(payload.customer_phone)}<br>
-              <strong>Email:</strong> ${show(payload.customer_email)}<br>
-              <strong>Company:</strong> ${show(company)}<br>
-              <strong>Pickup business:</strong> ${show(payload.pickup_business_name)}<br>
-              <strong>Delivery business:</strong> ${show(payload.delivery_business_name)}</p>
-              <p><strong>Pickup:</strong> ${show(pickupLocation.full)}<br>
-              <strong>Preferred pickup time:</strong> ${show(displayPreferredTime(preferredPickupTime))}<br>
-              <strong>Delivery:</strong> ${show(deliveryLocation.full)}<br>
-              <strong>Deliver by time:</strong> ${show(displayPreferredTime(preferredDeliveryTime))}</p>
-              <p><strong>Vehicle:</strong> ${show(payload.vehicle_type)}<br>
-              <strong>Delivery speed:</strong> ${show(payload.delivery_speed)}<br>
-              <strong>Service level:</strong> ${show(payload.service_level)}<br>
-              <strong>Pieces / boxes:</strong> ${pieceCount}<br>
-              <strong>Estimated total weight:</strong> ${show(packageWeight.replaceAll("_", " "))}<br>
-              <strong>Additional-piece fee:</strong> ${packageFees.extraPieceFee.toFixed(2)}<br>
-              <strong>Over-75-lb fee:</strong> ${packageFees.heavyWeightFee.toFixed(2)}<br>
-              <strong>Pickup → drop-off driving miles:</strong> ${show(routeMiles)}<br>
-              <strong>Introductory discount:</strong> 14% of delivery charge<br>
-              <strong>Preliminary customer estimate (not approved):</strong> ${customerPrice != null ? `${customerPrice.toFixed(2)}` : "Dispatch calculation needed"}</p>
-              <p><strong>Dispatch approval required:</strong> No payment link has been created. ${needsCustomReview ? show(verificationIssues.join(" ") || "Route is outside our standard area.") : ""}</p>
-              <p><strong>Special instructions:</strong><br>${show(payload.special_instructions).replaceAll("\n", "<br>")}</p>
-              <p><a href="https://portal.migenteexpress.com/">Open MG Express Dispatch Portal</a></p>
+              <div style="margin:0;padding:20px 12px;background:#f2f2f7;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif;color:#1c1c1e;line-height:1.5">
+                <div style="max-width:560px;margin:0 auto">
+                  <p style="font-size:12px;font-weight:800;letter-spacing:1px;color:#24553e;margin:0 0 10px">MG EXPRESS · DISPATCH</p>
+                  <div style="background:#fff;border:1px solid #e4e4e9;border-radius:20px;padding:22px 20px;margin-bottom:12px">
+                    <h1 style="font-size:25px;line-height:1.2;margin:0 0 6px;color:#1c1c1e">New order received</h1>
+                    <p style="font-size:13px;color:#77777d;margin:0 0 16px">Quote #${show(quoteNumber)}</p>
+                    <span style="display:inline-block;background:#fff3dd;border-radius:99px;padding:6px 11px;color:#925b03;font-size:12px;font-weight:700">Dispatch approval needed</span>
+                    <p style="font-size:12px;color:#75757b;margin:20px 0 2px">Estimated customer price</p>
+                    <p style="font-size:38px;line-height:1.1;font-weight:750;letter-spacing:-1px;color:#0f4f32;margin:0">${customerPrice != null ? new Intl.NumberFormat('en-US',{style:'currency',currency:'USD'}).format(customerPrice) : 'Pricing pending'}</p>
+                    <p style="font-size:12px;color:#77777d;margin:8px 0 0">Quote only · Not approved or paid</p>
+                    ${needsCustomReview ? '<p style="padding:11px 13px;margin:16px 0 0;background:#fff7e8;color:#82551a;border-radius:11px;font-size:13px;font-weight:600">' + (addressNeedsVerification ? 'Address needs verification' : 'Custom route needs review') + (outsideServiceArea ? ' · Outside standard service area' : '') + '</p>' : ''}
+                  </div>
+                  <div style="background:#fff;border:1px solid #e4e4e9;border-radius:18px;padding:18px 20px;margin-bottom:12px">
+                    <h2 style="font-size:15px;margin:0 0 14px">Route</h2>
+                    <p style="font-size:11px;font-weight:800;letter-spacing:.6px;color:#208047;margin:0 0 3px">PICKUP</p>
+                    ${payload.pickup_business_name ? '<p style="font-size:14px;font-weight:700;margin:0 0 3px">' + show(payload.pickup_business_name) + '</p>' : ''}
+                    <p style="font-size:15px;font-weight:600;margin:0 0 2px;overflow-wrap:anywhere">${show(pickupLocation.full)}</p>
+                    <p style="font-size:13px;color:#6b6b70;margin:0">Pickup: ${show(displayPreferredTime(preferredPickupTime))}</p>
+                    <div style="border-top:1px solid #ebebef;margin:16px 0"></div>
+                    <p style="font-size:11px;font-weight:800;letter-spacing:.6px;color:#bb6a12;margin:0 0 3px">DELIVERY</p>
+                    ${payload.delivery_business_name ? '<p style="font-size:14px;font-weight:700;margin:0 0 3px">' + show(payload.delivery_business_name) + '</p>' : ''}
+                    <p style="font-size:15px;font-weight:600;margin:0 0 2px;overflow-wrap:anywhere">${show(deliveryLocation.full)}</p>
+                    <p style="font-size:13px;color:#6b6b70;margin:0">Deliver by: ${show(displayPreferredTime(preferredDeliveryTime))}</p>
+                  </div>
+                  <div style="background:#fff;border:1px solid #e4e4e9;border-radius:18px;padding:18px 20px;margin-bottom:12px">
+                    <h2 style="font-size:15px;margin:0 0 8px">Order details</h2>
+                    <p style="font-size:14px;color:#44444a;margin:0;line-height:1.7">
+                      ${show(payload.vehicle_type)} · ${pieceCount} ${pieceCount === 1 ? 'piece' : 'pieces'} · ${show(packageWeight.replaceAll('_',' '))}
+                      ${routeMiles != null ? ' · ' + show(routeMiles) + ' mi' : ''}
+                      ${returnRequired ? ' · Return requested' : ''}
+                    </p>
+                    ${input.date ? '<p style="font-size:13px;color:#6b6b70;margin:8px 0 0">Date: ' + show(input.date) + '</p>' : ''}
+                    ${clean(input.reference_number,160) ? '<p style="font-size:13px;color:#6b6b70;margin:8px 0 0">Ref: ' + show(input.reference_number) + '</p>' : ''}
+                  </div>
+                  <div style="background:#fff;border:1px solid #e4e4e9;border-radius:18px;padding:18px 20px;margin-bottom:12px">
+                    <h2 style="font-size:15px;margin:0 0 8px">Customer</h2>
+                    <p style="font-size:15px;font-weight:700;margin:0 0 5px">${show(payload.customer_name)}</p>
+                    ${company ? '<p style="font-size:13px;color:#66666a;margin:0 0 6px">' + show(company) + '</p>' : ''}
+                    ${payload.customer_phone ? '<p style="margin:5px 0;font-size:14px"><a style="color:#007aff;text-decoration:none" href="tel:' + encodeURIComponent(clean(payload.customer_phone,80)) + '">' + show(payload.customer_phone) + '</a></p>' : ''}
+                    ${payload.customer_email ? '<p style="margin:5px 0;font-size:14px;overflow-wrap:anywhere"><a style="color:#007aff;text-decoration:none" href="mailto:' + encodeURIComponent(clean(payload.customer_email,160)) + '">' + show(payload.customer_email) + '</a></p>' : ''}
+                  </div>
+                  ${[input.pickup_contact_name,input.pickup_contact_phone,input.pickup_instructions,input.delivery_contact_phone,input.delivery_instructions,input.special_instructions,input.details].some(value => clean(value)) ? `
+                    <div style="background:#fff;border:1px solid #e4e4e9;border-radius:18px;padding:18px 20px;margin-bottom:12px">
+                      <h2 style="font-size:15px;margin:0 0 9px">Additional notes</h2>
+                      ${input.pickup_contact_name ? '<p style="font-size:13px;margin:5px 0">Pickup contact: ' + show(input.pickup_contact_name) + '</p>' : ''}
+                      ${input.pickup_contact_phone ? '<p style="font-size:13px;margin:5px 0">Pickup phone: ' + show(input.pickup_contact_phone) + '</p>' : ''}
+                      ${input.pickup_instructions ? '<p style="font-size:13px;margin:5px 0;white-space:pre-line">Pickup: ' + show(input.pickup_instructions) + '</p>' : ''}
+                      ${input.delivery_contact_phone ? '<p style="font-size:13px;margin:5px 0">Delivery phone: ' + show(input.delivery_contact_phone) + '</p>' : ''}
+                      ${input.delivery_instructions ? '<p style="font-size:13px;margin:5px 0;white-space:pre-line">Delivery: ' + show(input.delivery_instructions) + '</p>' : ''}
+                      ${input.special_instructions ? '<p style="font-size:13px;margin:5px 0;white-space:pre-line">' + show(input.special_instructions) + '</p>' : ''}
+                      ${input.details ? '<p style="font-size:13px;margin:5px 0;white-space:pre-line">' + show(input.details) + '</p>' : ''}
+                    </div>` : ''}
+                  <a href="https://portal.migenteexpress.com/" style="display:block;background:#0f4f32;color:#fff;border-radius:14px;padding:15px 18px;font-size:15px;font-weight:700;text-decoration:none;text-align:center">Open Dispatch Portal</a>
+                  <p style="margin:14px 0 0;color:#92929a;font-size:11px;text-align:center">MG Express · Internal order notification</p>
+                </div>
+              </div>
             `
           })
         });
