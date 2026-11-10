@@ -836,8 +836,8 @@
       const categoryClass = getCategoryClass(delivery.job_category);
       const categoryLabel = getCategoryLabel(delivery.job_category);
       const statusLabel = getStatusLabel(delivery);
-      const pickupAddress = escapeHtml(displayFullAddress(delivery,"pickup"));
-      const deliveryAddress = escapeHtml(displayFullAddress(delivery,"delivery"));
+      const pickupAddress = escapeHtml((delivery.pickup_business_name ? delivery.pickup_business_name+" • " : "")+displayFullAddress(delivery,"pickup"));
+      const deliveryAddress = escapeHtml((delivery.delivery_business_name ? delivery.delivery_business_name+" • " : "")+displayFullAddress(delivery,"delivery"));
       const driverName = driverNameById(delivery.assigned_driver_id);
       const assignedTo = delivery.assigned_driver_id ? `Driver: ${escapeHtml(driverName || "Driver Assigned")}` : "";
       const createdAt = formatDateTime(delivery.created_at);
@@ -1595,7 +1595,9 @@
         <h4>Addresses</h4>
         <div class="details-card-body compact-detail-grid">
           ${detailsBlock("Pickup", displayFullAddress(delivery,"pickup"), "detail-wide")}
+          ${optionalDetailsBlock("Pickup Business", delivery.pickup_business_name, "detail-wide")}
           ${detailsBlock("Delivery", displayFullAddress(delivery,"delivery"), "detail-wide")}
+          ${optionalDetailsBlock("Delivery Business", delivery.delivery_business_name, "detail-wide")}
           ${optionalDetailsBlock("Pickup Contact", [delivery.pickup_contact_name, delivery.pickup_contact_phone].filter(Boolean).join(" • "), "detail-wide")}
           ${optionalDetailsBlock("Delivery Contact", [delivery.delivery_contact_name, delivery.delivery_contact_phone].filter(Boolean).join(" • "), "detail-wide")}
           ${showReturnService ? `${detailsBlock("Return Required", "Yes")}${detailsBlock("Return Address", delivery.return_address || "-", "detail-wide")}` : ""}
