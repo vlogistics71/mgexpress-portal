@@ -130,6 +130,11 @@
   status = 200
 
 [[redirects]]
+  from = "/api/inbound-calls"
+  to = "/.netlify/functions/inbound-calls"
+  status = 200
+
+[[redirects]]
   from = "/api/refund-payment"
   to = "/.netlify/functions/refund-payment"
   status = 200
