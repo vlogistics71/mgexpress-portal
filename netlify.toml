@@ -125,6 +125,11 @@
   status = 200
 
 [[redirects]]
+  from = "/api/cancel-delivery-notify"
+  to = "/.netlify/functions/cancel-delivery-notify"
+  status = 200
+
+[[redirects]]
   from = "/api/refund-payment"
   to = "/.netlify/functions/refund-payment"
   status = 200
