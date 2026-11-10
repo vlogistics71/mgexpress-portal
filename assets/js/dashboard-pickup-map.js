@@ -244,8 +244,14 @@
     map = window.L.map(container, {zoomControl: false, scrollWheelZoom: false, tap: true, preferCanvas: true})
       .setView([39.7392, -104.9903], 10);
     window.L.control.zoom({position: "topright"}).addTo(map);
-    window.L.tileLayer("https://maps.geoapify.com/v1/tile/positron/{z}/{x}/{y}.png?apiKey={apiKey}", {
-      apiKey: geoKey, maxZoom: 19,
+    // OSM Bright keeps the light background but draws roads and street labels
+    // with stronger contrast than Positron. Use 2x tiles on high-density screens
+    // so labels and road edges stay sharp when zooming in.
+    const tilePath = window.L.Browser?.retina
+      ? "https://maps.geoapify.com/v1/tile/osm-bright/{z}/{x}/{y}@2x.png?apiKey={apiKey}"
+      : "https://maps.geoapify.com/v1/tile/osm-bright/{z}/{x}/{y}.png?apiKey={apiKey}";
+    window.L.tileLayer(tilePath, {
+      apiKey: geoKey, maxZoom: 20,
       attribution: 'Powered by <a href="https://www.geoapify.com/">Geoapify</a> | © OpenMapTiles · © <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
     }).addTo(map);
     markerLayer = window.L.layerGroup().addTo(map);
