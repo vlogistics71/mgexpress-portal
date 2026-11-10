@@ -68,6 +68,9 @@ exports.handler = async function handler(event) {
     }
 
     const isApprovalRequest = requestedAmount !== undefined && requestedAmount !== null && requestedAmount !== "";
+    if (!isApprovalRequest && !(Number(quote.approved_price) > 0)) {
+      return toJsonResponse(409, { error: "Enter and approve a final customer price before sending a payment link." });
+    }
     if (isApprovalRequest && (mode === "email" || mode === "both") && !quote.customer_email) {
       return toJsonResponse(400, { error: "Add the customer email before approving this quote." });
     }
