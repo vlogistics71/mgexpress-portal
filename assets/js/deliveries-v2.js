@@ -60,12 +60,16 @@
     editPickupAddress: document.getElementById("editPickupAddress"),
     editPickupSuiteFloor: document.getElementById("editPickupSuiteFloor"),
     editPickupZip: document.getElementById("editPickupZip"),
+    editPickupCity: document.getElementById("editPickupCity"),
+    editPickupState: document.getElementById("editPickupState"),
     editPickupContactName: document.getElementById("editPickupContactName"),
     editPickupContactPhone: document.getElementById("editPickupContactPhone"),
     editPickupInstructions: document.getElementById("editPickupInstructions"),
     editDeliveryAddress: document.getElementById("editDeliveryAddress"),
     editDeliverySuiteFloor: document.getElementById("editDeliverySuiteFloor"),
     editDeliveryZip: document.getElementById("editDeliveryZip"),
+    editDeliveryCity: document.getElementById("editDeliveryCity"),
+    editDeliveryState: document.getElementById("editDeliveryState"),
     editDeliveryContactName: document.getElementById("editDeliveryContactName"),
     editDeliveryContactPhone: document.getElementById("editDeliveryContactPhone"),
     editDeliveryInstructions: document.getElementById("editDeliveryInstructions"),
@@ -832,8 +836,8 @@
       const categoryClass = getCategoryClass(delivery.job_category);
       const categoryLabel = getCategoryLabel(delivery.job_category);
       const statusLabel = getStatusLabel(delivery);
-      const pickupAddress = escapeHtml(delivery.pickup_address || "Pickup pending");
-      const deliveryAddress = escapeHtml(delivery.delivery_address || "Delivery pending");
+      const pickupAddress = escapeHtml(displayFullAddress(delivery,"pickup"));
+      const deliveryAddress = escapeHtml(displayFullAddress(delivery,"delivery"));
       const driverName = driverNameById(delivery.assigned_driver_id);
       const assignedTo = delivery.assigned_driver_id ? `Driver: ${escapeHtml(driverName || "Driver Assigned")}` : "";
       const createdAt = formatDateTime(delivery.created_at);
@@ -857,6 +861,7 @@
             <div class="meta">
               <span>Created ${escapeHtml(createdAt)}</span>
               ${serviceLabel ? `<span>${escapeHtml(serviceLabel)}</span>` : ""}
+              <span>Quote: ${escapeHtml(quotedPriceLabel(delivery))}</span>
             </div>
             <div class="meta">
               ${assignedTo ? `<span>${assignedTo}</span>` : ""}
@@ -998,6 +1003,42 @@
     return '<span class="payment-badge payment-badge-unpaid">UNPAID</span>';
   }
 
+
+  function displayFullAddress(delivery, type) {
+    const line = String(delivery?.[type + "_address"] || "").trim();
+    const suite = String(delivery?.[type + "_suite_floor"] || "").trim();
+    const city = String(delivery?.[type + "_city"] || "").trim();
+    const state = String(delivery?.[type + "_state"] || "").trim();
+    const zip = String(delivery?.[type + "_zip"] || "").trim();
+    if (!line) return "Address missing — verify with customer";
+    const location = [city, [state, zip].filter(Boolean).join(" ")].filter(Boolean).join(", ");
+    const incomplete = [];
+    if (!city) incomplete.push("city");
+    if (!state) incomplete.push("state");
+    if (!zip) incomplete.push("ZIP");
+    return [
+      [line, suite].filter(Boolean).join(", "),
+      location,
+      incomplete.length ? "(Verify missing " + incomplete.join(", ") + ")" : ""
+    ].filter(Boolean).join(", ");
+  }
+
+  function quotedPriceLabel(delivery) {
+    // The customer's request estimate is stored in approved_price. Do not
+    // confuse customer_charge = 0 (unpaid default) with a $0 quote.
+    const amount = delivery?.approved_price != null && delivery.approved_price !== ""
+      ? Number(delivery.approved_price)
+      : Number(delivery?.customer_charge);
+    return Number.isFinite(amount) && amount > 0 ? formatMoney(amount) : "Custom quote / dispatch review";
+  }
+
+  function quoteTypeLabel(delivery) {
+    return ["website", "voice", "web", "online", "customer_portal"].includes(
+      String(delivery?.request_source || "").trim().toLowerCase())
+      ? "Preliminary Customer Quote"
+      : "Customer Quote / Price";
+  }
+
   function getCustomerCharge(delivery) {
     const amount = Number(delivery?.approved_price ?? delivery?.customer_charge ?? 0);
     return Number.isFinite(amount) ? amount : 0;
@@ -1114,12 +1155,16 @@
     elements.editPickupAddress.value = delivery.pickup_address || "";
     elements.editPickupSuiteFloor.value = delivery.pickup_suite_floor || "";
     elements.editPickupZip.value = delivery.pickup_zip || "";
+    elements.editPickupCity.value = delivery.pickup_city || "";
+    elements.editPickupState.value = delivery.pickup_state || "";
     elements.editPickupContactName.value = delivery.pickup_contact_name || instruction("Pickup contact", "Pickup Contact") || "";
     elements.editPickupContactPhone.value = delivery.pickup_contact_phone || instruction("Pickup contact phone", "Pickup Contact Phone") || "";
     elements.editPickupInstructions.value = delivery.pickup_instructions || instruction("Pickup instructions", "Pickup Instructions") || "";
     elements.editDeliveryAddress.value = delivery.delivery_address || "";
     elements.editDeliverySuiteFloor.value = delivery.delivery_suite_floor || "";
     elements.editDeliveryZip.value = delivery.delivery_zip || "";
+    elements.editDeliveryCity.value = delivery.delivery_city || "";
+    elements.editDeliveryState.value = delivery.delivery_state || "";
     elements.editDeliveryContactName.value = delivery.delivery_contact_name || delivery.delivery_recipient_name || delivery.pod_recipient_name || instruction("Delivery contact", "Delivery Contact") || "";
     elements.editDeliveryContactPhone.value = delivery.delivery_contact_phone || instruction("Delivery contact phone", "Delivery Contact Phone") || "";
     elements.editDeliveryInstructions.value = delivery.delivery_instructions || instruction("Delivery instructions", "Delivery Instructions") || "";
@@ -1232,6 +1277,18 @@
       showToast("Pickup and delivery addresses are required.", "error");
       return;
     }
+    const streetPattern = /^\d{1,6}[a-z]?(?:-\d{1,6}[a-z]?)?\s+.+\b(?:st(?:reet)?|rd|road|ave(?:nue)?|blvd|boulevard|ct|court|pl|place|dr|drive|ln|lane|way|cir(?:cle)?|ter(?:race)?|trl|trail|pkwy|parkway|hwy|highway|loop|pass|pike|plaza|sq|square|pt|point|run|path|aly|alley)\.?\b/i;
+    for (const [type, street, cityElement, stateElement, zipElement] of [
+      ["Pickup", pickupAddress, elements.editPickupCity, elements.editPickupState, elements.editPickupZip],
+      ["Delivery", deliveryAddress, elements.editDeliveryCity, elements.editDeliveryState, elements.editDeliveryZip]
+    ]) {
+      if (!streetPattern.test(street) || !cityElement.value.trim() ||
+          !/^[a-z]{2}$/i.test(stateElement.value.trim()) ||
+          !/^\d{5}(?:-\d{4})?$/.test(zipElement.value.trim())) {
+        showToast(type + " requires a full street number and type, city, two-letter state and ZIP.", "error");
+        return;
+      }
+    }
 
     const returnRequired = clean(elements.editReturnRequired?.value || "false") === "true";
     const returnLocationType = String(elements.editReturnLocationType?.value || "same_as_pickup").trim() || "same_as_pickup";
@@ -1268,9 +1325,13 @@
       pickup_address: pickupAddress,
       pickup_suite_floor: String(elements.editPickupSuiteFloor?.value || "").trim() || null,
       pickup_zip: String(elements.editPickupZip?.value || "").trim() || null,
+      pickup_city: String(elements.editPickupCity?.value || "").trim() || null,
+      pickup_state: String(elements.editPickupState?.value || "").trim().toUpperCase() || null,
       delivery_address: deliveryAddress,
       delivery_suite_floor: String(elements.editDeliverySuiteFloor?.value || "").trim() || null,
       delivery_zip: String(elements.editDeliveryZip?.value || "").trim() || null,
+      delivery_city: String(elements.editDeliveryCity?.value || "").trim() || null,
+      delivery_state: String(elements.editDeliveryState?.value || "").trim().toUpperCase() || null,
       delivery_recipient_name: String(elements.editDeliveryContactName?.value || "").trim() || null,
       job_category: String(elements.editJobCategory?.value || "general").trim() || "general",
       vehicle_type: String(elements.editVehicleType?.value || "").trim() || null,
@@ -1515,6 +1576,7 @@
           ${optionalDetailsBlock("Reference", delivery.reference_number)}
           ${detailsBlock("Assigned Driver", assignedDriver)}
           ${detailsBlock("Driver Pay", delivery.driver_pay != null && delivery.driver_pay !== "" ? formatMoney(delivery.driver_pay) : "-")}
+          ${detailsBlock(quoteTypeLabel(delivery), quotedPriceLabel(delivery))}
           ${detailsBlockMarkup("Payment", paymentBadgeMarkup(delivery.payment_status))}
           ${optionalDetailsBlock("Created By", delivery.created_by || delivery.created_by_email)}
           ${detailsBlock("Created", formatDateTime(delivery.created_at))}
@@ -1535,8 +1597,8 @@
       <section class="details-card">
         <h4>Addresses</h4>
         <div class="details-card-body compact-detail-grid">
-          ${detailsBlock("Pickup", delivery.pickup_address, "detail-wide")}
-          ${detailsBlock("Delivery", delivery.delivery_address, "detail-wide")}
+          ${detailsBlock("Pickup", displayFullAddress(delivery,"pickup"), "detail-wide")}
+          ${detailsBlock("Delivery", displayFullAddress(delivery,"delivery"), "detail-wide")}
           ${optionalDetailsBlock("Pickup Contact", [delivery.pickup_contact_name, delivery.pickup_contact_phone].filter(Boolean).join(" • "), "detail-wide")}
           ${optionalDetailsBlock("Delivery Contact", [delivery.delivery_contact_name, delivery.delivery_contact_phone].filter(Boolean).join(" • "), "detail-wide")}
           ${showReturnService ? `${detailsBlock("Return Required", "Yes")}${detailsBlock("Return Address", delivery.return_address || "-", "detail-wide")}` : ""}
