@@ -796,6 +796,20 @@
     `;
   }
 
+  function orderSourceLabel(delivery) {
+    const source = String(delivery?.request_source || "").trim().toLowerCase();
+    if (["voice", "call", "phone", "retell", "telephone"].includes(source)) return "Phone Call";
+    if (source === "customer_portal") return "Customer Portal";
+    if (["website", "web", "online", "instant"].includes(source)) return "Website Quote";
+    if (["dispatch", "staff", "manual"].includes(source)) return "Dispatch Created";
+    // Older saved jobs may have a source code in their reference.
+    const code = String(delivery?.job_number || "").match(/-((?:WEB)|(?:CALL)|(?:DSP))-[0-9]+$/i)?.[1]?.toUpperCase();
+    if (code === "WEB") return "Website Quote";
+    if (code === "CALL") return "Phone Call";
+    if (code === "DSP") return "Dispatch Created";
+    return "Not recorded";
+  }
+
   function renderDeliveries() {
     const list = visibleDeliveries();
     if (!list.length) {
@@ -830,6 +844,7 @@
               <span class="category-dot ${categoryClass}"></span>
               <span class="badge">${escapeHtml(categoryLabel)}</span>
               <span class="badge ${statusClass}">${escapeHtml(statusLabel)}</span>
+              <span class="badge" title="Order source">${escapeHtml(orderSourceLabel(delivery))}</span>
               ${String(delivery.internal_dispatch_notes || "").includes("CUSTOM QUOTE REQUIRED") ? '<span class="badge return">Outside Area · Custom Quote</span>' : String(delivery.internal_dispatch_notes || "").includes("ADDRESS VERIFICATION REQUIRED") ? '<span class="badge return">Verify Address · Dispatch Review</span>' : ""}
               ${clean(delivery.return_required) === "true" || delivery.return_required === true ? '<span class="badge return">Return</span>' : ""}
             </div>
@@ -1383,7 +1398,7 @@
     if (isAutoParts) {
       elements.deliveryDetailsTitle.textContent = "Auto Parts Delivery";
       elements.deliveryDetailsSubtitle.textContent = "Auto Parts • " + getStatusLabel(delivery);
-      elements.deliveryDetailsBody.innerHTML = '<section class="details-card"><h4>Parts Pickup</h4><div class="details-card-body">'+detailsBlock("Job Number",delivery.job_number)+detailsBlock("Pickup",delivery.pickup_address || "-")+detailsBlock("Delivery",delivery.delivery_address || "-")+'<div class="sheet-note">PO / RO and part details: '+escapeHtml(delivery.billing_notes || delivery.special_instructions || 'Not provided')+'</div><div style="margin-top:12px"><input id="autoPartsFileInput" type="file" accept="application/pdf,image/*,.pdf"><select id="autoPartsAttachmentType"><option value="document">PO / RO Document</option><option value="pickup_photo">Pickup Photo</option><option value="delivery_photo">Delivery Photo</option></select><button class="action-btn" id="autoPartsUploadBtn" type="button">Upload File</button><div id="autoPartsFiles" class="sheet-note" style="margin-top:8px">Loading attachments...</div></div><div class="sheet-note">Driver proof is stored separately for this job.</div><label style="display:block;margin-top:12px"><input id="autoPartsPickupConfirmed" type="checkbox"> Parts verified at pickup</label><input id="autoPartsDeliveredTo" placeholder="Delivered to / recipient name" style="width:100%;margin-top:12px;padding:10px"><textarea id="autoPartsProofNotes" placeholder="Pickup or delivery notes" style="width:100%;margin-top:12px;padding:10px"></textarea><div id="autoPartsProofSummary" class="sheet-note" style="margin-top:12px">Loading proof status...</div><div class="details-inline-actions" style="margin-top:12px"><button class="action-btn" id="autoPartsSaveProofBtn" type="button">Save Parts Proof</button></div></div></section>';
+      elements.deliveryDetailsBody.innerHTML = '<section class="details-card"><h4>Parts Pickup</h4><div class="details-card-body">'+detailsBlock("Job Number",delivery.job_number)+detailsBlock("Order Source",orderSourceLabel(delivery))+detailsBlock("Pickup",delivery.pickup_address || "-")+detailsBlock("Delivery",delivery.delivery_address || "-")+'<div class="sheet-note">PO / RO and part details: '+escapeHtml(delivery.billing_notes || delivery.special_instructions || 'Not provided')+'</div><div style="margin-top:12px"><input id="autoPartsFileInput" type="file" accept="application/pdf,image/*,.pdf"><select id="autoPartsAttachmentType"><option value="document">PO / RO Document</option><option value="pickup_photo">Pickup Photo</option><option value="delivery_photo">Delivery Photo</option></select><button class="action-btn" id="autoPartsUploadBtn" type="button">Upload File</button><div id="autoPartsFiles" class="sheet-note" style="margin-top:8px">Loading attachments...</div></div><div class="sheet-note">Driver proof is stored separately for this job.</div><label style="display:block;margin-top:12px"><input id="autoPartsPickupConfirmed" type="checkbox"> Parts verified at pickup</label><input id="autoPartsDeliveredTo" placeholder="Delivered to / recipient name" style="width:100%;margin-top:12px;padding:10px"><textarea id="autoPartsProofNotes" placeholder="Pickup or delivery notes" style="width:100%;margin-top:12px;padding:10px"></textarea><div id="autoPartsProofSummary" class="sheet-note" style="margin-top:12px">Loading proof status...</div><div class="details-inline-actions" style="margin-top:12px"><button class="action-btn" id="autoPartsSaveProofBtn" type="button">Save Parts Proof</button></div></div></section>';
       client.from("auto_parts_delivery_proof").select("*").eq("job_id",delivery.id).maybeSingle().then(({data}) => {
         const check=document.getElementById("autoPartsPickupConfirmed"); const recipient=document.getElementById("autoPartsDeliveredTo"); const notes=document.getElementById("autoPartsProofNotes");
         if(check) check.checked=Boolean(data?.pickup_confirmed); if(recipient) recipient.value=data?.delivered_to||""; if(notes) notes.value=data?.notes||"";
@@ -1428,7 +1443,7 @@
         elements.deliveryDetailsSubtitle.textContent = "Process Serve • " + serveStatus;
         elements.deliveryDetailsBody.innerHTML =
           '<section class="details-card"><h4>Case & Service</h4><div class="details-card-body">'+
-          detailsBlock("Job Number",delivery.job_number)+detailsBlock("Serve Status",serveStatus)+detailsBlock("Case Number",serve.case_number || "-")+
+          detailsBlock("Job Number",delivery.job_number)+detailsBlock("Order Source",orderSourceLabel(delivery))+detailsBlock("Serve Status",serveStatus)+detailsBlock("Case Number",serve.case_number || "-")+
           detailsBlock("Court",serve.court_name || "-")+detailsBlock("Plaintiff / Petitioner",serve.plaintiff_petitioner || "-")+
           detailsBlock("Defendant / Respondent",serve.defendant_respondent || "-")+detailsBlock("Person to Serve",serve.person_to_serve || "-")+
           detailsBlock("Service Address",serve.service_address || "-")+detailsBlock("Serve By / Deadline",deadline)+
@@ -1482,6 +1497,7 @@
         <h4>Delivery</h4>
         <div class="details-card-body compact-detail-grid">
           ${detailsBlock("Job Number", delivery.job_number)}
+          ${detailsBlock("Order Source", orderSourceLabel(delivery))}
           ${detailsBlock("Status", getStatusLabel(delivery))}
           ${detailsBlock("Customer", delivery.customer_name || delivery.company_name || "-", "detail-wide-mobile")}
           ${optionalDetailsBlock("Customer Email", delivery.customer_email)}
