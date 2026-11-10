@@ -967,9 +967,8 @@
       .filter(Boolean)
       .forEach(line => {
         const colonIndex = line.indexOf(":");
-        if (isGeneratedJobMetadataNote(line)) return;
         if (colonIndex < 0) {
-          result.other.push(line);
+          if (!isGeneratedJobMetadataNote(line)) result.other.push(line);
           return;
         }
 
@@ -979,7 +978,7 @@
 
         if (key && detailValue) {
           if (!result[key]) result[key] = detailValue;
-        } else {
+        } else if (!isGeneratedJobMetadataNote(line)) {
           result.other.push(line);
         }
       });
