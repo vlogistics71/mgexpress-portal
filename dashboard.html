@@ -1265,6 +1265,14 @@
                 <input id="customer_phone" name="customer_phone" type="tel">
               </div>
 
+              <div class="field">
+                <label for="request_source">How was this order received?</label>
+                <select id="request_source" name="request_source">
+                  <option value="dispatch" selected>Created by Dispatch</option>
+                  <option value="call">Customer Phone Call</option>
+                </select>
+              </div>
+
               <div class="field full">
                 <label for="reference_number">Reference Number (Optional)</label>
                 <input id="reference_number" name="reference_number">
@@ -3670,33 +3678,6 @@
       throw probe.error;
     }
 
-    async function generateJobNumber() {
-      const result = await client
-        .from("quotes")
-        .select("job_number")
-        .order("created_at", { ascending: false })
-        .limit(250);
-
-      if (result.error) {
-        throw result.error;
-      }
-
-      let maxNumber = 0;
-      (result.data || []).forEach(row => {
-        const match = String(row.job_number || "").match(/(\d+)$/);
-        if (!match) {
-          return;
-        }
-
-        const numeric = Number(match[1]);
-        if (Number.isFinite(numeric) && numeric > maxNumber) {
-          maxNumber = numeric;
-        }
-      });
-
-      return "MGE-" + String(maxNumber + 1).padStart(5, "0");
-    }
-
     function validatePayload(payload) {
       if (!payload.customer_name) {
         return "Customer name is required.";
@@ -3798,6 +3779,7 @@
       const payload = {
         customer_account_id: String(data.get("customer_account_id") || "").trim() || null,
         customer_name: String(data.get("customer_name") || "").trim(),
+        request_source: String(data.get("request_source") || "dispatch").trim() === "call" ? "call" : "dispatch",
         customer_email: String(data.get("customer_email") || "").trim() || null,
         customer_phone: String(data.get("customer_phone") || "").trim() || null,
         reference_number: referenceNumber || null,
@@ -3958,7 +3940,7 @@
           throw new Error(validationError);
         }
 
-        payload.job_number = await generateJobNumber();
+        // The database assigns a unique, short source-aware job number.
 
         console.log("BILLING DEBUG", {
           rawInputValue,
