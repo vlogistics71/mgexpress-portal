@@ -84,10 +84,12 @@ function geocodeMatches(found, expected) {
     if (normStreet(enteredStreet) !== normStreet(found.street)) return false;
   }
   if (found.postcode && found.postcode.slice(0, 5) !== expected.zip.slice(0, 5)) return false;
-  if (!found.postcode || found.stateCode && found.stateCode.toUpperCase() !== expected.state) return false;
+  if (!found.postcode || !found.stateCode ||
+      found.stateCode.toUpperCase() !== expected.state ||
+      (found.countryCode && found.countryCode !== "us")) return false;
   const foundCity = String(found.city || "").trim().toLowerCase();
   if (!foundCity || foundCity.replace(/\s+/g," ") !== expected.city.toLowerCase()) return false;
-  if (Number.isFinite(found.confidence) && found.confidence < 0.75) return false;
+  if (!Number.isFinite(found.confidence) || found.confidence < 0.75) return false;
   return true;
 }
 
@@ -183,6 +185,7 @@ async function geocodeAddress(input) {
     street: String(match?.street || "").trim(),
     city: String(match?.city || match?.town || match?.village || match?.municipality || "").trim(),
     stateCode: String(match?.state_code || "").trim(),
+    countryCode: String(match?.country_code || "").trim().toLowerCase(),
     confidence: match?.rank?.confidence == null ? null : Number(match.rank.confidence)
   };
 }
