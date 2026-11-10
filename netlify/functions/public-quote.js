@@ -70,6 +70,10 @@ function normStreet(value) {
     .replace(/\b(drive|dr)\b/g,"dr")
     .replace(/\b(lane|ln)\b/g,"ln")
     .replace(/\b(circle|cir)\b/g,"cir")
+    .replace(/\b(north|n)\b/g,"n")
+    .replace(/\b(south|s)\b/g,"s")
+    .replace(/\b(east|e)\b/g,"e")
+    .replace(/\b(west|w)\b/g,"w")
     .replace(/\b(parkway|pkwy)\b/g,"pkwy")
     .replace(/[^a-z0-9]/g,"");
 }
@@ -179,23 +183,20 @@ function createReviewToken(quoteId) {
     .digest("hex");
 }
 
-async function geocodeAddress(input) {
+async function geocodeAddress(input, expected) {
   const apiKey = String(process.env.GEOAPIFY_API_KEY || "34d895e9c6cd4d1faf0692f758aac8ac").trim();
   const url = new URL("https://api.geoapify.com/v1/geocode/search");
   url.searchParams.set("text", input);
   url.searchParams.set("format", "json");
-  url.searchParams.set("limit", "1");
+  url.searchParams.set("limit", "5");
   url.searchParams.set("filter", "rect:-109.06,36.99,-102.04,41.00|countrycode:us");
   url.searchParams.set("apiKey", apiKey);
   const result = await fetch(url);
   if (!result.ok) throw new Error("Address lookup failed.");
   const payload = await result.json();
-  const match = Array.isArray(payload.results) ? payload.results[0] : null;
-  const lat = Number(match?.lat);
-  const lon = Number(match?.lon);
-  if (!Number.isFinite(lat) || !Number.isFinite(lon)) throw new Error("Address could not be located.");
-  return {
-    lat, lon,
+  const candidates = (Array.isArray(payload.results) ? payload.results : []).map(match => ({
+    lat: Number(match?.lat),
+    lon: Number(match?.lon),
     postcode: String(match?.postcode || "").trim(),
     resultType: String(match?.result_type || "").toLowerCase(),
     housenumber: String(match?.housenumber || "").trim(),
@@ -204,12 +205,16 @@ async function geocodeAddress(input) {
     stateCode: String(match?.state_code || "").trim(),
     countryCode: String(match?.country_code || "").trim().toLowerCase(),
     confidence: match?.rank?.confidence == null ? null : Number(match.rank.confidence)
-  };
+  })).filter(candidate => Number.isFinite(candidate.lat) && Number.isFinite(candidate.lon));
+  if (!candidates.length) throw new Error("Address could not be located.");
+  // Use an exact-number/street/state/ZIP match, not simply the geocoder's
+  // first result (which can be a street or a similar address).
+  return candidates.find(candidate => geocodeMatches(candidate, expected)) || candidates[0];
 }
 
-async function calculateRouteMiles(pickup, delivery) {
+async function calculateRouteMiles(pickup, delivery, pickupExpected, deliveryExpected) {
   const apiKey = String(process.env.GEOAPIFY_API_KEY || "34d895e9c6cd4d1faf0692f758aac8ac").trim();
-  const [start, finish] = await Promise.all([geocodeAddress(pickup), geocodeAddress(delivery)]);
+  const [start, finish] = await Promise.all([geocodeAddress(pickup, pickupExpected), geocodeAddress(delivery, deliveryExpected)]);
   const url = new URL("https://api.geoapify.com/v1/routing");
   url.searchParams.set("waypoints", `${start.lat},${start.lon}|${finish.lat},${finish.lon}`);
   url.searchParams.set("mode", "drive");
@@ -375,7 +380,7 @@ exports.handler = async function handler(event) {
     let routeData = null;
     let routeError = null;
     try {
-      routeData = await calculateRouteMiles(pickupRouteAddress, deliveryRouteAddress);
+      routeData = await calculateRouteMiles(pickupRouteAddress, deliveryRouteAddress, pickupLocation, deliveryLocation);
       routeMiles = routeData.miles;
     } catch (error) {
       routeError = error;
