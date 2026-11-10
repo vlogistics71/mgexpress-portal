@@ -631,9 +631,11 @@
           <section class="edit-section">
             <h4 class="edit-section-title">Pickup</h4>
             <div class="edit-grid two-up">
-              <div class="edit-field full"><label for="editPickupAddress">Pickup Address</label><textarea id="editPickupAddress" name="pickup_address" required rows="2"></textarea></div>
+              <div class="edit-field full"><label for="editPickupAddress">Pickup Street Address (number, name, type)</label><textarea id="editPickupAddress" name="pickup_address" required rows="2"></textarea></div>
               <div class="edit-field"><label for="editPickupSuiteFloor">Pickup Suite / Floor</label><input id="editPickupSuiteFloor" name="pickup_suite_floor"></div>
-              <div class="edit-field"><label for="editPickupZip">Pickup ZIP</label><input id="editPickupZip" name="pickup_zip" inputmode="numeric"></div>
+              <div class="edit-field"><label for="editPickupCity">Pickup City</label><input id="editPickupCity" name="pickup_city" autocomplete="address-level2" required></div>
+              <div class="edit-field"><label for="editPickupState">Pickup State</label><input id="editPickupState" name="pickup_state" maxlength="2" placeholder="CO" required></div>
+              <div class="edit-field"><label for="editPickupZip">Pickup ZIP</label><input id="editPickupZip" name="pickup_zip" inputmode="numeric" maxlength="10" placeholder="5-digit ZIP" required></div>
               <div class="edit-field"><label for="editPickupContactName">Pickup Contact</label><input id="editPickupContactName" name="pickup_contact_name"></div>
               <div class="edit-field"><label for="editPickupContactPhone">Pickup Phone</label><input id="editPickupContactPhone" name="pickup_contact_phone" type="tel"></div>
               <div class="edit-field full"><label for="editPickupInstructions">Pickup Instructions</label><input id="editPickupInstructions" name="pickup_instructions" list="editPickupInstructionOptions" placeholder="Choose or type instructions"><datalist id="editPickupInstructionOptions"><option value="Dock"><option value="Front Door"><option value="Loading Area"><option value="Reception / Front Desk"><option value="Hand to Customer"><option value="Call Upon Arrival"></datalist></div>
@@ -643,9 +645,11 @@
           <section class="edit-section">
             <h4 class="edit-section-title">Delivery</h4>
             <div class="edit-grid two-up">
-              <div class="edit-field full"><label for="editDeliveryAddress">Delivery Address</label><textarea id="editDeliveryAddress" name="delivery_address" required rows="2"></textarea></div>
+              <div class="edit-field full"><label for="editDeliveryAddress">Delivery Street Address (number, name, type)</label><textarea id="editDeliveryAddress" name="delivery_address" required rows="2"></textarea></div>
               <div class="edit-field"><label for="editDeliverySuiteFloor">Delivery Suite / Floor</label><input id="editDeliverySuiteFloor" name="delivery_suite_floor"></div>
-              <div class="edit-field"><label for="editDeliveryZip">Delivery ZIP</label><input id="editDeliveryZip" name="delivery_zip" inputmode="numeric"></div>
+              <div class="edit-field"><label for="editDeliveryCity">Delivery City</label><input id="editDeliveryCity" name="delivery_city" autocomplete="address-level2" required></div>
+              <div class="edit-field"><label for="editDeliveryState">Delivery State</label><input id="editDeliveryState" name="delivery_state" maxlength="2" placeholder="CO" required></div>
+              <div class="edit-field"><label for="editDeliveryZip">Delivery ZIP</label><input id="editDeliveryZip" name="delivery_zip" inputmode="numeric" maxlength="10" placeholder="5-digit ZIP" required></div>
               <div class="edit-field"><label for="editDeliveryContactName">Delivery Contact / Recipient</label><input id="editDeliveryContactName" name="delivery_contact_name"></div>
               <div class="edit-field"><label for="editDeliveryContactPhone">Delivery Phone</label><input id="editDeliveryContactPhone" name="delivery_contact_phone" type="tel"></div>
               <div class="edit-field full"><label for="editDeliveryInstructions">Delivery Instructions</label><input id="editDeliveryInstructions" name="delivery_instructions" list="editDeliveryInstructionOptions" placeholder="Choose or type instructions"><datalist id="editDeliveryInstructionOptions"><option value="Dock"><option value="Front Door"><option value="Loading Area"><option value="Reception / Front Desk"><option value="Hand to Customer"><option value="Call Upon Arrival"><option value="Leave at Door"></datalist></div>
