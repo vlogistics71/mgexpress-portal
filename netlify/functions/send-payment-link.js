@@ -74,6 +74,9 @@ exports.handler = async function handler(event) {
 
     const paymentState = String(quote.payment_status || "").trim().toLowerCase();
     const jobStatus = String(quote.status || "").trim().toLowerCase();
+    if (["cancelled", "canceled", "completed", "delivered"].includes(jobStatus)) {
+      return toJsonResponse(409, { error: "Cancelled or completed jobs cannot receive a payment link." });
+    }
     if (paymentState === "paid" || jobStatus === "ready_to_dispatch" || jobStatus === "ready") {
       return toJsonResponse(409, { error: "This job is already paid and ready for dispatch." });
     }
