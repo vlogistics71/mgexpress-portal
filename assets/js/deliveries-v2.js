@@ -1580,82 +1580,138 @@
     const documentButtons = documentActionButtons(delivery);
     const completeMode = isComplete(delivery);
 
+    // Keep operational notes on the order, but don't repeat pickup/delivery times from the route card.
     const notesMarkup = [
       optionalDetailsBlock("Pickup Instructions", structuredNotes.pickupInstructions, "detail-wide note-item"),
       optionalDetailsBlock("Delivery Instructions", structuredNotes.deliveryInstructions, "detail-wide note-item"),
       optionalDetailsBlock("Pickup Contact", structuredNotes.pickupContact, "note-item"),
       optionalDetailsBlock("Estimated Weight", structuredNotes.weight, "note-item"),
       optionalDetailsBlock("Pieces / Boxes", structuredNotes.pieces, "note-item"),
-      optionalDetailsBlock("Pickup Time", structuredNotes.pickupTime, "note-item"),
-      optionalDetailsBlock("Deliver By", structuredNotes.deliverBy, "note-item"),
       optionalDetailsBlock("Additional Notes", structuredNotes.other.join(" • "), "detail-wide note-item")
     ].join("");
+
+    const verifiedTotal = Number(delivery.approved_price);
+    const preliminaryTotal = Number(delivery.preliminary_quote_amount);
+    const fallbackTotal = Number(delivery.customer_charge);
+    const hasApprovedPrice = delivery.approved_price != null && Number.isFinite(verifiedTotal) && verifiedTotal > 0;
+    const hasEstimate = delivery.preliminary_quote_amount != null && Number.isFinite(preliminaryTotal) && preliminaryTotal > 0;
+    const hasFallbackPrice = Number.isFinite(fallbackTotal) && fallbackTotal > 0;
+    const visibleTotal = hasApprovedPrice ? verifiedTotal : hasEstimate ? preliminaryTotal : hasFallbackPrice ? fallbackTotal : null;
+    const priceLabel = hasApprovedPrice ? "Approved customer price" : "Estimated customer price";
+    const reviewFlag = String(delivery.internal_dispatch_notes || "");
+    const needsReview = reviewFlag.includes("CUSTOM QUOTE REQUIRED") || reviewFlag.includes("ADDRESS VERIFICATION REQUIRED") || requiresUnpricedCustomReview(delivery);
+    const reviewCopy = reviewFlag.includes("CUSTOM QUOTE REQUIRED") ? "Outside service area · Custom review needed"
+      : reviewFlag.includes("ADDRESS VERIFICATION REQUIRED") ? "Address verification needed"
+      : requiresUnpricedCustomReview(delivery) ? "Dispatch review required before payment" : "";
+    const paymentState = clean(delivery.payment_status);
+    const paymentCopy = paymentState === "paid" ? "Paid" : ["pending", "payment_sent", "sent"].includes(paymentState) ? "Payment pending" : "No payment received";
+    const routePickupTime = structuredNotes.pickupTime || (scheduledValue ? formatTimeOnly(scheduledValue) : "");
+    const routeDeliveryTime = structuredNotes.deliverBy || "";
+    const customerPhone = String(delivery.customer_phone || "").trim();
+    const customerEmail = String(delivery.customer_email || "").trim();
+    const customerPhoneLink = customerPhone
+      ? `<a class="details-contact-link" href="tel:${escapeHtml(customerPhone.replace(/[^+0-9]/g,""))}">${escapeHtml(customerPhone)}</a>`
+      : '<span class="details-muted">Not provided</span>';
+    const customerEmailLink = customerEmail
+      ? `<a class="details-contact-link" href="mailto:${encodeURIComponent(customerEmail).replace("%40","@")}">${escapeHtml(customerEmail)}</a>`
+      : '<span class="details-muted">Not provided</span>';
 
     elements.deliveryDetailsTitle.textContent = delivery.job_number || "Delivery Details";
     elements.deliveryDetailsSubtitle.textContent = `${delivery.customer_name || delivery.company_name || "Customer"} • ${getStatusLabel(delivery)}`;
     elements.deliveryDetailsBody.innerHTML = `
-      <section class="details-card">
-        <h4>Delivery</h4>
+      <section class="details-card ios-order-hero">
+        <div class="ios-hero-top">
+          <div>
+            <div class="ios-eyebrow">MG EXPRESS · ORDER</div>
+            <div class="ios-small-id">${escapeHtml(delivery.job_number || "New Delivery")}</div>
+          </div>
+          <span class="ios-status-pill">${escapeHtml(getStatusLabel(delivery))}</span>
+        </div>
+        <div class="ios-price-label">${priceLabel}</div>
+        <div class="ios-price">${visibleTotal != null ? formatMoney(visibleTotal) : "Pricing pending"}</div>
+        <div class="ios-payment-line">${paymentBadgeMarkup(delivery.payment_status)} <span>${paymentCopy}${!hasApprovedPrice ? " · Quote not yet approved" : ""}</span></div>
+        ${needsReview && reviewCopy ? `<div class="ios-review-alert">${escapeHtml(reviewCopy)}</div>` : ""}
+      </section>
+
+      <section class="details-card ios-route-card">
+        <h4>Route</h4>
+        <div class="ios-stop ios-stop-pickup">
+          <span class="ios-stop-dot"></span>
+          <div class="ios-stop-info">
+            <span class="ios-stop-label">PICKUP</span>
+            ${delivery.pickup_business_name ? `<div class="ios-stop-business">${escapeHtml(delivery.pickup_business_name)}</div>` : ""}
+            <div class="ios-stop-address">${escapeHtml(displayFullAddress(delivery, "pickup"))}</div>
+            ${routePickupTime ? `<div class="ios-stop-time">Pickup · ${escapeHtml(routePickupTime)}</div>` : ""}
+            ${[delivery.pickup_contact_name,delivery.pickup_contact_phone].filter(Boolean).length ? `<div class="ios-stop-time">Contact · ${escapeHtml([delivery.pickup_contact_name,delivery.pickup_contact_phone].filter(Boolean).join(" · "))}</div>` : ""}
+          </div>
+        </div>
+        <div class="ios-route-connector"></div>
+        <div class="ios-stop ios-stop-delivery">
+          <span class="ios-stop-dot"></span>
+          <div class="ios-stop-info">
+            <span class="ios-stop-label">DROP-OFF</span>
+            ${delivery.delivery_business_name ? `<div class="ios-stop-business">${escapeHtml(delivery.delivery_business_name)}</div>` : ""}
+            <div class="ios-stop-address">${escapeHtml(displayFullAddress(delivery, "delivery"))}</div>
+            ${routeDeliveryTime ? `<div class="ios-stop-time">Deliver by · ${escapeHtml(routeDeliveryTime)}</div>` : ""}
+            ${[delivery.delivery_contact_name,delivery.delivery_contact_phone].filter(Boolean).length ? `<div class="ios-stop-time">Contact · ${escapeHtml([delivery.delivery_contact_name,delivery.delivery_contact_phone].filter(Boolean).join(" · "))}</div>` : ""}
+          </div>
+        </div>
+        ${showReturnService ? `<div class="ios-return-route"><strong>Return service requested</strong><div>${escapeHtml(delivery.return_address || "Return address not provided")}</div></div>` : ""}
+      </section>
+
+      <section class="details-card ios-customer-card">
+        <h4>Customer</h4>
+        <div class="ios-customer-name">${escapeHtml(delivery.customer_name || delivery.company_name || "Customer")}</div>
+        ${structuredNotes.company ? `<div class="ios-secondary-line">${escapeHtml(structuredNotes.company)}</div>` : ""}
+        <div class="ios-contact-row"><span>Phone</span>${customerPhoneLink}</div>
+        <div class="ios-contact-row"><span>Email</span>${customerEmailLink}</div>
+      </section>
+
+      <section class="details-card ios-order-card">
+        <h4>Order details</h4>
         <div class="details-card-body compact-detail-grid">
-          ${detailsBlock("Job Number", delivery.job_number)}
-          ${detailsBlock("Order Source", orderSourceLabel(delivery))}
-          ${detailsBlock("Status", getStatusLabel(delivery))}
-          ${detailsBlock("Customer", delivery.customer_name || delivery.company_name || "-", "detail-wide-mobile")}
-          ${optionalDetailsBlock("Customer Email", delivery.customer_email)}
-          ${optionalDetailsBlock("Customer Phone", delivery.customer_phone)}
-          ${optionalDetailsBlock("Dispatch Review", String(delivery.internal_dispatch_notes || "").includes("CUSTOM QUOTE REQUIRED") ? "Outside service area — custom quote required" : String(delivery.internal_dispatch_notes || "").includes("ADDRESS VERIFICATION REQUIRED") ? "Address verification required" : "")}
-          ${optionalDetailsBlock("Cancellation Reason", delivery.exception_type === "service_cancellation" ? delivery.customer_visible_notes : "")}
-          ${optionalDetailsBlock("Company", structuredNotes.company)}
           ${detailsBlock("Category", getCategoryLabel(delivery.job_category))}
           ${detailsBlock("Vehicle", delivery.vehicle_type || "-")}
-          ${detailsBlock("Speed", formatDeliverySpeed(delivery.delivery_speed || delivery.service_level))}
-          ${scheduledBlocks}
+          ${optionalDetailsBlock("Pieces", structuredNotes.pieces)}
+          ${optionalDetailsBlock("Weight", structuredNotes.weight)}
+          ${optionalDetailsBlock("Driving miles", delivery.quoted_route_miles != null ? Number(delivery.quoted_route_miles).toFixed(1) + " mi" : "")}
           ${optionalDetailsBlock("Reference", delivery.reference_number)}
-          ${detailsBlock("Assigned Driver", assignedDriver)}
-          ${detailsBlock("Driver Pay", delivery.driver_pay != null && delivery.driver_pay !== "" ? formatMoney(delivery.driver_pay) : "-")}
-          ${detailsBlock(quoteTypeLabel(delivery), quotedPriceLabel(delivery))}
-          ${optionalDetailsBlock("Pickup → Delivery Driving Miles", delivery.quoted_route_miles != null ? Number(delivery.quoted_route_miles).toFixed(1) + " mi" : "")}
-          ${optionalDetailsBlock("Introductory Discount", delivery.preliminary_quote_amount != null ? "14% of delivery charge applied" : "")}
-          ${optionalDetailsBlock("Dispatch Approval", requiresUnpricedCustomReview(delivery) ? "Required before payment or dispatch" : "")}
-          ${detailsBlockMarkup("Payment", paymentBadgeMarkup(delivery.payment_status))}
-          ${optionalDetailsBlock("Created By", delivery.created_by || delivery.created_by_email)}
-          ${detailsBlock("Created", formatDateTime(delivery.created_at))}
-          ${detailsBlock("Updated", formatDateTime(delivery.updated_at || delivery.modified_at || delivery.created_at))}
+          ${scheduledBlocks}
         </div>
+        <details class="ios-more-details">
+          <summary>More order information</summary>
+          <div class="details-card-body compact-detail-grid">
+            ${detailsBlock("Order source", orderSourceLabel(delivery))}
+            ${detailsBlock("Delivery speed", formatDeliverySpeed(delivery.delivery_speed || delivery.service_level))}
+            ${optionalDetailsBlock("Discount", delivery.preliminary_quote_amount != null ? "14% introductory delivery discount" : "")}
+            ${optionalDetailsBlock("Created by", delivery.created_by || delivery.created_by_email)}
+            ${detailsBlock("Created", formatDateTime(delivery.created_at))}
+            ${detailsBlock("Updated", formatDateTime(delivery.updated_at || delivery.modified_at || delivery.created_at))}
+          </div>
+        </details>
       </section>
 
-      <section class="details-card">
-        <h4>${completeMode ? "Completion" : "Driver Status"}</h4>
+      <section class="details-card ios-driver-card">
+        <h4>${completeMode ? "Completion & driver" : "Driver"}</h4>
         <div class="details-card-body compact-detail-grid">
-          ${completeMode ? optionalDetailsBlock("Completed", formatDateTime(delivery.completed_at || delivery.delivery_photo_uploaded_at)) : ""}
-          ${completeMode ? optionalDetailsBlock("POD Recipient", delivery.pod_recipient_name) : ""}
+          ${detailsBlock("Assigned driver", assignedDriver)}
+          ${detailsBlock("Driver pay", delivery.driver_pay != null && delivery.driver_pay !== "" ? formatMoney(delivery.driver_pay) : "-")}
           ${detailsBlock("Workflow", delivery.driver_workflow_status || "-")}
           ${detailsBlock("Acceptance", delivery.driver_acceptance_status || "-")}
-        </div>
-      </section>
-
-      <section class="details-card">
-        <h4>Addresses</h4>
-        <div class="details-card-body compact-detail-grid">
-          ${detailsBlock("Pickup", displayFullAddress(delivery,"pickup"), "detail-wide")}
-          ${optionalDetailsBlock("Pickup Business", delivery.pickup_business_name, "detail-wide")}
-          ${detailsBlock("Delivery", displayFullAddress(delivery,"delivery"), "detail-wide")}
-          ${optionalDetailsBlock("Delivery Business", delivery.delivery_business_name, "detail-wide")}
-          ${optionalDetailsBlock("Pickup Contact", [delivery.pickup_contact_name, delivery.pickup_contact_phone].filter(Boolean).join(" • "), "detail-wide")}
-          ${optionalDetailsBlock("Delivery Contact", [delivery.delivery_contact_name, delivery.delivery_contact_phone].filter(Boolean).join(" • "), "detail-wide")}
-          ${showReturnService ? `${detailsBlock("Return Required", "Yes")}${detailsBlock("Return Address", delivery.return_address || "-", "detail-wide")}` : ""}
+          ${completeMode ? optionalDetailsBlock("Completed", formatDateTime(delivery.completed_at || delivery.delivery_photo_uploaded_at)) : ""}
+          ${completeMode ? optionalDetailsBlock("POD recipient", delivery.pod_recipient_name) : ""}
         </div>
       </section>
 
       <section class="details-card details-notes-card">
-        <h4>Instructions & Job Notes</h4>
+        <h4>Instructions & job notes</h4>
         <div class="details-card-body compact-detail-grid">
-          ${notesMarkup || '<div class="sheet-note">No special instructions or package notes.</div>'}
+          ${notesMarkup || '<div class="sheet-note">No additional instructions.</div>'}
         </div>
       </section>
 
       <section class="details-card">
-        <h4>Workflow Actions</h4>
+        <h4>Workflow actions</h4>
         <div class="details-actions-section">
           ${workflowButtons ? `<div class="details-action-grid">${workflowButtons}</div>` : `<div class="sheet-note">${readOnlyMode ? "Read-only completed record." : "No workflow actions available for this delivery."}</div>`}
         </div>
