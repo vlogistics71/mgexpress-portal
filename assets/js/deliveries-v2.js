@@ -567,6 +567,9 @@
   function deliverySearchText(delivery) {
     return [
       delivery.job_number,
+      orderSourceLabel(delivery),
+      delivery.request_source,
+      delivery.internal_dispatch_notes,
       delivery.customer_name,
       delivery.company_name,
       delivery.email,
