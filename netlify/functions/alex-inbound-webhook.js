@@ -124,12 +124,23 @@ async function sendAlert(kind, record) {
   if (!outcome.configured) throw new Error("RESEND_API_KEY is not configured");
 
   // Optional second channel, only when a verified personal alert number is set.
-  const phone = asPhone(process.env.MG_INBOUND_ALERT_PHONE);
+  let phone = asPhone(process.env.MG_INBOUND_ALERT_PHONE);
+  if (!phone) {
+    // Use the private server-only routing settings from Supabase. The owner's
+    // personal number must never appear in public HTML or GitHub source.
+    try {
+      const settings = await rows("inbound_call_settings?select=sms_alert_phone_e164&setting_key=eq.alex&limit=1");
+      phone = asPhone(settings[0]?.sms_alert_phone_e164);
+    } catch (error) {
+      console.error("Alex SMS recipient lookup failed", { message: error.message });
+    }
+  }
   if (phone) {
     try {
       const text = "[MG Express] " + title + ". Caller: " +
         (record.caller_phone || "Unknown") + ". Review inbound calls in dispatch.";
-      await sendTwilioSms({ to: phone, body: text });
+      const sms = await sendTwilioSms({ to: phone, body: text });
+      if (!sms.configured) console.error("Alex SMS not sent: Twilio environment is not configured.");
     } catch (error) {
       console.error("Alex inbound SMS alert failed", { message: error.message });
       // Email already succeeded; do not trigger a duplicate email retry.
