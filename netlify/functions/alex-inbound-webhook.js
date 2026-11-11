@@ -1,3 +1,4 @@
+const { notifyDispatch } = require("./_dispatch-push");
 "use strict";
 
 // Alex inbound-only Retell webhook. Records every call even if no quote is created.
@@ -202,6 +203,10 @@ exports.handler = async function (event) {
       updated_at: new Date().toISOString()
     };
     await saveCall(record);
+    if (kind === "call_started") {
+      try { await notifyDispatch("call-" + id, {title:"Incoming MG Express call",body:"Alex is answering a call. Tap to open dispatch.",url:"/inbound-calls.html",tag:"call-" + id}); }
+      catch (_) { console.error("Incoming call push could not be queued"); }
+    }
     const item = await eventRecord(id, kind);
     if (!shouldAlert(kind, record) || item.notification_sent_at) return { statusCode: 204, body: "" };
     try {
@@ -219,3 +224,4 @@ exports.handler = async function (event) {
   }
 };
 exports._test = { verifySignature, asPhone, boolField, shouldAlert, shortText };
+

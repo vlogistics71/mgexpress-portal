@@ -1,3 +1,4 @@
+const { notifyDispatch } = require("./_dispatch-push");
 const crypto = require("crypto");
 const {
   supabaseRequest,
@@ -495,6 +496,10 @@ exports.handler = async function handler(event) {
     });
 
     const quote = Array.isArray(created) ? created[0] : created;
+    if (requestSource === "website" && quote?.id) {
+      try { await notifyDispatch("quote-" + quote.id, {title:"New online quote",body:"A customer submitted a quote. Open dispatch to review.",url:"/pending-approval.html",tag:"quote-" + quote.id}); }
+      catch (_) { console.error("Online quote push could not be queued"); }
+    }
 
     // Dispatch creates Checkout later with "Approve & Send Payment Link".
     const checkoutUrl = "";
@@ -678,3 +683,4 @@ exports.handler = async function handler(event) {
     }, origin);
   }
 };
+

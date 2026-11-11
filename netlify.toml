@@ -143,3 +143,7 @@
   from = "/api/send-document-package"
   to = "/.netlify/functions/send-document-package"
   status = 200
+
+
+[functions."dispatch-push-retry"]
+  schedule = "* * * * *"
