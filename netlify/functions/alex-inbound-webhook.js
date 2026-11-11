@@ -82,16 +82,12 @@ async function markNotified(id, kind, error) {
   });
 }
 function shouldAlert(kind, record) {
-  return kind === "call_started" || kind === "call_ended" ||
-    kind === "transfer_started" || kind === "transfer_cancelled" ||
-    (kind === "call_analyzed" && record.requested_human && record.human_request_known);
+  // Keep lifecycle events in dispatch, but email only the completed analysis.
+  return kind === "call_analyzed";
 }
 function alertTitle(kind, call) {
-  if (kind === "call_started") return "Incoming call from " + (call.caller_phone || "Unknown number");
-  if (kind === "call_ended") return "Call ended: " + (call.caller_phone || "Unknown number");
-  if (kind === "transfer_started") return "LIVE PERSON REQUEST: transfer initiated";
-  if (kind === "transfer_cancelled") return "URGENT: live transfer did not connect";
-  return "Follow-up needed: caller requested a real person";
+  return "Call summary: " + (call.caller_phone || "Unknown number") +
+    (call.requested_human && call.transfer_state !== "bridged" ? " — follow-up needed" : "");
 }
 async function sendAlert(kind, record) {
   const email = String(process.env.MG_INBOUND_ALERT_EMAIL || "info@migenteexpress.com").trim();
@@ -113,6 +109,7 @@ async function sendAlert(kind, record) {
     "\n\nReview: https://portal.migenteexpress.com/inbound-calls.html\n" +
     "Follow up if the caller did not complete an order, disconnected, or requested a live person.";
   const outcome = await sendResendEmail({
+    idempotencyKey: "alex-call-summary-" + record.provider_call_id,
     from: "MG Express Calls <quotes@notify.migenteexpress.com>",
     to: [email],
     subject: "[MG Express Calls] " + title,
