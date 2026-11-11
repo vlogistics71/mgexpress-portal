@@ -233,7 +233,7 @@ async function createStripeCheckoutSession({ quote, amountCents, siteUrl, succes
   return json;
 }
 
-async function sendResendEmail({ to, subject, html, text, from, attachments }) {
+async function sendResendEmail({ to, subject, html, text, from, attachments, idempotencyKey }) {
   const apiKey = String(process.env.RESEND_API_KEY || "").trim();
   if (!apiKey) {
     return { configured: false };
@@ -243,7 +243,8 @@ async function sendResendEmail({ to, subject, html, text, from, attachments }) {
     method: "POST",
     headers: {
       Authorization: `Bearer ${apiKey}`,
-      "Content-Type": "application/json"
+      "Content-Type": "application/json",
+      ...(idempotencyKey ? { "Idempotency-Key": idempotencyKey } : {})
     },
     body: JSON.stringify({
       from: String(from || process.env.RESEND_FROM_EMAIL || "MG Express <billing@mignexpress.com>"),
