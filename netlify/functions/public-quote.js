@@ -366,10 +366,21 @@ exports.handler = async function handler(event) {
     }
     const packageWeight = clean(input.package_weight, 100) || "under_50_lbs";
     const packageFees = calculatePackageFees(pieceCount, packageWeight);
+    const scheduledDate = clean(input.scheduled_date || input.date, 20);
+    if (scheduledDate) {
+      const parts = new Intl.DateTimeFormat('en-US', {timeZone:'America/Denver',year:'numeric',month:'2-digit',day:'2-digit'}).formatToParts(new Date());
+      const part = type => parts.find(p => p.type === type).value;
+      const today = part('year') + '-' + part('month') + '-' + part('day');
+      const parsed = /^\d{4}-\d{2}-\d{2}$/.test(scheduledDate) ? new Date(scheduledDate + 'T12:00:00Z') : null;
+      if (!parsed || Number.isNaN(parsed.getTime()) || parsed.toISOString().slice(0,10) !== scheduledDate || scheduledDate < today) {
+        return response(400, {error:'Choose today or a future valid pickup date.'}, origin);
+      }
+    }
     const preferredPickupTime = normalizePreferredTime(input.preferred_pickup_time);
     const preferredDeliveryTime = normalizePreferredTime(input.preferred_delivery_time);
     const deliverySpeed = normalizeToken(input.delivery_speed) || deliverySpeedFromWindow(preferredPickupTime, preferredDeliveryTime);
     const instructionParts = [
+      scheduledDate ? `Requested pickup date: ${scheduledDate}` : "",
       company ? `Company: ${company}` : "",
       pickupBusinessName && deliveryType?.startsWith("business_to_") ? `Pickup business: ${pickupBusinessName}` : "",
       deliveryBusinessName && deliveryType?.endsWith("_to_business") ? `Delivery business: ${deliveryBusinessName}` : "",
@@ -485,6 +496,7 @@ exports.handler = async function handler(event) {
       return_suite_floor: returnRequired && returnLocationType === "different_location" ? nullable(input.return_suite_floor, 120) : null,
       return_zip: returnRequired && returnLocationType === "different_location" ? nullable(input.return_zip, 20) : null,
 
+      scheduled_date: scheduledDate || null,
       request_source: requestSource, // Store voice requests as phone calls, not website orders.
       status: "new"
     };
@@ -562,7 +574,7 @@ exports.handler = async function handler(event) {
                       ${routeMiles != null ? ' · ' + show(routeMiles) + ' mi' : ''}
                       ${returnRequired ? ' · Return requested' : ''}
                     </p>
-                    ${input.date ? '<p style="font-size:13px;color:#6b6b70;margin:8px 0 0">Date: ' + show(input.date) + '</p>' : ''}
+                    ${scheduledDate ? '<p style="font-size:13px;color:#6b6b70;margin:8px 0 0">Date: ' + show(scheduledDate) + '</p>' : ''}
                     ${clean(input.reference_number,160) ? '<p style="font-size:13px;color:#6b6b70;margin:8px 0 0">Ref: ' + show(input.reference_number) + '</p>' : ''}
                   </div>
                   <div style="background:#fff;border:1px solid #e4e4e9;border-radius:18px;padding:18px 20px;margin-bottom:12px">
@@ -683,4 +695,5 @@ exports.handler = async function handler(event) {
     }, origin);
   }
 };
+
 
