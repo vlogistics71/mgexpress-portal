@@ -2,6 +2,7 @@
   'use strict';
   const box=document.createElement('section');
   box.id='dispatch-push-panel';
+  box.hidden=true;
   box.style.cssText='background:#fff;border:1px solid #dce3da;border-radius:18px;padding:16px;margin:0 0 18px;color:#1c2821;font:inherit';
   box.innerHTML='<strong>Phone notifications</strong><p style="margin:6px 0 12px">Get alerts for incoming calls and new online quotes.</p><div style="display:flex;gap:8px;flex-wrap:wrap"><button type="button" data-enable>Enable notifications</button><button type="button" data-test hidden>Send test</button><button type="button" data-disable hidden>Turn off on this device</button></div><p data-status role="status" style="font-size:14px;margin:10px 0 0">Notifications are off on this device.</p>';
   document.querySelector('main')?.prepend(box);
