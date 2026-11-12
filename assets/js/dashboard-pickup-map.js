@@ -15,7 +15,7 @@
   let jobs = [];
   let revision = 0;
   let firstFit = true;
-  let markerLayer = null;
+  let markers = [];
   let map = null;
   let mapUsable = false;
   const failedLookupKeys = new Set();
@@ -179,26 +179,41 @@
       if (!grouped.has(coordKey)) grouped.set(coordKey, {point, jobs: [], address: pickupAddress(job)});
       grouped.get(coordKey).jobs.push(job);
     });
-    markerLayer.clearLayers();
-    const bounds = [];
+    markers.forEach(marker => marker.setMap(null));
+    markers = [];
+    const bounds = new google.maps.LatLngBounds();
     grouped.forEach(({point, jobs: localJobs, address}) => {
-      bounds.push(point);
+      const position = {lat: point[0], lng: point[1]};
+      bounds.extend(position);
       const priorities = ["live", "ready", "pending", "completed", "cancelled"];
       const kind = priorities.find(k => localJobs.some(job => statusKind(job) === k)) || "pending";
-      const icon = window.L.divIcon({
-        className: "mg-map-marker-icon",
-        html: '<span class="mg-map-pin mg-map-pin-' + kind + '"><b class="mg-map-pin-count">' + localJobs.length + '</b></span>',
-        iconSize: [40, 44], iconAnchor: [20, 42], popupAnchor: [0, -35]
+      const color = ({live:"#3b82f6",ready:"#22c55e",pending:"#f4bd4f",completed:"#64748b",cancelled:"#ef4444"})[kind] || "#f4bd4f";
+      const svg = '<svg xmlns="http://www.w3.org/2000/svg" width="44" height="52" viewBox="0 0 44 52">'
+        + '<path d="M22 2C10.4 2 1 11.2 1 22.5c0 15.4 21 28 21 28s21-12.6 21-28C43 11.2 33.6 2 22 2z" fill="' + color + '" stroke="white" stroke-width="3"/>'
+        + '<circle cx="22" cy="22" r="13" fill="white"/><text x="22" y="27" text-anchor="middle" font-family="Arial,sans-serif" font-size="14" font-weight="700" fill="#123b2e">' + localJobs.length + '</text></svg>';
+      const marker = new google.maps.Marker({
+        map, position, title: localJobs.length + " pickup job" + (localJobs.length === 1 ? "" : "s"),
+        icon: {url: "data:image/svg+xml;charset=UTF-8," + encodeURIComponent(svg), scaledSize: new google.maps.Size(44,52), anchor: new google.maps.Point(22,50)}
       });
-      window.L.marker(point, {icon, keyboard:true, title: localJobs.length + " pickup job" + (localJobs.length === 1 ? "" : "s")})
-        .bindPopup(popupMarkup(localJobs, address), {maxWidth: 300, minWidth: 240})
-        .addTo(markerLayer);
+      marker.addListener("click", () => {
+        infoWindow.setContent(popupMarkup(localJobs, address));
+        infoWindow.open({map, anchor: marker});
+      });
+      markers.push(marker);
     });
     updateSummary(visible, located, unlocated, waiting);
-    if ((options.recenter || firstFit) && bounds.length) {
+    if ((options.recenter || firstFit) && grouped.size) {
       firstFit = false;
-      if (bounds.length === 1) map.setView(bounds[0], 12);
-      else map.fitBounds(bounds, {padding: [30, 30], maxZoom: 13});
+      if (grouped.size === 1) {
+        const only = [...grouped.values()][0].point;
+        map.setCenter({lat: only[0], lng: only[1]});
+        map.setZoom(12);
+      } else {
+        map.fitBounds(bounds, 30);
+        google.maps.event.addListenerOnce(map, "idle", () => {
+          if (map.getZoom() > 13) map.setZoom(13);
+        });
+      }
     }
   }
 
@@ -240,26 +255,43 @@
     if (current === revision) showVisibleJobs();
   }
 
-  if (window.L && geoKey) {
-    map = window.L.map(container, {zoomControl: false, scrollWheelZoom: true, doubleClickZoom: true, touchZoom: true, tap: true, preferCanvas: true})
-      .setView([39.7392, -104.9903], 10);
-    window.L.control.zoom({position: "topright"}).addTo(map);
-    // OSM Bright keeps the light background but draws roads and street labels
-    // with stronger contrast than Positron. Use 2x tiles on high-density screens
-    // so labels and road edges stay sharp when zooming in.
-    const tilePath = window.L.Browser?.retina
-      ? "https://maps.geoapify.com/v1/tile/osm-bright/{z}/{x}/{y}@2x.png?apiKey={apiKey}"
-      : "https://maps.geoapify.com/v1/tile/osm-bright/{z}/{x}/{y}.png?apiKey={apiKey}";
-    window.L.tileLayer(tilePath, {
-      apiKey: geoKey, maxZoom: 20,
-      attribution: 'Powered by <a href="https://www.geoapify.com/">Geoapify</a> | © OpenMapTiles · © <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-    }).addTo(map);
-    markerLayer = window.L.layerGroup().addTo(map);
-    mapUsable = true;
-    window.setTimeout(() => map.invalidateSize(), 60);
-    statusNode.textContent = "Loading pickup locations…";
+  let infoWindow;
+  function loadGoogleMaps() {
+    return new Promise((resolve, reject) => {
+      if (window.google?.maps?.Map) return resolve();
+      const apiKey = String(window.MG_GOOGLE_MAPS_API_KEY || "").trim();
+      if (!apiKey) return reject(new Error("Google Maps key is missing."));
+      const callbackName = "__mgPickupGoogleMapsReady";
+      window[callbackName] = () => resolve();
+      const script = document.createElement("script");
+      script.src = "https://maps.googleapis.com/maps/api/js?key=" + encodeURIComponent(apiKey)
+        + "&v=weekly&callback=" + callbackName;
+      script.async = true;
+      script.onerror = () => reject(new Error("Google Maps could not load."));
+      document.head.appendChild(script);
+    });
+  }
+
+  if (geoKey) {
+    statusNode.textContent = "Loading Google Maps…";
+    loadGoogleMaps().then(() => {
+      map = new google.maps.Map(container, {
+        center: {lat:39.7392, lng:-104.9903}, zoom:10,
+        mapTypeControl:false, streetViewControl:false, fullscreenControl:false,
+        zoomControl:true, gestureHandling:"greedy"
+      });
+      infoWindow = new google.maps.InfoWindow();
+      mapUsable = true;
+      window.setTimeout(() => google.maps.event.trigger(map, "resize"), 80);
+      statusNode.textContent = "Loading pickup locations…";
+      showVisibleJobs();
+    }).catch(error => {
+      console.error("[MG Pickup Map] Google Maps failed to load:", String(error?.message || error));
+      statusNode.textContent = "Unable to load Google Maps. Check the API key, billing, and Maps JavaScript API access.";
+      countNode.textContent = "Pickup map unavailable";
+    });
   } else {
-    statusNode.textContent = "Unable to load the map. Check the mapping service and refresh.";
+    statusNode.textContent = "Map geocoding is not configured. Contact dispatch setup.";
     countNode.textContent = "Pickup map unavailable";
   }
 
@@ -269,7 +301,7 @@
   resetButton.addEventListener("click", () => {
     if (!mapUsable) return;
     if (selectedJobs().some(job => pointForJob(job))) showVisibleJobs({recenter:true});
-    else map.setView([39.7392, -104.9903], 10);
+    else { map.setCenter({lat:39.7392, lng:-104.9903}); map.setZoom(10); }
   });
 
   window.MGDispatchPickupMap = {update, recenter: () => showVisibleJobs({recenter:true})};
