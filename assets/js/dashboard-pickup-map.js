@@ -259,16 +259,22 @@
   function loadGoogleMaps() {
     return new Promise((resolve, reject) => {
       if (window.google?.maps?.Map) return resolve();
-      const apiKey = String(window.MG_GOOGLE_MAPS_API_KEY || "").trim();
-      if (!apiKey) return reject(new Error("Google Maps key is missing."));
-      const callbackName = "__mgPickupGoogleMapsReady";
-      window[callbackName] = () => resolve();
-      const script = document.createElement("script");
-      script.src = "https://maps.googleapis.com/maps/api/js?key=" + encodeURIComponent(apiKey)
-        + "&v=weekly&callback=" + callbackName;
-      script.async = true;
-      script.onerror = () => reject(new Error("Google Maps could not load."));
-      document.head.appendChild(script);
+      fetch("/.netlify/functions/google-maps-key", {credentials:"same-origin"})
+        .then(response => {
+          if (!response.ok) throw new Error("Google Maps key is not configured in Netlify.");
+          return response.json();
+        })
+        .then(({apiKey}) => {
+          if (!apiKey) throw new Error("Google Maps key is missing.");
+          const callbackName = "__mgPickupGoogleMapsReady";
+          window[callbackName] = () => resolve();
+          const script = document.createElement("script");
+          script.src = "https://maps.googleapis.com/maps/api/js?key=" + encodeURIComponent(apiKey)
+            + "&v=weekly&callback=" + callbackName;
+          script.async = true;
+          script.onerror = () => reject(new Error("Google Maps could not load."));
+          document.head.appendChild(script);
+        }).catch(reject);
     });
   }
 
