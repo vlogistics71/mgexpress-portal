@@ -1,6 +1,7 @@
 (function () {
   "use strict";
   window.MG_GEOAPIFY_API_KEY = "34d895e9c6cd4d1faf0692f758aac8ac";
+  window.MG_GOOGLE_MAPS_API_KEY = "AIzaSyAWN3WDHMs9UKf3mwttsBj0S29BvTl7UJg";
   const SUPABASE_URL = "https://dczlucwfjayymlwbzzdi.supabase.co";
   const SUPABASE_PUBLISHABLE_KEY = "sb_publishable_kcv_a78ZyUxMo2neKUANdw_XN7eAMpI";
   if (!window.supabase) { console.error("Supabase library is missing. Load @supabase/supabase-js before config.js."); return; }
