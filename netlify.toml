@@ -146,4 +146,6 @@
 
 
 [functions."dispatch-push-retry"]
-  schedule = "* * * * *"
+  # Retry recent dispatch push notifications every 5 minutes instead of every minute.
+  # New events are still delivered immediately by the request flow; this job is fallback only.
+  schedule = "*/5 * * * *"
