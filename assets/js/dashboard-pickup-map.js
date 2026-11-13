@@ -310,5 +310,14 @@
     else { map.setCenter({lat:39.7392, lng:-104.9903}); map.setZoom(10); }
   });
 
-  window.MGDispatchPickupMap = {update, recenter: () => showVisibleJobs({recenter:true})};
+  window.MGDispatchPickupMap = {
+    update,
+    recenter: () => showVisibleJobs({recenter:true}),
+    resize: () => {
+      if (!mapUsable || !map || !window.google?.maps) return;
+      const currentCenter = map.getCenter();
+      google.maps.event.trigger(map, "resize");
+      if (currentCenter) map.setCenter(currentCenter);
+    }
+  };
 })();
