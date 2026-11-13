@@ -1,6 +1,9 @@
 /* MG Express Dispatch — shared compact mobile workspace, November 2026.
    Applied only to named dispatch pages via dispatch-menu.js.
    Keeps navigation / forms intact and scrolls long data lists within the viewport. */
+.mg-team-toggle {display:none}
+body.mg-compact-screen > main[hidden] {display:none!important}
+
 @media screen and (max-width:720px) {
   body.mg-compact-screen {
     height:100dvh;
@@ -592,6 +595,9 @@
     min-height:25px;
   }
   body.mg-compact-team > main .mg-team-toggle {
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
     float:right;
     min-height:28px;
     margin-top:-4px;
