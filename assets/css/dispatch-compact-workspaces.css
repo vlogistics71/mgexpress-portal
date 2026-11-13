@@ -754,6 +754,292 @@ body.mg-compact-screen > main[hidden] {display:none!important}
     border-radius:11px;
   }
 
+  /* Driver Applications: filters remain handy while applications scroll. */
+  body.mg-compact-driver-applications > main > .toolbar {
+    display:grid;
+    grid-template-columns:minmax(0,1fr) auto;
+    gap:7px;
+    align-items:center;
+  }
+  body.mg-compact-driver-applications > main > .toolbar input {
+    min-width:0;
+    width:100%;
+    height:40px;
+    font-size:13px;
+  }
+  body.mg-compact-driver-applications > main > .toolbar .btn {
+    min-height:40px;
+    padding:7px 10px;
+    font-size:12px;
+  }
+  body.mg-compact-driver-applications > main > .filters {
+    display:flex;
+    flex:0 0 auto;
+    flex-wrap:nowrap;
+    gap:5px;
+    overflow-x:auto;
+    overscroll-behavior-x:contain;
+  }
+  body.mg-compact-driver-applications > main > .filters .filter {
+    flex:0 0 auto;
+    min-height:32px;
+    padding:5px 9px;
+    font-size:11px;
+    white-space:nowrap;
+  }
+  body.mg-compact-driver-applications > main > .count {
+    flex:0 0 auto;
+    margin:0;
+    font-size:11px;
+  }
+  body.mg-compact-driver-applications > main > #grid {
+    flex:1 1 0;
+    min-height:0;
+    overflow-y:auto;
+    overscroll-behavior:contain;
+    grid-auto-rows:max-content;
+    gap:7px;
+  }
+  body.mg-compact-driver-applications > main .app-summary {padding:10px}
+  body.mg-compact-driver-applications > main .app-details {padding:8px 10px}
+
+  /* Legacy active jobs view, reached from old links. */
+  body.mg-compact-jobs > main > .filters {
+    display:grid;
+    grid-template-columns:minmax(0,1fr);
+    padding:8px;
+    border-radius:12px;
+  }
+  body.mg-compact-jobs > main .filter-grid {
+    display:grid;
+    grid-template-columns:minmax(0,1.2fr) minmax(0,.8fr);
+    gap:6px;
+  }
+  body.mg-compact-jobs > main .filter-grid .field {min-width:0}
+  body.mg-compact-jobs > main .filter-grid .refresh-button {
+    grid-column:1/-1;
+    min-height:30px;
+    padding:5px 9px;
+    width:auto;
+    justify-self:end;
+    font-size:11px;
+  }
+  body.mg-compact-jobs > main > .jobs-list {
+    flex:1 1 0;
+    min-height:0;
+    overflow-y:auto;
+    overscroll-behavior:contain;
+    display:grid;
+    align-content:start;
+    grid-auto-rows:max-content;
+    gap:7px;
+    padding:3px;
+  }
+  body.mg-compact-jobs > main .create-button {min-height:38px;padding:7px 9px;font-size:11px}
+
+  /* Customer record and customer details: compact overview and inner records. */
+  body.mg-compact-customer-record > main.wrap {
+    display:flex;
+    flex-direction:column;
+    gap:7px;
+  }
+  body.mg-compact-customer-record > main.wrap > a.back {
+    flex:0 0 auto;
+    margin:0;
+    min-height:32px;
+    padding:6px;
+    font-size:13px;
+  }
+  body.mg-compact-customer-record > main.wrap > #page {
+    flex:1 1 0;
+    min-height:0;
+    overflow-y:auto;
+    overscroll-behavior:contain;
+  }
+  body.mg-compact-customer-record > main .grid {gap:8px}
+  body.mg-compact-customer-record > main .card {padding:11px;border-radius:12px}
+  body.mg-compact-customer-record > main .jobs {gap:6px}
+  body.mg-compact-customer-record > main .job {padding:9px;gap:6px;border-radius:10px}
+  body.mg-compact-customer-details > main.container > a.back-button {
+    flex:0 0 auto;
+    margin:0;
+    width:max-content;
+    min-height:34px;
+    padding:6px 10px;
+    border-radius:10px;
+    font-size:12px;
+  }
+  body.mg-compact-customer-details > main.container > #customerPage:not(.hidden) {
+    flex:1 1 0;
+    min-height:0;
+    display:flex;
+    flex-direction:column;
+    gap:8px;
+    overflow:hidden;
+  }
+  body.mg-compact-customer-details > main .customer-heading {
+    display:flex;
+    flex:0 0 auto;
+    flex-direction:row;
+    align-items:center;
+    justify-content:space-between;
+    margin:0;
+    gap:8px;
+  }
+  body.mg-compact-customer-details > main .customer-heading .eyebrow,
+  body.mg-compact-customer-details > main .customer-email {display:none}
+  body.mg-compact-customer-details > main .customer-heading h1 {
+    font-size:20px;
+    margin:0;
+    overflow:hidden;
+    text-overflow:ellipsis;
+    white-space:nowrap;
+  }
+  body.mg-compact-customer-details > main .action-grid {
+    flex:0 0 auto;
+    display:grid;
+    grid-template-columns:repeat(2,minmax(0,1fr));
+    gap:6px;
+    margin:0;
+  }
+  body.mg-compact-customer-details > main .action-grid a {
+    min-height:36px;
+    padding:7px 9px;
+    font-size:11px;
+  }
+  body.mg-compact-customer-details > main #customerPage > .stats {
+    flex:0 0 auto;
+    display:grid;
+    grid-template-columns:repeat(3,minmax(0,1fr));
+    gap:6px;
+    margin:0;
+  }
+  body.mg-compact-customer-details > main #customerPage > .stats .stat-card {
+    min-width:0;
+    min-height:58px;
+    padding:7px;
+    border-radius:11px;
+  }
+  body.mg-compact-customer-details > main #customerPage > .stats .stat-number {font-size:24px}
+  body.mg-compact-customer-details > main #customerPage > .stats .stat-label {font-size:10px}
+  body.mg-compact-customer-details > main .page-grid {
+    flex:1 1 0;
+    min-height:0;
+    overflow-y:auto;
+    display:grid;
+    grid-template-columns:1fr;
+    grid-auto-rows:max-content;
+    gap:9px;
+    overscroll-behavior:contain;
+  }
+  body.mg-compact-customer-details > main .page-grid .stack {gap:8px}
+  body.mg-compact-customer-details > main .page-grid .panel {
+    margin:0;
+    padding:10px;
+    border-radius:12px;
+  }
+
+  /* Incoming Calls: independent one-screen work queue with native top bar. */
+  body.mg-compact-inbound-calls {
+    height:100dvh;
+    min-height:100dvh;
+    display:flex;
+    flex-direction:column;
+    overflow:hidden;
+  }
+  body.mg-compact-inbound-calls > header {
+    flex:0 0 auto;
+    padding:9px 12px;
+  }
+  body.mg-compact-inbound-calls > header .head {
+    flex-wrap:nowrap;
+    gap:8px;
+  }
+  body.mg-compact-inbound-calls > header strong {font-size:clamp(16px,4.2vw,19px)}
+  body.mg-compact-inbound-calls > header nav {gap:5px;flex-wrap:nowrap}
+  body.mg-compact-inbound-calls > header nav a {
+    padding:6px;
+    font-size:10px;
+    line-height:1.2;
+    white-space:nowrap;
+  }
+  body.mg-compact-inbound-calls > main {
+    flex:1 1 0;
+    min-height:0;
+    width:100%;
+    max-width:1100px;
+    padding:9px 12px 12px;
+    margin:0 auto;
+    display:flex;
+    flex-direction:column;
+    gap:8px;
+    overflow:hidden;
+  }
+  body.mg-compact-inbound-calls > main h1 {
+    flex:0 0 auto;
+    margin:0;
+    font-size:20px;
+    line-height:1.15;
+  }
+  body.mg-compact-inbound-calls > main .intro {display:none}
+  body.mg-compact-inbound-calls > main > .stats {
+    flex:0 0 auto;
+    display:grid;
+    grid-template-columns:repeat(3,minmax(0,1fr));
+    gap:6px;
+    margin:0;
+  }
+  body.mg-compact-inbound-calls > main .stat {
+    min-width:0;
+    min-height:59px;
+    grid-column:auto;
+    padding:8px;
+    font-size:10px;
+    line-height:1.15;
+  }
+  body.mg-compact-inbound-calls > main .stat b {font-size:23px;line-height:1.1}
+  body.mg-compact-inbound-calls > main .controls {
+    display:grid;
+    grid-template-columns:minmax(0,1fr) minmax(0,.75fr) auto;
+    align-items:center;
+    gap:6px;
+    margin:0;
+  }
+  body.mg-compact-inbound-calls > main .controls input,
+  body.mg-compact-inbound-calls > main .controls select {
+    width:100%;
+    min-width:0;
+    min-height:37px;
+    height:37px;
+    margin:0;
+    padding:5px 7px;
+    font-size:12px;
+    flex:auto;
+  }
+  body.mg-compact-inbound-calls > main .controls button {
+    min-height:37px;
+    padding:5px 7px;
+    font-size:11px;
+    white-space:nowrap;
+  }
+  body.mg-compact-inbound-calls > main #message {
+    flex:0 0 auto;
+    margin:0;
+    font-size:11px;
+  }
+  body.mg-compact-inbound-calls > main > #cards {
+    flex:1 1 0;
+    min-height:0;
+    display:grid;
+    grid-auto-rows:max-content;
+    align-content:start;
+    gap:7px;
+    padding:0 2px 7px;
+    overflow-y:auto;
+    overscroll-behavior:contain;
+  }
+  body.mg-compact-inbound-calls > main .card {border-radius:11px}
+  body.mg-compact-inbound-calls > main > .note {display:none}
   /* Any data-heavy editor modal remains independently scrollable. */
   body.mg-compact-screen .modal-backdrop,
   body.mg-compact-screen .customer-modal-overlay,
