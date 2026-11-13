@@ -8,210 +8,256 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
   <style>
-    * {
-      box-sizing: border-box;
+    * { box-sizing: border-box; }
+    :root {
+      --dark: #064f3b;
+      --green: #087455;
+      --ink: #202824;
+      --muted: #68746f;
+      --danger: #9b2929;
     }
-
+    html { min-height: 100%; }
     body {
       margin: 0;
       min-height: 100vh;
+      min-height: 100dvh;
+      display: grid;
+      place-items: center;
+      padding: 32px 18px;
       font-family: Arial, Helvetica, sans-serif;
-      background: #f3f8f6;
-      color: #17221e;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 24px;
+      color: var(--ink);
+      background-color: #263c34;
+      background-image:
+        linear-gradient(rgba(13, 27, 22, .22), rgba(13, 27, 22, .30)),
+        url("https://migenteexpress.com/assets/mg-express-night-mural-team.webp");
+      background-position: center;
+      background-size: cover;
+      background-repeat: no-repeat;
+      background-attachment: fixed;
     }
-
     .login-card {
-      width: 100%;
-      max-width: 520px;
-      background: white;
-      border: 1px solid #dfe8e4;
-      border-radius: 24px;
-      padding: 34px 28px;
-      box-shadow: 0 12px 35px rgba(0,0,0,.08);
+      width: min(70vw, 300px);
+      padding: 10px 16px 11px;
+      background: #fff;
+      border-radius: 23px;
+      box-shadow: 0 20px 65px rgba(0, 0, 0, .24);
     }
-
-    .brand {
-      color: #064f3b;
-      font-size: 28px;
-      font-weight: 900;
-      line-height: 1.05;
-      margin-bottom: 16px;
+    .logo-wrap {
+      display: flex;
+      justify-content: center;
+      margin: 0 0 4px;
     }
-
-    .brand span {
-      color: #ff665c;
+    .logo {
+      display: block;
+      width: 118px;
+      height: auto;
+      max-height: 96px;
+      object-fit: contain;
     }
-
-    .subtitle {
-      color: #66736e;
-      font-size: 18px;
-      margin-bottom: 25px;
+    .portal-label {
+      margin: 0 0 6px;
+      color: var(--dark);
+      font-size: 11px;
+      letter-spacing: .18em;
+      text-transform: uppercase;
+      font-weight: 800;
+      text-align: center;
     }
-
     h1 {
-      font-size: 42px;
-      margin: 0 0 25px;
+      margin: 0 0 4px;
+      font-size: 24px;
+      letter-spacing: -.03em;
+      font-weight: 700;
     }
-
+    .subtitle {
+      margin: 0 0 8px;
+      font-size: 13px;
+      line-height: 1.4;
+      color: var(--muted);
+    }
     label {
       display: block;
-      font-weight: 800;
-      margin: 17px 0 7px;
+      margin: 0 0 4px;
+      font-size: 16px;
+      font-weight: 500;
     }
-
     input {
+      display: block;
       width: 100%;
-      min-height: 56px;
-      border: 1px solid #ccd8d3;
-      border-radius: 13px;
-      padding: 13px 15px;
-      font-size: 17px;
+      min-width: 0;
+      height: 44px;
+      padding: 10px 12px;
+      border: 1px solid #cdd4d4;
+      border-radius: 7px;
+      background: #fff;
+      color: var(--ink);
+      font: inherit;
+      font-size: 16px;
       outline: none;
     }
-
     input:focus {
-      border-color: #087455;
-      box-shadow: 0 0 0 3px rgba(8,116,85,.12);
+      border-color: var(--green);
+      box-shadow: 0 0 0 3px rgba(8, 116, 85, .14);
     }
-
-    button {
-      width: 100%;
-      min-height: 56px;
-      margin-top: 24px;
-      border: 0;
-      border-radius: 13px;
-      background: #087455;
-      color: white;
+    .field { margin-bottom: 8px; }
+    button { font: inherit; cursor: pointer; }
+    button:disabled { opacity: .65; cursor: default; }
+    .primary-button {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 45px;
+      min-width: 112px;
+      max-width: 100%;
+      margin-top: 2px;
+      padding: 8px 14px;
+      border: 1.5px solid var(--green);
+      border-radius: 10px;
+      background: #fff;
+      color: var(--green);
       font-size: 18px;
-      font-weight: 800;
-      cursor: pointer;
+      font-weight: 500;
+      transition: background .15s ease, color .15s ease;
     }
-
-    button:disabled {
-      opacity: .65;
+    .primary-button:hover,
+    .primary-button:focus-visible {
+      background: var(--green);
+      color: #fff;
     }
-
     .text-button {
-      min-height: auto;
-      margin-top: 14px;
-      padding: 6px;
+      display: block;
+      width: fit-content;
+      margin: 8px 0 0;
+      padding: 5px 0;
+      border: 0;
       background: transparent;
-      color: #087455;
-      font-size: 15px;
+      color: var(--green);
+      font-size: 12px;
       text-decoration: underline;
+      font-weight: 600;
     }
-
-    .form-copy {
-      color: #66736e;
-      line-height: 1.5;
-      margin-bottom: 12px;
-    }
-
-    .back-button {
+    .secondary-button {
+      display: block;
+      max-width: 100%;
+      min-height: 38px;
+      margin-top: 9px;
+      padding: 7px 11px;
+      border: 1px solid #cbded5;
+      border-radius: 9px;
       background: #edf7f3;
-      color: #06543e;
-      margin-top: 10px;
+      color: var(--dark);
+      font-size: 13px;
+      font-weight: 700;
     }
-
+    .form-copy, .mfa-copy {
+      margin: 0 0 12px;
+      color: var(--muted);
+      line-height: 1.45;
+      font-size: 13px;
+    }
     .message {
       display: none;
-      margin-top: 18px;
-      padding: 13px;
-      border-radius: 12px;
-      font-size: 15px;
+      margin-top: 12px;
+      padding: 10px;
+      border-radius: 9px;
+      font-size: 12px;
+      line-height: 1.45;
+      overflow-wrap: anywhere;
     }
-
-    .error {
-      display: block;
-      background: #fff0f0;
-      color: #9b2929;
-    }
-
-    .info {
-      display: block;
-      background: #edf7f3;
-      color: #06543e;
-    }
-
+    .error { display: block; background: #fff0f0; color: var(--danger); }
+    .info { display: block; background: #edf7f3; color: var(--dark); }
     .hidden { display: none; }
-
-    .mfa-copy {
-      color: #66736e;
-      line-height: 1.5;
-      margin-bottom: 10px;
-    }
-
     .help {
-      color: #68756f;
+      margin: 8px 0 0;
+      color: var(--muted);
       text-align: center;
-      margin-top: 22px;
-      line-height: 1.5;
+      line-height: 1.45;
+      font-size: 12px;
+    }
+    @media (max-width: 600px) {
+      body {
+        background-image:
+          linear-gradient(rgba(13, 27, 22, .20), rgba(13, 27, 22, .29)),
+          url("https://migenteexpress.com/assets/field-photo-01-v2.jpg");
+        background-position: center center;
+        background-attachment: scroll;
+      }
+      .login-card {
+        width: min(65vw, 265px);
+        padding: 8px 14px 9px;
+      }
+      .logo { width: 106px; }
+    }
+    @media (max-height: 640px) {
+      body { padding-top: 18px; padding-bottom: 18px; }
+      .login-card { padding-top: 10px; padding-bottom: 11px; }
+      .logo { width: 106px; }
+      .portal-label { margin-bottom: 6px; }
+      .subtitle { margin-bottom: 8px; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .primary-button { transition: none; }
     }
   </style>
 </head>
 
+
 <body>
   <main class="login-card">
-    <div class="brand">MG EXPRESS <span>PORTAL</span></div>
-    <div class="subtitle">Secure customer, driver and dispatch access</div>
-
-    <h1>Sign in</h1>
+    <div class="logo-wrap">
+      <img class="logo" src="https://migenteexpress.com/assets/mg-express-logo-2026.jpg" alt="MG Express">
+    </div>
+    <p class="portal-label">Dispatch Portal</p>
+    <h1>Login</h1>
+    <p class="subtitle">Secure access to MG Express dispatch.</p>
 
     <form id="loginForm">
-      <label for="email">Email</label>
-      <input
-        id="email"
-        type="email"
-        autocomplete="email"
-        required
-      >
-
-      <label for="password">Password</label>
-      <input
-        id="password"
-        type="password"
-        autocomplete="current-password"
-        required
-      >
-
-      <button id="signInButton" type="submit">Sign In</button>
+      <div class="field">
+        <label for="email">Email</label>
+        <input id="email" type="email" autocomplete="email" required>
+      </div>
+      <div class="field">
+        <label for="password">Password</label>
+        <input id="password" type="password" autocomplete="current-password" required>
+      </div>
+      <button class="primary-button" id="signInButton" type="submit">Sign In</button>
       <button class="text-button" id="forgotPasswordBtn" type="button">Forgot password?</button>
     </form>
 
     <form id="recoveryRequestForm" class="hidden">
       <div class="form-copy">Enter your login email and we’ll send you a secure password-reset link.</div>
-      <label for="recoveryEmail">Login email</label>
-      <input id="recoveryEmail" type="email" autocomplete="email" required>
-      <button id="sendRecoveryBtn" type="submit">Send Reset Email</button>
-      <button class="back-button" id="backToLoginBtn" type="button">Back to Sign In</button>
+      <div class="field">
+        <label for="recoveryEmail">Login email</label>
+        <input id="recoveryEmail" type="email" autocomplete="email" required>
+      </div>
+      <button class="primary-button" id="sendRecoveryBtn" type="submit">Send Reset Email</button>
+      <button class="secondary-button" id="backToLoginBtn" type="button">Back to Sign In</button>
     </form>
 
     <form id="passwordResetForm" class="hidden">
       <div class="form-copy">Create a new password for your MG Express account.</div>
-      <label for="newPassword">New password</label>
-      <input id="newPassword" type="password" autocomplete="new-password" minlength="12" required>
-      <label for="confirmPassword">Confirm new password</label>
-      <input id="confirmPassword" type="password" autocomplete="new-password" minlength="12" required>
-      <button id="savePasswordBtn" type="submit">Save New Password</button>
+      <div class="field">
+        <label for="newPassword">New password</label>
+        <input id="newPassword" type="password" autocomplete="new-password" minlength="12" required>
+      </div>
+      <div class="field">
+        <label for="confirmPassword">Confirm new password</label>
+        <input id="confirmPassword" type="password" autocomplete="new-password" minlength="12" required>
+      </div>
+      <button class="primary-button" id="savePasswordBtn" type="submit">Save New Password</button>
     </form>
 
     <form id="mfaForm" class="hidden">
       <div class="mfa-copy">Open your authenticator app and enter the 6-digit code.</div>
-      <label for="mfaCode">Authenticator code</label>
-      <input id="mfaCode" type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="6" pattern="[0-9]{6}" required>
-      <button id="mfaButton" type="submit">Verify Code</button>
+      <div class="field">
+        <label for="mfaCode">Authenticator code</label>
+        <input id="mfaCode" type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="6" pattern="[0-9]{6}" required>
+      </div>
+      <button class="primary-button" id="mfaButton" type="submit">Verify Code</button>
     </form>
 
-    <div id="message" class="message"></div>
-
-    <div class="help">
-      Need an account?<br>
-      Contact MG Express Dispatch.
-    </div>
+    <div id="message" class="message" role="status" aria-live="polite"></div>
+    <div class="help">Need an account? Contact MG Express Dispatch.</div>
   </main>
 
   <script>
