@@ -1,5 +1,6 @@
 /* MG Express compact mobile workspaces — Edit Job and Assign Driver.
    Desktop styles and existing form field IDs are untouched. */
+.mg-workflow-progress,.mg-workflow-footer {display:none}
 @media screen and (max-width: 720px) {
   #editJobModal.open,
   #assignModal.open {
@@ -37,6 +38,7 @@
     font-size:24px;padding:0;
   }
   .mg-workflow-progress {
+    display:flex;
     flex:0 0 auto;
     display:flex;flex-direction:column;gap:7px;
     padding:11px 12px 9px;
@@ -72,6 +74,7 @@
     background:#087455;color:#fff;border-color:#087455;
   }
   .mg-workflow-footer {
+    display:flex;
     flex:0 0 auto;
     display:flex;align-items:stretch;gap:8px;
     padding:9px 12px max(12px,env(safe-area-inset-bottom));
@@ -102,10 +105,10 @@
     overscroll-behavior:contain;-webkit-overflow-scrolling:touch;
     padding:0 2px 12px;
   }
-  #editJobModal #editJobForm > .edit-section {
+  #editJobModal .edit-panel.mg-steps-ready #editJobForm > .edit-section {
     display:none!important;
   }
-  #editJobModal #editJobForm > .edit-section.mg-edit-active {
+  #editJobModal .edit-panel.mg-steps-ready #editJobForm > .edit-section.mg-edit-active {
     display:grid!important;
     padding:12px;gap:10px;
     border-radius:15px;min-height:0;
@@ -133,7 +136,7 @@
     background:#fff;
   }
   #editJobModal .edit-field textarea {min-height:69px}
-  #editJobModal #editJobForm > .edit-actions {display:none!important}
+  #editJobModal .edit-panel.mg-steps-ready #editJobForm > .edit-actions {display:none!important}
   #editJobModal .mg-workflow-save:disabled {opacity:.55}
 
   /* Assign Driver: Summary first, then recommended driver and searchable list. */
@@ -143,24 +146,21 @@
     overscroll-behavior:contain;-webkit-overflow-scrolling:touch;
     display:block;padding:10px 12px 12px;
   }
-  #assignModal .assign-panel-body > .assign-job-card,
-  #assignModal .assign-panel-body > .assign-recommended,
-  #assignModal .assign-panel-body > .assign-list,
-  #assignModal .assign-panel-body > .assign-future {
+  #assignModal .assign-panel.mg-steps-ready .assign-panel-body > .assign-job-card,
+  #assignModal .assign-panel.mg-steps-ready .assign-panel-body > .assign-recommended,
+  #assignModal .assign-panel.mg-steps-ready .assign-panel-body > .assign-list,
+  #assignModal .assign-panel.mg-steps-ready .assign-panel-body > .assign-future {
     display:none!important;
   }
-  #assignModal .assign-panel-body > .mg-assign-active {
+  #assignModal .assign-panel.mg-steps-ready .assign-panel-body > .mg-assign-active {
     display:block!important;
     margin:0 0 9px;
     padding:11px;
     border-radius:15px;
     box-shadow:0 3px 12px rgba(0,0,0,.035);
   }
-  #assignModal .assign-panel-body > .assign-future {
-    display:none!important;
-  }
-  #assignModal .assign-panel-body > .assign-list.mg-assign-active,
-  #assignModal .assign-panel-body > .assign-recommended.mg-assign-active {
+  #assignModal .assign-panel.mg-steps-ready .assign-panel-body > .assign-list.mg-assign-active,
+  #assignModal .assign-panel.mg-steps-ready .assign-panel-body > .assign-recommended.mg-assign-active {
     display:block!important;
   }
   #assignModal .assign-section-label {margin-bottom:6px;font-size:10px}
