@@ -24,7 +24,7 @@
 <div class="field full"><label>Documents to Serve</label><textarea name="documents_to_serve" placeholder="Summons, complaint, subpoena, notice, etc."></textarea></div>
 <div class="field full"><label>Special Instructions</label><textarea name="special_instructions"></textarea></div>
 </div><div class="msg" id="formMsg"></div><div class="actions"><button class="cancel" id="cancelServe" type="button">Cancel</button><button class="save" id="saveServe" type="submit">Create Serve</button></div></form></div></div>
-<script src="dispatch-menu.js"></script>
+<script src="/dispatch-menu.js?v=20261113-compact-all"></script>
 <script>
 const sb=window.mgSupabase, modal=document.getElementById("serveModal"), form=document.getElementById("serveForm"), msg=document.getElementById("formMsg");
 function showModal(){modal.classList.add("open")} function hideModal(){modal.classList.remove("open");msg.textContent=""}
