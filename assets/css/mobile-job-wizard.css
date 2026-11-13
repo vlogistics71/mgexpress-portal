@@ -11,7 +11,7 @@
     flex:1 1 auto;min-height:0;overflow:hidden;
     display:flex;flex-direction:column;padding:9px 11px 10px
   }
-  body.mobile-create-expanded .panel.create-section{
+  body.mobile-create-expanded #createJobSection.panel.create-section{
     flex:1 1 auto;min-height:0;display:flex;flex-direction:column;
     gap:0;margin:0;padding:11px;border-radius:16px;
     overflow:hidden
@@ -49,7 +49,7 @@
   .mg-wizard-progress-header span{
     font-size:11px;color:#68756f;font-weight:700
   }
-  .mg-wizard-bars{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:5px}
+  .mg-wizard-bars{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:5px}
   .mg-wizard-bars i{height:4px;border-radius:999px;background:#e2ebe7}
   .mg-wizard-bars i.active{background:#087455}
   body.mobile-create-expanded #createJobForm{
