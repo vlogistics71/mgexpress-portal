@@ -3,6 +3,9 @@ const { requireDispatchAccess, supabaseRequest, toJsonResponse } = require("./_s
 
 const CALL_ID = /^[A-Za-z0-9_-]{6,128}$/;
 const STATUS = new Set(["needs_follow_up", "contacted", "no_follow_up_needed"]);
+const CALL_RETENTION_MS = 4 * 24 * 60 * 60 * 1000;
+const recentOnly = () => "&created_at=gte." +
+  encodeURIComponent(new Date(Date.now() - CALL_RETENTION_MS).toISOString());
 
 exports.handler = async function (event) {
   try {
@@ -10,7 +13,7 @@ exports.handler = async function (event) {
     if (event.httpMethod === "GET") {
       const calls = await supabaseRequest(
         "inbound_calls?select=provider_call_id,caller_phone,called_number,started_at,ended_at,last_event,end_reason,summary,call_outcome,requested_human,human_request_known,transfer_state,quote_status,follow_up_status,followed_up_at,created_at,updated_at" +
-        "&order=created_at.desc&limit=200"
+        recentOnly() + "&order=created_at.desc&limit=200"
       );
       return toJsonResponse(200, { calls: Array.isArray(calls) ? calls : [] });
     }
@@ -23,7 +26,7 @@ exports.handler = async function (event) {
       if (!CALL_ID.test(id) || !STATUS.has(status))
         return toJsonResponse(400, { error: "Invalid call or follow-up status" });
       const updated = await supabaseRequest(
-        "inbound_calls?provider_call_id=eq." + encodeURIComponent(id), {
+        "inbound_calls?provider_call_id=eq." + encodeURIComponent(id) + recentOnly(), {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
