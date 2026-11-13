@@ -1261,6 +1261,7 @@
     }
 
   </style>
+  <link rel="stylesheet" href="/assets/css/mobile-job-wizard.css?v=20261113" />
 </head>
 
 <body>
@@ -3112,6 +3113,7 @@
       const shouldExpand = Boolean(expanded);
       elements.createJobBody.classList.toggle("hidden", !shouldExpand);
       document.body.classList.toggle("mobile-create-expanded", shouldExpand);
+      window.dispatchEvent(new CustomEvent("mg-create-job-expanded", {detail: {expanded: shouldExpand}}));
       elements.toggleCreateJobBtn.textContent = shouldExpand ? "Collapse" : "Expand";
       sessionStorage.setItem(CREATE_JOB_EXPANDED_KEY, shouldExpand ? "1" : "0");
       if (!shouldExpand && window.matchMedia("(max-width: 650px)").matches) {
@@ -4394,6 +4396,7 @@
       }
     })();
   </script>
+  <script src="/assets/js/dashboard-mobile-job-wizard.js?v=20261113"></script>
   <script src="/assets/js/dashboard-pickup-map.js?v=20261112-google-maps-secure-key"></script>
   <script>
     (() => {
