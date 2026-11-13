@@ -165,14 +165,15 @@
   const compactWorkspacePages = new Set([
     "process-serves", "customer", "driver", "driver-onboarding",
     "payroll", "invoices", "reports", "history", "team", "settings",
-    "assigned", "pending-approval", "ready-to-dispatch", "closed-today"
+    "assigned", "pending-approval", "ready-to-dispatch", "closed-today",
+    "driver-applications", "customer-details", "customer-record", "jobs"
   ]);
   const compactPage = window.location.pathname.split("/").pop().replace(/\.html$/i, "").toLowerCase();
   if (compactWorkspacePages.has(compactPage)) {
     document.body.classList.add("mg-compact-screen", "mg-compact-" + compactPage);
     const sharedStylesheet = document.createElement("link");
     sharedStylesheet.rel = "stylesheet";
-    sharedStylesheet.href = "/assets/css/dispatch-compact-workspaces.css?v=20261113-one-screen";
+    sharedStylesheet.href = "/assets/css/dispatch-compact-workspaces.css?v=20261113-compact-all-v2";
     document.head.appendChild(sharedStylesheet);
     if (compactPage === "team") {
       const invitePanel = document.querySelector("main#app > section.panel");
