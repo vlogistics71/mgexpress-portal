@@ -160,6 +160,41 @@
     }
   `;
   document.head.appendChild(style);
+  // Apply the shared, phone-only operations layout to the remaining workspaces.
+  // Dashboard and Deliveries already have their own compact designs.
+  const compactWorkspacePages = new Set([
+    "process-serves", "customer", "driver", "driver-onboarding",
+    "payroll", "invoices", "reports", "history", "team", "settings",
+    "assigned", "pending-approval", "ready-to-dispatch", "closed-today"
+  ]);
+  const compactPage = window.location.pathname.split("/").pop().replace(/\.html$/i, "").toLowerCase();
+  if (compactWorkspacePages.has(compactPage)) {
+    document.body.classList.add("mg-compact-screen", "mg-compact-" + compactPage);
+    const sharedStylesheet = document.createElement("link");
+    sharedStylesheet.rel = "stylesheet";
+    sharedStylesheet.href = "/assets/css/dispatch-compact-workspaces.css?v=20261113-one-screen";
+    document.head.appendChild(sharedStylesheet);
+    if (compactPage === "team") {
+      const invitePanel = document.querySelector("main#app > section.panel");
+      const inviteHeader = invitePanel?.querySelector("h2");
+      if (invitePanel && inviteHeader) {
+        const toggleInvite = document.createElement("button");
+        toggleInvite.type = "button";
+        toggleInvite.className = "mg-team-toggle";
+        toggleInvite.textContent = "Add";
+        toggleInvite.setAttribute("aria-label", "Expand Add Team Member");
+        toggleInvite.setAttribute("aria-expanded", "false");
+        inviteHeader.appendChild(toggleInvite);
+        toggleInvite.addEventListener("click", () => {
+          const expanded = invitePanel.classList.toggle("mg-team-invite-open");
+          toggleInvite.textContent = expanded ? "Close" : "Add";
+          toggleInvite.setAttribute("aria-expanded", String(expanded));
+          toggleInvite.setAttribute("aria-label", expanded ? "Collapse Add Team Member" : "Expand Add Team Member");
+          if (expanded) invitePanel.querySelector("#fullName")?.focus({preventScroll:true});
+        });
+      }
+    }
+  }
 
   const currentPage = window.location.pathname.split("/").pop().toLowerCase();
   function fileName(url) { return new URL(url, window.location.origin).pathname.split("/").pop().toLowerCase(); }
