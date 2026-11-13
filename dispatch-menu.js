@@ -40,7 +40,7 @@
     .dispatch-side-menu.open { transform:translateX(0); }
     .dispatch-menu-header { position:relative; padding:28px 82px 27px 28px; background:#064f3b; color:#fff; }
     .dispatch-menu-brand { font-size:29px; font-weight:900; line-height:1.08; }
-    .dispatch-menu-brand span { color:#ff665c; }
+    .dispatch-menu-brand > span:not(.dispatch-menu-desktop-title) { color:#ff665c; }
     .dispatch-menu-subtitle { margin-top:7px; font-size:14px; opacity:.82; overflow-wrap:anywhere; }
     .dispatch-menu-close { position:absolute; top:24px; right:24px; width:56px; height:56px; border:0; border-radius:16px; background:#fff; color:#064f3b; font-size:30px; font-weight:900; cursor:pointer; }
     .dispatch-menu-links { flex:1; overflow-y:auto; padding:18px 18px 25px; background:#fff; }
