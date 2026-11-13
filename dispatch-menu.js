@@ -20,7 +20,6 @@
     { href: routeUrl("/deliveries.html"), label: "Deliveries", icon: "📋" },
     { href: routeUrl("/process-serves.html"), label: "Process Serves", icon: "⚖️" },
     { href: routeUrl("/customer.html"), label: "Customers", icon: "👥" },
-    { href: routeUrl("/leads.html"), label: "Leads", icon: "🎯" },
     { href: routeUrl("/driver.html"), label: "Drivers", icon: "🚚" },
     { href: routeUrl("/driver-onboarding.html"), label: "Driver Onboarding", icon: "🪪" },
     { href: routeUrl("/payroll.html"), label: "Payroll", icon: "💵" },
