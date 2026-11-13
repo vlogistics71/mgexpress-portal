@@ -3113,19 +3113,19 @@
       const shouldExpand = Boolean(expanded);
       elements.createJobBody.classList.toggle("hidden", !shouldExpand);
       document.body.classList.toggle("mobile-create-expanded", shouldExpand);
-      window.dispatchEvent(new CustomEvent("mg-create-job-expanded", {detail: {expanded: shouldExpand}}));
       elements.toggleCreateJobBtn.textContent = shouldExpand ? "Collapse" : "Expand";
       sessionStorage.setItem(CREATE_JOB_EXPANDED_KEY, shouldExpand ? "1" : "0");
+      window.dispatchEvent(new CustomEvent("mg-create-job-expanded", {detail: {expanded: shouldExpand}}));
       if (!shouldExpand && window.matchMedia("(max-width: 650px)").matches) {
         window.scrollTo({top:0,behavior:"instant"});
         window.requestAnimationFrame(() => window.MGDispatchPickupMap?.resize?.());
       }
 
-      if (shouldExpand && options.scroll) {
+      if (shouldExpand && options.scroll && !window.matchMedia("(max-width: 650px)").matches) {
         elements.createJobSection.scrollIntoView({ behavior: "smooth", block: "start" });
       }
 
-      if (shouldExpand && options.focusFirstField) {
+      if (shouldExpand && options.focusFirstField && !window.matchMedia("(max-width: 650px)").matches) {
         window.setTimeout(() => {
           if (elements.customerLookupInput) {
             elements.customerLookupInput.focus();
