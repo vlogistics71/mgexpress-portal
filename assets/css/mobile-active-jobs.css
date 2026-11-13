@@ -1,0 +1,240 @@
+/* MG Express — compact mobile Active Jobs work queue.
+   Desktop remains unchanged; the job list scrolls independently. */
+.active-jobs-short { display:none; }
+
+@media (max-width:720px) {
+  html, body { max-width:100%; }
+  body {
+    min-height:100dvh;
+    height:100dvh;
+    overflow:hidden;
+    display:flex;
+    flex-direction:column;
+  }
+  .topbar {
+    flex:0 0 auto;
+    padding:9px 12px;
+  }
+  .topbar-inner { gap:9px; }
+  .topbar .brand {
+    font-size:clamp(15px,4.5vw,19px);
+    line-height:1.15;
+    white-space:nowrap;
+  }
+  .topbar .brand-subtitle { font-size:10px;margin-top:3px; }
+  .topbar .dispatch-menu-button {
+    width:46px;height:46px;min-width:46px;
+    padding:0;border-radius:12px;font-size:25px;
+  }
+
+  .container {
+    flex:1 1 auto;
+    display:flex;
+    flex-direction:column;
+    min-height:0;
+    overflow:hidden;
+    width:100%;
+    padding:10px 12px 12px;
+  }
+  .page-head {
+    flex:0 0 auto;
+    display:flex;
+    flex-direction:row;
+    align-items:center;
+    justify-content:space-between;
+    flex-wrap:nowrap;
+    gap:8px;
+    min-width:0;
+    margin:0 0 10px;
+  }
+  .page-head > div:first-child {min-width:0; flex:0 1 auto;}
+  .page-head .eyebrow {display:none;}
+  .page-head .page-title {
+    margin:0;
+    font-size:clamp(19px,5.6vw,24px);
+    line-height:1.1;
+    white-space:nowrap;
+    letter-spacing:-.03em;
+  }
+  .page-head > .active-jobs-actions {
+    width:auto;
+    display:flex;
+    flex:0 0 auto;
+    align-items:center;
+    flex-wrap:nowrap;
+    gap:6px;
+  }
+  .page-head .action-btn {
+    width:auto;
+    min-height:42px;
+    padding:8px 10px;
+    font-size:12px;
+    line-height:1.1;
+    font-weight:850;
+    border-radius:11px;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    white-space:nowrap;
+    box-shadow:none;
+  }
+  .active-jobs-full {display:none;}
+  .active-jobs-short {display:inline;}
+
+  .summary-grid {
+    flex:0 0 auto;
+    display:grid;
+    grid-template-columns:repeat(2,minmax(0,1fr));
+    grid-template-rows:repeat(2,58px);
+    gap:7px;
+    margin:0 0 10px;
+  }
+  .summary-card {
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:7px;
+    min-width:0;
+    min-height:0;
+    padding:8px 10px;
+    border-radius:14px;
+    box-shadow:0 3px 12px rgba(0,0,0,.035);
+  }
+  .summary-card .summary-label {
+    min-width:0;
+    font-size:10px;
+    line-height:1.22;
+    letter-spacing:.045em;
+    overflow-wrap:anywhere;
+  }
+  .summary-card .summary-value {
+    flex:0 0 auto;
+    font-size:27px;
+    line-height:1;
+    letter-spacing:-.03em;
+  }
+  .summary-card .summary-dot {
+    width:7px;height:7px;margin-right:5px;
+  }
+
+  .toolbar {
+    flex:0 0 auto;
+    display:grid;
+    grid-template-columns:minmax(0,1.22fr) minmax(112px,.78fr);
+    align-items:end;
+    gap:7px;
+    margin:0 0 9px;
+    min-width:0;
+  }
+  .toolbar .control {min-width:0;}
+  .toolbar .control label {
+    display:block;
+    margin-bottom:3px;
+    font-size:10px;
+    line-height:1.1;
+    letter-spacing:.045em;
+  }
+  .toolbar .control input,
+  .toolbar .control select {
+    width:100%;
+    min-width:0;
+    height:43px;
+    min-height:43px;
+    margin:0;
+    padding:8px 10px;
+    border-radius:11px;
+    font-size:14px;
+    line-height:1.2;
+  }
+  .toolbar .control input::placeholder {font-size:13px;}
+  .toolbar .toolbar-note {
+    grid-column:1/-1;
+    min-height:0;
+    margin:0;
+    font-size:10px;
+    line-height:1.25;
+  }
+  .toolbar .hidden {display:none!important;}
+
+  .container > .panel {
+    flex:1 1 0;
+    min-height:0;
+    margin:0;
+    border-radius:16px;
+    display:flex;
+    flex-direction:column;
+    overflow:hidden;
+    box-shadow:0 4px 15px rgba(0,0,0,.035);
+  }
+  .container > .panel > .list {
+    flex:1 1 auto;
+    min-height:0;
+    overflow-y:auto;
+    overscroll-behavior:contain;
+    -webkit-overflow-scrolling:touch;
+    align-content:start;
+    display:grid;
+    grid-auto-rows:max-content;
+    gap:8px;
+    padding:9px;
+  }
+  .container > .panel .card {
+    min-width:0;
+    gap:7px;
+    padding:10px 11px;
+    border-radius:13px;
+    border-left-width:5px;
+    box-shadow:none;
+  }
+  .container > .panel .card-main {gap:5px;min-width:0;}
+  .container > .panel .card-topline {gap:4px;row-gap:5px;}
+  .container > .panel .badge {
+    min-height:21px;
+    padding:3px 6px;
+    font-size:9px;
+    letter-spacing:.015em;
+  }
+  .container > .panel .category-dot {width:8px;height:8px;}
+  .container > .panel .job-number {font-size:14px;line-height:1.2;}
+  .container > .panel .customer {font-size:13px;line-height:1.2;}
+  .container > .panel .route {font-size:11px;line-height:1.28;}
+  .container > .panel .meta {
+    gap:4px 9px;
+    font-size:10px;
+    line-height:1.2;
+    font-weight:700;
+  }
+  .container > .panel .card-chevron {font-size:18px;}
+  .container > .panel .empty {
+    min-height:145px;
+    padding:18px 14px;
+  }
+  .container > .panel .empty-title {font-size:17px;}
+  .container > .panel .empty-copy {font-size:12px;}
+
+  /* Keep modals interactive and independently scrollable. */
+  .modal-backdrop .modal-panel,
+  .modal-backdrop .delivery-details-panel,
+  .modal-backdrop .edit-panel,
+  .modal-backdrop .assign-panel {
+    min-height:0;
+  }
+}
+
+@media (max-width:360px) {
+  .container{padding-left:9px;padding-right:9px;}
+  .page-head {gap:5px;}
+  .page-head .page-title {font-size:18px;}
+  .page-head .action-btn {font-size:11px;padding:7px 8px;min-height:40px;}
+  .summary-card{padding:7px 8px;}
+  .summary-card .summary-label{font-size:9px;}
+  .toolbar{grid-template-columns:minmax(0,1fr) minmax(105px,.85fr);}
+}
+
+@media (max-width:720px) and (max-height:480px) {
+  /* Short landscape displays may scroll instead of squeezing the job cards. */
+  body{height:auto;min-height:100dvh;overflow:auto;display:block;}
+  .container{display:block;overflow:visible;padding-bottom:18px;}
+  .container > .panel{min-height:195px;overflow:visible;}
+  .container > .panel > .list {max-height:260px;overflow-y:auto;}
+}
