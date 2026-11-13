@@ -1195,6 +1195,71 @@
       .pickup-map-footer { padding:10px 2px 0; }
       .pickup-map-legend { gap:6px 10px; }
     }
+  
+    /* Compact one-screen mobile operations dashboard */
+    .map-expand-button { display:none; }
+    .label-short { display:none; }
+    @media (max-width:650px) {
+      body:not(.mobile-create-expanded){height:100dvh;min-height:100dvh;overflow:hidden;display:flex;flex-direction:column}
+      .topbar{flex:0 0 auto;padding:9px 12px}
+      .topbar-inner{gap:9px}
+      .topbar .brand{font-size:clamp(15px,4.5vw,19px);line-height:1.15;white-space:nowrap}
+      .topbar .brand-subtitle{font-size:10px;margin-top:3px}
+      .topbar .dispatch-menu-button{width:46px;height:46px;min-width:46px;padding:0;border-radius:12px;font-size:25px}
+      .container{padding:10px 12px 12px}
+      body:not(.mobile-create-expanded) .container{flex:1 1 auto;min-height:0;overflow:hidden;display:flex;flex-direction:column}
+      .page-heading{flex:0 0 auto;flex-direction:row;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px}
+      .page-heading>div{min-width:0}
+      .welcome-stack{margin:0}
+      .welcome-greeting{font-size:16px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+      .welcome-date{font-size:10.5px;white-space:nowrap;margin-top:4px}
+      .page-heading .eyebrow,.page-heading h1{display:none}
+      .page-heading .primary-button{width:auto;flex:0 0 auto;min-height:43px;padding:8px 11px;border-radius:11px;font-size:12px;white-space:nowrap}
+      .label-short{display:inline}.label-full{display:none}
+      .stats{display:grid;flex:0 0 auto;height:clamp(170px,29dvh,205px);grid-template-columns:repeat(2,minmax(0,1fr));grid-template-rows:repeat(2,minmax(0,1fr)) 44px;gap:7px;margin:0 0 10px}
+      .stat-card{min-height:0;padding:8px 12px;border-radius:14px;box-shadow:0 3px 12px rgba(0,0,0,.035);display:flex;flex-direction:column;justify-content:center}
+      .stat-number{font-size:27px;line-height:1}
+      .stat-label{font-size:11px;line-height:1.22;margin-top:5px}
+      .stat-subtitle{margin-top:2px;font-size:9px}
+      .stats .stat-card.revenue-card{grid-column:1/-1;display:flex;flex-direction:row;justify-content:space-between;align-items:center;gap:10px;padding:7px 13px}
+      .revenue-card .stat-number{font-size:23px}
+      .revenue-card .stat-label{margin:0;font-size:11px;text-align:right}
+      body:not(.mobile-create-expanded) #createJobSection{display:none}
+      body.mobile-create-expanded .page-heading,body.mobile-create-expanded .stats,body.mobile-create-expanded .pickup-map-panel{display:none}
+      body.mobile-create-expanded .container{display:block;padding:10px 12px 30px}
+      body.mobile-create-expanded #createJobSection{display:grid;margin:0}
+      .pickup-map-panel{flex:1 1 0;min-height:0;display:flex;flex-direction:column;margin:0;padding:10px;border-radius:16px}
+      .pickup-map-head{align-items:center;flex:0 0 auto;flex-wrap:nowrap;margin-bottom:7px;gap:7px}
+      .pickup-map-head h2{font-size:17px}
+      .pickup-map-head p{display:none}
+      .pickup-map-controls{width:auto;flex:0 0 auto}
+      .pickup-map-controls select,.pickup-map-controls #dispatchPickupMapReset{display:none}
+      .pickup-map-controls .map-expand-button{display:inline-flex;align-items:center;justify-content:center;min-height:32px;padding:5px 10px;font-size:12px;border-radius:9px}
+      #dispatchPickupMap{flex:1 1 0;min-height:0;height:auto;border-radius:12px}
+      .pickup-map-footer{flex:0 0 auto;padding:6px 1px 0;gap:2px}
+      #dispatchPickupMapCount{font-size:11px}
+      #dispatchPickupMapStatus{font-size:10px;line-height:1.2;margin-top:2px}
+      .pickup-map-legend{display:none}
+      .pickup-map-panel.map-expanded{display:flex;position:fixed;z-index:900;inset:0;width:100%;height:100dvh;margin:0;border-radius:0;padding:14px 12px max(12px,env(safe-area-inset-bottom));box-shadow:0 0 0 9999px rgba(0,0,0,.25)}
+      .pickup-map-panel.map-expanded .pickup-map-head{align-items:flex-start;flex-wrap:wrap}
+      .pickup-map-panel.map-expanded .pickup-map-head p{display:block;font-size:11px;margin-top:4px}
+      .pickup-map-panel.map-expanded .pickup-map-head>div:first-child{width:100%}
+      .pickup-map-panel.map-expanded .pickup-map-controls{width:100%;flex-wrap:nowrap}
+      .pickup-map-panel.map-expanded .pickup-map-controls select,.pickup-map-panel.map-expanded .pickup-map-controls #dispatchPickupMapReset{display:inline-flex;min-width:0;min-height:40px;font-size:12px;padding:6px 9px}
+      .pickup-map-panel.map-expanded .pickup-map-controls select{flex:1 1 auto}
+      .pickup-map-panel.map-expanded .pickup-map-controls .map-expand-button{flex:0 0 auto;min-height:40px}
+      .pickup-map-panel.map-expanded #dispatchPickupMap{flex:1 1 0;min-height:100px}
+      .pickup-map-panel.map-expanded .pickup-map-legend{display:flex}
+      .pickup-map-panel.map-expanded #dispatchPickupMapStatus{font-size:11px}
+      body.dispatch-map-expanded{overflow:hidden!important}
+    }
+    @media (max-width:650px) and (max-height:550px){
+      body:not(.mobile-create-expanded):not(.dispatch-map-expanded){height:auto;overflow:auto}
+      body:not(.mobile-create-expanded) .container{overflow:visible;flex:0 0 auto}
+      body:not(.mobile-create-expanded) .pickup-map-panel{height:210px;flex:0 0 auto}
+      body:not(.mobile-create-expanded) #dispatchPickupMap{min-height:135px}
+    }
+
   </style>
 </head>
 
@@ -1227,7 +1292,7 @@
         id="newQuoteButton"
         type="button"
       >
-        + Create New Job
+        <span class="label-full">+ Create New Job</span><span class="label-short">+ New Job</span>
       </button>
     </div>
 
@@ -1272,6 +1337,7 @@
             <option value="live">Live only</option>
           </select>
           <button type="button" id="dispatchPickupMapReset" aria-label="Recenter the map on pickup locations">Fit pins</button>
+          <button type="button" id="dispatchPickupMapExpand" class="map-expand-button" aria-controls="dispatchPickupMap" aria-expanded="false">Expand map</button>
         </div>
       </div>
       <div id="dispatchPickupMap" role="region" aria-label="Interactive map of job pickup locations with zoom and clickable job pins"></div>
@@ -3045,8 +3111,13 @@
 
       const shouldExpand = Boolean(expanded);
       elements.createJobBody.classList.toggle("hidden", !shouldExpand);
+      document.body.classList.toggle("mobile-create-expanded", shouldExpand);
       elements.toggleCreateJobBtn.textContent = shouldExpand ? "Collapse" : "Expand";
       sessionStorage.setItem(CREATE_JOB_EXPANDED_KEY, shouldExpand ? "1" : "0");
+      if (!shouldExpand && window.matchMedia("(max-width: 650px)").matches) {
+        window.scrollTo({top:0,behavior:"instant"});
+        window.requestAnimationFrame(() => window.MGDispatchPickupMap?.resize?.());
+      }
 
       if (shouldExpand && options.scroll) {
         elements.createJobSection.scrollIntoView({ behavior: "smooth", block: "start" });
@@ -4324,6 +4395,27 @@
     })();
   </script>
   <script src="/assets/js/dashboard-pickup-map.js?v=20261112-google-maps-secure-key"></script>
+  <script>
+    (() => {
+      const panel=document.getElementById("pickupMapSection");
+      const button=document.getElementById("dispatchPickupMapExpand");
+      if(!panel||!button)return;
+      function setExpanded(value){
+        panel.classList.toggle("map-expanded",value);
+        document.body.classList.toggle("dispatch-map-expanded",value);
+        button.textContent=value?"Close map":"Expand map";
+        button.setAttribute("aria-expanded",String(value));
+        requestAnimationFrame(()=>{
+          window.MGDispatchPickupMap?.resize?.();
+          setTimeout(()=>window.MGDispatchPickupMap?.resize?.(),120);
+        });
+      }
+      button.addEventListener("click",()=>setExpanded(!panel.classList.contains("map-expanded")));
+      document.addEventListener("keydown",event=>{
+        if(event.key==="Escape"&&panel.classList.contains("map-expanded")){setExpanded(false);button.focus();}
+      });
+    })();
+  </script>
   <script src="/dispatch-menu.js"></script>
 <script src="/assets/js/dispatch-push.js?v=20261112-hidden-panel"></script>
 </body>
