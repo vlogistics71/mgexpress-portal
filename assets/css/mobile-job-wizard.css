@@ -1,0 +1,125 @@
+/* MG Express: phone-only, step-by-step Create Job workspace.
+   Desktop job creation and all field IDs remain unchanged. */
+.mg-wizard-progress,.mg-wizard-footer{display:none}
+@media(max-width:650px){
+  body.mobile-create-expanded{
+    height:100dvh;min-height:100dvh;overflow:hidden;
+    display:flex;flex-direction:column
+  }
+  body.mobile-create-expanded .topbar{flex:0 0 auto}
+  body.mobile-create-expanded .container{
+    flex:1 1 auto;min-height:0;overflow:hidden;
+    display:flex;flex-direction:column;padding:9px 11px 10px
+  }
+  body.mobile-create-expanded .panel.create-section{
+    flex:1 1 auto;min-height:0;display:flex;flex-direction:column;
+    gap:0;margin:0;padding:11px;border-radius:16px;
+    overflow:hidden
+  }
+  body.mobile-create-expanded .create-section-head{
+    flex:0 0 auto;display:flex;flex-direction:row;
+    align-items:center;justify-content:space-between;flex-wrap:nowrap;
+    gap:8px;margin:0 0 8px
+  }
+  body.mobile-create-expanded .create-section-head h2{
+    font-size:20px;line-height:1.12;white-space:nowrap
+  }
+  body.mobile-create-expanded .create-section-head .hint{display:none}
+  body.mobile-create-expanded .create-section-actions{
+    display:flex;flex-wrap:nowrap;gap:5px;width:auto;flex:0 0 auto
+  }
+  body.mobile-create-expanded .create-section-actions .secondary-button{
+    width:auto;min-height:36px;padding:6px 9px;font-size:11px;
+    border-radius:9px
+  }
+  body.mobile-create-expanded #createJobBody{
+    display:flex;flex:1 1 auto;min-height:0;overflow:hidden;
+    flex-direction:column;gap:8px
+  }
+  body.mobile-create-expanded .mg-wizard-progress{
+    flex:0 0 auto;display:flex;flex-direction:column;gap:6px;
+    padding:4px 2px 6px
+  }
+  .mg-wizard-progress-header{
+    display:flex;align-items:center;justify-content:space-between;gap:8px
+  }
+  .mg-wizard-progress-header strong{
+    font-size:13px;color:#064f3b;line-height:1.2
+  }
+  .mg-wizard-progress-header span{
+    font-size:11px;color:#68756f;font-weight:700
+  }
+  .mg-wizard-bars{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:5px}
+  .mg-wizard-bars i{height:4px;border-radius:999px;background:#e2ebe7}
+  .mg-wizard-bars i.active{background:#087455}
+  body.mobile-create-expanded #createJobForm{
+    flex:1 1 auto;min-height:0;overflow-y:auto;overflow-x:hidden;
+    overscroll-behavior:contain;display:flex;flex-direction:column;
+    gap:9px;padding:0 2px 8px;
+    -webkit-overflow-scrolling:touch;
+  }
+  body.mobile-create-expanded #createJobForm>.form-group{
+    display:none!important
+  }
+  body.mobile-create-expanded #createJobForm>.form-group.mg-wizard-active{
+    display:grid!important;gap:9px;
+    padding:11px;border-radius:13px;align-content:start
+  }
+  body.mobile-create-expanded #createJobForm>.form-group>h3{
+    font-size:18px;line-height:1.15;margin:0
+  }
+  body.mobile-create-expanded #createJobForm .form-grid{
+    column-gap:8px;row-gap:8px
+  }
+  body.mobile-create-expanded #createJobForm .field{gap:4px}
+  body.mobile-create-expanded #createJobForm .field label{font-size:10px;line-height:1.2}
+  body.mobile-create-expanded #createJobForm .field input,
+  body.mobile-create-expanded #createJobForm .field select,
+  body.mobile-create-expanded #createJobForm .field textarea{
+    min-height:40px;font-size:16px;padding:8px 9px;border-radius:9px
+  }
+  body.mobile-create-expanded #createJobForm .field textarea{min-height:66px}
+  body.mobile-create-expanded #createJobForm .hint{font-size:10px;line-height:1.25}
+  body.mobile-create-expanded #createJobForm .pricing-assistant{
+    gap:9px;padding:9px;border-radius:12px
+  }
+  body.mobile-create-expanded #createJobForm .pricing-head h4{font-size:15px}
+  body.mobile-create-expanded #createJobForm .pricing-head p{font-size:11px}
+  body.mobile-create-expanded #createJobForm .pricing-result{padding:7px 5px}
+  body.mobile-create-expanded #createJobForm .pricing-result strong{font-size:15px}
+  body.mobile-create-expanded #createJobForm>.create-actions{display:none!important}
+  body.mobile-create-expanded #paymentPanel[hidden]{display:none!important}
+  body.mobile-create-expanded #paymentPanel:not([hidden]){
+    display:grid!important;min-height:0
+  }
+  body.mobile-create-expanded .mg-wizard-footer{
+    display:flex;flex:0 0 auto;align-items:stretch;gap:8px;
+    padding:9px 2px max(2px,env(safe-area-inset-bottom));
+    border-top:1px solid #dfe8e4
+  }
+  .mg-wizard-footer button{
+    min-height:44px;border-radius:10px;padding:9px 12px;
+    font-size:14px;font-weight:850;cursor:pointer
+  }
+  .mg-wizard-back{
+    min-width:80px;flex:0 0 auto;background:#fff;
+    border:1px solid #d7e3de;color:#064f3b
+  }
+  .mg-wizard-next{
+    flex:1;min-width:0;border:0;background:#087455;color:#fff
+  }
+  .mg-wizard-submit-slot{flex:1;min-width:0}
+  .mg-wizard-submit-slot[hidden],.mg-wizard-next[hidden]{display:none!important}
+  .mg-wizard-submit-slot .create-actions{display:flex;flex-direction:column;gap:6px}
+  .mg-wizard-submit-slot .create-job-button{
+    width:100%;min-height:44px;padding:9px 11px;border-radius:10px;font-size:14px
+  }
+  .mg-wizard-submit-slot #createJobMessage:not(:empty){
+    max-height:75px;overflow-y:auto;font-size:11px;line-height:1.3
+  }
+}
+@media(max-width:650px) and (max-height:540px){
+  body.mobile-create-expanded .create-section-head h2{font-size:17px}
+  body.mobile-create-expanded .mg-wizard-progress{gap:3px;padding:0}
+  body.mobile-create-expanded .panel.create-section{padding:8px}
+}
