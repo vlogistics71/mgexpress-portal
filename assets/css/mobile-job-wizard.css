@@ -65,6 +65,10 @@
     display:grid!important;gap:9px;
     padding:11px;border-radius:13px;align-content:start
   }
+  body.mobile-create-expanded #createJobForm>.form-group.mg-wizard-service-mode .mg-wizard-package-field,
+  body.mobile-create-expanded #createJobForm>.form-group.mg-wizard-package-mode .mg-wizard-service-field{
+    display:none!important
+  }
   body.mobile-create-expanded #createJobForm>.form-group>h3{
     font-size:18px;line-height:1.15;margin:0
   }
