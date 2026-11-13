@@ -1,0 +1,179 @@
+/* MG Express — compact phone-only delivery details, 7 quick-view sections.
+   Desktop layout and specialized job viewers retain their existing design. */
+.mg-details-steps,.mg-details-step-footer{display:none}
+
+@media (max-width:720px) {
+  .delivery-details-panel.mg-details-steps-active {
+    display:grid;
+    grid-template-rows:auto auto minmax(0,1fr) auto;
+    height:100dvh;
+    max-height:100dvh;
+    overflow:hidden;
+  }
+  .delivery-details-panel.mg-details-steps-active .modal-head {
+    position:relative;
+    padding:10px 14px;
+    min-height:66px;
+    gap:8px;
+  }
+  .delivery-details-panel.mg-details-steps-active .modal-head .eyebrow {
+    font-size:10px;
+    line-height:1;
+  }
+  .delivery-details-panel.mg-details-steps-active .modal-title {
+    font-size:clamp(16px,4.5vw,19px);
+    line-height:1.14;
+    overflow-wrap:anywhere;
+  }
+  .delivery-details-panel.mg-details-steps-active .modal-subtitle {
+    margin-top:3px;
+    font-size:11px;
+  }
+  .delivery-details-panel.mg-details-steps-active .icon-btn {
+    min-width:40px;min-height:40px;width:40px;height:40px;
+    padding:0;border-radius:12px;
+  }
+  .delivery-details-panel.mg-details-steps-active .mg-details-steps {
+    display:block;
+    min-width:0;
+    padding:9px 12px 10px;
+    background:#fff;
+    border-bottom:1px solid #e4e9e7;
+  }
+  .mg-details-step-title {
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    gap:10px;
+    padding:0 2px 7px;
+  }
+  .mg-details-step-title strong {
+    color:#064f3b;
+    font-size:14px;
+    line-height:1.15;
+  }
+  .mg-details-step-title span {
+    color:#6e7b74;
+    font-weight:700;
+    font-size:11px;
+  }
+  .mg-details-nav {
+    display:flex;
+    align-items:center;
+    gap:6px;
+    width:100%;
+    overflow-x:auto;
+    scrollbar-width:none;
+    overscroll-behavior-x:contain;
+    -webkit-overflow-scrolling:touch;
+  }
+  .mg-details-nav::-webkit-scrollbar {display:none}
+  .mg-details-nav button {
+    flex:0 0 auto;
+    min-height:34px;
+    padding:7px 11px;
+    border:1px solid #e0ebe5;
+    border-radius:10px;
+    background:#f7faf8;
+    color:#245440;
+    font-size:12px;
+    line-height:1.1;
+    font-weight:800;
+    cursor:pointer;
+  }
+  .mg-details-nav button[aria-current="step"] {
+    background:#087455;
+    border-color:#087455;
+    color:#fff;
+  }
+  .delivery-details-panel.mg-details-steps-active .delivery-details-body {
+    display:block;
+    min-height:0;
+    overflow-y:auto;
+    overscroll-behavior:contain;
+    padding:12px 12px 15px;
+    background:#f2f2f7;
+    -webkit-overflow-scrolling:touch;
+  }
+  .delivery-details-panel.mg-details-steps-active .delivery-details-body > .details-card {
+    display:none!important;
+  }
+  .delivery-details-panel.mg-details-steps-active .delivery-details-body > .details-card.mg-details-visible {
+    display:block!important;
+    margin:0 0 10px;
+  }
+  .delivery-details-panel.mg-details-steps-active .delivery-details-body > .details-card.mg-details-visible:last-child {margin-bottom:0}
+  .delivery-details-panel.mg-details-steps-active .delivery-details-body .details-card {
+    padding:15px;
+    border-radius:16px;
+    box-shadow:0 2px 9px rgba(0,0,0,.02);
+  }
+  .delivery-details-panel.mg-details-steps-active .delivery-details-body .details-card h4 {
+    font-size:17px;
+    margin-bottom:11px;
+  }
+  .delivery-details-panel.mg-details-steps-active .ios-order-hero .ios-price {
+    font-size:clamp(27px,7vw,35px);
+    margin-bottom:10px;
+  }
+  .delivery-details-panel.mg-details-steps-active .details-card-body.compact-detail-grid {
+    row-gap:10px;
+    column-gap:10px;
+  }
+  .delivery-details-panel.mg-details-steps-active .details-action-grid {
+    grid-template-columns:1fr 1fr;
+    gap:8px;
+  }
+  .delivery-details-panel.mg-details-steps-active .details-action-grid .action-btn,
+  .delivery-details-panel.mg-details-steps-active .details-action-grid .danger-btn {
+    min-height:44px;
+    padding:10px 8px;
+    font-size:13px;
+    line-height:1.2;
+    overflow-wrap:anywhere;
+  }
+  .delivery-details-panel.mg-details-steps-active .details-action-grid .danger-btn {
+    grid-column:1/-1;
+  }
+  .delivery-details-panel.mg-details-steps-active .mg-details-step-footer {
+    display:flex;
+    gap:9px;
+    align-items:center;
+    flex:0 0 auto;
+    padding:9px 12px max(12px,env(safe-area-inset-bottom));
+    background:#fff;
+    border-top:1px solid #e4e9e7;
+  }
+  .mg-details-step-footer button {
+    min-height:44px;
+    padding:9px 12px;
+    border-radius:11px;
+    font-size:14px;
+    font-weight:850;
+    cursor:pointer;
+  }
+  .mg-details-back {
+    flex:0 0 auto;
+    border:1px solid #d6e6dd;
+    background:#fff;
+    color:#064f3b;
+  }
+  .mg-details-next {
+    flex:1;
+    min-width:0;
+    border:0;
+    background:#087455;
+    color:#fff;
+  }
+  .mg-details-next:disabled {opacity:.55}
+  @media (max-width:370px) {
+    .delivery-details-panel.mg-details-steps-active .details-action-grid {grid-template-columns:1fr}
+    .delivery-details-panel.mg-details-steps-active .details-action-grid .danger-btn {grid-column:auto}
+  }
+  @media (max-height:540px) {
+    .delivery-details-panel.mg-details-steps-active .modal-head {padding:6px 12px;min-height:54px}
+    .delivery-details-panel.mg-details-steps-active .mg-details-steps {padding:6px 10px}
+    .delivery-details-panel.mg-details-steps-active .delivery-details-body {padding:8px 10px}
+    .delivery-details-panel.mg-details-steps-active .mg-details-step-footer {padding:5px 10px max(5px,env(safe-area-inset-bottom))}
+  }
+}
