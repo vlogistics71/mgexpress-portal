@@ -594,6 +594,7 @@
     }
 
   </style>
+  <link rel="stylesheet" href="/assets/css/mobile-active-jobs.css?v=20261113-compact">
 </head>
 <body>
   <header class="topbar">
@@ -611,7 +612,7 @@
         <div class="eyebrow">Dispatch work queue</div>
         <h1 class="page-title">Active Jobs</h1>
       </div>
-      <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap"><a class="action-btn secondary" style="text-decoration:none" href="/inbound-calls.html">Incoming Calls &amp; Follow-Up</a><button class="action-btn primary-compact" id="newDeliveryButton" type="button">+ Create New Job</button></div>
+      <div class="active-jobs-actions"><a class="action-btn secondary" style="text-decoration:none" href="/inbound-calls.html" aria-label="Incoming Calls and Follow-Up"><span class="active-jobs-full">Incoming Calls &amp; Follow-Up</span><span class="active-jobs-short">Calls</span></a><button class="action-btn primary-compact" id="newDeliveryButton" type="button"><span class="active-jobs-full">+ Create New Job</span><span class="active-jobs-short">+ New Job</span></button></div>
     </section>
 
     <section class="summary-grid">
@@ -636,7 +637,7 @@
     <section class="toolbar">
       <div class="control">
         <label for="searchInput">Search</label>
-        <input id="searchInput" type="search" placeholder="Job number, customer, driver or address">
+        <input id="searchInput" type="search" placeholder="Search jobs..." aria-label="Search jobs by number, customer, driver, or address">
       </div>
       <div class="control">
         <label for="statusFilter">Status</label>
