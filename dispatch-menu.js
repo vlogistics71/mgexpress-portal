@@ -235,4 +235,11 @@
   window.addEventListener("mg-dispatch-ready", event => { const d=event.detail||{}; const box=document.getElementById("dispatchMenuUser"); if(box) box.textContent=d.name||d.email||"MG Express Dispatch"; });
   document.addEventListener("keydown", event => { if(event.key==="Escape") closeMenu(); });
   const existingEmail=document.getElementById("staffEmail")?.textContent?.trim(); if(existingEmail) document.getElementById("dispatchMenuUser").textContent=existingEmail;
+  // Compact pages scroll inside panels; restore Android swipe-to-refresh.
+  if (!document.querySelector('script[data-mg-pull-refresh]')) {
+    const refreshScript = document.createElement("script");
+    refreshScript.src = "/assets/js/mobile-pull-refresh.js?v=20261113-pull-v1";
+    refreshScript.dataset.mgPullRefresh = "true";
+    document.body.appendChild(refreshScript);
+  }
 })();
