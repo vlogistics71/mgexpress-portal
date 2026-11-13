@@ -11,21 +11,35 @@
   const originalSubmit = document.getElementById("createJobSubmitBtn");
   const actions = form?.querySelector(":scope > .create-actions");
   const paymentPanel = document.getElementById("paymentPanel");
-  const steps = form ? Array.from(form.children).filter(
+  const panels = form ? Array.from(form.children).filter(
     item => item.matches("section.form-group")
   ) : [];
 
-  if (!section || !body || !form || !originalSubmit || !actions || steps.length !== 5) {
+  if (!section || !body || !form || !originalSubmit || !actions || panels.length !== 5) {
     return;
   }
 
-  const names = ["Customer", "Pickup", "Delivery", "Service", "Pricing"];
+  // The service card has a lot of fields. On phones give its package
+  // details their own step without moving any fields or changing desktop.
+  const servicePanel = panels[3];
+  const serviceTitle = servicePanel.querySelector("h3");
+  const serviceGrid = servicePanel.querySelector(":scope > .form-grid");
+  let packageFieldsStarted = false;
+  Array.from(serviceGrid?.children || []).forEach(child => {
+    if (child.contains(document.getElementById("piece_count"))) packageFieldsStarted = true;
+    if (child.classList.contains("field")) {
+      child.classList.add(packageFieldsStarted ? "mg-wizard-package-field" : "mg-wizard-service-field");
+    }
+  });
+
+  const steps = [panels[0], panels[1], panels[2], panels[3], panels[3], panels[4]];
+  const names = ["Customer", "Pickup", "Delivery", "Service", "Package", "Pricing"];
   const progress = document.createElement("div");
   progress.className = "mg-wizard-progress";
   progress.setAttribute("aria-live", "polite");
   progress.innerHTML =
     '<div class="mg-wizard-progress-header"><strong id="mgWizardStepName">Customer</strong>' +
-    '<span id="mgWizardStepCount">Step 1 of 5</span></div>' +
+    '<span id="mgWizardStepCount">Step 1 of 6</span></div>' +
     '<div class="mg-wizard-bars" aria-hidden="true">' +
     names.map(() => "<i></i>").join("") + "</div>";
   body.insertBefore(progress, form);
@@ -73,13 +87,16 @@
   function render() {
     if (!wizardVisible()) {
       restoreSubmit();
-      steps.forEach(item => item.classList.remove("mg-wizard-active"));
+      panels.forEach(item => item.classList.remove("mg-wizard-active"));
+      servicePanel.classList.remove("mg-wizard-service-mode", "mg-wizard-package-mode");
+      if (serviceTitle) serviceTitle.textContent = "Service";
       return;
     }
 
-    steps.forEach((item, index) => {
-      item.classList.toggle("mg-wizard-active", index === stepIndex);
-    });
+    panels.forEach(item => item.classList.toggle("mg-wizard-active", item === steps[stepIndex]));
+    servicePanel.classList.toggle("mg-wizard-service-mode", stepIndex === 3);
+    servicePanel.classList.toggle("mg-wizard-package-mode", stepIndex === 4);
+    if (serviceTitle) serviceTitle.textContent = stepIndex === 4 ? "Package" : "Service";
     nameNode.textContent = names[stepIndex];
     countNode.textContent = "Step " + (stepIndex + 1) + " of " + steps.length;
     bars.forEach((bar, index) => {
@@ -104,8 +121,10 @@
     }
   }
 
-  function isConditionallyAvailable(field) {
+  function isConditionallyAvailable(field, index) {
     if (!field.willValidate || field.disabled) return false;
+    if (index === 3 && field.closest(".mg-wizard-package-field")) return false;
+    if (index === 4 && field.closest(".mg-wizard-service-field")) return false;
     let parent = field.parentElement;
     while (parent && parent !== form) {
       if (parent.hidden || parent.classList.contains("hidden")) return false;
@@ -116,7 +135,7 @@
 
   function firstInvalidInStep(index) {
     return Array.from(steps[index].querySelectorAll("input,select,textarea")).find(
-      field => isConditionallyAvailable(field) && !field.checkValidity()
+      field => isConditionallyAvailable(field, index) && !field.checkValidity()
     );
   }
 
@@ -156,7 +175,8 @@
   // reveal the owning step so a hidden invalid input is focusable.
   form.addEventListener("invalid", event => {
     if (!wizardVisible() || invalidJumpScheduled) return;
-    const idx = steps.findIndex(item => item.contains(event.target));
+    let idx = steps.findIndex(item => item.contains(event.target));
+    if (idx === 3 && event.target.closest(".mg-wizard-package-field")) idx = 4;
     if (idx < 0 || idx === stepIndex) return;
     event.preventDefault();
     invalidJumpScheduled = true;
