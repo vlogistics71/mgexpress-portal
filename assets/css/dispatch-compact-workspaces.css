@@ -648,6 +648,112 @@ body.mg-compact-screen > main[hidden] {display:none!important}
   body.mg-compact-settings > main .button-row {gap:6px}
   body.mg-compact-settings > main .button-row button {min-height:39px;padding:7px 10px;font-size:12px}
 
+  /* Status sub-workspaces: pending, ready, assigned, and closed jobs. */
+  body.mg-compact-assigned > main > .heading,
+  body.mg-compact-pending-approval > main > .heading,
+  body.mg-compact-ready-to-dispatch > main > .heading,
+  body.mg-compact-closed-today > main > .heading {
+    display:block;
+    min-height:38px;
+  }
+  body.mg-compact-assigned > main .heading-top,
+  body.mg-compact-pending-approval > main .heading-top,
+  body.mg-compact-ready-to-dispatch > main .heading-top,
+  body.mg-compact-closed-today > main .heading-top {
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    gap:8px;
+  }
+  body.mg-compact-assigned > main .heading .eyebrow,
+  body.mg-compact-pending-approval > main .heading .eyebrow,
+  body.mg-compact-ready-to-dispatch > main .heading .eyebrow,
+  body.mg-compact-closed-today > main .heading .eyebrow,
+  body.mg-compact-assigned > main .page-subtitle,
+  body.mg-compact-pending-approval > main .page-subtitle,
+  body.mg-compact-ready-to-dispatch > main .page-subtitle,
+  body.mg-compact-closed-today > main .page-subtitle {display:none}
+  body.mg-compact-assigned > main .back-link,
+  body.mg-compact-pending-approval > main .back-link,
+  body.mg-compact-ready-to-dispatch > main .back-link,
+  body.mg-compact-closed-today > main .back-link {
+    min-height:35px;
+    padding:6px 9px;
+    font-size:11px;
+    border-radius:9px;
+  }
+  body.mg-compact-assigned > main > .panel,
+  body.mg-compact-pending-approval > main > .panel,
+  body.mg-compact-ready-to-dispatch > main > .panel,
+  body.mg-compact-closed-today > main > .panel {
+    flex:1 1 0;
+    min-height:0;
+    display:flex;
+    flex-direction:column;
+    overflow:hidden;
+    margin:0;
+    border-radius:15px;
+  }
+  body.mg-compact-assigned > main > .panel .panel-head,
+  body.mg-compact-pending-approval > main > .panel .panel-head,
+  body.mg-compact-ready-to-dispatch > main > .panel .panel-head,
+  body.mg-compact-closed-today > main > .panel .panel-head {
+    flex:0 0 auto;
+    padding:8px;
+  }
+  body.mg-compact-assigned > main > .panel .controls,
+  body.mg-compact-pending-approval > main > .panel .controls,
+  body.mg-compact-ready-to-dispatch > main > .panel .controls,
+  body.mg-compact-closed-today > main > .panel .controls {
+    display:grid;
+    grid-template-columns:repeat(2,minmax(0,1fr));
+    gap:6px;
+  }
+  body.mg-compact-screen[data-workspace] > main > .panel .controls .field {
+    min-width:0;
+  }
+  body.mg-compact-screen[data-workspace] > main > .panel .controls .field label {
+    margin:0 0 3px;
+    font-size:9px;
+  }
+  body.mg-compact-screen[data-workspace] > main > .panel .controls input,
+  body.mg-compact-screen[data-workspace] > main > .panel .controls select {
+    width:100%;
+    min-width:0;
+    min-height:37px;
+    height:37px;
+    padding:6px 8px;
+    font-size:12px;
+  }
+  body.mg-compact-screen[data-workspace] > main > .panel .controls .refresh-btn {
+    min-height:36px;
+    padding:6px 8px;
+    font-size:11px;
+  }
+  body.mg-compact-screen[data-workspace] > main > .panel .panel-meta {
+    flex:0 0 auto;
+    padding:6px 9px;
+    font-size:11px;
+  }
+  body.mg-compact-screen[data-workspace] > main > .panel .rejected-section {
+    flex:0 0 auto;
+    max-height:26%;
+    overflow-y:auto;
+  }
+  body.mg-compact-screen[data-workspace] > main > .panel .rows {
+    flex:1 1 0;
+    min-height:0;
+    overflow-y:auto;
+    align-content:start;
+    overscroll-behavior:contain;
+    -webkit-overflow-scrolling:touch;
+  }
+  body.mg-compact-screen[data-workspace] > main > .panel .row {
+    margin:5px 7px;
+    padding:9px;
+    border-radius:11px;
+  }
+
   /* Any data-heavy editor modal remains independently scrollable. */
   body.mg-compact-screen .modal-backdrop,
   body.mg-compact-screen .customer-modal-overlay,
