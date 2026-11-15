@@ -43,6 +43,32 @@ function referrerHost(value) {
   }
 }
 
+function cleanLocation(value, maxLength = 100) {
+  const text = String(value || "").trim();
+  return text ? text.slice(0, maxLength) : null;
+}
+
+function requestLocation(event) {
+  const headers = event.headers || {};
+  const contextGeo = event.context?.geo || {};
+  return {
+    city: cleanLocation(contextGeo.city || headers["x-nf-geo-city"]),
+    region: cleanLocation(
+      contextGeo.subdivision?.name ||
+      contextGeo.subdivision?.code ||
+      headers["x-nf-geo-subdivision-name"] ||
+      headers["x-nf-geo-subdivision-code"]
+    ),
+    country: cleanLocation(
+      contextGeo.country?.code ||
+      contextGeo.country?.name ||
+      headers["x-country"] ||
+      headers["x-nf-geo-country-code"],
+      80
+    )
+  };
+}
+
 exports.handler = async event => {
   const origin = String(event.headers?.origin || event.headers?.Origin || "").replace(/\/$/, "");
 
@@ -72,6 +98,7 @@ exports.handler = async event => {
   }
 
   const sessionHash = crypto.createHash("sha256").update(sessionId, "utf8").digest("hex");
+  const location = requestLocation(event);
   const since = new Date(Date.now() - 30 * 60 * 1000).toISOString();
   const duplicate = await supabaseRequest(
     `website_page_views?select=id&session_hash=eq.${sessionHash}&path=eq.${encodeURIComponent(path)}&viewed_at=gte.${encodeURIComponent(since)}&limit=1`
@@ -85,7 +112,10 @@ exports.handler = async event => {
         path,
         referrer_host: referrerHost(body.referrer),
         session_hash: sessionHash,
-        device_type: deviceType(userAgent)
+        device_type: deviceType(userAgent),
+        city: location.city,
+        region: location.region,
+        country: location.country
       })
     });
   }
