@@ -10,21 +10,24 @@
   const closeButton = modal?.querySelector("[data-close-delivery-details]");
   if (!modal || !panel || !body || !title || !closeButton) return;
 
+  // Keep essential details together on mobile; move tools to the next page.
   const pages = [
-    {name: "Overview", find: () => [body.querySelector(":scope > .ios-order-hero")]},
-    {name: "Route", find: () => [body.querySelector(":scope > .ios-route-card")]},
-    {name: "Customer", find: () => [body.querySelector(":scope > .ios-customer-card")]},
-    {name: "Order", find: () => [body.querySelector(":scope > .ios-order-card")]},
-    {name: "Driver", find: () => [
-      body.querySelector(":scope > .ios-driver-card"),
-      body.querySelector(":scope > .details-notes-card")
+    {name: "Overview", find: () => [
+      body.querySelector(":scope > .ios-order-hero"),
+      body.querySelector(":scope > .ios-route-card"),
+      body.querySelector(":scope > .ios-customer-card"),
+      body.querySelector(":scope > .ios-order-card")
     ]},
-    {name: "Actions", find: () => [Array.from(body.querySelectorAll(":scope > section.details-card")).find(
-      el => el.querySelector("h4")?.textContent.trim().toLowerCase() === "workflow actions"
-    )]},
-    {name: "Documents", find: () => [Array.from(body.querySelectorAll(":scope > section.details-card")).find(
-      el => el.querySelector("h4")?.textContent.trim().toLowerCase() === "documents"
-    )]}
+    {name: "More Details", find: () => [
+      body.querySelector(":scope > .ios-driver-card"),
+      body.querySelector(":scope > .details-notes-card"),
+      Array.from(body.querySelectorAll(":scope > section.details-card")).find(
+        el => el.querySelector("h4")?.textContent.trim().toLowerCase() === "workflow actions"
+      ),
+      Array.from(body.querySelectorAll(":scope > section.details-card")).find(
+        el => el.querySelector("h4")?.textContent.trim().toLowerCase() === "documents"
+      )
+    ]}
   ];
 
   const bar = document.createElement("div");
@@ -78,7 +81,9 @@
     });
 
     heading.textContent = pages[active].name;
-    counter.textContent = "Section " + (active + 1) + " of " + pages.length;
+    counter.textContent = "Page " + (active + 1) + " of " + pages.length;
+    panel.classList.toggle("mg-details-page-overview", active === 0);
+    panel.classList.toggle("mg-details-page-more", active === 1);
     tabs.forEach((tab, index) => {
       if (index === active) tab.setAttribute("aria-current", "step");
       else tab.removeAttribute("aria-current");
@@ -102,14 +107,14 @@
     const regular = body.querySelector(":scope > .ios-order-hero");
     if (!regular) {
       sectionsByPage = null;
-      panel.classList.remove("mg-details-steps-active");
+      panel.classList.remove("mg-details-steps-active", "mg-details-page-overview", "mg-details-page-more");
       return;
     }
 
     const nextGroups = pages.map(page => page.find().filter(Boolean));
     if (nextGroups.some(group => group.length === 0)) {
       sectionsByPage = null;
-      panel.classList.remove("mg-details-steps-active");
+      panel.classList.remove("mg-details-steps-active", "mg-details-page-overview", "mg-details-page-more");
       return;
     }
     const jobNumber = title.textContent.trim();
