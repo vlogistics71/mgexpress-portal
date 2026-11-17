@@ -1,4 +1,4 @@
-/* MG Express — compact phone-only delivery details, 7 quick-view sections.
+/* MG Express — compact phone-only delivery details, 2 quick-view pages.
    Desktop layout and specialized job viewers retain their existing design. */
 .mg-details-steps,.mg-details-step-footer{display:none}
 
@@ -167,6 +167,159 @@
   }
   .mg-details-next:disabled {opacity:.55}
 }
+
+/* Two-page phone layout: an at-a-glance Overview with Route, Customer,
+   and Order visible together. Expanded fields still scroll if necessary. */
+@media (max-width:720px) {
+  .delivery-details-panel.mg-details-steps-active .mg-details-steps {
+    padding:7px 10px 8px;
+  }
+  .delivery-details-panel.mg-details-steps-active .mg-details-step-title {
+    padding-bottom:5px;
+  }
+  .delivery-details-panel.mg-details-steps-active .mg-details-nav {
+    display:grid;
+    grid-template-columns:repeat(2,minmax(0,1fr));
+    gap:7px;
+    overflow:visible;
+  }
+  .delivery-details-panel.mg-details-steps-active .mg-details-nav button {
+    min-width:0;
+    width:100%;
+    min-height:32px;
+    padding:6px 8px;
+  }
+  .delivery-details-panel.mg-details-steps-active.mg-details-page-overview .delivery-details-body {
+    padding:7px 9px 9px;
+  }
+  .delivery-details-panel.mg-details-page-overview .delivery-details-body > .details-card.mg-details-visible {
+    padding:9px 11px;
+    border-radius:12px;
+    margin-bottom:6px;
+  }
+  .delivery-details-panel.mg-details-page-overview .delivery-details-body .details-card h4 {
+    margin:0 0 6px;
+    font-size:13px;
+    letter-spacing:0;
+    line-height:1.15;
+  }
+  .delivery-details-panel.mg-details-page-overview .ios-order-hero .ios-hero-top {
+    align-items:center;
+  }
+  .delivery-details-panel.mg-details-page-overview .ios-order-hero .ios-small-id {
+    display:none; /* already in the fixed delivery-details header */
+  }
+  .delivery-details-panel.mg-details-page-overview .ios-order-hero .ios-eyebrow {
+    font-size:9px;
+  }
+  .delivery-details-panel.mg-details-page-overview .ios-order-hero .ios-status-pill {
+    padding:4px 8px;
+    font-size:10px;
+  }
+  .delivery-details-panel.mg-details-page-overview .ios-order-hero .ios-price-label {
+    margin-top:5px;
+    font-size:10px;
+  }
+  .delivery-details-panel.mg-details-page-overview .ios-order-hero .ios-price {
+    font-size:25px;
+    margin:1px 0 5px;
+  }
+  .delivery-details-panel.mg-details-page-overview .ios-order-hero .ios-payment-line {
+    gap:5px;
+    font-size:11px;
+    line-height:1.2;
+  }
+  .delivery-details-panel.mg-details-page-overview .ios-order-hero .ios-payment-line .payment-badge {
+    min-height:20px;
+    padding:4px 7px;
+    font-size:9px;
+  }
+  .delivery-details-panel.mg-details-page-overview .ios-order-hero .ios-review-alert {
+    padding:7px 9px;
+    margin-top:7px;
+    font-size:11px;
+  }
+  .delivery-details-panel.mg-details-page-overview .ios-route-card .ios-stop {
+    gap:8px;
+  }
+  .delivery-details-panel.mg-details-page-overview .ios-route-card .ios-stop-dot {
+    flex-basis:8px;
+    width:8px;
+    height:8px;
+    margin-top:4px;
+  }
+  .delivery-details-panel.mg-details-page-overview .ios-route-card .ios-stop-label {
+    font-size:9px;
+  }
+  .delivery-details-panel.mg-details-page-overview .ios-route-card .ios-stop-business {
+    margin:2px 0 0;
+    font-size:11px;
+  }
+  .delivery-details-panel.mg-details-page-overview .ios-route-card .ios-stop-address {
+    margin-top:1px;
+    font-size:12px;
+    line-height:1.23;
+  }
+  .delivery-details-panel.mg-details-page-overview .ios-route-card .ios-stop-time {
+    margin-top:2px;
+    font-size:10px;
+    line-height:1.22;
+  }
+  .delivery-details-panel.mg-details-page-overview .ios-route-card .ios-route-connector {
+    height:7px;
+    margin:3px 0 4px 3px;
+  }
+  .delivery-details-panel.mg-details-page-overview .ios-route-card .ios-return-route {
+    padding:6px 8px;
+    margin-top:6px;
+    font-size:11px;
+  }
+  .delivery-details-panel.mg-details-page-overview .ios-customer-card .ios-customer-name {
+    font-size:14px;
+    margin-bottom:3px;
+  }
+  .delivery-details-panel.mg-details-page-overview .ios-customer-card .ios-secondary-line {
+    font-size:11px;
+    margin-bottom:4px;
+  }
+  .delivery-details-panel.mg-details-page-overview .ios-customer-card .ios-contact-row {
+    gap:6px;
+    padding:4px 0;
+    font-size:11px;
+    line-height:1.25;
+  }
+  .delivery-details-panel.mg-details-page-overview .ios-customer-card .ios-contact-row > span {
+    flex-basis:38px;
+  }
+  .delivery-details-panel.mg-details-page-overview .ios-order-card .compact-detail-grid {
+    grid-template-columns:repeat(2,minmax(0,1fr));
+    gap:6px 9px;
+  }
+  .delivery-details-panel.mg-details-page-overview .ios-order-card .details-kv {
+    gap:2px;
+    line-height:1.2;
+  }
+  .delivery-details-panel.mg-details-page-overview .ios-order-card .details-kv strong {
+    font-size:9px;
+    line-height:1.1;
+  }
+  .delivery-details-panel.mg-details-page-overview .ios-order-card .details-kv span {
+    font-size:11px;
+    line-height:1.25;
+  }
+  .delivery-details-panel.mg-details-page-overview .ios-order-card .ios-more-details {
+    margin-top:6px;
+    padding-top:4px;
+  }
+  .delivery-details-panel.mg-details-page-overview .ios-order-card .ios-more-details summary {
+    font-size:11px;
+    padding:3px 0;
+  }
+  .delivery-details-panel.mg-details-steps-active .mg-details-step-footer {
+    padding:7px 10px max(8px,env(safe-area-inset-bottom));
+  }
+}
+
 @media (max-width:370px) {
   .delivery-details-panel.mg-details-steps-active .details-action-grid {grid-template-columns:1fr}
   .delivery-details-panel.mg-details-steps-active .details-action-grid .danger-btn {grid-column:auto}
