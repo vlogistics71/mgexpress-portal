@@ -15,7 +15,24 @@ exports.handler = async function (event) {
         "inbound_calls?select=provider_call_id,caller_phone,called_number,started_at,ended_at,last_event,end_reason,summary,call_outcome,requested_human,human_request_known,transfer_state,quote_status,follow_up_status,followed_up_at,created_at,updated_at" +
         recentOnly() + "&order=created_at.desc&limit=200"
       );
-      return toJsonResponse(200, { calls: Array.isArray(calls) ? calls : [] });
+      const list = Array.isArray(calls) ? calls : [];
+      let priorById = new Map();
+      const ids = list.map(call => String(call.provider_call_id || "")).filter(Boolean);
+      if (ids.length) {
+        try {
+          const inList = ids.map(id => encodeURIComponent(id)).join(",");
+          const history = await supabaseRequest(
+            "inbound_caller_history_events?select=provider_call_id,prior_call_count&provider_call_id=in.(" + inList + ")"
+          );
+          if (Array.isArray(history)) priorById = new Map(history.map(row => [row.provider_call_id, Number(row.prior_call_count)]));
+        } catch (historyError) {
+          console.error("Inbound caller history lookup failed", { message: historyError.message });
+        }
+      }
+      return toJsonResponse(200, { calls: list.map(call => ({
+        ...call,
+        caller_prior_call_count: priorById.has(call.provider_call_id) ? priorById.get(call.provider_call_id) : null
+      })) });
     }
     if (event.httpMethod === "POST") {
       let payload;
