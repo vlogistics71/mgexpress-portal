@@ -54,6 +54,18 @@ async function rows(path) {
   const result = await supabaseRequest(path);
   return Array.isArray(result) ? result : [];
 }
+async function recordCallerHistory(doc) {
+  if (!doc.caller_phone || !PHONE.test(doc.caller_phone)) return;
+  await supabaseRequest("rpc/record_inbound_caller_call", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      p_caller_phone: doc.caller_phone,
+      p_provider_call_id: doc.provider_call_id,
+      p_call_at: doc.started_at || doc.created_at || new Date().toISOString()
+    })
+  });
+}
 async function saveCall(doc) {
   await supabaseRequest("inbound_calls?on_conflict=provider_call_id", {
     method: "POST",
@@ -203,6 +215,7 @@ exports.handler = async function (event) {
       updated_at: new Date().toISOString()
     };
     await saveCall(record);
+    await recordCallerHistory(record);
     if (kind === "call_started") {
       try { await notifyDispatch("call-" + id, {title:"Incoming MG Express call",body:"Alex is answering a call. Tap to open dispatch.",url:"/inbound-calls.html",tag:"call-" + id}); }
       catch (_) { console.error("Incoming call push could not be queued"); }
