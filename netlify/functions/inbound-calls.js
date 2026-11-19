@@ -40,13 +40,26 @@ exports.handler = async function (event) {
       if (!Array.isArray(updated) || !updated.length) return toJsonResponse(404, { error: "Call not found" });
       return toJsonResponse(200, { ok: true, follow_up_status: status });
     }
+    if (event.httpMethod === "DELETE") {
+      let payload;
+      try { payload = JSON.parse(event.body || "{}"); }
+      catch (_) { return toJsonResponse(400, { error: "Invalid JSON" }); }
+      const id = String(payload.provider_call_id || "");
+      if (!CALL_ID.test(id)) return toJsonResponse(400, { error: "Invalid call ID" });
+      const removed = await supabaseRequest(
+        "inbound_calls?provider_call_id=eq." + encodeURIComponent(id) + recentOnly(),
+        { method: "DELETE" }
+      );
+      if (!Array.isArray(removed) || !removed.length) return toJsonResponse(404, { error: "Call not found" });
+      return toJsonResponse(200, { ok: true, deleted: true });
+    }
     return toJsonResponse(405, { error: "Method not allowed" });
   } catch (error) {
     console.error("inbound-calls endpoint error", { status: error.statusCode, message: error.message });
     return toJsonResponse(error.statusCode === 403 ? 403 : error.statusCode === 401 ? 401 : 503, {
       error: error.statusCode === 403 || error.statusCode === 401
         ? "Dispatch access required"
-        : "Unable to load or update incoming call records"
+        : "Unable to load or modify incoming call records"
     });
   }
 };
