@@ -37,6 +37,8 @@ button.small{font-size:13px;min-height:36px;padding:6px 11px}
 .phone a{color:var(--green);text-decoration:none}
 .call-date{font-size:13px;color:var(--muted)}
 .status-tag{margin:0}
+.caller-history{background:#eef5ff;border-color:#d2e2fa;color:#254d78}
+.caller-history.new{background:#eaf4e8;border-color:#d2ded1;color:#24533c}
 .card-body{padding:12px 16px 16px;border-top:1px solid var(--line)}
 .tags{display:flex;gap:6px;flex-wrap:wrap;margin:9px 0}
 .tag{background:#eaf0e7;border:1px solid #d2ded1;border-radius:999px;font-size:12px;padding:3px 9px;font-weight:700}
@@ -74,7 +76,7 @@ button.danger{color:#8f2d23;background:#fff1ed;border:1px solid #f0c5b8}
 </div>
 <p id="message" class="status" role="status"></p>
 <section id="cards" class="cards" aria-live="polite"></section>
-<p class="note">Only authorized dispatch staff can access this history. Phone calls with blocked caller ID may not have a callback number. This page stores summaries and outcomes, not call recordings or full transcripts. Call records expire after 4 days.</p>
+<p class="note">Only authorized dispatch staff can access this history. Phone calls with blocked caller ID may not have a callback number. This page stores summaries and outcomes, not call recordings or full transcripts. Detailed call records expire after 4 days; caller counts are retained so dispatch can recognize repeat callers.</p>
 </main>
 <script>
 (function(){
@@ -99,10 +101,13 @@ cards.innerHTML=view.length?view.map(c=>{
 const status=c.follow_up_status||"needs_follow_up",number=c.caller_phone||"Unknown / private number";
 const href=/^\+[1-9]\d{7,14}$/.test(c.caller_phone||"")?'<a href="tel:'+safe(c.caller_phone)+'">'+safe(number)+'</a>':safe(number);
 const sourceStatus=c.quote_status==="submitted"?"Quote reported submitted":c.quote_status==="not_submitted"?"No quote reported":"Quote not verified";
+const prior=Number.isInteger(c.caller_prior_call_count)?c.caller_prior_call_count:null;
+const callerLabel=prior===null||!c.caller_phone?"":prior===0?"New Caller":"Called "+prior+" "+(prior===1?"time":"times")+" before";
 const isOpen=expanded.has(c.provider_call_id);
 return '<article class="card" data-call-id="'+safe(c.provider_call_id)+'">'+
 '<div class="card-head"><span class="card-top"><span class="phone">'+href+'</span><span class="call-date">'+safe(date(c.started_at||c.created_at))+'</span></span>'+
 '<span class="tag status-tag '+(status==="needs_follow_up"?"needs":"")+'">'+safe(label(status))+'</span>'+
+(callerLabel?'<span class="tag caller-history '+(prior===0?"new":"")+'">'+safe(callerLabel)+'</span>':"")+
 '<div class="actions"><button class="small" type="button" data-action="view" aria-expanded="'+(isOpen?"true":"false")+'">'+(isOpen?"Hide":"View")+'</button>'+
 '<button class="small secondary danger" type="button" data-action="delete">Delete</button></div></div>'+
 '<div class="card-body"'+(isOpen?"":" hidden")+'><div class="meta"><span>Call ID: '+safe(c.provider_call_id)+'</span></div>'+
