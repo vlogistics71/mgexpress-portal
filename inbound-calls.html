@@ -53,6 +53,93 @@ button.danger{color:#8f2d23;background:#fff1ed;border:1px solid #f0c5b8}
 @media(max-width:650px){.stats{grid-template-columns:1fr 1fr}.stat:last-child{grid-column:1/-1}.card-head{padding:12px}.card-body{padding:12px}.phone{font-size:18px}}
 </style>
   <link rel="stylesheet" href="/assets/css/dispatch-compact-workspaces.css?v=20261113-compact-all-v2">
+<style>
+/* Neon visual skin for the Incoming Calls dispatch page; existing layout and actions stay intact. */
+@import url('https://fonts.googleapis.com/css2?family=Titan+One&display=swap');
+body.mg-compact-inbound-calls {
+  --green:#8b22d1;
+  --lime:#35c9ff;
+  --ink:#241833;
+  --muted:#746783;
+  --bg:#f6f1ff;
+  --line:#e2d4f1;
+  --red:#a12c68;
+  background:var(--bg);
+}
+body.mg-compact-inbound-calls > header {
+  background:linear-gradient(105deg,#16052b 0%,#35105d 48%,#151039 100%);
+  border-bottom:3px solid #18cfff;
+  box-shadow:0 5px 24px rgba(177,20,255,.25);
+}
+body.mg-compact-inbound-calls .head strong {
+  font-family:'Titan One','Arial Rounded MT Bold',Arial,sans-serif;
+  letter-spacing:.015em;
+  background:linear-gradient(100deg,#9d42ff 0%,#ff35ba 48%,#32caff 100%);
+  -webkit-background-clip:text;
+  background-clip:text;
+  color:transparent;
+  -webkit-text-fill-color:transparent;
+  text-shadow:0 0 13px rgba(222,55,255,.28);
+}
+body.mg-compact-inbound-calls .head strong span {
+  color:transparent !important;
+  -webkit-text-fill-color:transparent;
+}
+body.mg-compact-inbound-calls nav a {
+  border-color:#bd8bdf;
+  box-shadow:inset 0 0 12px rgba(190,54,255,.12);
+}
+body.mg-compact-inbound-calls nav a:hover {
+  background:rgba(226,67,255,.18);
+  border-color:#33cfff;
+}
+body.mg-compact-inbound-calls .stat,
+body.mg-compact-inbound-calls .card {
+  border-color:var(--line);
+  box-shadow:0 7px 22px rgba(91,35,128,.07);
+}
+body.mg-compact-inbound-calls button:not(.secondary):not(.danger) {
+  background:linear-gradient(105deg,#c515d9,#f52ca7 55%,#1689ef);
+  box-shadow:0 4px 13px rgba(171,39,214,.20);
+}
+body.mg-compact-inbound-calls button.secondary {
+  background:#f3e2ff;
+  border-color:#dcc8ef;
+  color:#542477;
+}
+body.mg-compact-inbound-calls button.danger {
+  background:#fff0f6;
+  border-color:#f1c4da;
+  color:#a12c68;
+}
+body.mg-compact-inbound-calls input:focus,
+body.mg-compact-inbound-calls select:focus {
+  outline:2px solid #bb55ee;
+  outline-offset:1px;
+  border-color:#a536dd;
+  box-shadow:0 0 0 3px rgba(174,64,230,.13);
+}
+body.mg-compact-inbound-calls .tag {
+  background:#f3e7ff;
+  border-color:#dfc9f1;
+  color:#552477;
+}
+body.mg-compact-inbound-calls .tag.needs {
+  background:#fff0f7;
+  border-color:#f1c4df;
+  color:#9d3168;
+}
+body.mg-compact-inbound-calls .caller-history {
+  background:#e9f7ff;
+  border-color:#bee7fa;
+  color:#24567c;
+}
+body.mg-compact-inbound-calls .caller-history.new {
+  background:#f0e9ff;
+  border-color:#d7c3f5;
+  color:#572c84;
+}
+</style>
 </head>
 <body class="mg-compact-inbound-calls">
 <header><div class="head"><strong>MG <span style="color:var(--lime)">EXPRESS</span> · CALLS</strong><nav><a href="/deliveries.html">Active Jobs</a><a href="/dashboard.html">Dispatch</a></nav></div></header>
