@@ -409,7 +409,7 @@
       }
     }
   </style>
-  <link rel="stylesheet" href="/assets/css/vice-city-theme.css?v=20261120-job-readable">
+  <link rel="stylesheet" href="/assets/css/vice-city-theme.css?v=20261120-jobs-card-direct">
 </head>
 
 <body>
@@ -1168,5 +1168,42 @@
   </script>
 
   <script src="/dispatch-menu.js?v=20261120-neon-theme-v1"></script>
+
+  <style id="active-job-dashboard-contrast">
+    body.mg-dispatch-neon .jobs-list > a.job-card,
+    body .jobs-list > a.job-card {
+      background: linear-gradient(145deg, #143e7a 0%, #0c2c65 56%, #0a2356 100%) !important;
+      background-image: linear-gradient(145deg, #143e7a 0%, #0c2c65 56%, #0a2356 100%) !important;
+      color: #f7f8ff !important;
+      border: 1px solid rgba(133, 176, 226, .78) !important;
+      box-shadow: 0 8px 22px rgba(0, 9, 38, .28) !important;
+      -webkit-text-fill-color: #f7f8ff !important;
+    }
+    body.mg-dispatch-neon .jobs-list > a.job-card .job-number,
+    body.mg-dispatch-neon .jobs-list > a.job-card .customer,
+    body.mg-dispatch-neon .jobs-list > a.job-card .route-address,
+    body.mg-dispatch-neon .jobs-list > a.job-card .meta-value,
+    body.mg-dispatch-neon .jobs-list > a.job-card .open-job {
+      color: #f7f8ff !important;
+      -webkit-text-fill-color: #f7f8ff !important;
+    }
+    body.mg-dispatch-neon .jobs-list > a.job-card .route {
+      background: rgba(30, 72, 132, .94) !important;
+      background-image: none !important;
+      border: 1px solid rgba(145, 184, 230, .62) !important;
+      color: #f0f4ff !important;
+    }
+    body.mg-dispatch-neon .jobs-list > a.job-card .route-label,
+    body.mg-dispatch-neon .jobs-list > a.job-card .meta-label,
+    body.mg-dispatch-neon .jobs-list > a.job-card .customer-email {
+      color: #d9e4f7 !important;
+      -webkit-text-fill-color: #d9e4f7 !important;
+    }
+    body.mg-dispatch-neon .jobs-list > a.job-card .route-arrow {
+      color: #8fd8ff !important;
+      -webkit-text-fill-color: #8fd8ff !important;
+    }
+  </style>
+
 </body>
 </html>
