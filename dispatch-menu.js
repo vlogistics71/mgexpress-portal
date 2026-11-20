@@ -197,6 +197,83 @@
     }
   }
 
+  // Neon visual theme applies only to the internal dispatch workspace pages.
+  // It changes presentation only; page structure and dispatch behavior stay untouched.
+  const dispatchThemePage = window.location.pathname.split("/").pop().toLowerCase();
+  if (dispatchThemePage !== "index.html") {
+    document.body.classList.add("mg-dispatch-neon");
+    const neonTheme = document.createElement("style");
+    neonTheme.textContent = `
+      @import url('https://fonts.googleapis.com/css2?family=Titan+One&display=swap');
+      body.mg-dispatch-neon {
+        --dark-green:#210b3d; --green:#8b22d1; --light-green:#f4e6ff; --coral:#ff38b8;
+        --background:#f6f1ff; --ink:#241833; --muted:#746783; --line:#e2d4f1;
+        --blue:#087edb; --blue-bg:#e4f4ff; --danger-bg:#fff0f6;
+        background:var(--background);
+      }
+      body.mg-dispatch-neon > .topbar {
+        background:linear-gradient(105deg,#16052b 0%,#35105d 48%,#151039 100%) !important;
+        border-bottom:3px solid #18cfff;
+        box-shadow:0 5px 24px rgba(177,20,255,.25);
+      }
+      body.mg-dispatch-neon .brand,
+      body.mg-dispatch-neon .dispatch-menu-brand {
+        font-family:'Titan One','Arial Rounded MT Bold',Arial,sans-serif;
+        letter-spacing:.015em;
+        background:linear-gradient(100deg,#9d42ff 0%,#ff35ba 47%,#32caff 100%);
+        -webkit-background-clip:text; background-clip:text;
+        color:transparent !important; -webkit-text-fill-color:transparent;
+        text-shadow:0 0 13px rgba(222,55,255,.28);
+      }
+      body.mg-dispatch-neon .brand span,
+      body.mg-dispatch-neon .dispatch-menu-brand > span:not(.dispatch-menu-desktop-title) {
+        color:transparent !important; -webkit-text-fill-color:transparent;
+      }
+      body.mg-dispatch-neon .brand-subtitle,
+      body.mg-dispatch-neon .staff-email {color:#f2eaff}
+      body.mg-dispatch-neon .welcome-greeting,
+      body.mg-dispatch-neon h2,
+      body.mg-dispatch-neon h3 {color:#512276}
+      body.mg-dispatch-neon .primary-button,
+      body.mg-dispatch-neon .primary-cta,
+      body.mg-dispatch-neon .create-job-button,
+      body.mg-dispatch-neon .action-btn:not(.secondary),
+      body.mg-dispatch-neon .btn.primary,
+      body.mg-dispatch-neon .button.primary,
+      body.mg-dispatch-neon .pricing-button,
+      body.mg-dispatch-neon .primary-btn {
+        background:linear-gradient(105deg,#c515d9,#f52ca7 55%,#1689ef) !important;
+        border-color:transparent !important; color:#fff !important;
+        box-shadow:0 5px 16px rgba(171,39,214,.22);
+      }
+      body.mg-dispatch-neon .secondary-button,
+      body.mg-dispatch-neon .action-btn.secondary,
+      body.mg-dispatch-neon .back-link {
+        color:#542477; border-color:#dcc8ef;
+      }
+      body.mg-dispatch-neon input:focus,
+      body.mg-dispatch-neon select:focus,
+      body.mg-dispatch-neon textarea:focus {
+        outline:2px solid #bb55ee; outline-offset:1px; border-color:#a536dd;
+        box-shadow:0 0 0 3px rgba(174,64,230,.13);
+      }
+      body.mg-dispatch-neon .dispatch-side-menu {border-left:1px solid #d9c0ee}
+      body.mg-dispatch-neon .dispatch-menu-header {
+        background:linear-gradient(115deg,#16052b,#3a0d61 55%,#10173e) !important;
+        border-bottom:3px solid #21cfff;
+      }
+      body.mg-dispatch-neon .dispatch-menu-close,
+      body.mg-dispatch-neon .dispatch-menu-button {color:#57217c}
+      body.mg-dispatch-neon .dispatch-menu-link.active {
+        background:#f3e2ff !important; border-color:#d6a8f2 !important; color:#8124bd !important;
+      }
+      body.mg-dispatch-neon .dispatch-menu-link:hover,
+      body.mg-dispatch-neon .dispatch-menu-link:active {background:#f8edff}
+      body.mg-dispatch-neon .dispatch-menu-signout {background:#fff0f6;color:#a12c68}
+    `;
+    document.head.appendChild(neonTheme);
+  }
+
   const currentPage = window.location.pathname.split("/").pop().toLowerCase();
   function fileName(url) { return new URL(url, window.location.origin).pathname.split("/").pop().toLowerCase(); }
 
