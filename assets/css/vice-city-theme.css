@@ -121,3 +121,20 @@ hr { border-color: rgba(105, 159, 218, .36) !important; }
   border: 1px solid #92a7c9 !important;
   box-shadow: 0 2px 7px rgba(7, 23, 61, .24) !important;
 }
+
+/* High-contrast text for the dispatch command menu. */
+body.mg-dispatch-neon .dispatch-side-menu .dispatch-menu-link,
+body.mg-dispatch-neon .dispatch-side-menu .dispatch-menu-link:visited {
+  color: #18325b !important;
+  -webkit-text-fill-color: #18325b !important;
+}
+body.mg-dispatch-neon .dispatch-side-menu .dispatch-menu-link.active,
+body.mg-dispatch-neon .dispatch-side-menu .dispatch-menu-link.active:visited {
+  color: #5b287f !important;
+  -webkit-text-fill-color: #5b287f !important;
+}
+body.mg-dispatch-neon .dispatch-side-menu .dispatch-menu-link:hover,
+body.mg-dispatch-neon .dispatch-side-menu .dispatch-menu-link:active {
+  color: #18325b !important;
+  -webkit-text-fill-color: #18325b !important;
+}
