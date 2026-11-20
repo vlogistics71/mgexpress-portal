@@ -1,82 +1,95 @@
-/* MG Express Vice City sunset theme. Color-only overrides for dispatch pages. */
+/* MG Express dispatch portal: cobalt, teal, and sunset theme */
 :root {
-  --vc-night: #06153d;
-  --vc-navy: #09265f;
-  --vc-cobalt: #103f9a;
-  --vc-blue: #1d62ba;
-  --vc-teal: #148aa5;
-  --vc-pink: #dc72a8;
-  --vc-violet: #7959bd;
-  --vc-white: #f5f7ff;
-  --vc-muted: #c3cde8;
-  --vc-line: rgba(106, 169, 235, .46);
-  --vc-button: linear-gradient(105deg, #dc6da5 0%, #ad64bb 55%, #557bd5 100%);
+  --vc-night: #07183f;
+  --vc-navy: #0a2458;
+  --vc-cobalt: #10438f;
+  --vc-blue: #1d5fae;
+  --vc-teal: #167fa6;
+  --vc-pink: #e88ab9;
+  --vc-violet: #8b62c6;
+  --vc-white: #f7f8ff;
+  --vc-muted: #c8d3ec;
+  --vc-line: rgba(105, 159, 218, .58);
+  --vc-button: linear-gradient(105deg, #ec8bb5 0%, #c77bb9 50%, #7459c2 100%);
 }
 html, body {
-  background: linear-gradient(160deg, #082c78 0%, #09245e 42%, #131e55 72%, #39245b 100%) !important;
+  background:
+    radial-gradient(ellipse at 100% 18%, rgba(20, 139, 177, .32), transparent 40%),
+    radial-gradient(ellipse at 3% 83%, rgba(206, 101, 160, .30), transparent 41%),
+    linear-gradient(165deg, #123f93 0%, #0b2c70 34%, #091e53 70%, #211c54 100%) !important;
   color: var(--vc-white) !important;
 }
 body { background-attachment: fixed !important; }
-body::before {
-  content: ""; position: fixed; inset: 0; z-index: -1; pointer-events: none;
-  background: radial-gradient(ellipse at 100% 12%, rgba(18,132,170,.28), transparent 38%),
-              radial-gradient(ellipse at 0% 88%, rgba(209,91,155,.25), transparent 40%);
-}
 header, .topbar, .header, .app-header, .site-header, .navbar, .navigation,
 nav, .sidebar, .menu, .toolbar, .top-nav {
-  background: linear-gradient(105deg, rgba(5,22,63,.98), rgba(9,48,125,.96) 68%, rgba(15,104,150,.9)) !important;
-  color: var(--vc-white) !important; border-color: rgba(91,160,232,.45) !important;
+  background: linear-gradient(108deg, #09276b 0%, #104493 57%, #11749d 100%) !important;
+  color: var(--vc-white) !important;
+  border-color: rgba(90, 158, 222, .56) !important;
 }
-h1, h2, h3, h4, h5, h6, label, .page-title, .section-title, .brand,
-strong, th, legend { color: var(--vc-white) !important; }
-p, small, .muted, .subtitle, .description, .help-text, .text-muted { color: var(--vc-muted) !important; }
+.topbar {
+  border-bottom: 2px solid transparent !important;
+  border-image: linear-gradient(90deg, #d77eb8, #527ad5, #35b8d0) 1 !important;
+}
+.brand, .brand span {
+  background: linear-gradient(95deg, #ed83b2 0%, #bd7bd2 54%, #65a8ed 100%) !important;
+  color: transparent !important;
+  -webkit-background-clip: text !important;
+  background-clip: text !important;
+}
+h1, h2, h3, h4, h5, h6, label, .page-title, .section-title,
+strong, th, legend, .welcome-greeting, .welcome-date, .eyebrow,
+.stat-label, .stat-subtitle, .pickup-map-head h2 {
+  color: var(--vc-white) !important;
+}
+p, small, .muted, .subtitle, .description, .help-text, .text-muted,
+.welcome-date, .stat-label, .stat-subtitle, .pickup-map-head p {
+  color: var(--vc-muted) !important;
+}
 .panel, .card, .stat-card, .form-group, .section, .table-wrap, .content-card,
 .modal-content, .dialog-content, .workspace, .job-card, .list-card,
-.payment-panel, .lookup-confirm, .summary-card, .filter-panel, .settings-card {
-  background: linear-gradient(145deg, rgba(14,48,110,.96), rgba(7,27,72,.97)) !important;
-  color: var(--vc-white) !important; border-color: var(--vc-line) !important;
-  box-shadow: 0 12px 30px rgba(0,8,34,.22) !important;
-}
-input, select, textarea, .field input, .field select, .field textarea {
-  background: rgba(18,54,112,.88) !important; color: var(--vc-white) !important;
-  border-color: rgba(101,174,232,.62) !important;
-}
-input::placeholder, textarea::placeholder { color: #b5c2e3 !important; opacity: .82; }
-button, .button, .btn, [role="button"], input[type="button"], input[type="submit"],
-a.button, a.btn, .primary-button, .secondary-button, .navigation a {
-  background: var(--vc-button) !important; color: #fff !important;
-  border: 1px solid rgba(221,190,255,.52) !important;
-  box-shadow: 0 5px 16px rgba(20,18,68,.2) !important;
-}
-button:hover, .button:hover, .btn:hover, [role="button"]:hover,
-input[type="button"]:hover, input[type="submit"]:hover, .navigation a:hover { filter: brightness(1.1) !important; }
-button:disabled, input:disabled, select:disabled, textarea:disabled { opacity: .62; }
-a:not(.button):not(.btn) { color: #8fcfff !important; }
-table, thead, tbody, tr, td, th { border-color: rgba(106,169,235,.32) !important; }
-tbody tr:nth-child(even) { background: rgba(60,104,171,.14) !important; }
-hr { border-color: rgba(106,169,235,.32) !important; }
-:focus-visible { outline: 2px solid #e28dbd !important; outline-offset: 2px; }
-
-/* Dashboard-specific contrast fixes */
-.welcome-greeting, .welcome-date, .eyebrow, .stat-label, .stat-subtitle,
-.pickup-map-head h2, .pickup-map-head p {
-  color: #f2f5ff !important;
-}
-.stat-label, .stat-subtitle, .welcome-date, .pickup-map-head p {
-  color: #c3cde8 !important;
-}
-.pickup-map-panel {
-  background: linear-gradient(145deg, rgba(14,48,110,.97), rgba(7,27,72,.98)) !important;
+.payment-panel, .lookup-confirm, .summary-card, .filter-panel, .settings-card,
+.filters, .driver-list, .workflow-panel, .pickup-map-panel, .route-panel,
+.detail-panel, .data-card, .table-card {
+  background: linear-gradient(145deg, rgba(20, 61, 121, .94), rgba(8, 29, 76, .97)) !important;
   color: var(--vc-white) !important;
   border-color: var(--vc-line) !important;
-  box-shadow: 0 12px 30px rgba(0,8,34,.22) !important;
+  box-shadow: 0 10px 28px rgba(0, 10, 42, .2) !important;
 }
-.pickup-map-head h2 { color: #f5f7ff !important; }
-.pickup-map-head p { color: #c3cde8 !important; }
-/* Keep Google Maps controls distinct from the portal's main action buttons. */
-.pickup-map-panel .gm-control-active,
-.pickup-map-panel .gm-fullscreen-control {
+.pickup-map-head h2 { color: var(--vc-white) !important; }
+.pickup-map-head p { color: var(--vc-muted) !important; }
+input, select, textarea, .field input, .field select, .field textarea {
+  background: rgba(24, 57, 108, .94) !important;
+  color: var(--vc-white) !important;
+  border-color: rgba(115, 164, 218, .7) !important;
+}
+input::placeholder, textarea::placeholder { color: #c1cce5 !important; opacity: .88; }
+button, .button, .btn, [role="button"], input[type="button"], input[type="submit"],
+a.button, a.btn, .primary-button, .secondary-button, .navigation a {
+  background: var(--vc-button) !important;
+  color: #fff !important;
+  border: 1px solid rgba(240, 195, 230, .68) !important;
+  box-shadow: 0 4px 14px rgba(15, 17, 59, .2) !important;
+}
+.topbar button, .topbar .button, .topbar .btn, .topbar a.button {
+  background: #f3f6fc !important;
+  color: #102b61 !important;
+  border-color: rgba(255,255,255,.9) !important;
+}
+button:hover, .button:hover, .btn:hover, [role="button"]:hover,
+input[type="button"]:hover, input[type="submit"]:hover, .navigation a:hover {
+  filter: brightness(1.07) !important;
+}
+button:disabled, input:disabled, select:disabled, textarea:disabled { opacity: .62; }
+a:not(.button):not(.btn) { color: #a8d8ff !important; }
+.stat-number, .stat-value, .metric-value, .kpi-value, .price-value {
+  color: #df9cf0 !important;
+}
+table, thead, tbody, tr, td, th { border-color: rgba(105, 159, 218, .35) !important; }
+tbody tr:nth-child(even) { background: rgba(62, 105, 163, .13) !important; }
+hr { border-color: rgba(105, 159, 218, .36) !important; }
+:focus-visible { outline: 2px solid #ee9bc8 !important; outline-offset: 2px; }
+.pickup-map-panel .gm-control-active, .pickup-map-panel .gm-fullscreen-control {
   background: #735bb0 !important;
   color: #fff !important;
-  border-color: rgba(231,205,255,.65) !important;
+  border-color: rgba(231, 205, 255, .65) !important;
 }
