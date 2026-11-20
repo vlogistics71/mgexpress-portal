@@ -1,5 +1,5 @@
-/* MG Express dispatch: one-page, no-scroll Create Job workspace for phones.
-   Keeps the existing form fields, validation, pricing, and submit handlers. */
+/* MG Express dispatch job form.
+   Mobile keeps the existing guided flow; desktop gets an in-place, no-scroll section layout. */
 (() => {
   "use strict";
 
@@ -35,7 +35,8 @@
   progress.setAttribute("aria-live", "polite");
   progress.innerHTML =
     '<div class="mg-wizard-progress-header"><strong id="mgWizardStepName">Customer</strong>' +
-    '<span id="mgWizardStepCount">Section 1 of 6</span></div>' +
+    '<span id="mgWizardStepCount">Step 1 of 6</span></div>' +
+    '<div class="mg-wizard-bars" aria-hidden="true">' + names.map(() => "<i></i>").join("") + "</div>" +
     '<nav class="mg-wizard-tabs" aria-label="Job form sections">' +
     names.map((name, index) =>
       '<button type="button" class="mg-wizard-tab" data-job-section="' + index +
@@ -49,24 +50,29 @@
   footer.setAttribute("aria-label", "Create job controls");
   footer.innerHTML =
     '<button type="button" class="mg-wizard-back">← Board</button>' +
-    '<div class="mg-wizard-submit-slot"></div>';
+    '<button type="button" class="mg-wizard-next">Next: Pickup</button>' +
+    '<div class="mg-wizard-submit-slot" hidden></div>';
   body.appendChild(footer);
 
   const back = footer.querySelector(".mg-wizard-back");
+  const next = footer.querySelector(".mg-wizard-next");
   const submitSlot = footer.querySelector(".mg-wizard-submit-slot");
   const nameNode = progress.querySelector("#mgWizardStepName");
   const countNode = progress.querySelector("#mgWizardStepCount");
+  const bars = Array.from(progress.querySelectorAll(".mg-wizard-bars i"));
   const tabs = Array.from(progress.querySelectorAll("[data-job-section]"));
   const mobile = window.matchMedia("(max-width: 650px)");
   const extraPricing = document.getElementById("pricingExtraOptions");
-  if (extraPricing) extraPricing.removeAttribute("open");
+  if (!mobile.matches && extraPricing) extraPricing.removeAttribute("open");
 
   let stepIndex = 0;
   let invalidJumpScheduled = false;
 
-  function wizardVisible() {
+  function formExpanded() {
     return document.body.classList.contains("mobile-create-expanded");
   }
+  function mobileMode() { return mobile.matches && formExpanded(); }
+  function desktopMode() { return !mobile.matches && formExpanded(); }
 
   function restoreSubmit() {
     if (actions.parentElement === submitSlot) {
@@ -82,7 +88,8 @@
   }
 
   function render() {
-    if (!wizardVisible()) {
+    document.body.classList.toggle("desktop-create-expanded", desktopMode());
+    if (!formExpanded()) {
       restoreSubmit();
       panels.forEach(item => item.classList.remove("mg-wizard-active"));
       servicePanel.classList.remove("mg-wizard-service-mode", "mg-wizard-package-mode");
@@ -95,10 +102,26 @@
     servicePanel.classList.toggle("mg-wizard-package-mode", stepIndex === 4);
     if (serviceTitle) serviceTitle.textContent = stepIndex === 4 ? "Package" : "Service";
     nameNode.textContent = names[stepIndex];
-    countNode.textContent = "Section " + (stepIndex + 1) + " of " + steps.length;
+    countNode.textContent = mobileMode()
+      ? "Step " + (stepIndex + 1) + " of " + steps.length
+      : "Section " + (stepIndex + 1) + " of " + steps.length;
     tabs.forEach((tab, index) => tab.setAttribute("aria-pressed", String(index === stepIndex)));
-    moveSubmitToFooter();
-    if (collapseButton) collapseButton.textContent = "← Board";
+
+    if (mobileMode()) {
+      next.hidden = stepIndex === steps.length - 1;
+      submitSlot.hidden = !next.hidden;
+      if (next.hidden) moveSubmitToFooter();
+      else restoreSubmit();
+      back.textContent = stepIndex === 0 ? "← Board" : "← Back";
+      next.textContent = "Next: " + names[stepIndex + 1];
+      if (collapseButton) collapseButton.textContent = "← Board";
+    } else {
+      next.hidden = true;
+      submitSlot.hidden = false;
+      moveSubmitToFooter();
+      back.textContent = "← Board";
+      if (collapseButton) collapseButton.textContent = "← Board";
+    }
   }
 
   function showStep(index, focusField = false) {
@@ -129,14 +152,30 @@
     );
   }
 
-  tabs.forEach(tab => {
-    tab.addEventListener("click", () => showStep(Number(tab.dataset.jobSection)));
-  });
-  back.addEventListener("click", () => collapseButton?.click());
+  function goNext() {
+    if (!mobileMode()) return;
+    const invalid = firstInvalidInStep(stepIndex);
+    if (invalid) {
+      invalid.focus();
+      invalid.reportValidity();
+      return;
+    }
+    showStep(stepIndex + 1);
+  }
 
-  // Keep required-field errors visible by switching to the section that needs attention.
+  tabs.forEach(tab => {
+    tab.addEventListener("click", () => {
+      if (desktopMode()) showStep(Number(tab.dataset.jobSection));
+    });
+  });
+  back.addEventListener("click", () => {
+    if (mobileMode() && stepIndex > 0) showStep(stepIndex - 1);
+    else collapseButton?.click();
+  });
+  next.addEventListener("click", goNext);
+
   originalSubmit.addEventListener("click", event => {
-    if (!wizardVisible()) return;
+    if (!formExpanded()) return;
     for (let i = 0; i < steps.length; i++) {
       const invalid = firstInvalidInStep(i);
       if (invalid) {
@@ -150,7 +189,7 @@
   }, true);
 
   form.addEventListener("invalid", event => {
-    if (!wizardVisible() || invalidJumpScheduled) return;
+    if (!formExpanded() || invalidJumpScheduled) return;
     let idx = steps.findIndex(item => item.contains(event.target));
     if (idx === 3 && event.target.closest(".mg-wizard-package-field")) idx = 4;
     if (idx < 0 || idx === stepIndex) return;
@@ -166,7 +205,7 @@
 
   function sync() {
     render();
-    if (wizardVisible()) form.scrollTop = 0;
+    if (mobileMode()) form.scrollTop = 0;
   }
 
   window.addEventListener("mg-create-job-expanded", sync);
