@@ -1,5 +1,5 @@
-/* MG Express dispatch: compact mobile Create Job steps.
-   Reuses the real form and its existing validation, pricing and submit handlers. */
+/* MG Express dispatch: one-page, no-scroll Create Job workspace for phones.
+   Keeps the existing form fields, validation, pricing, and submit handlers. */
 (() => {
   "use strict";
 
@@ -15,12 +15,8 @@
     item => item.matches("section.form-group")
   ) : [];
 
-  if (!section || !body || !form || !originalSubmit || !actions || panels.length !== 5) {
-    return;
-  }
+  if (!section || !body || !form || !originalSubmit || !actions || panels.length !== 5) return;
 
-  // The service card has a lot of fields. On phones give its package
-  // details their own step without moving any fields or changing desktop.
   const servicePanel = panels[3];
   const serviceTitle = servicePanel.querySelector("h3");
   const serviceGrid = servicePanel.querySelector(":scope > .form-grid");
@@ -39,27 +35,32 @@
   progress.setAttribute("aria-live", "polite");
   progress.innerHTML =
     '<div class="mg-wizard-progress-header"><strong id="mgWizardStepName">Customer</strong>' +
-    '<span id="mgWizardStepCount">Step 1 of 6</span></div>' +
-    '<div class="mg-wizard-bars" aria-hidden="true">' +
-    names.map(() => "<i></i>").join("") + "</div>";
+    '<span id="mgWizardStepCount">Section 1 of 6</span></div>' +
+    '<nav class="mg-wizard-tabs" aria-label="Job form sections">' +
+    names.map((name, index) =>
+      '<button type="button" class="mg-wizard-tab" data-job-section="' + index +
+      '" aria-pressed="' + (index === 0 ? "true" : "false") + '">' +
+      '<span class="mg-wizard-tab-number">' + (index + 1) + '</span>' + name + '</button>'
+    ).join("") + "</nav>";
   body.insertBefore(progress, form);
 
   const footer = document.createElement("nav");
   footer.className = "mg-wizard-footer";
-  footer.setAttribute("aria-label", "Create job steps");
+  footer.setAttribute("aria-label", "Create job controls");
   footer.innerHTML =
-    '<button type="button" class="mg-wizard-back">Dashboard</button>' +
-    '<button type="button" class="mg-wizard-next">Next: Pickup</button>' +
-    '<div class="mg-wizard-submit-slot" hidden></div>';
+    '<button type="button" class="mg-wizard-back">← Board</button>' +
+    '<div class="mg-wizard-submit-slot"></div>';
   body.appendChild(footer);
 
   const back = footer.querySelector(".mg-wizard-back");
-  const next = footer.querySelector(".mg-wizard-next");
   const submitSlot = footer.querySelector(".mg-wizard-submit-slot");
   const nameNode = progress.querySelector("#mgWizardStepName");
   const countNode = progress.querySelector("#mgWizardStepCount");
-  const bars = Array.from(progress.querySelectorAll(".mg-wizard-bars i"));
+  const tabs = Array.from(progress.querySelectorAll("[data-job-section]"));
   const mobile = window.matchMedia("(max-width: 650px)");
+  const extraPricing = document.getElementById("pricingExtraOptions");
+  if (mobile.matches && extraPricing) extraPricing.removeAttribute("open");
+
   let stepIndex = 0;
   let invalidJumpScheduled = false;
 
@@ -69,18 +70,14 @@
 
   function restoreSubmit() {
     if (actions.parentElement === submitSlot) {
-      if (paymentPanel?.parentElement === form) {
-        form.insertBefore(actions, paymentPanel);
-      } else {
-        form.appendChild(actions);
-      }
+      if (paymentPanel?.parentElement === form) form.insertBefore(actions, paymentPanel);
+      else form.appendChild(actions);
     }
     originalSubmit.removeAttribute("form");
   }
 
   function moveSubmitToFooter() {
     if (actions.parentElement !== submitSlot) submitSlot.appendChild(actions);
-    // The submit button remains associated with the original form, even outside it.
     originalSubmit.setAttribute("form", form.id);
   }
 
@@ -98,16 +95,9 @@
     servicePanel.classList.toggle("mg-wizard-package-mode", stepIndex === 4);
     if (serviceTitle) serviceTitle.textContent = stepIndex === 4 ? "Package" : "Service";
     nameNode.textContent = names[stepIndex];
-    countNode.textContent = "Step " + (stepIndex + 1) + " of " + steps.length;
-    bars.forEach((bar, index) => {
-      bar.classList.toggle("active", index <= stepIndex);
-    });
-    back.textContent = stepIndex === 0 ? "← Board" : "← Back";
-    const last = stepIndex === steps.length - 1;
-    next.hidden = last;
-    submitSlot.hidden = !last;
-    if (last) moveSubmitToFooter();
-    else restoreSubmit();
+    countNode.textContent = "Section " + (stepIndex + 1) + " of " + steps.length;
+    tabs.forEach((tab, index) => tab.setAttribute("aria-pressed", String(index === stepIndex)));
+    moveSubmitToFooter();
     if (collapseButton) collapseButton.textContent = "← Board";
   }
 
@@ -139,24 +129,12 @@
     );
   }
 
-  function goNext() {
-    if (!wizardVisible()) return;
-    const invalid = firstInvalidInStep(stepIndex);
-    if (invalid) {
-      invalid.focus();
-      invalid.reportValidity();
-      return;
-    }
-    showStep(stepIndex + 1);
-  }
-
-  back.addEventListener("click", () => {
-    if (stepIndex === 0) collapseButton?.click();
-    else showStep(stepIndex - 1);
+  tabs.forEach(tab => {
+    tab.addEventListener("click", () => showStep(Number(tab.dataset.jobSection)));
   });
-  next.addEventListener("click", goNext);
+  back.addEventListener("click", () => collapseButton?.click());
 
-  // Catch missing required fields in earlier steps before native submission.
+  // Keep required-field errors visible by switching to the section that needs attention.
   originalSubmit.addEventListener("click", event => {
     if (!wizardVisible()) return;
     for (let i = 0; i < steps.length; i++) {
@@ -171,8 +149,6 @@
     }
   }, true);
 
-  // If browser native validation is triggered by keyboard or Enter,
-  // reveal the owning step so a hidden invalid input is focusable.
   form.addEventListener("invalid", event => {
     if (!wizardVisible() || invalidJumpScheduled) return;
     let idx = steps.findIndex(item => item.contains(event.target));
@@ -197,6 +173,5 @@
   mobile.addEventListener?.("change", sync);
   window.addEventListener("resize", sync);
   refreshButton?.addEventListener("click", () => showStep(0));
-
   sync();
 })();
