@@ -138,3 +138,33 @@ body.mg-dispatch-neon .dispatch-side-menu .dispatch-menu-link:active {
   color: #18325b !important;
   -webkit-text-fill-color: #18325b !important;
 }
+
+/* Improve readability of active-job cards on the dark sunset theme. */
+body.mg-dispatch-neon a.job-card {
+  background: linear-gradient(145deg, #143e7a 0%, #0c2c65 56%, #0a2356 100%) !important;
+  color: #f7f8ff !important;
+  border: 1px solid rgba(133, 176, 226, .72) !important;
+  box-shadow: 0 8px 22px rgba(0, 9, 38, .28) !important;
+}
+body.mg-dispatch-neon a.job-card .job-number,
+body.mg-dispatch-neon a.job-card .customer,
+body.mg-dispatch-neon a.job-card .route-address,
+body.mg-dispatch-neon a.job-card .meta-value,
+body.mg-dispatch-neon a.job-card .open-job {
+  color: #f7f8ff !important;
+  -webkit-text-fill-color: #f7f8ff !important;
+}
+body.mg-dispatch-neon a.job-card .route {
+  background: rgba(30, 72, 132, .88) !important;
+  border: 1px solid rgba(125, 168, 220, .54) !important;
+  color: #f0f4ff !important;
+}
+body.mg-dispatch-neon a.job-card .route-label,
+body.mg-dispatch-neon a.job-card .meta-label,
+body.mg-dispatch-neon a.job-card .customer-email {
+  color: #d2def3 !important;
+  -webkit-text-fill-color: #d2def3 !important;
+}
+body.mg-dispatch-neon a.job-card .route-arrow {
+  color: #8fd8ff !important;
+}
