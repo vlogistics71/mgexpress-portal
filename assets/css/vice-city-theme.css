@@ -5,17 +5,18 @@
   --vc-cobalt: #10438f;
   --vc-blue: #1d5fae;
   --vc-teal: #167fa6;
-  --vc-pink: #e88ab9;
+  --vc-pink: #efa07e;
   --vc-violet: #8b62c6;
   --vc-white: #f7f8ff;
   --vc-muted: #c8d3ec;
   --vc-line: rgba(105, 159, 218, .58);
-  --vc-button: linear-gradient(105deg, #ec8bb5 0%, #c77bb9 50%, #7459c2 100%);
+  --vc-button: linear-gradient(105deg, #efa078 0%, #e887ae 34%, #bd79c3 68%, #7459c2 100%);
 }
 html, body {
   background:
-    radial-gradient(ellipse at 100% 18%, rgba(20, 139, 177, .32), transparent 40%),
-    radial-gradient(ellipse at 3% 83%, rgba(206, 101, 160, .30), transparent 41%),
+    radial-gradient(ellipse at 100% 18%, rgba(20, 139, 177, .34), transparent 40%),
+    radial-gradient(ellipse at 4% 82%, rgba(231, 121, 100, .32), transparent 38%),
+    radial-gradient(ellipse at 98% 82%, rgba(226, 139, 106, .24), transparent 36%),
     linear-gradient(165deg, #123f93 0%, #0b2c70 34%, #091e53 70%, #211c54 100%) !important;
   color: var(--vc-white) !important;
 }
@@ -28,10 +29,10 @@ nav, .sidebar, .menu, .toolbar, .top-nav {
 }
 .topbar {
   border-bottom: 2px solid transparent !important;
-  border-image: linear-gradient(90deg, #d77eb8, #527ad5, #35b8d0) 1 !important;
+  border-image: linear-gradient(90deg, #efa078, #d77eb8, #527ad5, #35b8d0) 1 !important;
 }
 .brand, .brand span {
-  background: linear-gradient(95deg, #ed83b2 0%, #bd7bd2 54%, #65a8ed 100%) !important;
+  background: linear-gradient(95deg, #f2a079 0%, #e783b1 32%, #bd7bd2 62%, #65a8ed 100%) !important;
   color: transparent !important;
   -webkit-background-clip: text !important;
   background-clip: text !important;
@@ -87,7 +88,7 @@ a:not(.button):not(.btn) { color: #a8d8ff !important; }
 table, thead, tbody, tr, td, th { border-color: rgba(105, 159, 218, .35) !important; }
 tbody tr:nth-child(even) { background: rgba(62, 105, 163, .13) !important; }
 hr { border-color: rgba(105, 159, 218, .36) !important; }
-:focus-visible { outline: 2px solid #ee9bc8 !important; outline-offset: 2px; }
+:focus-visible { outline: 2px solid #f0a076 !important; outline-offset: 2px; }
 .pickup-map-panel .gm-control-active, .pickup-map-panel .gm-fullscreen-control {
   background: #735bb0 !important;
   color: #fff !important;
