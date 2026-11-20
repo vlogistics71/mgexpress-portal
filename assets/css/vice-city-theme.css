@@ -94,3 +94,30 @@ hr { border-color: rgba(105, 159, 218, .36) !important; }
   color: #fff !important;
   border-color: rgba(231, 205, 255, .65) !important;
 }
+
+/* Keep Google Maps markers and controls independent from portal button styling. */
+#dispatchPickupMap button:not(.gm-control-active),
+#dispatchPickupMap [role="button"]:not(.gm-control-active),
+#dispatchPickupMap .gm-style button:not(.gm-control-active) {
+  background: transparent !important;
+  background-image: none !important;
+  color: inherit !important;
+  border: 0 !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+}
+#dispatchPickupMap .gm-control-active,
+#dispatchPickupMap button[aria-label*="Zoom"],
+#dispatchPickupMap button[title*="Zoom"] {
+  background: #f6f8fd !important;
+  background-image: none !important;
+  color: #18396f !important;
+  border: 1px solid #92a7c9 !important;
+  box-shadow: 0 2px 7px rgba(7, 23, 61, .24) !important;
+}
+#dispatchPickupMap .gm-fullscreen-control {
+  background: #f6f8fd !important;
+  background-image: none !important;
+  border: 1px solid #92a7c9 !important;
+  box-shadow: 0 2px 7px rgba(7, 23, 61, .24) !important;
+}
