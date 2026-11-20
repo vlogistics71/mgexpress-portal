@@ -3121,10 +3121,6 @@
         window.requestAnimationFrame(() => window.MGDispatchPickupMap?.resize?.());
       }
 
-      if (shouldExpand && options.scroll && !window.matchMedia("(max-width: 650px)").matches) {
-        elements.createJobSection.scrollIntoView({ behavior: "smooth", block: "start" });
-      }
-
       if (shouldExpand && options.focusFirstField && !window.matchMedia("(max-width: 650px)").matches) {
         window.setTimeout(() => {
           if (elements.customerLookupInput) {
