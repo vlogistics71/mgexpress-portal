@@ -59,13 +59,13 @@
   const tabs = Array.from(progress.querySelectorAll("[data-job-section]"));
   const mobile = window.matchMedia("(max-width: 650px)");
   const extraPricing = document.getElementById("pricingExtraOptions");
-  if (mobile.matches && extraPricing) extraPricing.removeAttribute("open");
+  if (extraPricing) extraPricing.removeAttribute("open");
 
   let stepIndex = 0;
   let invalidJumpScheduled = false;
 
   function wizardVisible() {
-    return mobile.matches && document.body.classList.contains("mobile-create-expanded");
+    return document.body.classList.contains("mobile-create-expanded");
   }
 
   function restoreSubmit() {
