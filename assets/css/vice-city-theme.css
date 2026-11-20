@@ -56,3 +56,27 @@ table, thead, tbody, tr, td, th { border-color: rgba(106,169,235,.32) !important
 tbody tr:nth-child(even) { background: rgba(60,104,171,.14) !important; }
 hr { border-color: rgba(106,169,235,.32) !important; }
 :focus-visible { outline: 2px solid #e28dbd !important; outline-offset: 2px; }
+
+/* Dashboard-specific contrast fixes */
+.welcome-greeting, .welcome-date, .eyebrow, .stat-label, .stat-subtitle,
+.pickup-map-head h2, .pickup-map-head p {
+  color: #f2f5ff !important;
+}
+.stat-label, .stat-subtitle, .welcome-date, .pickup-map-head p {
+  color: #c3cde8 !important;
+}
+.pickup-map-panel {
+  background: linear-gradient(145deg, rgba(14,48,110,.97), rgba(7,27,72,.98)) !important;
+  color: var(--vc-white) !important;
+  border-color: var(--vc-line) !important;
+  box-shadow: 0 12px 30px rgba(0,8,34,.22) !important;
+}
+.pickup-map-head h2 { color: #f5f7ff !important; }
+.pickup-map-head p { color: #c3cde8 !important; }
+/* Keep Google Maps controls distinct from the portal's main action buttons. */
+.pickup-map-panel .gm-control-active,
+.pickup-map-panel .gm-fullscreen-control {
+  background: #735bb0 !important;
+  color: #fff !important;
+  border-color: rgba(231,205,255,.65) !important;
+}
