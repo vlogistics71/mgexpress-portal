@@ -106,6 +106,7 @@
       ? "Step " + (stepIndex + 1) + " of " + steps.length
       : "Section " + (stepIndex + 1) + " of " + steps.length;
     tabs.forEach((tab, index) => tab.setAttribute("aria-pressed", String(index === stepIndex)));
+    bars.forEach((bar, index) => bar.classList.toggle("active", index <= stepIndex));
 
     if (mobileMode()) {
       next.hidden = stepIndex === steps.length - 1;
@@ -113,7 +114,7 @@
       if (next.hidden) moveSubmitToFooter();
       else restoreSubmit();
       back.textContent = stepIndex === 0 ? "← Board" : "← Back";
-      next.textContent = "Next: " + names[stepIndex + 1];
+      next.textContent = stepIndex < steps.length - 1 ? "Next: " + names[stepIndex + 1] : "Create Job";
       if (collapseButton) collapseButton.textContent = "← Board";
     } else {
       next.hidden = true;
