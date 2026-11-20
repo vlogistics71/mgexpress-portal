@@ -64,7 +64,7 @@ input, select, textarea, .field input, .field select, .field textarea {
   border-color: rgba(115, 164, 218, .7) !important;
 }
 input::placeholder, textarea::placeholder { color: #c1cce5 !important; opacity: .88; }
-button, .button, .btn, [role="button"], input[type="button"], input[type="submit"],
+button, .button, .btn, [role="button"]:not(.card):not(.job-card), input[type="button"], input[type="submit"],
 a.button, a.btn, .primary-button, .secondary-button, .navigation a {
   background: var(--vc-button) !important;
   color: #fff !important;
@@ -76,7 +76,7 @@ a.button, a.btn, .primary-button, .secondary-button, .navigation a {
   color: #102b61 !important;
   border-color: rgba(255,255,255,.9) !important;
 }
-button:hover, .button:hover, .btn:hover, [role="button"]:hover,
+button:hover, .button:hover, .btn:hover, [role="button"]:not(.card):not(.job-card):hover,
 input[type="button"]:hover, input[type="submit"]:hover, .navigation a:hover {
   filter: brightness(1.07) !important;
 }
