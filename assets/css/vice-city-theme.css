@@ -1,0 +1,58 @@
+/* MG Express Vice City sunset theme. Color-only overrides for dispatch pages. */
+:root {
+  --vc-night: #06153d;
+  --vc-navy: #09265f;
+  --vc-cobalt: #103f9a;
+  --vc-blue: #1d62ba;
+  --vc-teal: #148aa5;
+  --vc-pink: #dc72a8;
+  --vc-violet: #7959bd;
+  --vc-white: #f5f7ff;
+  --vc-muted: #c3cde8;
+  --vc-line: rgba(106, 169, 235, .46);
+  --vc-button: linear-gradient(105deg, #dc6da5 0%, #ad64bb 55%, #557bd5 100%);
+}
+html, body {
+  background: linear-gradient(160deg, #082c78 0%, #09245e 42%, #131e55 72%, #39245b 100%) !important;
+  color: var(--vc-white) !important;
+}
+body { background-attachment: fixed !important; }
+body::before {
+  content: ""; position: fixed; inset: 0; z-index: -1; pointer-events: none;
+  background: radial-gradient(ellipse at 100% 12%, rgba(18,132,170,.28), transparent 38%),
+              radial-gradient(ellipse at 0% 88%, rgba(209,91,155,.25), transparent 40%);
+}
+header, .topbar, .header, .app-header, .site-header, .navbar, .navigation,
+nav, .sidebar, .menu, .toolbar, .top-nav {
+  background: linear-gradient(105deg, rgba(5,22,63,.98), rgba(9,48,125,.96) 68%, rgba(15,104,150,.9)) !important;
+  color: var(--vc-white) !important; border-color: rgba(91,160,232,.45) !important;
+}
+h1, h2, h3, h4, h5, h6, label, .page-title, .section-title, .brand,
+strong, th, legend { color: var(--vc-white) !important; }
+p, small, .muted, .subtitle, .description, .help-text, .text-muted { color: var(--vc-muted) !important; }
+.panel, .card, .stat-card, .form-group, .section, .table-wrap, .content-card,
+.modal-content, .dialog-content, .workspace, .job-card, .list-card,
+.payment-panel, .lookup-confirm, .summary-card, .filter-panel, .settings-card {
+  background: linear-gradient(145deg, rgba(14,48,110,.96), rgba(7,27,72,.97)) !important;
+  color: var(--vc-white) !important; border-color: var(--vc-line) !important;
+  box-shadow: 0 12px 30px rgba(0,8,34,.22) !important;
+}
+input, select, textarea, .field input, .field select, .field textarea {
+  background: rgba(18,54,112,.88) !important; color: var(--vc-white) !important;
+  border-color: rgba(101,174,232,.62) !important;
+}
+input::placeholder, textarea::placeholder { color: #b5c2e3 !important; opacity: .82; }
+button, .button, .btn, [role="button"], input[type="button"], input[type="submit"],
+a.button, a.btn, .primary-button, .secondary-button, .navigation a {
+  background: var(--vc-button) !important; color: #fff !important;
+  border: 1px solid rgba(221,190,255,.52) !important;
+  box-shadow: 0 5px 16px rgba(20,18,68,.2) !important;
+}
+button:hover, .button:hover, .btn:hover, [role="button"]:hover,
+input[type="button"]:hover, input[type="submit"]:hover, .navigation a:hover { filter: brightness(1.1) !important; }
+button:disabled, input:disabled, select:disabled, textarea:disabled { opacity: .62; }
+a:not(.button):not(.btn) { color: #8fcfff !important; }
+table, thead, tbody, tr, td, th { border-color: rgba(106,169,235,.32) !important; }
+tbody tr:nth-child(even) { background: rgba(60,104,171,.14) !important; }
+hr { border-color: rgba(106,169,235,.32) !important; }
+:focus-visible { outline: 2px solid #e28dbd !important; outline-offset: 2px; }
