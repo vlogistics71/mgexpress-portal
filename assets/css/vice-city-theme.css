@@ -124,18 +124,18 @@ hr { border-color: rgba(241, 109, 217, .3) !important; }
 /* High-contrast text for the dispatch command menu. */
 body.mg-dispatch-neon .dispatch-side-menu .dispatch-menu-link,
 body.mg-dispatch-neon .dispatch-side-menu .dispatch-menu-link:visited {
-  color: #18325b !important;
-  -webkit-text-fill-color: #18325b !important;
+  color: #fff8ff !important;
+  -webkit-text-fill-color: #fff8ff !important;
 }
 body.mg-dispatch-neon .dispatch-side-menu .dispatch-menu-link.active,
 body.mg-dispatch-neon .dispatch-side-menu .dispatch-menu-link.active:visited {
-  color: #5b287f !important;
-  -webkit-text-fill-color: #5b287f !important;
+  color: #250636 !important;
+  -webkit-text-fill-color: #250636 !important;
 }
 body.mg-dispatch-neon .dispatch-side-menu .dispatch-menu-link:hover,
 body.mg-dispatch-neon .dispatch-side-menu .dispatch-menu-link:active {
-  color: #18325b !important;
-  -webkit-text-fill-color: #18325b !important;
+  color: #fff8ff !important;
+  -webkit-text-fill-color: #fff8ff !important;
 }
 
 /* Improve readability of active-job cards on the dark sunset theme. */
