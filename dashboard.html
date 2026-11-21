@@ -1262,7 +1262,7 @@
 
   </style>
   <link rel="stylesheet" href="/assets/css/mobile-job-wizard.css?v=20261120-desktop-form-v2" />
-  <link rel="stylesheet" href="/assets/css/vice-city-theme.css?v=20261121-dashboard-exact-v1">
+  <link rel="stylesheet" href="/assets/css/vice-city-theme.css?v=20261121-dashboard-exact-v2">
   <style id="mg-main-dashboard-sunset-design">
     /* Dashboard-only presentation layer. Other dispatch pages keep their existing styles. */
     body.mg-dispatch-neon.mg-main-dashboard {
@@ -1448,6 +1448,30 @@
     }
     @media (prefers-reduced-motion: reduce) {
       body.mg-main-dashboard *,body.mg-main-dashboard *::before,body.mg-main-dashboard *::after {scroll-behavior:auto !important;animation:none !important;transition:none !important}
+    }
+  
+    body.mg-main-dashboard .page-heading .eyebrow {display:none !important}
+    body.mg-main-dashboard .stats > .stat-card {
+      grid-template-columns:36px minmax(0,1fr) auto !important;
+      gap:8px !important;
+      padding:14px !important;
+    }
+    body.mg-main-dashboard .stats > .stat-card::before {width:34px;height:34px}
+    body.mg-main-dashboard .stats .stat-number {font-size:clamp(29px,2.6vw,39px) !important}
+    body.mg-main-dashboard .stats .stat-label {font-size:clamp(13px,1vw,16px) !important}
+    body.mg-main-dashboard .stats .revenue-card .stat-label {
+      max-width:88px;
+      font-size:13px !important;
+      line-height:1.1 !important;
+      letter-spacing:-.02em;
+    }
+    body.mg-main-dashboard .stats .revenue-card .stat-number {
+      font-size:clamp(27px,2.4vw,35px) !important;
+    }
+    @media (max-width:650px) {
+      body.mg-main-dashboard .stats > .stat-card {grid-template-columns:30px minmax(0,1fr) auto !important}
+      body.mg-main-dashboard .stats > .stat-card::before {width:28px;height:28px}
+      body.mg-main-dashboard .stats .revenue-card .stat-label {max-width:none}
     }
   </style>
 
