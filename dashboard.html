@@ -1273,14 +1273,13 @@
       color: #fff8ff !important;
     }
     body.mg-dispatch-neon.mg-main-dashboard > .topbar {
-      position: sticky !important;
-      top: 0 !important;
-      z-index: 9999 !important;
-      isolation: isolate;
+      position: static !important;
+      top: auto !important;
+      z-index: auto !important;
       width: 100%;
-      background: linear-gradient(105deg, #17051f 0%, #26083a 64%, #3a0b4a 100%) !important;
-      border-bottom: 2px solid #ff2998 !important;
-      box-shadow: 0 5px 24px rgba(255, 39, 154, .24) !important;
+      background: transparent !important;
+      border: 0 !important;
+      box-shadow: none !important;
     }
     body.mg-main-dashboard .topbar-inner {
       width: min(1440px, 100%) !important;
@@ -1313,12 +1312,12 @@
     body.mg-main-dashboard h1 {font-size:clamp(42px,4vw,58px) !important;letter-spacing:-.035em}
     body.mg-main-dashboard .page-heading .primary-button {
       min-height:58px !important;
-      border:1px solid rgba(255,210,244,.75) !important;
+      border:2px solid #ff2998 !important;
       border-radius:16px !important;
       padding:16px 26px !important;
-      background:linear-gradient(105deg,#ff963f 0%,#ff2998 54%,#9239e8 100%) !important;
-      color:#fff !important;
-      box-shadow:0 0 22px rgba(255,41,152,.25) !important;
+      background:linear-gradient(145deg,rgba(74,7,66,.96),rgba(28,7,46,.98)) !important;
+      color:#fff8ff !important;
+      box-shadow:0 0 18px rgba(255,41,152,.24), inset 0 1px rgba(255,255,255,.07) !important;
       font-size:17px !important;
     }
     body.mg-main-dashboard .stats {
@@ -1416,9 +1415,11 @@
     body.mg-main-dashboard #pickupMapSection .pickup-map-controls select {
       background:#260b3e !important;color:#fff8ff !important;border:1px solid #d451ef !important;
     }
-    body.mg-main-dashboard #pickupMapSection .pickup-map-controls button {
-      background:linear-gradient(105deg,#ff963f,#ff2998 54%,#9239e8) !important;
-      color:#fff !important;border:1px solid rgba(255,210,244,.7) !important;
+    body.mg-main-dashboard #pickupMapSection .pickup-map-controls .map-expand-button {
+      background:linear-gradient(145deg,rgba(60,20,103,.96),rgba(26,7,50,.98)) !important;
+      color:#fff8ff !important;
+      border:2px solid #c04bff !important;
+      box-shadow:0 0 18px rgba(192,75,255,.24), inset 0 1px rgba(255,255,255,.07) !important;
     }
     body.mg-main-dashboard #dispatchPickupMap {
       height:clamp(320px,42vh,410px) !important;
