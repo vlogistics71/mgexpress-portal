@@ -1666,6 +1666,341 @@
         height:280px !important;
       }
     }
+    /* Phone dashboard: compact one-screen layout matching the four-card reference. */
+    @media (max-width:650px) {
+      body.mg-main-dashboard:not(.mobile-create-expanded) {
+        display:flex !important;
+        flex-direction:column !important;
+        height:100dvh !important;
+        min-height:100dvh !important;
+        overflow:hidden !important;
+      }
+      body.mg-main-dashboard:not(.mobile-create-expanded) > .topbar {
+        position:relative !important;
+        inset:auto !important;
+        flex:0 0 56px !important;
+        min-height:56px !important;
+        padding:7px 10px !important;
+        background:transparent !important;
+      }
+      body.mg-main-dashboard:not(.mobile-create-expanded) .topbar-inner {
+        width:100% !important;
+        min-height:42px !important;
+        gap:8px !important;
+      }
+      body.mg-main-dashboard:not(.mobile-create-expanded) .topbar .brand {
+        font-size:clamp(14px,4.1vw,17px) !important;
+        line-height:1.05 !important;
+      }
+      body.mg-main-dashboard:not(.mobile-create-expanded) .topbar .brand-subtitle {
+        font-size:9px !important;
+        margin-top:2px !important;
+      }
+      body.mg-main-dashboard:not(.mobile-create-expanded) .topbar .dispatch-menu-button {
+        width:42px !important;
+        height:42px !important;
+        min-width:42px !important;
+        padding:0 !important;
+        font-size:23px !important;
+        border-radius:11px !important;
+      }
+      body.mg-main-dashboard:not(.mobile-create-expanded) main.container {
+        display:flex !important;
+        flex:1 1 auto !important;
+        flex-direction:column !important;
+        width:100% !important;
+        height:auto !important;
+        min-height:0 !important;
+        overflow:hidden !important;
+        padding:5px 9px 8px !important;
+      }
+      body.mg-main-dashboard:not(.mobile-create-expanded) .page-heading {
+        flex:0 0 auto !important;
+        display:grid !important;
+        grid-template-columns:minmax(0,1fr) auto !important;
+        grid-template-rows:auto auto !important;
+        align-items:center !important;
+        gap:3px 8px !important;
+        margin:0 0 7px !important;
+      }
+      body.mg-main-dashboard:not(.mobile-create-expanded) .page-heading > div {
+        display:contents !important;
+      }
+      body.mg-main-dashboard:not(.mobile-create-expanded) .welcome-stack {
+        grid-column:1 / -1 !important;
+        grid-row:1 !important;
+        margin:0 !important;
+      }
+      body.mg-main-dashboard:not(.mobile-create-expanded) .welcome-greeting {
+        font-size:14px !important;
+        line-height:1.05 !important;
+      }
+      body.mg-main-dashboard:not(.mobile-create-expanded) .welcome-date {
+        margin-top:2px !important;
+        font-size:9px !important;
+        line-height:1.1 !important;
+      }
+      body.mg-main-dashboard:not(.mobile-create-expanded) .page-heading .eyebrow {
+        display:none !important;
+      }
+      body.mg-main-dashboard:not(.mobile-create-expanded) .page-heading h1 {
+        display:block !important;
+        grid-column:1 !important;
+        grid-row:2 !important;
+        align-self:center !important;
+        margin:0 !important;
+        font-size:clamp(23px,7vw,29px) !important;
+        line-height:1 !important;
+      }
+      body.mg-main-dashboard:not(.mobile-create-expanded) .page-heading .primary-button {
+        display:block !important;
+        grid-column:2 !important;
+        grid-row:2 !important;
+        width:auto !important;
+        min-width:112px !important;
+        min-height:37px !important;
+        padding:6px 9px !important;
+        border-radius:10px !important;
+        font-size:10px !important;
+        white-space:nowrap !important;
+      }
+      body.mg-main-dashboard:not(.mobile-create-expanded) .label-full {display:none !important}
+      body.mg-main-dashboard:not(.mobile-create-expanded) .label-short {display:inline !important}
+      body.mg-main-dashboard:not(.mobile-create-expanded) .stats {
+        display:grid !important;
+        flex:0 0 auto !important;
+        width:100% !important;
+        height:auto !important;
+        min-height:0 !important;
+        grid-template-columns:repeat(4,minmax(0,1fr)) !important;
+        grid-template-rows:clamp(78px,12dvh,96px) 52px !important;
+        grid-auto-rows:auto !important;
+        gap:6px !important;
+        overflow:visible !important;
+        margin:0 0 7px !important;
+        padding-top:7px !important;
+      }
+      body.mg-main-dashboard:not(.mobile-create-expanded) .stats > .stat-card {
+        min-width:0 !important;
+        min-height:0 !important;
+        height:100% !important;
+        display:grid !important;
+        grid-template-columns:minmax(0,1fr) !important;
+        grid-template-rows:20px minmax(0,1fr) 23px 9px !important;
+        align-items:center !important;
+        justify-items:center !important;
+        gap:1px !important;
+        padding:4px 3px 3px !important;
+        border-radius:12px !important;
+      }
+      body.mg-main-dashboard:not(.mobile-create-expanded) .stats > .stat-card::before {
+        grid-column:1 !important;
+        grid-row:1 !important;
+        align-self:center !important;
+        justify-self:center !important;
+        width:19px !important;
+        height:19px !important;
+      }
+      body.mg-main-dashboard:not(.mobile-create-expanded) .stats > .stat-card::after {
+        grid-column:1 !important;
+        grid-row:1 !important;
+        align-self:end !important;
+        justify-self:center !important;
+        width:72% !important;
+        height:1px !important;
+        min-height:1px !important;
+        margin:0 0 -2px !important;
+      }
+      body.mg-main-dashboard:not(.mobile-create-expanded) .stats .stat-label {
+        grid-column:1 !important;
+        grid-row:2 !important;
+        align-self:center !important;
+        justify-self:stretch !important;
+        min-width:0 !important;
+        margin:0 !important;
+        max-width:none !important;
+        text-align:center !important;
+        font-size:clamp(8px,2.45vw,10px) !important;
+        line-height:1.03 !important;
+        overflow-wrap:anywhere !important;
+      }
+      body.mg-main-dashboard:not(.mobile-create-expanded) .stats .stat-number {
+        grid-column:1 !important;
+        grid-row:3 !important;
+        align-self:center !important;
+        justify-self:center !important;
+        margin:0 !important;
+        font-size:clamp(20px,6vw,25px) !important;
+        line-height:1 !important;
+      }
+      body.mg-main-dashboard:not(.mobile-create-expanded) #cardCompletedJobs {
+        grid-template-columns:minmax(0,1fr) !important;
+        grid-template-rows:20px minmax(0,1fr) 23px 9px !important;
+      }
+      body.mg-main-dashboard:not(.mobile-create-expanded) #cardCompletedJobs::before,
+      body.mg-main-dashboard:not(.mobile-create-expanded) #cardCompletedJobs::after {
+        grid-column:1 !important;
+        grid-row:1 !important;
+      }
+      body.mg-main-dashboard:not(.mobile-create-expanded) #cardCompletedJobs .stat-label {
+        grid-column:1 !important;
+        grid-row:2 !important;
+        align-self:center !important;
+      }
+      body.mg-main-dashboard:not(.mobile-create-expanded) #cardCompletedJobs .stat-number {
+        grid-column:1 !important;
+        grid-row:3 !important;
+      }
+      body.mg-main-dashboard:not(.mobile-create-expanded) #cardCompletedJobs .stat-subtitle {
+        grid-column:1 !important;
+        grid-row:4 !important;
+        align-self:center !important;
+        margin:0 !important;
+        font-size:8px !important;
+        line-height:1 !important;
+      }
+      body.mg-main-dashboard:not(.mobile-create-expanded) .stats > .stat-card:nth-child(5) {
+        grid-column:1 / -1 !important;
+        grid-row:2 !important;
+        min-height:52px !important;
+        grid-template-columns:30px minmax(0,1fr) auto !important;
+        grid-template-rows:minmax(0,1fr) !important;
+        justify-items:stretch !important;
+        padding:5px 12px !important;
+      }
+      body.mg-main-dashboard:not(.mobile-create-expanded) .stats > .stat-card:nth-child(5)::before {
+        grid-column:1 !important;
+        grid-row:1 !important;
+        width:22px !important;
+        height:22px !important;
+      }
+      body.mg-main-dashboard:not(.mobile-create-expanded) .stats > .stat-card:nth-child(5)::after {
+        grid-column:1 !important;
+        grid-row:1 !important;
+        justify-self:end !important;
+        align-self:center !important;
+        width:2px !important;
+        height:75% !important;
+        min-height:25px !important;
+        margin:0 !important;
+      }
+      body.mg-main-dashboard:not(.mobile-create-expanded) .stats .revenue-card .stat-label {
+        grid-column:2 !important;
+        grid-row:1 !important;
+        align-self:center !important;
+        justify-self:center !important;
+        text-align:center !important;
+        font-size:clamp(9px,2.8vw,11px) !important;
+        line-height:1.05 !important;
+      }
+      body.mg-main-dashboard:not(.mobile-create-expanded) .stats .revenue-card .stat-number {
+        grid-column:3 !important;
+        grid-row:1 !important;
+        justify-self:end !important;
+        font-size:clamp(20px,6vw,25px) !important;
+      }
+      body.mg-main-dashboard:not(.mobile-create-expanded) #pickupMapSection {
+        display:flex !important;
+        flex:1 1 auto !important;
+        flex-direction:column !important;
+        min-height:0 !important;
+        overflow:hidden !important;
+        margin:0 !important;
+        padding:9px !important;
+        border-radius:16px !important;
+      }
+      body.mg-main-dashboard:not(.mobile-create-expanded) #pickupMapSection .pickup-map-head {
+        flex:0 0 auto !important;
+        flex-wrap:nowrap !important;
+        align-items:center !important;
+        gap:5px !important;
+        margin:0 0 6px !important;
+      }
+      body.mg-main-dashboard:not(.mobile-create-expanded) #pickupMapSection .pickup-map-head > div:first-child {
+        min-width:0 !important;
+      }
+      body.mg-main-dashboard:not(.mobile-create-expanded) #pickupMapSection .pickup-map-head h2 {
+        font-size:16px !important;
+        line-height:1.05 !important;
+      }
+      body.mg-main-dashboard:not(.mobile-create-expanded) #pickupMapSection .pickup-map-head p {
+        display:none !important;
+      }
+      body.mg-main-dashboard:not(.mobile-create-expanded) #pickupMapSection .pickup-map-controls {
+        width:auto !important;
+        flex:0 0 auto !important;
+        flex-wrap:nowrap !important;
+        gap:4px !important;
+      }
+      body.mg-main-dashboard:not(.mobile-create-expanded) #pickupMapSection .pickup-map-controls select,
+      body.mg-main-dashboard:not(.mobile-create-expanded) #pickupMapSection .pickup-map-controls button {
+        min-height:27px !important;
+        padding:4px 6px !important;
+        border-radius:8px !important;
+        font-size:9px !important;
+      }
+      body.mg-main-dashboard:not(.mobile-create-expanded) #pickupMapSection .pickup-map-controls select {
+        width:92px !important;
+        min-width:0 !important;
+      }
+      body.mg-main-dashboard:not(.mobile-create-expanded) #pickupMapSection .pickup-map-controls button {
+        white-space:nowrap !important;
+      }
+      body.mg-main-dashboard:not(.mobile-create-expanded) #dispatchPickupMap {
+        flex:1 1 auto !important;
+        width:100% !important;
+        height:auto !important;
+        min-height:110px !important;
+        border-radius:11px !important;
+      }
+      body.mg-main-dashboard:not(.mobile-create-expanded) #pickupMapSection .pickup-map-footer {
+        display:none !important;
+      }
+    }
+    @media (max-width:390px) {
+      body.mg-main-dashboard:not(.mobile-create-expanded) .stats {
+        grid-template-rows:clamp(74px,11.5dvh,88px) 48px !important;
+        gap:5px !important;
+      }
+      body.mg-main-dashboard:not(.mobile-create-expanded) .stats > .stat-card:nth-child(5) {
+        min-height:48px !important;
+      }
+      body.mg-main-dashboard:not(.mobile-create-expanded) #pickupMapSection .pickup-map-controls select {
+        width:82px !important;
+      }
+    }
+    @media (max-height:680px) and (max-width:650px) {
+      body.mg-main-dashboard:not(.mobile-create-expanded) > .topbar {
+        flex-basis:48px !important;
+        min-height:48px !important;
+        padding-top:4px !important;
+        padding-bottom:4px !important;
+      }
+      body.mg-main-dashboard:not(.mobile-create-expanded) main.container {
+        padding-top:3px !important;
+        padding-bottom:5px !important;
+      }
+      body.mg-main-dashboard:not(.mobile-create-expanded) .page-heading {
+        margin-bottom:4px !important;
+        gap:2px 6px !important;
+      }
+      body.mg-main-dashboard:not(.mobile-create-expanded) .stats {
+        grid-template-rows:70px 44px !important;
+        gap:4px !important;
+        margin-bottom:4px !important;
+        padding-top:4px !important;
+      }
+      body.mg-main-dashboard:not(.mobile-create-expanded) .stats > .stat-card {
+        grid-template-rows:17px minmax(0,1fr) 19px 8px !important;
+        padding:3px 2px !important;
+      }
+      body.mg-main-dashboard:not(.mobile-create-expanded) #pickupMapSection {
+        padding:6px !important;
+      }
+      body.mg-main-dashboard:not(.mobile-create-expanded) #dispatchPickupMap {
+        min-height:90px !important;
+      }
+    }
   </style>
 
 </head>
