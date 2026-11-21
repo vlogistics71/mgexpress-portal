@@ -262,8 +262,8 @@
       body.mg-dispatch-neon .dispatch-side-menu {border-left:1px solid #9c38b6;background:#190625;color:#fff8ff}
       body.mg-dispatch-neon .dispatch-menu-header {
         background:
-          linear-gradient(90deg,rgba(20,4,33,.68),rgba(44,7,51,.32)),
-          url("/assets/images/vice-city-sunset.svg") center 52% / cover no-repeat !important;
+          linear-gradient(90deg,rgba(20,4,33,.56),rgba(44,7,51,.4)),
+          url("/assets/images/vice-city-dashboard-banner.png") center 48% / cover no-repeat !important;
         border-bottom:3px solid #ff35a5;
       }
       body.mg-dispatch-neon .dispatch-menu-close,
@@ -278,14 +278,20 @@
       body.mg-dispatch-neon .dispatch-menu-link:nth-child(4n + 3) {border-color:#b653ef !important}
       body.mg-dispatch-neon .dispatch-menu-link:nth-child(4n + 4) {border-color:#ff6477 !important}
       body.mg-dispatch-neon .dispatch-menu-link.active {
-        background:linear-gradient(105deg,#ff963f,#ff2998 54%,#9239e8) !important;
-        border-color:#ffc2eb !important;color:#fff !important;
+        background:linear-gradient(145deg,#321044,#230a37) !important;
+        border-color:rgba(200,89,219,.55) !important;
+        color:#fff8ff !important;
+        -webkit-text-fill-color:#fff8ff !important;
+        box-shadow:0 8px 20px rgba(8,0,23,.24) !important;
       }
       body.mg-dispatch-neon .dispatch-menu-link:hover,
       body.mg-dispatch-neon .dispatch-menu-link:active {filter:brightness(1.15)}
       body.mg-dispatch-neon .dispatch-menu-signout {
-        background:linear-gradient(105deg,#ff963f,#ff2998 54%,#9239e8) !important;
-        color:#fff !important;border:0;
+        background:linear-gradient(145deg,#321044,#230a37) !important;
+        color:#fff8ff !important;
+        -webkit-text-fill-color:#fff8ff !important;
+        border:1px solid rgba(200,89,219,.55) !important;
+        box-shadow:0 8px 20px rgba(8,0,23,.24) !important;
       }
     `;
     document.head.appendChild(neonTheme);
@@ -304,7 +310,7 @@
     return `<a class="dispatch-menu-link${active}" href="${page.href}"><span class="dispatch-menu-icon">${page.icon}</span><span>${page.label}</span></a>`;
   }).join("");
 
-  menu.innerHTML = `<div class="dispatch-menu-header"><button class="dispatch-menu-close" id="dispatchMenuClose" type="button">×</button><div class="dispatch-menu-brand">MG <span>EXPRESS</span><span class="dispatch-menu-desktop-title"><br>COMMAND CENTER</span></div><div class="dispatch-menu-subtitle" id="dispatchMenuUser">MG Express Dispatch</div></div><nav class="dispatch-menu-links">${links}</nav><div class="dispatch-menu-footer"><button id="dispatchMenuSignOut" class="dispatch-menu-signout">Sign Out</button></div>`;
+  menu.innerHTML = `<div class="dispatch-menu-header"><button class="dispatch-menu-close" id="dispatchMenuClose" type="button">×</button><div class="dispatch-menu-brand">COMMAND CENTER</div><div class="dispatch-menu-subtitle" id="dispatchMenuUser">MG Express Dispatch</div></div><nav class="dispatch-menu-links">${links}</nav><div class="dispatch-menu-footer"><button id="dispatchMenuSignOut" class="dispatch-menu-signout">Sign Out</button></div>`;
 
   const openButton = document.createElement("button");
   openButton.className = "dispatch-menu-button";
