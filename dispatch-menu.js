@@ -206,24 +206,26 @@
     neonTheme.textContent = `
       @import url('https://fonts.googleapis.com/css2?family=Titan+One&display=swap');
       body.mg-dispatch-neon {
-        --dark-green:#210b3d; --green:#8b22d1; --light-green:#f4e6ff; --coral:#ff38b8;
-        --background:#f6f1ff; --ink:#241833; --muted:#746783; --line:#e2d4f1;
-        --blue:#087edb; --blue-bg:#e4f4ff; --danger-bg:#fff0f6;
+        --dark-green:#190625; --green:#ff279a; --light-green:#401145; --coral:#ff783f;
+        --background:#17051f; --ink:#fff8ff; --muted:#f0d9ef; --line:rgba(242,84,204,.5);
+        --blue:#bd56f2; --blue-bg:#351052; --danger-bg:#42112c;
         background:var(--background);
       }
       body.mg-dispatch-neon > .topbar {
-        background:linear-gradient(105deg,#16052b 0%,#35105d 48%,#151039 100%) !important;
-        border-bottom:3px solid #18cfff;
-        box-shadow:0 5px 24px rgba(177,20,255,.25);
+        background:
+          linear-gradient(90deg,rgba(20,4,33,.72),rgba(42,6,48,.3)),
+          url("/assets/images/vice-city-sunset.svg") center 52% / cover no-repeat !important;
+        border-bottom:3px solid #ff35a5;
+        box-shadow:0 5px 24px rgba(255,39,154,.2);
       }
       body.mg-dispatch-neon .brand,
       body.mg-dispatch-neon .dispatch-menu-brand {
         font-family:'Titan One','Arial Rounded MT Bold',Arial,sans-serif;
         letter-spacing:.015em;
-        background:linear-gradient(100deg,#9d42ff 0%,#ff35ba 47%,#32caff 100%);
+        background:linear-gradient(100deg,#ff9b43 0%,#ff3b9f 52%,#a54cf0 100%);
         -webkit-background-clip:text; background-clip:text;
         color:transparent !important; -webkit-text-fill-color:transparent;
-        text-shadow:0 0 13px rgba(222,55,255,.28);
+        text-shadow:0 0 13px rgba(255,55,166,.35);
       }
       body.mg-dispatch-neon .brand span,
       body.mg-dispatch-neon .dispatch-menu-brand > span:not(.dispatch-menu-desktop-title) {
@@ -242,34 +244,49 @@
       body.mg-dispatch-neon .button.primary,
       body.mg-dispatch-neon .pricing-button,
       body.mg-dispatch-neon .primary-btn {
-        background:linear-gradient(105deg,#c515d9,#f52ca7 55%,#1689ef) !important;
+        background:linear-gradient(105deg,#ff963f 0%,#ff2998 54%,#9239e8 100%) !important;
         border-color:transparent !important; color:#fff !important;
-        box-shadow:0 5px 16px rgba(171,39,214,.22);
+        box-shadow:0 5px 16px rgba(255,39,154,.25);
       }
       body.mg-dispatch-neon .secondary-button,
       body.mg-dispatch-neon .action-btn.secondary,
       body.mg-dispatch-neon .back-link {
-        color:#542477; border-color:#dcc8ef;
+        color:#fff8ff; border-color:#ba56d8;
       }
       body.mg-dispatch-neon input:focus,
       body.mg-dispatch-neon select:focus,
       body.mg-dispatch-neon textarea:focus {
-        outline:2px solid #bb55ee; outline-offset:1px; border-color:#a536dd;
-        box-shadow:0 0 0 3px rgba(174,64,230,.13);
+        outline:2px solid #ff963f; outline-offset:1px; border-color:#ff2998;
+        box-shadow:0 0 0 3px rgba(255,41,152,.18);
       }
-      body.mg-dispatch-neon .dispatch-side-menu {border-left:1px solid #d9c0ee}
+      body.mg-dispatch-neon .dispatch-side-menu {border-left:1px solid #9c38b6;background:#190625;color:#fff8ff}
       body.mg-dispatch-neon .dispatch-menu-header {
-        background:linear-gradient(115deg,#16052b,#3a0d61 55%,#10173e) !important;
-        border-bottom:3px solid #21cfff;
+        background:
+          linear-gradient(90deg,rgba(20,4,33,.68),rgba(44,7,51,.32)),
+          url("/assets/images/vice-city-sunset.svg") center 52% / cover no-repeat !important;
+        border-bottom:3px solid #ff35a5;
       }
       body.mg-dispatch-neon .dispatch-menu-close,
-      body.mg-dispatch-neon .dispatch-menu-button {color:#57217c}
+      body.mg-dispatch-neon .dispatch-menu-button {color:#21103a;border-color:#ff79bd}
+      body.mg-dispatch-neon .dispatch-menu-links,
+      body.mg-dispatch-neon .dispatch-menu-footer {background:#190625 !important;border-color:rgba(239,74,205,.42) !important}
+      body.mg-dispatch-neon .dispatch-menu-link {
+        background:linear-gradient(145deg,#321044,#230a37) !important;
+        border:1px solid rgba(200,89,219,.55) !important;color:#fff8ff !important;
+      }
+      body.mg-dispatch-neon .dispatch-menu-link:nth-child(4n + 2) {border-color:#ff963f !important}
+      body.mg-dispatch-neon .dispatch-menu-link:nth-child(4n + 3) {border-color:#b653ef !important}
+      body.mg-dispatch-neon .dispatch-menu-link:nth-child(4n + 4) {border-color:#ff6477 !important}
       body.mg-dispatch-neon .dispatch-menu-link.active {
-        background:#f3e2ff !important; border-color:#d6a8f2 !important; color:#8124bd !important;
+        background:linear-gradient(105deg,#ff963f,#ff2998 54%,#9239e8) !important;
+        border-color:#ffc2eb !important;color:#fff !important;
       }
       body.mg-dispatch-neon .dispatch-menu-link:hover,
-      body.mg-dispatch-neon .dispatch-menu-link:active {background:#f8edff}
-      body.mg-dispatch-neon .dispatch-menu-signout {background:#fff0f6;color:#a12c68}
+      body.mg-dispatch-neon .dispatch-menu-link:active {filter:brightness(1.15)}
+      body.mg-dispatch-neon .dispatch-menu-signout {
+        background:linear-gradient(105deg,#ff963f,#ff2998 54%,#9239e8) !important;
+        color:#fff !important;border:0;
+      }
     `;
     document.head.appendChild(neonTheme);
   }
