@@ -245,3 +245,39 @@ body.mg-dispatch-neon .list > .card[role="button"] .mini-status {
   background: #ff2897 !important;
   color: #fff !important;
 }
+
+
+/* Keep the job route readable inside the plum card and give category filters clear states. */
+body.mg-dispatch-neon .summary-label {
+  color: #fff8ff !important;
+  font-size: 12px !important;
+  letter-spacing: .08em !important;
+}
+body.mg-dispatch-neon .list > .card[role="button"] .route {
+  background: rgba(52, 15, 73, .96) !important;
+  background-image: none !important;
+  border: 1px solid rgba(177, 83, 225, .72) !important;
+  border-radius: 10px !important;
+  color: #fff8ff !important;
+  -webkit-text-fill-color: #fff8ff !important;
+  font-size: 14px !important;
+  line-height: 1.45 !important;
+  padding: 8px 10px !important;
+}
+body.mg-dispatch-neon .list > .card[role="button"] .job-number {font-size:17px !important;line-height:1.2}
+body.mg-dispatch-neon .list > .card[role="button"] .customer {font-size:16px !important}
+body.mg-dispatch-neon .list > .card[role="button"] .meta {font-size:13px !important;line-height:1.4}
+body.mg-dispatch-neon .toolbar .filters {background:transparent !important;box-shadow:none !important}
+body.mg-dispatch-neon .toolbar .filters .chip {
+  background:#2b0c40 !important;
+  color:#fff8ff !important;
+  border:1px solid #ff2c9d !important;
+  box-shadow:none !important;
+}
+body.mg-dispatch-neon .toolbar .filters .chip:nth-child(4n + 2) {border-color:#ff963f !important}
+body.mg-dispatch-neon .toolbar .filters .chip:nth-child(4n + 3) {border-color:#b653ef !important}
+body.mg-dispatch-neon .toolbar .filters .chip:nth-child(4n + 4) {border-color:#ff6477 !important}
+body.mg-dispatch-neon .toolbar .filters .chip.active {
+  background:linear-gradient(105deg,#ff963f,#ff2998 54%,#9239e8) !important;
+  border-color:#ffc2eb !important;
+}
