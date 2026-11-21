@@ -1421,12 +1421,14 @@
       color:#fff !important;border:1px solid rgba(255,210,244,.7) !important;
     }
     body.mg-main-dashboard #dispatchPickupMap {
-      height:clamp(280px,38vh,360px) !important;
+      height:clamp(320px,42vh,410px) !important;
       border:1px solid rgba(255,255,255,.16);
       border-radius:17px !important;
     }
     body.mg-main-dashboard #pickupMapSection .pickup-map-footer,
     body.mg-main-dashboard #pickupMapSection .pickup-map-footer * {color:#f6dff2 !important}
+    body.mg-main-dashboard:not(.mobile-create-expanded) #createJobSection {display:none !important}
+    body.mg-main-dashboard.mobile-create-expanded #createJobSection {display:grid !important}
     body.mg-main-dashboard #createJobSection {
       border:1px solid #a143ed !important;
       border-radius:19px !important;
