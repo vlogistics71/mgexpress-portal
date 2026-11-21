@@ -1262,10 +1262,198 @@
 
   </style>
   <link rel="stylesheet" href="/assets/css/mobile-job-wizard.css?v=20261120-desktop-form-v2" />
-  <link rel="stylesheet" href="/assets/css/vice-city-theme.css?v=20261121-sunset-theme-v2">
+  <link rel="stylesheet" href="/assets/css/vice-city-theme.css?v=20261121-dashboard-exact-v1">
+  <style id="mg-main-dashboard-sunset-design">
+    /* Dashboard-only presentation layer. Other dispatch pages keep their existing styles. */
+    body.mg-dispatch-neon.mg-main-dashboard {
+      background:
+        linear-gradient(180deg, rgba(24, 4, 39, .18) 0%, rgba(24, 4, 39, .48) 205px, #17051f 370px),
+        url("/assets/images/vice-city-sunset.svg") center top / 100% 300px no-repeat,
+        #17051f !important;
+      color: #fff8ff !important;
+    }
+    body.mg-dispatch-neon.mg-main-dashboard > .topbar {
+      background: linear-gradient(90deg, rgba(20, 4, 33, .48), rgba(42, 6, 48, .18)) !important;
+      border-bottom: 2px solid #ff2998 !important;
+      box-shadow: 0 5px 24px rgba(255, 39, 154, .2) !important;
+    }
+    body.mg-main-dashboard .topbar-inner {
+      width: min(1440px, 100%) !important;
+      justify-content: flex-start !important;
+      gap: 18px !important;
+    }
+    body.mg-main-dashboard .dispatch-menu-button {order:-1;margin:0 0 0 2px !important}
+    body.mg-main-dashboard main.container {
+      position:relative;
+      z-index:1;
+      width:min(1440px,100%) !important;
+      padding:24px 30px 54px !important;
+    }
+    body.mg-main-dashboard .page-heading {
+      align-items:flex-end !important;
+      gap:24px !important;
+      margin-bottom:18px !important;
+    }
+    body.mg-main-dashboard .welcome-greeting,
+    body.mg-main-dashboard .welcome-date,
+    body.mg-main-dashboard .eyebrow,
+    body.mg-main-dashboard h1 {color:#fff8ff !important}
+    body.mg-main-dashboard .welcome-greeting {font-size:25px !important}
+    body.mg-main-dashboard .welcome-date {color:#f6dff2 !important}
+    body.mg-main-dashboard .eyebrow {font-size:15px !important;letter-spacing:.08em;text-transform:uppercase}
+    body.mg-main-dashboard h1 {font-size:clamp(42px,4vw,58px) !important;letter-spacing:-.035em}
+    body.mg-main-dashboard .page-heading .primary-button {
+      min-height:58px !important;
+      border:1px solid rgba(255,210,244,.75) !important;
+      border-radius:16px !important;
+      padding:16px 26px !important;
+      background:linear-gradient(105deg,#ff963f 0%,#ff2998 54%,#9239e8 100%) !important;
+      color:#fff !important;
+      box-shadow:0 0 22px rgba(255,41,152,.25) !important;
+      font-size:17px !important;
+    }
+    body.mg-main-dashboard .stats {
+      grid-template-columns:repeat(5,minmax(0,1fr)) !important;
+      gap:12px !important;
+      margin:0 0 24px !important;
+      padding-top:16px;
+      border-top:2px solid #ff2998;
+    }
+    body.mg-main-dashboard .stats > .stat-card {
+      --dash-accent:#ff2998;
+      --dash-surface:linear-gradient(145deg,rgba(74,7,66,.96),rgba(28,7,46,.98));
+      min-width:0;
+      min-height:132px !important;
+      display:grid !important;
+      grid-template-columns:44px minmax(0,1fr) auto !important;
+      grid-template-rows:1fr !important;
+      align-items:center !important;
+      gap:12px !important;
+      padding:18px 20px !important;
+      border:2px solid var(--dash-accent) !important;
+      border-radius:19px !important;
+      background:var(--dash-surface) !important;
+      color:#fff8ff !important;
+      box-shadow:0 0 18px color-mix(in srgb,var(--dash-accent) 24%,transparent), inset 0 1px rgba(255,255,255,.07) !important;
+    }
+    body.mg-main-dashboard .stats > .stat-card:nth-child(2) {
+      --dash-accent:#ff963f;
+      --dash-surface:linear-gradient(145deg,rgba(78,37,19,.96),rgba(31,8,43,.98));
+    }
+    body.mg-main-dashboard .stats > .stat-card:nth-child(3) {
+      --dash-accent:#c04bff;
+      --dash-surface:linear-gradient(145deg,rgba(60,20,103,.96),rgba(26,7,50,.98));
+    }
+    body.mg-main-dashboard .stats > .stat-card:nth-child(4) {
+      --dash-accent:#ff6477;
+      --dash-surface:linear-gradient(145deg,rgba(89,17,48,.96),rgba(32,7,43,.98));
+    }
+    body.mg-main-dashboard .stats > .stat-card:nth-child(5) {
+      --dash-accent:#ff2998;
+      --dash-surface:linear-gradient(145deg,rgba(65,9,63,.96),rgba(29,7,49,.98));
+    }
+    body.mg-main-dashboard .stats > .stat-card::before {
+      content:"";
+      grid-column:1;
+      grid-row:1;
+      width:42px;height:42px;
+      background:var(--dash-accent);
+      -webkit-mask:var(--dash-icon) center / contain no-repeat;
+      mask:var(--dash-icon) center / contain no-repeat;
+    }
+    body.mg-main-dashboard #cardPendingPayment {--dash-icon:url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2048%2048%22%20fill%3D%22none%22%20stroke%3D%22%23000%22%20stroke-width%3D%223%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22M24%205%205%2015l19%2010%2019-10L24%205Z%20M5%2024l19%2010%2019-10%20M5%2033l19%2010%2019-10%22%2F%3E%3C%2Fsvg%3E")}
+    body.mg-main-dashboard #cardReadyDispatch {--dash-icon:url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2048%2048%22%20fill%3D%22none%22%20stroke%3D%22%23000%22%20stroke-width%3D%223%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Ccircle%20cx%3D%2224%22%20cy%3D%2214%22%20r%3D%228%22%2F%3E%3Cpath%20d%3D%22M8%2042c1-10%207-15%2016-15s15%205%2016%2015H8Z%22%2F%3E%3C%2Fsvg%3E")}
+    body.mg-main-dashboard #cardLiveJobs {--dash-icon:url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2048%2048%22%20fill%3D%22none%22%20stroke%3D%22%23000%22%20stroke-width%3D%223%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22M4%2012h25v22H4zM29%2020h9l7%208v6H29z%22%2F%3E%3Ccircle%20cx%3D%2214%22%20cy%3D%2237%22%20r%3D%224%22%2F%3E%3Ccircle%20cx%3D%2237%22%20cy%3D%2237%22%20r%3D%224%22%2F%3E%3C%2Fsvg%3E")}
+    body.mg-main-dashboard #cardCompletedJobs {--dash-icon:url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2048%2048%22%20fill%3D%22none%22%20stroke%3D%22%23000%22%20stroke-width%3D%223%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Ccircle%20cx%3D%2224%22%20cy%3D%2224%22%20r%3D%2219%22%2F%3E%3Cpath%20d%3D%22m14%2024%207%207%2014-15%22%2F%3E%3C%2Fsvg%3E")}
+    body.mg-main-dashboard #cardRevenueToday {--dash-icon:url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2048%2048%22%20fill%3D%22none%22%20stroke%3D%22%23000%22%20stroke-width%3D%223%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cellipse%20cx%3D%2224%22%20cy%3D%2211%22%20rx%3D%2215%22%20ry%3D%226%22%2F%3E%3Cpath%20d%3D%22M9%2011v9c0%203%207%206%2015%206s15-3%2015-6v-9M9%2020v9c0%203%207%206%2015%206s15-3%2015-6v-9M9%2029v8c0%203%207%206%2015%206s15-3%2015-6v-8%22%2F%3E%3C%2Fsvg%3E")}
+    body.mg-main-dashboard .stats .stat-number {
+      grid-column:3;grid-row:1;justify-self:end;
+      margin:0 !important;
+      color:#fff8ff !important;
+      font-size:clamp(32px,3vw,45px) !important;
+      font-weight:950 !important;
+      line-height:1 !important;
+      white-space:nowrap;
+    }
+    body.mg-main-dashboard .stats .stat-label {
+      grid-column:2;grid-row:1;
+      margin:0 !important;
+      color:#fff8ff !important;
+      font-size:clamp(14px,1.2vw,18px) !important;
+      font-weight:850 !important;
+      line-height:1.2 !important;
+      text-transform:uppercase;
+    }
+    body.mg-main-dashboard .stats .stat-subtitle {
+      grid-column:2;grid-row:1;align-self:end;
+      margin:0 0 1px !important;
+      color:#f6dff2 !important;
+      font-size:11px !important;
+      font-weight:900 !important;
+      text-transform:uppercase;
+    }
+    body.mg-main-dashboard #cardCompletedJobs .stat-label {align-self:start}
+    body.mg-main-dashboard #cardCompletedJobs .stat-subtitle {grid-column:2;grid-row:1}
+    body.mg-main-dashboard #pickupMapSection {
+      border:2px solid #ff2998 !important;
+      border-radius:22px !important;
+      padding:20px !important;
+      margin-bottom:24px !important;
+      background:linear-gradient(145deg,rgba(35,8,56,.97),rgba(22,5,39,.98)) !important;
+      box-shadow:0 0 20px rgba(255,41,152,.18) !important;
+    }
+    body.mg-main-dashboard #pickupMapSection .pickup-map-head h2 {color:#fff8ff !important;font-size:28px !important}
+    body.mg-main-dashboard #pickupMapSection .pickup-map-head p {color:#f0d9ef !important;font-size:14px !important}
+    body.mg-main-dashboard #pickupMapSection .pickup-map-controls select {
+      background:#260b3e !important;color:#fff8ff !important;border:1px solid #d451ef !important;
+    }
+    body.mg-main-dashboard #pickupMapSection .pickup-map-controls button {
+      background:linear-gradient(105deg,#ff963f,#ff2998 54%,#9239e8) !important;
+      color:#fff !important;border:1px solid rgba(255,210,244,.7) !important;
+    }
+    body.mg-main-dashboard #dispatchPickupMap {
+      height:clamp(280px,38vh,360px) !important;
+      border:1px solid rgba(255,255,255,.16);
+      border-radius:17px !important;
+    }
+    body.mg-main-dashboard #pickupMapSection .pickup-map-footer,
+    body.mg-main-dashboard #pickupMapSection .pickup-map-footer * {color:#f6dff2 !important}
+    body.mg-main-dashboard #createJobSection {
+      border:1px solid #a143ed !important;
+      border-radius:19px !important;
+      background:linear-gradient(145deg,rgba(35,8,56,.96),rgba(22,5,39,.98)) !important;
+      color:#fff8ff !important;
+      box-shadow:0 8px 24px rgba(8,0,23,.28) !important;
+    }
+    body.mg-main-dashboard #createJobSection h2 {color:#fff8ff !important}
+    body.mg-main-dashboard #createJobSection .hint {color:#f0d9ef !important}
+    body.mg-main-dashboard #createJobSection .secondary-button {
+      background:#2b0c40 !important;color:#fff8ff !important;border:1px solid #b653ef !important;
+    }
+    @media (max-width: 900px) {
+      body.mg-main-dashboard .stats {grid-template-columns:repeat(2,minmax(0,1fr)) !important}
+      body.mg-main-dashboard .stats > .stat-card:nth-child(5) {grid-column:1/-1}
+    }
+    @media (max-width: 650px) {
+      body.mg-main-dashboard main.container {padding:20px 14px 40px !important}
+      body.mg-main-dashboard .page-heading {align-items:stretch !important}
+      body.mg-main-dashboard .page-heading .primary-button {width:100%}
+      body.mg-main-dashboard .stats {grid-template-columns:repeat(2,minmax(0,1fr)) !important}
+      body.mg-main-dashboard .stats > .stat-card {min-height:100px !important;grid-template-columns:32px minmax(0,1fr) auto !important;gap:8px !important;padding:12px !important}
+      body.mg-main-dashboard .stats > .stat-card::before {width:30px;height:30px}
+      body.mg-main-dashboard .stats .stat-number {font-size:30px !important}
+      body.mg-main-dashboard .stats .stat-label {font-size:12px !important}
+      body.mg-main-dashboard .stats > .stat-card:nth-child(5) {grid-column:1/-1}
+      body.mg-main-dashboard #dispatchPickupMap {height:300px !important}
+    }
+    @media (prefers-reduced-motion: reduce) {
+      body.mg-main-dashboard *,body.mg-main-dashboard *::before,body.mg-main-dashboard *::after {scroll-behavior:auto !important;animation:none !important;transition:none !important}
+    }
+  </style>
+
 </head>
 
-<body>
+<body class="mg-main-dashboard">
   <header class="topbar">
     <div class="topbar-inner">
       <div>
