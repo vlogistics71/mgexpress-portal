@@ -277,8 +277,8 @@
       body.mg-dispatch-neon .dispatch-menu-link:nth-child(4n + 2) {border-color:#ff963f !important}
       body.mg-dispatch-neon .dispatch-menu-link:nth-child(4n + 3) {border-color:#b653ef !important}
       body.mg-dispatch-neon .dispatch-menu-link:nth-child(4n + 4) {border-color:#ff6477 !important}
-      body.mg-dispatch-neon .dispatch-side-menu .dispatch-menu-link.active,
-      body.mg-dispatch-neon .dispatch-side-menu .dispatch-menu-link.active:visited {
+      body.mg-dispatch-neon .dispatch-side-menu .dispatch-menu-links a.dispatch-menu-link.active,
+      body.mg-dispatch-neon .dispatch-side-menu .dispatch-menu-links a.dispatch-menu-link.active:visited {
         background:linear-gradient(145deg,#321044,#230a37) !important;
         border-color:rgba(200,89,219,.55) !important;
         color:#fff8ff !important;
