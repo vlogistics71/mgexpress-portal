@@ -1542,6 +1542,130 @@
       body.mg-main-dashboard .stats > .stat-card::before {width:28px;height:28px}
       body.mg-main-dashboard .stats .revenue-card .stat-label {max-width:none}
     }
+    /* Mobile dashboard: prevent fixed-height grid rows from forcing cards into each other. */
+    @media (max-width:650px) {
+      body.mg-main-dashboard {
+        display:block !important;
+        height:auto !important;
+        min-height:100dvh !important;
+        overflow-x:hidden !important;
+        overflow-y:auto !important;
+      }
+      body.mg-main-dashboard main.container {
+        display:block !important;
+        width:100% !important;
+        height:auto !important;
+        min-height:0 !important;
+        overflow:visible !important;
+        padding:16px 14px 28px !important;
+      }
+      body.mg-main-dashboard .page-heading {
+        display:flex !important;
+        flex-direction:column !important;
+        align-items:stretch !important;
+        gap:10px !important;
+        margin-bottom:14px !important;
+      }
+      body.mg-main-dashboard .page-heading h1 {
+        display:block !important;
+        font-size:34px !important;
+        line-height:1.05 !important;
+        margin-top:6px !important;
+      }
+      body.mg-main-dashboard .page-heading .primary-button {
+        display:block !important;
+        width:100% !important;
+        min-height:56px !important;
+        font-size:18px !important;
+      }
+      body.mg-main-dashboard .stats {
+        display:grid !important;
+        flex:none !important;
+        width:100% !important;
+        height:auto !important;
+        min-height:0 !important;
+        grid-template-columns:repeat(2,minmax(0,1fr)) !important;
+        grid-template-rows:none !important;
+        grid-auto-rows:minmax(112px,auto) !important;
+        gap:10px !important;
+        overflow:visible !important;
+        margin:0 0 14px !important;
+      }
+      body.mg-main-dashboard .stats > .stat-card {
+        min-width:0 !important;
+        min-height:112px !important;
+        padding:10px !important;
+        gap:7px !important;
+        grid-template-columns:28px minmax(0,1fr) auto !important;
+        grid-template-rows:minmax(0,1fr) !important;
+        align-items:center !important;
+      }
+      body.mg-main-dashboard .stats > .stat-card::before {
+        width:26px !important;
+        height:26px !important;
+      }
+      body.mg-main-dashboard .stats > .stat-card::after {
+        min-height:42px !important;
+        height:68% !important;
+      }
+      body.mg-main-dashboard .stats .stat-label {
+        min-width:0 !important;
+        font-size:clamp(10px,3.2vw,13px) !important;
+        line-height:1.15 !important;
+        overflow-wrap:anywhere !important;
+      }
+      body.mg-main-dashboard .stats .stat-number {
+        font-size:clamp(24px,7vw,31px) !important;
+      }
+      body.mg-main-dashboard #cardCompletedJobs {
+        grid-template-columns:28px minmax(0,1fr) auto !important;
+        grid-template-rows:minmax(0,1fr) min-content !important;
+      }
+      body.mg-main-dashboard #cardCompletedJobs::before,
+      body.mg-main-dashboard #cardCompletedJobs::after {
+        grid-row:1 / 3 !important;
+      }
+      body.mg-main-dashboard #cardCompletedJobs .stat-number {
+        grid-column:3 !important;
+        grid-row:1 / 3 !important;
+      }
+      body.mg-main-dashboard #cardCompletedJobs .stat-label {
+        grid-column:2 !important;
+        grid-row:1 !important;
+        align-self:end !important;
+      }
+      body.mg-main-dashboard #cardCompletedJobs .stat-subtitle {
+        grid-column:2 !important;
+        grid-row:2 !important;
+        align-self:start !important;
+        margin-top:3px !important;
+      }
+      body.mg-main-dashboard .stats > .stat-card:nth-child(5) {
+        grid-column:1 / -1 !important;
+        min-height:88px !important;
+        grid-template-columns:32px minmax(0,1fr) auto !important;
+      }
+      body.mg-main-dashboard .stats .revenue-card .stat-label {
+        max-width:none !important;
+        font-size:13px !important;
+      }
+      body.mg-main-dashboard .stats .revenue-card .stat-number {
+        font-size:clamp(25px,7vw,32px) !important;
+      }
+      body.mg-main-dashboard #pickupMapSection {
+        margin:0 0 18px !important;
+        padding:14px !important;
+      }
+      body.mg-main-dashboard #pickupMapSection .pickup-map-head {
+        align-items:center !important;
+      }
+      body.mg-main-dashboard #pickupMapSection .pickup-map-head h2 {
+        font-size:23px !important;
+      }
+      body.mg-main-dashboard #dispatchPickupMap {
+        height:280px !important;
+      }
+    }
   </style>
 
 </head>
