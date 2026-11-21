@@ -1421,6 +1421,23 @@
       border:2px solid #c04bff !important;
       box-shadow:0 0 18px rgba(192,75,255,.24), inset 0 1px rgba(255,255,255,.07) !important;
     }
+    @media (min-width:651px) {
+      body.mg-main-dashboard #pickupMapSection .pickup-map-controls {
+        width:300px !important;
+        flex:0 0 300px !important;
+        flex-wrap:nowrap !important;
+        align-items:center !important;
+      }
+      body.mg-main-dashboard #pickupMapSection .pickup-map-controls select {
+        width:auto !important;
+        min-width:0 !important;
+        flex:1 1 auto !important;
+      }
+      body.mg-main-dashboard #pickupMapSection .pickup-map-controls button {
+        flex:0 0 auto !important;
+        white-space:nowrap !important;
+      }
+    }
     body.mg-main-dashboard #dispatchPickupMap {
       height:clamp(320px,42vh,410px) !important;
       border:1px solid rgba(255,255,255,.16);
