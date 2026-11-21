@@ -1369,6 +1369,25 @@
       -webkit-mask:var(--dash-icon) center / contain no-repeat;
       mask:var(--dash-icon) center / contain no-repeat;
     }
+    body.mg-main-dashboard .stats > .stat-card::after {
+      content:"";
+      grid-column:1;
+      grid-row:1;
+      justify-self:end;
+      align-self:center;
+      width:2px;
+      height:72%;
+      min-height:46px;
+      margin-right:0;
+      border-radius:2px;
+      background:var(--dash-accent);
+      box-shadow:0 0 8px color-mix(in srgb,var(--dash-accent) 48%,transparent);
+      opacity:.9;
+      pointer-events:none;
+    }
+    @media (max-width:650px) {
+      body.mg-main-dashboard .stats > .stat-card::after {min-height:38px}
+    }
     body.mg-main-dashboard #cardPendingPayment {--dash-icon:url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2048%2048%22%20fill%3D%22none%22%20stroke%3D%22%23000%22%20stroke-width%3D%223%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22M24%205%205%2015l19%2010%2019-10L24%205Z%20M5%2024l19%2010%2019-10%20M5%2033l19%2010%2019-10%22%2F%3E%3C%2Fsvg%3E")}
     body.mg-main-dashboard #cardReadyDispatch {--dash-icon:url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2048%2048%22%20fill%3D%22none%22%20stroke%3D%22%23000%22%20stroke-width%3D%223%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Ccircle%20cx%3D%2224%22%20cy%3D%2214%22%20r%3D%228%22%2F%3E%3Cpath%20d%3D%22M8%2042c1-10%207-15%2016-15s15%205%2016%2015H8Z%22%2F%3E%3C%2Fsvg%3E")}
     body.mg-main-dashboard #cardLiveJobs {--dash-icon:url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2048%2048%22%20fill%3D%22none%22%20stroke%3D%22%23000%22%20stroke-width%3D%223%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22M4%2012h25v22H4zM29%2020h9l7%208v6H29z%22%2F%3E%3Ccircle%20cx%3D%2214%22%20cy%3D%2237%22%20r%3D%224%22%2F%3E%3Ccircle%20cx%3D%2237%22%20cy%3D%2237%22%20r%3D%224%22%2F%3E%3C%2Fsvg%3E")}
