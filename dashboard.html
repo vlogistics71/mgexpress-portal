@@ -1262,7 +1262,7 @@
 
   </style>
   <link rel="stylesheet" href="/assets/css/mobile-job-wizard.css?v=20261120-desktop-form-v2" />
-  <link rel="stylesheet" href="/assets/css/vice-city-theme.css?v=20261121-dashboard-exact-v3">
+  <link rel="stylesheet" href="/assets/css/vice-city-theme.css?v=20261121-dashboard-exact-v4">
   <style id="mg-main-dashboard-sunset-design">
     /* Dashboard-only presentation layer. Other dispatch pages keep their existing styles. */
     body.mg-dispatch-neon.mg-main-dashboard {
@@ -1273,16 +1273,25 @@
       color: #fff8ff !important;
     }
     body.mg-dispatch-neon.mg-main-dashboard > .topbar {
-      background: linear-gradient(90deg, rgba(20, 4, 33, .48), rgba(42, 6, 48, .18)) !important;
+      position: sticky !important;
+      top: 0 !important;
+      z-index: 9999 !important;
+      isolation: isolate;
+      width: 100%;
+      background: linear-gradient(105deg, #17051f 0%, #26083a 64%, #3a0b4a 100%) !important;
       border-bottom: 2px solid #ff2998 !important;
-      box-shadow: 0 5px 24px rgba(255, 39, 154, .2) !important;
+      box-shadow: 0 5px 24px rgba(255, 39, 154, .24) !important;
     }
     body.mg-main-dashboard .topbar-inner {
       width: min(1440px, 100%) !important;
-      justify-content: flex-start !important;
+      justify-content: space-between !important;
       gap: 18px !important;
     }
-    body.mg-main-dashboard .dispatch-menu-button {order:-1;margin:0 0 0 2px !important}
+    body.mg-main-dashboard .dispatch-menu-button {
+      order: 2 !important;
+      margin: 0 2px 0 auto !important;
+      flex: 0 0 auto !important;
+    }
     body.mg-main-dashboard main.container {
       position:relative;
       z-index:1;
