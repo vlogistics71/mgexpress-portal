@@ -1419,8 +1419,29 @@
       font-weight:900 !important;
       text-transform:uppercase;
     }
-    body.mg-main-dashboard #cardCompletedJobs .stat-label {align-self:start}
-    body.mg-main-dashboard #cardCompletedJobs .stat-subtitle {grid-column:2;grid-row:1}
+    body.mg-main-dashboard #cardCompletedJobs {
+      grid-template-rows:minmax(0,1fr) min-content min-content minmax(0,1fr) !important;
+    }
+    body.mg-main-dashboard #cardCompletedJobs .stat-number {
+      grid-row:1 / 5 !important;
+      align-self:center !important;
+    }
+    body.mg-main-dashboard #cardCompletedJobs::before,
+    body.mg-main-dashboard #cardCompletedJobs::after {
+      grid-row:1 / 5 !important;
+    }
+    body.mg-main-dashboard #cardCompletedJobs .stat-label {
+      grid-column:2 !important;
+      grid-row:2 !important;
+      align-self:end !important;
+      text-align:left !important;
+    }
+    body.mg-main-dashboard #cardCompletedJobs .stat-subtitle {
+      grid-column:2 !important;
+      grid-row:3 !important;
+      align-self:start !important;
+      text-align:left !important;
+    }
     body.mg-main-dashboard #pickupMapSection {
       border:2px solid #ff2998 !important;
       border-radius:22px !important;
