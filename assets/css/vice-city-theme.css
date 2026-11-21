@@ -1,38 +1,37 @@
-/* MG Express dispatch portal: cobalt, teal, and sunset theme */
+/* MG Express dispatch portal: neon sunset theme */
 :root {
-  --vc-night: #07183f;
-  --vc-navy: #0a2458;
-  --vc-cobalt: #10438f;
-  --vc-blue: #1d5fae;
-  --vc-teal: #167fa6;
-  --vc-pink: #efa07e;
-  --vc-violet: #8b62c6;
-  --vc-white: #f7f8ff;
-  --vc-muted: #c8d3ec;
-  --vc-line: rgba(105, 159, 218, .58);
-  --vc-button: linear-gradient(105deg, #efa078 0%, #e887ae 34%, #bd79c3 68%, #7459c2 100%);
+  --vc-night: #17051f;
+  --vc-navy: #210b35;
+  --vc-cobalt: #351052;
+  --vc-blue: #6426a0;
+  --vc-teal: #8c237d;
+  --vc-pink: #ff42a4;
+  --vc-violet: #a143ed;
+  --vc-white: #fff8ff;
+  --vc-muted: #f0d9ef;
+  --vc-line: rgba(231, 95, 222, .55);
+  --vc-button: linear-gradient(105deg, #ff963f 0%, #ff3298 52%, #9239e8 100%);
 }
 html, body {
   background:
-    radial-gradient(ellipse at 100% 18%, rgba(20, 139, 177, .34), transparent 40%),
-    radial-gradient(ellipse at 4% 82%, rgba(231, 121, 100, .32), transparent 38%),
-    radial-gradient(ellipse at 98% 82%, rgba(226, 139, 106, .24), transparent 36%),
-    linear-gradient(165deg, #123f93 0%, #0b2c70 34%, #091e53 70%, #211c54 100%) !important;
+    linear-gradient(180deg, rgba(19, 4, 34, .25) 0%, rgba(20, 5, 34, .62) 235px, #17051f 540px),
+    url("/assets/images/vice-city-sunset.svg") center top / 100% auto no-repeat,
+    linear-gradient(165deg, #25083a 0%, #190628 54%, #17051f 100%) !important;
   color: var(--vc-white) !important;
 }
 body { background-attachment: fixed !important; }
 header, .topbar, .header, .app-header, .site-header, .navbar, .navigation,
 nav, .sidebar, .menu, .toolbar, .top-nav {
-  background: linear-gradient(108deg, #09276b 0%, #104493 57%, #11749d 100%) !important;
+  background: linear-gradient(108deg, rgba(24, 4, 39, .92) 0%, rgba(57, 9, 76, .9) 57%, rgba(116, 20, 96, .88) 100%) !important;
   color: var(--vc-white) !important;
-  border-color: rgba(90, 158, 222, .56) !important;
+  border-color: rgba(255, 62, 173, .62) !important;
 }
 .topbar {
   border-bottom: 2px solid transparent !important;
-  border-image: linear-gradient(90deg, #efa078, #d77eb8, #527ad5, #35b8d0) 1 !important;
+  border-image: linear-gradient(90deg, #ff9c3d, #ff2999, #a143ed, #ff5ba9) 1 !important;
 }
 .brand, .brand span {
-  background: linear-gradient(95deg, #f2a079 0%, #e783b1 32%, #bd7bd2 62%, #65a8ed 100%) !important;
+  background: linear-gradient(95deg, #ff9f44 0%, #ff3c9b 44%, #a354f0 100%) !important;
   color: transparent !important;
   -webkit-background-clip: text !important;
   background-clip: text !important;
@@ -83,12 +82,12 @@ input[type="button"]:hover, input[type="submit"]:hover, .navigation a:hover {
 button:disabled, input:disabled, select:disabled, textarea:disabled { opacity: .62; }
 a:not(.button):not(.btn) { color: #a8d8ff !important; }
 .stat-number, .stat-value, .metric-value, .kpi-value, .price-value {
-  color: #df9cf0 !important;
+  color: #ff72c2 !important;
 }
-table, thead, tbody, tr, td, th { border-color: rgba(105, 159, 218, .35) !important; }
+table, thead, tbody, tr, td, th { border-color: rgba(241, 109, 217, .3) !important; }
 tbody tr:nth-child(even) { background: rgba(62, 105, 163, .13) !important; }
-hr { border-color: rgba(105, 159, 218, .36) !important; }
-:focus-visible { outline: 2px solid #f0a076 !important; outline-offset: 2px; }
+hr { border-color: rgba(241, 109, 217, .3) !important; }
+:focus-visible { outline: 2px solid #ff963f !important; outline-offset: 2px; }
 .pickup-map-panel .gm-control-active, .pickup-map-panel .gm-fullscreen-control {
   background: #735bb0 !important;
   color: #fff !important;
@@ -142,8 +141,8 @@ body.mg-dispatch-neon .dispatch-side-menu .dispatch-menu-link:active {
 /* Improve readability of active-job cards on the dark sunset theme. */
 body.mg-dispatch-neon a.job-card {
   background: linear-gradient(145deg, #143e7a 0%, #0c2c65 56%, #0a2356 100%) !important;
-  color: #f7f8ff !important;
-  border: 1px solid rgba(133, 176, 226, .72) !important;
+  color: #fff8ff !important;
+  border: 1px solid rgba(255, 58, 168, .78) !important;
   box-shadow: 0 8px 22px rgba(0, 9, 38, .28) !important;
 }
 body.mg-dispatch-neon a.job-card .job-number,
@@ -155,16 +154,94 @@ body.mg-dispatch-neon a.job-card .open-job {
   -webkit-text-fill-color: #f7f8ff !important;
 }
 body.mg-dispatch-neon a.job-card .route {
-  background: rgba(30, 72, 132, .88) !important;
-  border: 1px solid rgba(125, 168, 220, .54) !important;
+  background: rgba(57, 17, 83, .92) !important;
+  border: 1px solid rgba(195, 91, 226, .55) !important;
   color: #f0f4ff !important;
 }
 body.mg-dispatch-neon a.job-card .route-label,
 body.mg-dispatch-neon a.job-card .meta-label,
 body.mg-dispatch-neon a.job-card .customer-email {
-  color: #d2def3 !important;
+  color: #f2dff2 !important;
   -webkit-text-fill-color: #d2def3 !important;
 }
 body.mg-dispatch-neon a.job-card .route-arrow {
-  color: #8fd8ff !important;
+  color: #ff8cce !important;
+}
+
+
+/* Sunset accents for operational cards and inputs. */
+body.mg-dispatch-neon .summary-grid > .summary-card:nth-child(1),
+body.mg-dispatch-neon .stats-grid > :nth-child(1),
+body.mg-dispatch-neon .stats > :nth-child(1) {
+  background: linear-gradient(145deg, rgba(84, 12, 76, .96), rgba(35, 8, 55, .98)) !important;
+  border-color: #ff2c9d !important;
+}
+body.mg-dispatch-neon .summary-grid > .summary-card:nth-child(2),
+body.mg-dispatch-neon .stats-grid > :nth-child(2),
+body.mg-dispatch-neon .stats > :nth-child(2) {
+  background: linear-gradient(145deg, rgba(90, 38, 24, .96), rgba(40, 10, 49, .98)) !important;
+  border-color: #ff963f !important;
+}
+body.mg-dispatch-neon .summary-grid > .summary-card:nth-child(3),
+body.mg-dispatch-neon .stats-grid > :nth-child(3),
+body.mg-dispatch-neon .stats > :nth-child(3) {
+  background: linear-gradient(145deg, rgba(67, 23, 109, .96), rgba(31, 9, 59, .98)) !important;
+  border-color: #bd56f2 !important;
+}
+body.mg-dispatch-neon .summary-grid > .summary-card:nth-child(4),
+body.mg-dispatch-neon .stats-grid > :nth-child(4),
+body.mg-dispatch-neon .stats > :nth-child(4) {
+  background: linear-gradient(145deg, rgba(100, 19, 58, .96), rgba(39, 8, 48, .98)) !important;
+  border-color: #ff6477 !important;
+}
+body.mg-dispatch-neon .summary-grid > .summary-card:nth-child(5),
+body.mg-dispatch-neon .stats-grid > :nth-child(5) {
+  background: linear-gradient(145deg, rgba(49, 20, 92, .96), rgba(25, 8, 52, .98)) !important;
+  border-color: #a143ed !important;
+}
+body.mg-dispatch-neon .summary-card,
+body.mg-dispatch-neon .stat-card,
+body.mg-dispatch-neon .stats > *,
+body.mg-dispatch-neon .stats-grid > * {
+  color: #fff8ff !important;
+  box-shadow: 0 8px 24px rgba(8, 0, 23, .28), inset 0 1px rgba(255,255,255,.06) !important;
+}
+body.mg-dispatch-neon .summary-label,
+body.mg-dispatch-neon .stat-label,
+body.mg-dispatch-neon .summary-card :is(span, small, p) {
+  color: #f5e8f7 !important;
+}
+body.mg-dispatch-neon .summary-value,
+body.mg-dispatch-neon .stat-number,
+body.mg-dispatch-neon .stat-value {
+  color: #fff8ff !important;
+}
+body.mg-dispatch-neon .controls input,
+body.mg-dispatch-neon .controls select,
+body.mg-dispatch-neon .toolbar input,
+body.mg-dispatch-neon .toolbar select {
+  background: rgba(35, 10, 56, .96) !important;
+  color: #fff8ff !important;
+  border-color: rgba(255, 64, 172, .75) !important;
+}
+body.mg-dispatch-neon .jobs-list > a.job-card,
+body.mg-dispatch-neon .list > .card[role="button"] {
+  background: linear-gradient(145deg, #271044 0%, #1c0a35 100%) !important;
+  color: #fff8ff !important;
+  border: 1px solid #ff36a7 !important;
+  border-left-width: 5px !important;
+  box-shadow: 0 10px 28px rgba(5, 0, 20, .34) !important;
+}
+body.mg-dispatch-neon .jobs-list > a.job-card *,
+body.mg-dispatch-neon .list > .card[role="button"] * {
+  color: #fff8ff !important;
+  -webkit-text-fill-color: #fff8ff !important;
+}
+body.mg-dispatch-neon .list > .card[role="button"]:nth-child(4n + 2) { border-left-color: #ff963f !important; }
+body.mg-dispatch-neon .list > .card[role="button"]:nth-child(4n + 3) { border-left-color: #b653ef !important; }
+body.mg-dispatch-neon .list > .card[role="button"]:nth-child(4n + 4) { border-left-color: #ff6477 !important; }
+body.mg-dispatch-neon .list > .card[role="button"] .badge,
+body.mg-dispatch-neon .list > .card[role="button"] .mini-status {
+  background: #ff2897 !important;
+  color: #fff !important;
 }
