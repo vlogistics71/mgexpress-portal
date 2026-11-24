@@ -41,7 +41,7 @@ body.desktop-create-expanded .mg-wizard-progress{
 .mg-wizard-progress-header{display:flex;align-items:center;justify-content:space-between;gap:8px}
 .mg-wizard-progress-header strong{font-size:13px;color:#542477;line-height:1.2}
 .mg-wizard-progress-header span{font-size:11px;color:#746783;font-weight:700}
-.mg-wizard-tabs{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:6px}
+.mg-wizard-tabs{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px}
 .mg-wizard-tab{
   display:flex;align-items:center;justify-content:center;gap:6px;
   min-width:0;min-height:36px;padding:6px 8px;border-radius:11px;
@@ -68,7 +68,7 @@ body.desktop-create-expanded #createJobForm{
 body.desktop-create-expanded #createJobForm>.form-group{display:none!important}
 body.desktop-create-expanded #createJobForm>.form-group.mg-wizard-active{
   flex:1 1 auto;min-height:0;display:grid!important;gap:9px;
-  padding:13px 15px;border-radius:15px;align-content:start;overflow:hidden;
+  padding:13px 15px;border-radius:15px;align-content:start;overflow-y:auto;overflow-x:hidden;
   border:1px solid #e8e0ef;background:#fff
 }
 body.desktop-create-expanded #createJobForm>.form-group.mg-wizard-service-mode .mg-wizard-package-field,
@@ -157,7 +157,7 @@ body.desktop-create-expanded .mg-wizard-footer{
   }
   .mg-wizard-progress-header strong{font-size:13px;color:#064f3b;line-height:1.2}
   .mg-wizard-progress-header span{font-size:11px;color:#68756f;font-weight:700}
-  .mg-wizard-bars{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:5px}
+  .mg-wizard-bars{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:5px}
   .mg-wizard-bars i{height:4px;border-radius:999px;background:#e2ebe7}
   .mg-wizard-bars i.active{background:#087455}
   .mg-wizard-tabs{display:none}
