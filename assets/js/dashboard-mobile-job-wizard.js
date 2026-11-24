@@ -32,7 +32,7 @@
   progress.setAttribute("aria-live", "polite");
   progress.innerHTML =
     '<div class="mg-wizard-progress-header"><strong id="mgWizardStepName">Customer</strong>' +
-    '<span id="mgWizardStepCount">Step 1 of 6</span></div>' +
+    '<span id="mgWizardStepCount">Step 1 of 4</span></div>' +
     '<div class="mg-wizard-bars" aria-hidden="true">' + names.map(() => "<i></i>").join("") + "</div>" +
     '<nav class="mg-wizard-tabs" aria-label="Job form sections">' +
     names.map((name, index) =>
