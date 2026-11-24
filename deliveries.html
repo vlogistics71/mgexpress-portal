@@ -727,8 +727,41 @@
     }
     body.mg-dispatch-neon #newDeliveryButton {display:none !important}
   </style>
+  <style id="active-jobs-remove-duplicate-header">
+    body.mg-deliveries-page.mg-dispatch-neon {
+      background:
+        linear-gradient(180deg,rgba(19,4,34,.12) 0,rgba(19,4,34,.42) 300px,#16051f 640px),
+        url("/assets/images/vice-city-dashboard-banner.png") center top / 100% 380px no-repeat,
+        #16051f !important;
+      background-attachment:scroll !important;
+    }
+    body.mg-deliveries-page.mg-dispatch-neon > .topbar {
+      background:transparent !important;
+      background-image:none !important;
+      border:0 !important;
+      border-image:none !important;
+      box-shadow:none !important;
+    }
+    body.mg-deliveries-page.mg-dispatch-neon .summary-card {
+      background:linear-gradient(135deg,rgba(48,9,70,.42),rgba(28,8,48,.40)) !important;
+      backdrop-filter:blur(4px);
+    }
+    body.mg-deliveries-page.mg-dispatch-neon .summary-card:nth-child(4n + 2) {
+      background:linear-gradient(135deg,rgba(65,27,25,.43),rgba(34,10,39,.40)) !important;
+    }
+    body.mg-deliveries-page.mg-dispatch-neon .summary-card:nth-child(4n + 3) {
+      background:linear-gradient(135deg,rgba(57,14,92,.43),rgba(27,8,50,.40)) !important;
+    }
+    body.mg-deliveries-page.mg-dispatch-neon .summary-card:nth-child(4n) {
+      background:linear-gradient(135deg,rgba(73,12,55,.43),rgba(34,8,43,.40)) !important;
+    }
+    body.mg-deliveries-page.mg-dispatch-neon .card {
+      background:linear-gradient(135deg,rgba(51,12,74,.54),rgba(25,8,43,.50)) !important;
+      backdrop-filter:blur(4px);
+    }
+  </style>
 </head>
-<body>
+<body class="mg-deliveries-page">
   <header class="topbar">
     <div class="topbar-inner">
       <div class="topbar-copy">
