@@ -218,6 +218,15 @@
         border-bottom:3px solid #ff35a5;
         box-shadow:0 5px 24px rgba(255,39,154,.2);
       }
+      /* The deliveries page uses one shared sunset banner behind the brand row.
+         Keep the navigation content, but don't paint a second banner inside its header. */
+      body.mg-dispatch-neon.mg-deliveries-page > .topbar {
+        background:transparent !important;
+        background-image:none !important;
+        border:0 !important;
+        border-image:none !important;
+        box-shadow:none !important;
+      }
       body.mg-dispatch-neon .brand,
       body.mg-dispatch-neon .dispatch-menu-brand {
         font-family:'Titan One','Arial Rounded MT Bold',Arial,sans-serif;
