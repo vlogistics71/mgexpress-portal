@@ -668,6 +668,65 @@
       body.mg-dispatch-neon .customer { font-size: 15px; }
     }
   </style>
+  <style id="active-jobs-single-banner-glass">
+    body.mg-dispatch-neon {
+      background:
+        linear-gradient(180deg,rgba(19,4,34,.22) 0,rgba(19,4,34,.70) 340px,#16051f 620px),
+        url("/assets/images/vice-city-dashboard-banner.png") center 72px / 100% 310px no-repeat,
+        #16051f !important;
+    }
+    body.mg-dispatch-neon > .topbar {
+      background:#210832 !important;
+      background-image:none !important;
+      border-bottom:1px solid rgba(255,72,180,.42) !important;
+      box-shadow:none !important;
+    }
+    body.mg-dispatch-neon .summary-card {
+      background:linear-gradient(135deg,rgba(48,9,70,.62),rgba(28,8,48,.58)) !important;
+      backdrop-filter:blur(7px);
+      box-shadow:0 6px 18px rgba(0,0,0,.18) !important;
+    }
+    body.mg-dispatch-neon .summary-card:nth-child(4n + 2) {
+      background:linear-gradient(135deg,rgba(65,27,25,.63),rgba(34,10,39,.58)) !important;
+    }
+    body.mg-dispatch-neon .summary-card:nth-child(4n + 3) {
+      background:linear-gradient(135deg,rgba(57,14,92,.63),rgba(27,8,50,.58)) !important;
+    }
+    body.mg-dispatch-neon .summary-card:nth-child(4n) {
+      background:linear-gradient(135deg,rgba(73,12,55,.63),rgba(34,8,43,.58)) !important;
+    }
+    body.mg-dispatch-neon .panel {
+      background:rgba(28,7,45,.68) !important;
+      backdrop-filter:blur(7px);
+    }
+    body.mg-dispatch-neon .card {
+      background:linear-gradient(135deg,rgba(51,12,74,.72),rgba(25,8,43,.68)) !important;
+      backdrop-filter:blur(6px);
+    }
+    body.mg-dispatch-neon .card:nth-child(4n + 2) {background:linear-gradient(135deg,rgba(73,24,44,.72),rgba(30,8,44,.68)) !important}
+    body.mg-dispatch-neon .card:nth-child(4n + 3) {background:linear-gradient(135deg,rgba(57,14,92,.72),rgba(25,7,47,.68)) !important}
+    body.mg-dispatch-neon .card:nth-child(4n) {background:linear-gradient(135deg,rgba(73,12,55,.72),rgba(34,8,43,.68)) !important}
+    body.mg-dispatch-neon .card[role="button"] .route {
+      background:rgba(37,9,56,.55) !important;
+      background-image:none !important;
+      border-color:rgba(255,118,204,.42) !important;
+      color:#fff2fb !important;
+    }
+    body.mg-dispatch-neon .tab,
+    body.mg-dispatch-neon .chip,
+    body.mg-dispatch-neon .action-btn.secondary {
+      background:linear-gradient(135deg,rgba(74,7,66,.65),rgba(28,7,46,.62)) !important;
+      color:#fff8ff !important;
+      border-color:rgba(255,91,188,.78) !important;
+      backdrop-filter:blur(5px);
+    }
+    body.mg-dispatch-neon .chip.active,
+    body.mg-dispatch-neon .tab.active {
+      background:rgba(199,40,155,.70) !important;
+      color:#fff !important;
+    }
+    body.mg-dispatch-neon #newDeliveryButton {display:none !important}
+  </style>
 </head>
 <body>
   <header class="topbar">
