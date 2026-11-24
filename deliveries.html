@@ -783,14 +783,14 @@
   </style>
 </head>
 <body class="mg-deliveries-page">
-  <header class="topbar" style="background:transparent!important;background-image:none!important;border:0!important;border-image:none!important;box-shadow:none!important">
+  <div class="deliveries-brand-row">
     <div class="topbar-inner">
       <div class="topbar-copy">
         <div class="brand">MG <span>EXPRESS</span> DISPATCH</div>
         <div class="brand-subtitle">Work Station Hub</div>
       </div>
     </div>
-  </header>
+  </div>
 
   <main class="container">
     <section class="page-head">
@@ -1109,5 +1109,34 @@
     }
   </style>
 
+  <style id="deliveries-brand-row-layout">
+    body.mg-deliveries-page .deliveries-brand-row {
+      position:relative;
+      z-index:2;
+      width:100%;
+      padding:10px 20px;
+      background:transparent !important;
+      border:0 !important;
+      box-shadow:none !important;
+    }
+    body.mg-deliveries-page .deliveries-brand-row .topbar-inner {width:min(1050px,100%);margin:auto}
+    body.mg-deliveries-page .deliveries-brand-row .brand {font-size:24px}
+    body.mg-deliveries-page .deliveries-brand-row .brand-subtitle {font-size:13px}
+    body.mg-deliveries-page.mg-dispatch-neon .summary-card,
+    body.mg-deliveries-page.mg-dispatch-neon .summary-card:nth-child(n) {
+      background:rgba(22,7,40,.23) !important;
+      backdrop-filter:blur(2px);
+    }
+    body.mg-deliveries-page.mg-dispatch-neon .card,
+    body.mg-deliveries-page.mg-dispatch-neon .card:nth-child(n) {
+      background:rgba(25,7,45,.36) !important;
+      backdrop-filter:blur(2px);
+    }
+    @media(max-width:720px) {
+      body.mg-deliveries-page .deliveries-brand-row {padding:8px 12px}
+      body.mg-deliveries-page .deliveries-brand-row .brand {font-size:clamp(15px,4.5vw,19px)}
+      body.mg-deliveries-page .deliveries-brand-row .brand-subtitle {font-size:10px}
+    }
+  </style>
 </body>
 </html>
