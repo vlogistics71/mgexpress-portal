@@ -760,9 +760,30 @@
       backdrop-filter:blur(4px);
     }
   </style>
+  <style id="active-jobs-visible-glass-fix">
+    body.mg-deliveries-page.mg-dispatch-neon .summary-card,
+    body.mg-deliveries-page.mg-dispatch-neon .summary-card:nth-child(n) {
+      background:rgba(27,7,43,.34) !important;
+      backdrop-filter:blur(3px);
+    }
+    body.mg-deliveries-page.mg-dispatch-neon .card,
+    body.mg-deliveries-page.mg-dispatch-neon .card:nth-child(n) {
+      background:rgba(34,8,52,.48) !important;
+      backdrop-filter:blur(3px);
+    }
+    body.mg-deliveries-page.mg-dispatch-neon .tab,
+    body.mg-deliveries-page.mg-dispatch-neon .chip {
+      background:rgba(50,10,65,.48) !important;
+      backdrop-filter:blur(3px);
+    }
+    body.mg-deliveries-page.mg-dispatch-neon .chip.active,
+    body.mg-deliveries-page.mg-dispatch-neon .tab.active {
+      background:rgba(199,40,155,.58) !important;
+    }
+  </style>
 </head>
 <body class="mg-deliveries-page">
-  <header class="topbar">
+  <header class="topbar" style="background:transparent!important;background-image:none!important;border:0!important;border-image:none!important;box-shadow:none!important">
     <div class="topbar-inner">
       <div class="topbar-copy">
         <div class="brand">MG <span>EXPRESS</span> DISPATCH</div>
