@@ -1475,5 +1475,138 @@
       border-color:#ff91cf !important;
     }
   </style>
+
+  <style id="delivery-details-compact-desktop">
+    @media (min-width:900px) {
+      body.mg-deliveries-page #deliveryDetailsModal .delivery-details-panel {
+        width:min(1180px,calc(100vw - 36px)) !important;
+        height:92vh !important;
+        max-height:92vh !important;
+        border-radius:18px !important;
+      }
+      body.mg-deliveries-page #deliveryDetailsModal .delivery-details-body {
+        display:grid !important;
+        grid-template-columns:repeat(2,minmax(0,1fr));
+        align-content:start;
+        align-items:start;
+        gap:8px;
+        padding:10px 12px 12px !important;
+        min-height:0;
+      }
+      body.mg-deliveries-page #deliveryDetailsModal .delivery-details-body > .details-card {
+        min-width:0;
+        padding:10px 12px !important;
+        border-radius:14px !important;
+      }
+      body.mg-deliveries-page #deliveryDetailsModal .delivery-details-body > .ios-order-hero,
+      body.mg-deliveries-page #deliveryDetailsModal .delivery-details-body > .details-card:last-child {
+        grid-column:1 / -1;
+      }
+      body.mg-deliveries-page #deliveryDetailsModal .ios-order-hero {
+        display:grid;
+        grid-template-columns:minmax(0,1fr) minmax(0,1fr);
+        align-items:center;
+        gap:3px 14px;
+        padding:10px 14px !important;
+      }
+      body.mg-deliveries-page #deliveryDetailsModal .ios-order-hero .ios-hero-top {
+        grid-column:1 / -1;
+        align-items:center;
+      }
+      body.mg-deliveries-page #deliveryDetailsModal .ios-price-label {
+        grid-column:1;
+        margin:0;
+        font-size:11px;
+      }
+      body.mg-deliveries-page #deliveryDetailsModal .ios-price {
+        grid-column:1;
+        margin:0;
+        font-size:30px;
+        line-height:1;
+      }
+      body.mg-deliveries-page #deliveryDetailsModal .ios-payment-line {
+        grid-column:2;
+        grid-row:2 / span 2;
+        justify-content:flex-end;
+        align-self:center;
+        font-size:12px;
+      }
+      body.mg-deliveries-page #deliveryDetailsModal .ios-review-alert {
+        grid-column:1 / -1;
+        margin:4px 0 0;
+        padding:7px 9px;
+      }
+      body.mg-deliveries-page #deliveryDetailsModal .delivery-details-body .details-card h4 {
+        font-size:14px !important;
+        line-height:1.15;
+        margin:0 0 7px !important;
+      }
+      body.mg-deliveries-page #deliveryDetailsModal .ios-stop {
+        gap:8px;
+      }
+      body.mg-deliveries-page #deliveryDetailsModal .ios-stop-dot {
+        flex-basis:9px;
+        width:9px;
+        height:9px;
+        margin-top:3px;
+      }
+      body.mg-deliveries-page #deliveryDetailsModal .ios-stop-label {font-size:9px}
+      body.mg-deliveries-page #deliveryDetailsModal .ios-stop-business,
+      body.mg-deliveries-page #deliveryDetailsModal .ios-stop-address {
+        font-size:12px;
+        line-height:1.25;
+        margin-top:2px;
+      }
+      body.mg-deliveries-page #deliveryDetailsModal .ios-stop-time {
+        font-size:10px;
+        line-height:1.2;
+        margin-top:3px;
+      }
+      body.mg-deliveries-page #deliveryDetailsModal .ios-route-connector {
+        height:9px;
+        margin:2px 0 3px 4px;
+      }
+      body.mg-deliveries-page #deliveryDetailsModal .ios-customer-name {
+        font-size:14px;
+        margin-bottom:2px;
+      }
+      body.mg-deliveries-page #deliveryDetailsModal .ios-contact-row {
+        font-size:11px;
+        padding:5px 0;
+      }
+      body.mg-deliveries-page #deliveryDetailsModal .details-card-body.compact-detail-grid {
+        grid-template-columns:repeat(2,minmax(0,1fr));
+        gap:4px 10px;
+      }
+      body.mg-deliveries-page #deliveryDetailsModal .details-kv {
+        grid-template-columns:minmax(70px,.65fr) minmax(0,1fr);
+        gap:5px;
+        align-items:baseline;
+        font-size:11px;
+        line-height:1.2;
+      }
+      body.mg-deliveries-page #deliveryDetailsModal .details-kv strong {font-size:9px}
+      body.mg-deliveries-page #deliveryDetailsModal .ios-more-details summary {
+        padding:4px 0;
+        font-size:11px;
+      }
+      body.mg-deliveries-page #deliveryDetailsModal .details-notes-card .note-item {
+        padding:5px 8px;
+        font-size:10px;
+        line-height:1.2;
+      }
+      body.mg-deliveries-page #deliveryDetailsModal .details-actions-section {gap:6px}
+      body.mg-deliveries-page #deliveryDetailsModal .details-action-grid {
+        grid-template-columns:repeat(3,minmax(0,1fr));
+        gap:6px;
+      }
+      body.mg-deliveries-page #deliveryDetailsModal .details-action-grid .action-btn {
+        min-height:36px;
+        padding:7px 9px;
+        font-size:11px;
+      }
+      body.mg-deliveries-page #deliveryDetailsModal .sheet-note {font-size:10px}
+    }
+  </style>
 </body>
 </html>
