@@ -790,6 +790,9 @@
     if (canAssignDriver(delivery)) {
       buttons.push(`<button class="action-btn secondary" type="button" data-details-action="assign" data-delivery-id="${id}">${delivery.assigned_driver_id ? "Reassign Driver" : "Assign Driver"}</button>`);
     }
+    if (isActiveJob(delivery)) {
+      buttons.push(`<button class="action-btn secondary" type="button" data-details-action="unassign-problem" data-delivery-id="${id}">Unassign / Problem Job</button>`);
+    }
     if (canMarkReady(delivery)) {
       buttons.push(`<button class="action-btn secondary" type="button" data-details-action="ready" data-delivery-id="${id}">Mark Ready</button>`);
     }
@@ -875,6 +878,7 @@
                 <span class="badge">${escapeHtml(categoryLabel)}</span>
                 <span class="badge" title="Order source">${escapeHtml(orderSourceLabel(delivery))}</span>
                 ${String(delivery.internal_dispatch_notes || "").includes("CUSTOM QUOTE REQUIRED") ? '<span class="badge return">Outside Area · Custom Quote</span>' : String(delivery.internal_dispatch_notes || "").includes("ADDRESS VERIFICATION REQUIRED") ? '<span class="badge return">Verify Address · Dispatch Review</span>' : ""}
+                ${String(delivery.internal_dispatch_notes || "").includes("[DISPATCH PROBLEM]") ? '<span class="badge return">Dispatch Problem</span>' : ""}
                 ${clean(delivery.return_required) === "true" || delivery.return_required === true ? '<span class="badge return">Return</span>' : ""}
               </div>
               <div class="customer">${escapeHtml(delivery.customer_name || delivery.company_name || "Customer")}</div>
@@ -2292,6 +2296,121 @@
     }
   }
 
+  function openUnassignProblemDialog(delivery) {
+    const assigned = Boolean(String(delivery.assigned_driver_id || "").trim());
+    const started = isInTransit(delivery) || Boolean(delivery.picked_up_at);
+    const dialog = document.createElement("div");
+    dialog.className = "mg-job-action-backdrop";
+    dialog.innerHTML = `
+      <section class="mg-job-action-dialog" role="dialog" aria-modal="true" aria-labelledby="mgJobActionTitle">
+        <button type="button" class="mg-job-action-close" aria-label="Close">×</button>
+        <h3 id="mgJobActionTitle">Dispatch job options</h3>
+        <p class="mg-job-action-summary"><strong>${escapeHtml(delivery.job_number || "This job")}</strong> · ${assigned ? "Assigned to a driver" : "Not currently assigned"}</p>
+        ${started ? '<p class="mg-job-action-warning">This job has already started. Keep its current assignment and flag the issue so dispatch can choose the next step.</p>' : ""}
+        <div class="mg-job-action-options">
+          ${assigned && !started ? '<button type="button" class="action-btn secondary" data-job-action="unassign">Return to Ready to Assign</button>' : ""}
+          <button type="button" class="action-btn secondary" data-job-action="problem">Report a Problem</button>
+          <button type="button" class="action-btn secondary" data-job-action="back">Go Back</button>
+        </div>
+        <div class="mg-job-action-error" role="alert"></div>
+      </section>`;
+    const styleId = "mg-job-action-dialog-style";
+    if (!document.getElementById(styleId)) {
+      const style = document.createElement("style");
+      style.id = styleId;
+      style.textContent = `
+        .mg-job-action-backdrop{position:fixed;inset:0;z-index:10050;display:grid;place-items:center;padding:18px;background:rgba(9,3,19,.78);backdrop-filter:blur(5px)}
+        .mg-job-action-dialog{position:relative;width:min(520px,100%);max-height:90vh;overflow:auto;padding:28px;border:1px solid #f02aa7;border-radius:22px;background:linear-gradient(145deg,rgba(47,13,76,.98),rgba(22,7,39,.99));box-shadow:0 0 28px rgba(239,32,167,.28);color:#fff}
+        .mg-job-action-dialog h3{margin:0 40px 10px 0;color:#fff;font-size:1.25rem}
+        .mg-job-action-summary,.mg-job-action-warning{color:#fff;line-height:1.5}
+        .mg-job-action-warning{padding:12px 14px;border:1px solid #f27d55;border-radius:12px;background:rgba(255,126,72,.12)}
+        .mg-job-action-close{position:absolute;top:12px;right:12px;width:38px;height:38px;border:1px solid #ed39b5;border-radius:12px;background:rgba(217,22,161,.22);color:#fff;font-size:24px;cursor:pointer}
+        .mg-job-action-options{display:flex;flex-wrap:wrap;gap:10px;margin-top:18px}
+        .mg-job-action-options .action-btn{min-height:44px}
+        .mg-job-action-error{min-height:20px;margin-top:12px;color:#ffb6cf}
+      `;
+      document.head.appendChild(style);
+    }
+    document.body.appendChild(dialog);
+    const close = () => dialog.remove();
+    dialog.querySelector(".mg-job-action-close").addEventListener("click", close);
+    dialog.addEventListener("click", event => { if (event.target === dialog) close(); });
+    dialog.querySelector('[data-job-action="back"]').addEventListener("click", close);
+    const err = dialog.querySelector(".mg-job-action-error");
+    const problemButton = dialog.querySelector('[data-job-action="problem"]');
+    problemButton.addEventListener("click", () => {
+      const form = document.createElement("form");
+      form.innerHTML = `
+        <label for="mgProblemType">What needs dispatch attention?</label>
+        <select id="mgProblemType" required>
+          <option value="">Choose an issue…</option>
+          <option>Driver issue</option><option>Pickup problem</option><option>Delivery problem</option>
+          <option>Customer unavailable</option><option>Delay or schedule issue</option><option>Other</option>
+        </select>
+        <label for="mgProblemNote">Notes for dispatch</label>
+        <textarea id="mgProblemNote" rows="3" maxlength="1200" placeholder="Add details and what has happened so far…" required></textarea>
+        <div class="mg-job-action-options">
+          <button type="button" class="action-btn secondary" data-problem-back>Back</button>
+          <button type="submit" class="action-btn secondary">Save Problem</button>
+        </div>`;
+      form.querySelectorAll("label").forEach(label => { label.style.cssText = "display:block;margin:12px 0 6px;color:#fff;font-weight:700"; });
+      form.querySelectorAll("select,textarea").forEach(input => { input.style.cssText = "box-sizing:border-box;width:100%;padding:12px;border:1px solid #d93cbd;border-radius:10px;background:#210d38;color:#fff;font:inherit"; });
+      dialog.querySelector(".mg-job-action-options").replaceWith(form);
+      form.querySelector("[data-problem-back]").addEventListener("click", close);
+      form.addEventListener("submit", async event => {
+        event.preventDefault();
+        err.textContent = "";
+        const category = form.querySelector("#mgProblemType").value;
+        const note = form.querySelector("#mgProblemNote").value.trim();
+        if (!category || !note) { err.textContent = "Choose an issue and add a dispatch note."; return; }
+        const submit = form.querySelector('button[type="submit"]');
+        submit.disabled = true; submit.textContent = "Saving…";
+        try {
+          const stamp = new Intl.DateTimeFormat("en-US", { dateStyle:"medium", timeStyle:"short" }).format(new Date());
+          const entry = `[DISPATCH PROBLEM] ${stamp} · ${category}: ${note}`;
+          const prior = String(delivery.internal_dispatch_notes || "").trim();
+          const combined = [prior, entry].filter(Boolean).join("\n").slice(-6000);
+          const result = await client.from("quotes").update({ internal_dispatch_notes: combined }).eq("id", delivery.id).select("*").maybeSingle();
+          if (result.error) throw result.error;
+          close();
+          showToast("Problem flagged for dispatch. The job and driver assignment were left unchanged.", "success");
+          await refreshDeliveries({ keepSelection: delivery.id });
+        } catch (error) {
+          err.textContent = error.message || "Unable to save the problem report.";
+          submit.disabled = false; submit.textContent = "Save Problem";
+        }
+      });
+      form.querySelector("#mgProblemType").focus();
+    });
+    const unassignButton = dialog.querySelector('[data-job-action="unassign"]');
+    if (unassignButton) unassignButton.addEventListener("click", async () => {
+      if (requiresUnpricedCustomReview(delivery)) {
+        err.textContent = "Approve the final price and verify the route before returning this job to the ready pool.";
+        return;
+      }
+      if (!window.confirm(`Return ${delivery.job_number || "this job"} to Ready to Assign? The current driver will be removed from the job.`)) return;
+      unassignButton.disabled = true; unassignButton.textContent = "Updating…";
+      try {
+        const result = await client.from("quotes").update({
+          status: "ready",
+          assigned_driver_id: null,
+          driver_pay: null,
+          driver_acceptance_status: "pending",
+          driver_workflow_status: "unassigned",
+          driver_accepted_at: null,
+          driver_rejected_at: null
+        }).eq("id", delivery.id).select("*").maybeSingle();
+        if (result.error) throw result.error;
+        close();
+        showToast("Job returned to Ready to Assign.", "success");
+        await refreshDeliveries({ keepSelection: delivery.id });
+      } catch (error) {
+        err.textContent = error.message || "Unable to return this job to Ready.";
+        unassignButton.disabled = false; unassignButton.textContent = "Return to Ready to Assign";
+      }
+    });
+  }
+
   async function markReady(deliveryId) {
     const delivery = state.deliveries.find(item => String(item.id) === String(deliveryId));
     if (!delivery) {
@@ -2567,6 +2686,11 @@
 
     if (action === "edit") {
       openEditJobModal(delivery);
+      return;
+    }
+
+    if (action === "unassign-problem") {
+      openUnassignProblemDialog(delivery);
       return;
     }
 
