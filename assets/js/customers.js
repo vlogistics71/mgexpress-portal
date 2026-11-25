@@ -989,14 +989,6 @@
                     Add Location
                   </button>
 
-                  <button
-                    class="customer-action-button"
-                    type="button"
-                    data-delete-customer="${escapeHtml(customer.id)}"
-                    aria-label="Delete ${escapeHtml(customer.customer_name)}"
-                  >
-                    Delete Customer
-                  </button>
                 </div>
 
                 <div class="customer-details">
@@ -1647,45 +1639,6 @@
     await loadCustomerData();
   }
 
-  async function deleteCustomer(customerId) {
-    const customer = findCustomer(customerId);
-    if (!customer) throw new Error("Customer record not found.");
-
-    const linkedJobs = customerJobs(customerId).length;
-    const linkedInvoices = customerInvoices(customerId).length;
-    const confirmed = window.confirm(
-      `Permanently delete ${customer.customer_name || "this customer"} and saved locations? ` +
-      `Its ${linkedJobs} delivery record(s) and ${linkedInvoices} invoice(s) will be kept, but unlinked from this profile. ` +
-      (customer.auth_user_id ? "Customer portal access to this profile will also end. " : "") +
-      "This cannot be undone."
-    );
-    if (!confirmed) return false;
-
-    const jobLinks = await client.from("quotes")
-      .update({ customer_account_id: null })
-      .eq("customer_account_id", customerId);
-    if (jobLinks.error) throw jobLinks.error;
-
-    const invoiceLinks = await client.from("invoices")
-      .update({ customer_account_id: null })
-      .eq("customer_account_id", customerId);
-    if (invoiceLinks.error) throw invoiceLinks.error;
-
-    const savedLocations = await client.from("customer_saved_locations")
-      .delete()
-      .eq("customer_account_id", customerId);
-    if (savedLocations.error) throw savedLocations.error;
-
-    const removed = await client.from("customer_portal_accounts")
-      .delete()
-      .eq("id", customerId);
-    if (removed.error) throw removed.error;
-
-    setPageMessage("Customer deleted. Delivery and invoice records were kept.", "success");
-    await loadCustomerData();
-    return true;
-  }
-
   async function deleteLocation(
     locationId
   ) {
@@ -1726,25 +1679,6 @@
   customerList.addEventListener(
     "click",
     async function (event) {
-      const deleteCustomerButton = event.target.closest("[data-delete-customer]");
-      if (deleteCustomerButton) {
-        const originalText = deleteCustomerButton.textContent;
-        deleteCustomerButton.disabled = true;
-        deleteCustomerButton.textContent = "Deleting...";
-        try {
-          const deleted = await deleteCustomer(deleteCustomerButton.dataset.deleteCustomer);
-          if (!deleted) {
-            deleteCustomerButton.disabled = false;
-            deleteCustomerButton.textContent = originalText;
-          }
-        } catch (error) {
-          setPageMessage(error.message || "Unable to delete customer.", "error");
-          deleteCustomerButton.disabled = false;
-          deleteCustomerButton.textContent = originalText;
-        }
-        return;
-      }
-
       const toggleButton =
         event.target.closest(
           "[data-toggle-customer]"
