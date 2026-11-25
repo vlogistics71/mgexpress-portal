@@ -879,6 +879,7 @@
                 <span class="badge" title="Order source">${escapeHtml(orderSourceLabel(delivery))}</span>
                 ${String(delivery.internal_dispatch_notes || "").includes("CUSTOM QUOTE REQUIRED") ? '<span class="badge return">Outside Area · Custom Quote</span>' : String(delivery.internal_dispatch_notes || "").includes("ADDRESS VERIFICATION REQUIRED") ? '<span class="badge return">Verify Address · Dispatch Review</span>' : ""}
                 ${String(delivery.internal_dispatch_notes || "").includes("[DISPATCH PROBLEM]") ? '<span class="badge return">Dispatch Problem</span>' : ""}
+                ${String(delivery.internal_dispatch_notes || "").includes("[TEST JOB]") || String(delivery.reference_number || "").startsWith("TEST-") ? '<span class="badge">TEST JOB</span>' : ""}
                 ${clean(delivery.return_required) === "true" || delivery.return_required === true ? '<span class="badge return">Return</span>' : ""}
               </div>
               <div class="customer">${escapeHtml(delivery.customer_name || delivery.company_name || "Customer")}</div>
