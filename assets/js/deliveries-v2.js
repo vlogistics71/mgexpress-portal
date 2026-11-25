@@ -790,7 +790,7 @@
     if (canAssignDriver(delivery)) {
       buttons.push(`<button class="action-btn secondary" type="button" data-details-action="assign" data-delivery-id="${id}">${delivery.assigned_driver_id ? "Reassign Driver" : "Assign Driver"}</button>`);
     }
-    if (isActiveJob(delivery)) {
+    if (String(delivery.assigned_driver_id || "").trim() || isActiveJob(delivery) || isComplete(delivery)) {
       buttons.push(`<button class="action-btn secondary" type="button" data-details-action="unassign-problem" data-delivery-id="${id}">Unassign / Problem Job</button>`);
     }
     if (canMarkReady(delivery)) {
@@ -2299,6 +2299,7 @@
   function openUnassignProblemDialog(delivery) {
     const assigned = Boolean(String(delivery.assigned_driver_id || "").trim());
     const started = isInTransit(delivery) || Boolean(delivery.picked_up_at);
+    const completedOrCancelled = isComplete(delivery) || isCancelled(delivery);
     const dialog = document.createElement("div");
     dialog.className = "mg-job-action-backdrop";
     dialog.innerHTML = `
@@ -2306,10 +2307,11 @@
         <button type="button" class="mg-job-action-close" aria-label="Close">×</button>
         <h3 id="mgJobActionTitle">Dispatch job options</h3>
         <p class="mg-job-action-summary"><strong>${escapeHtml(delivery.job_number || "This job")}</strong> · ${assigned ? "Assigned to a driver" : "Not currently assigned"}</p>
-        ${started ? '<p class="mg-job-action-warning">This job has already started. Keep its current assignment and flag the issue so dispatch can choose the next step.</p>' : ""}
+        ${started ? '<p class="mg-job-action-warning">Unassigning removes this driver from the driver portal. The job and its route history stay in dispatch so you can review or edit it.</p>' : ""}
         <div class="mg-job-action-options">
-          ${assigned && !started ? '<button type="button" class="action-btn secondary" data-job-action="unassign">Return to Ready to Assign</button>' : ""}
+          ${assigned ? '<button type="button" class="action-btn secondary" data-job-action="unassign">Unassign Driver</button>' : ""}
           <button type="button" class="action-btn secondary" data-job-action="problem">Report a Problem</button>
+          <button type="button" class="action-btn danger-btn" data-job-action="delete-test">Delete Test Job</button>
           <button type="button" class="action-btn secondary" data-job-action="back">Go Back</button>
         </div>
         <div class="mg-job-action-error" role="alert"></div>
@@ -2383,26 +2385,54 @@
       form.querySelector("#mgProblemType").focus();
     });
     const unassignButton = dialog.querySelector('[data-job-action="unassign"]');
+    const deleteTestButton = dialog.querySelector('[data-job-action="delete-test"]');
+    deleteTestButton.addEventListener("click", async () => {
+      const jobNumber = String(delivery.job_number || "").trim();
+      if (!jobNumber) { err.textContent = "This job has no job number, so it cannot be safely confirmed for deletion."; return; }
+      const typed = window.prompt(`TEST JOB ONLY: Permanently delete ${jobNumber}? This cannot be undone. Type the exact job number to continue:`);
+      if (typed === null) return;
+      if (typed.trim() !== jobNumber) { err.textContent = "The job number did not match. Nothing was deleted."; return; }
+      if (!window.confirm(`Permanently delete test job ${jobNumber} from dispatch?`)) return;
+      deleteTestButton.disabled = true; deleteTestButton.textContent = "Deleting…";
+      try {
+        const result = await client.from("quotes").delete().eq("id", delivery.id).select("id").maybeSingle();
+        if (result.error) throw result.error;
+        if (!result.data) throw new Error("No job was deleted. Refresh and check dispatch permissions.");
+        close();
+        closeModal(elements.deliveryDetailsModal);
+        state.selectedDelivery = null;
+        showToast(`Test job ${jobNumber} deleted.`, "success");
+        await refreshDeliveries();
+      } catch (error) {
+        err.textContent = error.message || "Unable to delete test job.";
+        deleteTestButton.disabled = false; deleteTestButton.textContent = "Delete Test Job";
+      }
+    });
+
     if (unassignButton) unassignButton.addEventListener("click", async () => {
       if (requiresUnpricedCustomReview(delivery)) {
         err.textContent = "Approve the final price and verify the route before returning this job to the ready pool.";
         return;
       }
-      if (!window.confirm(`Return ${delivery.job_number || "this job"} to Ready to Assign? The current driver will be removed from the job.`)) return;
+      if (!window.confirm(`Unassign ${delivery.job_number || "this job"} from its driver? Dispatch will keep the job and its route history.`)) return;
       unassignButton.disabled = true; unassignButton.textContent = "Updating…";
       try {
+        const keepOperationalStatus = started || completedOrCancelled;
+        const audit = `[DISPATCH UNASSIGNED] ${new Intl.DateTimeFormat("en-US", { dateStyle:"medium", timeStyle:"short" }).format(new Date())} · Driver removed by dispatch; prior workflow: ${String(delivery.driver_workflow_status || "not recorded")}.`;
+        const notes = [String(delivery.internal_dispatch_notes || "").trim(), audit].filter(Boolean).join("\\n").slice(-6000);
         const result = await client.from("quotes").update({
-          status: "ready",
+          status: keepOperationalStatus ? delivery.status : "ready",
           assigned_driver_id: null,
           driver_pay: null,
           driver_acceptance_status: "pending",
           driver_workflow_status: "unassigned",
           driver_accepted_at: null,
-          driver_rejected_at: null
+          driver_rejected_at: null,
+          internal_dispatch_notes: notes
         }).eq("id", delivery.id).select("*").maybeSingle();
         if (result.error) throw result.error;
         close();
-        showToast("Job returned to Ready to Assign.", "success");
+        showToast(keepOperationalStatus ? "Driver removed. Job and route status remain visible in dispatch." : "Driver removed. Job returned to Ready to Assign.", "success");
         await refreshDeliveries({ keepSelection: delivery.id });
       } catch (error) {
         err.textContent = error.message || "Unable to return this job to Ready.";
