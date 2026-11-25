@@ -783,7 +783,7 @@
     const id = escapeHtml(String(delivery.id || ""));
     const buttons = [];
 
-    if (isActiveJob(delivery)) {
+    if (isActiveJob(delivery) || isComplete(delivery)) {
       buttons.push(`<button class="action-btn secondary" type="button" data-details-action="edit" data-delivery-id="${id}">Edit Job</button>`);
     }
 
