@@ -2006,6 +2006,64 @@
       content: none !important;
       display: none !important;
     }
+
+    /* Payment follow-up uses the same readable plum cards as the dashboard. */
+    body.mg-main-dashboard #paymentPanel {
+      color: #fff8ff !important;
+      border: 1px solid #ed31ad !important;
+      border-radius: 18px !important;
+      background: linear-gradient(145deg, rgba(54, 13, 78, .97), rgba(24, 6, 39, .98)) !important;
+      box-shadow: 0 0 22px rgba(230, 31, 174, .16) !important;
+    }
+    body.mg-main-dashboard #paymentPanel .payment-panel-title,
+    body.mg-main-dashboard #paymentPanel .payment-panel-job,
+    body.mg-main-dashboard #paymentPanel .payment-panel-row strong,
+    body.mg-main-dashboard #paymentPanel .payment-panel-row span,
+    body.mg-main-dashboard #paymentPanel .lookup-confirm-title,
+    body.mg-main-dashboard #paymentPanel .lookup-confirm-copy {
+      color: #fff8ff !important;
+    }
+    body.mg-main-dashboard #paymentPanel .payment-panel-title,
+    body.mg-main-dashboard #paymentPanel .lookup-confirm-title {
+      color: #ff8bd9 !important;
+    }
+    body.mg-main-dashboard #paymentPanel .payment-panel-row {
+      min-width: 0 !important;
+      background: rgba(58, 17, 82, .82) !important;
+      border: 1px solid rgba(238, 77, 192, .68) !important;
+      border-radius: 12px !important;
+    }
+    body.mg-main-dashboard #paymentPanel .payment-panel-url {
+      color: #fff8ff !important;
+      background: rgba(18, 5, 31, .86) !important;
+      border: 1px solid rgba(238, 77, 192, .72) !important;
+      overflow-wrap: anywhere !important;
+      word-break: break-word !important;
+      user-select: all;
+    }
+    body.mg-main-dashboard #paymentPanel .mini-status {
+      color: #fff8ff !important;
+      background: rgba(127, 37, 143, .72) !important;
+      border: 1px solid #ef48ba !important;
+    }
+    body.mg-main-dashboard #paymentPanel .payment-panel-actions .action-btn {
+      color: #fff !important;
+      border: 1px solid #f044b5 !important;
+      background: linear-gradient(110deg, #ff7a38, #f21b96 58%, #9b19d3) !important;
+      box-shadow: 0 0 12px rgba(239, 35, 173, .2) !important;
+    }
+    body.mg-main-dashboard #paymentPanel .payment-panel-actions .action-btn.secondary {
+      background: rgba(46, 13, 68, .82) !important;
+    }
+    body.mg-main-dashboard #paymentPanel .payment-panel-actions .action-btn:disabled {
+      color: rgba(255, 248, 255, .68) !important;
+      opacity: .72 !important;
+      cursor: not-allowed !important;
+    }
+    body.mg-main-dashboard #paymentPanel .payment-panel-actions .action-btn:not(:disabled):hover {
+      filter: brightness(1.12);
+      transform: translateY(-1px);
+    }
   </style>
 
 </head>
@@ -3609,9 +3667,14 @@
       elements.paymentPanelPaymentStatus.textContent = context.payment_status_label || "Waiting Payment";
 
       const hasCheckoutUrl = Boolean(String(context.checkout_url || "").trim());
-      elements.paymentPanelAvailability.textContent = hasCheckoutUrl
-        ? "Choose a delivery method to send the secure Stripe link, or copy it below."
-        : "Payment link could not be created. The job remains Waiting Payment.";
+      const isTestJob = String(context.payment_status_label || "").toLowerCase().includes("test job");
+      elements.paymentPanelAvailability.textContent = isTestJob
+        ? "Test jobs do not create or send customer payment links."
+        : hasCheckoutUrl
+          ? "Choose a delivery method to send the secure Stripe link, or copy it below."
+          : methods.length
+            ? "No payment link is ready yet. Choose Email or Text to create and send a secure Stripe link."
+            : "Add a customer email or phone number to create and send a secure payment link.";
 
       if (elements.paymentPanelUrl) {
         elements.paymentPanelUrl.textContent = context.checkout_url || "";
