@@ -158,6 +158,55 @@
     }
   }
 </style>
+<style id="mg-customer-page-header-glass-buttons">
+  body.mg-vice-customer.mg-dispatch-neon {
+    background:
+      linear-gradient(180deg,rgba(24,4,39,.12) 0%,rgba(24,4,39,.38) 220px,#17051f 390px),
+      url("/assets/images/vice-city-dashboard-banner.png") center top / 100% 340px no-repeat,
+      #17051f !important;
+    color:#fff8ff !important;
+  }
+  body.mg-vice-customer.mg-dispatch-neon > .topbar {
+    position:static !important; height:0 !important; min-height:0 !important;
+    margin:0 !important; padding:0 !important; overflow:visible !important;
+    background:transparent !important; background-image:none !important;
+    border:0 !important; box-shadow:none !important;
+  }
+  body.mg-vice-customer.mg-dispatch-neon > .topbar .topbar-inner {
+    position:fixed !important; top:10px !important; right:12px !important; left:auto !important;
+    z-index:1000 !important; width:auto !important; min-height:0 !important;
+    margin:0 !important; padding:0 !important;
+  }
+  body.mg-vice-customer.mg-dispatch-neon > .topbar .brand,
+  body.mg-vice-customer.mg-dispatch-neon > .topbar .staff-email {
+    display:none !important;
+  }
+  body.mg-vice-customer.mg-dispatch-neon > .topbar .dispatch-menu-button {
+    display:inline-flex !important; width:48px !important; height:48px !important;
+    align-items:center !important; justify-content:center !important;
+    color:#fff8ff !important; background:rgba(36,8,56,.76) !important;
+    border:1px solid rgba(255,88,188,.78) !important;
+    box-shadow:0 6px 18px rgba(9,1,19,.25) !important; backdrop-filter:blur(8px);
+  }
+  body.mg-vice-customer.mg-dispatch-neon > main.container {padding-top:66px !important}
+  body.mg-vice-customer.mg-dispatch-neon button:not(.dispatch-menu-button):not(.dispatch-menu-close):not(.dispatch-menu-signout),
+  body.mg-vice-customer.mg-dispatch-neon input[type="button"],
+  body.mg-vice-customer.mg-dispatch-neon input[type="submit"],
+  body.mg-vice-customer.mg-dispatch-neon a.primary-button {
+    color:#fff8ff !important; -webkit-text-fill-color:#fff8ff !important;
+    background:linear-gradient(145deg,rgba(255,55,163,.20),rgba(132,54,195,.24)) !important;
+    border:1px solid rgba(241,116,219,.78) !important;
+    box-shadow:inset 0 1px rgba(255,255,255,.06),0 4px 14px rgba(7,1,18,.18) !important;
+    backdrop-filter:blur(6px);
+  }
+  body.mg-vice-customer.mg-dispatch-neon button:not(.dispatch-menu-button):not(.dispatch-menu-close):not(.dispatch-menu-signout):hover {
+    background:linear-gradient(145deg,rgba(255,55,163,.32),rgba(132,54,195,.34)) !important;
+  }
+  @media(max-width:720px) {
+    body.mg-vice-customer.mg-dispatch-neon > .topbar .topbar-inner {top:8px !important;right:9px !important}
+    body.mg-vice-customer.mg-dispatch-neon > main.container {padding-top:60px !important}
+  }
+</style>
 </head>
 
 <body class="mg-vice-customer">
