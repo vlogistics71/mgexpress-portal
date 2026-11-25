@@ -1080,7 +1080,7 @@
 
   <script src="/assets/js/mobile-delivery-details-steps.js?v=20261116-overview2"></script>
   <script src="/assets/js/mobile-delivery-workflows.js?v=20261113-edit-assign"></script>
-  <script src="/dispatch-menu.js?v=20261124-deliveries-single-banner"></script>
+  <script src="/dispatch-menu.js?v=20261125-deliveries-live-fix"></script>
 
   <style id="active-job-dashboard-contrast">
     body.mg-dispatch-neon .card[role="button"] {
@@ -1136,6 +1136,40 @@
       body.mg-deliveries-page .deliveries-brand-row {padding:8px 12px}
       body.mg-deliveries-page .deliveries-brand-row .brand {font-size:clamp(15px,4.5vw,19px)}
       body.mg-deliveries-page .deliveries-brand-row .brand-subtitle {font-size:10px}
+    }
+  </style>
+
+  <style id="deliveries-live-visual-fix">
+    body.mg-deliveries-page .deliveries-brand-row {
+      background: transparent !important;
+      background-image: none !important;
+      border: 0 !important;
+      box-shadow: none !important;
+    }
+    body.mg-deliveries-page #newDeliveryButton,
+    body.mg-deliveries-page .active-jobs-actions #newDeliveryButton {
+      display: none !important;
+    }
+    body.mg-deliveries-page.mg-dispatch-neon .card[role="button"] {
+      background: rgba(25, 7, 45, .36) !important;
+      background-image: none !important;
+      color: #fff8ff !important;
+      border-color: rgba(255, 76, 190, .8) !important;
+      box-shadow: 0 8px 22px rgba(10, 0, 28, .3) !important;
+      backdrop-filter: blur(3px);
+      -webkit-backdrop-filter: blur(3px);
+    }
+    body.mg-deliveries-page.mg-dispatch-neon .card[role="button"] .job-number,
+    body.mg-deliveries-page.mg-dispatch-neon .card[role="button"] .customer,
+    body.mg-deliveries-page.mg-dispatch-neon .card[role="button"] .route,
+    body.mg-deliveries-page.mg-dispatch-neon .card[role="button"] .meta {
+      color: #fff8ff !important;
+      -webkit-text-fill-color: #fff8ff !important;
+    }
+    body.mg-deliveries-page.mg-dispatch-neon .card[role="button"] .route {
+      background: rgba(42, 10, 61, .42) !important;
+      background-image: none !important;
+      border-color: rgba(220, 112, 226, .62) !important;
     }
   </style>
 </body>
