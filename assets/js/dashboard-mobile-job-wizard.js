@@ -26,6 +26,40 @@
     [panels[3]],
     [panels[4]]
   ];
+
+  const addressPanels = [panels[1], panels[2]];
+  addressPanels.forEach((panel, index) => {
+    const heading = panel.querySelector("h3");
+    const fields = panel.querySelector(".form-grid");
+    if (!heading || !fields) return;
+
+    const label = heading.textContent.trim();
+    heading.classList.add("mg-address-desktop-title");
+
+    const toggle = document.createElement("button");
+    toggle.type = "button";
+    toggle.className = "mg-address-toggle";
+    toggle.setAttribute("aria-expanded", String(index === 0));
+    toggle.innerHTML =
+      '<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">' +
+      '<path d="M3 7h11v10H3zM14 10h4l3 4v3h-4M6.5 17a1.5 1.5 0 1 0 3 0m6 0a1.5 1.5 0 1 0 3 0" />' +
+      '<path d="M18 10v4h4" />' +
+      '</svg><span class="mg-address-toggle-label"></span>' +
+      '<span class="mg-address-toggle-chevron" aria-hidden="true">⌄</span>';
+    toggle.querySelector(".mg-address-toggle-label").textContent = label;
+    panel.classList.toggle("mg-address-open", index === 0);
+    panel.insertBefore(toggle, fields);
+
+    toggle.addEventListener("click", () => {
+      const opening = !panel.classList.contains("mg-address-open");
+      addressPanels.forEach(other => {
+        const isOpen = other === panel && opening;
+        other.classList.toggle("mg-address-open", isOpen);
+        const otherToggle = other.querySelector(".mg-address-toggle");
+        otherToggle?.setAttribute("aria-expanded", String(isOpen));
+      });
+    });
+  });
   const names = ["Customer", "Pickup & Delivery", "Service & Package", "Pricing"];
   const progress = document.createElement("div");
   progress.className = "mg-wizard-progress";
