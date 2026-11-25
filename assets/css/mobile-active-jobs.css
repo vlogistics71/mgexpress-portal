@@ -238,3 +238,158 @@
   .container > .panel{min-height:195px;overflow:visible;}
   .container > .panel > .list {max-height:260px;overflow-y:auto;}
 }
+
+
+/* Six-at-a-glance mobile queue. Keep the page fixed to the viewport and
+   reserve most of its height for compact, readable job rows. */
+@media (max-width:720px) {
+  body.mg-dispatch-neon .container > .summary-grid {
+    grid-template-rows:repeat(2,44px);
+    gap:6px;
+    margin-top:0;
+    margin-bottom:7px;
+  }
+  body.mg-dispatch-neon .container > .summary-grid > .summary-card {
+    min-height:44px;
+    height:44px;
+    padding:6px 9px;
+    border-radius:12px;
+  }
+  body.mg-dispatch-neon .container > .summary-grid > .summary-card .summary-label {
+    font-size:9px;
+    line-height:1.1;
+    letter-spacing:.03em;
+  }
+  body.mg-dispatch-neon .container > .summary-grid > .summary-card .summary-value {
+    font-size:23px;
+  }
+  body.mg-dispatch-neon .container > .toolbar {
+    margin-top:0;
+    margin-bottom:6px;
+    gap:5px;
+  }
+  body.mg-dispatch-neon .container > .toolbar .control input,
+  body.mg-dispatch-neon .container > .toolbar .control select {
+    height:38px;
+    min-height:38px;
+    padding:6px 9px;
+    font-size:13px;
+  }
+  body.mg-dispatch-neon .container > .toolbar .control label {
+    margin-bottom:2px;
+    font-size:9px;
+  }
+  body.mg-dispatch-neon .container > .toolbar .toolbar-note {
+    font-size:9px;
+    line-height:1.1;
+  }
+  body.mg-dispatch-neon .container > .panel > .list {
+    gap:5px;
+    padding:6px;
+  }
+  body.mg-dispatch-neon .container > .panel > .list > .card {
+    grid-template-columns:minmax(0,1fr) auto;
+    min-height:0;
+    padding:6px 8px;
+    gap:5px;
+    border-left-width:4px;
+    border-radius:11px;
+    box-shadow:none;
+  }
+  body.mg-dispatch-neon .container > .panel > .list > .card .card-main {
+    display:grid;
+    gap:2px;
+  }
+  body.mg-dispatch-neon .container > .panel > .list > .card .job-heading {
+    display:flex;
+    align-items:center;
+    gap:6px;
+    min-width:0;
+  }
+  body.mg-dispatch-neon .container > .panel > .list > .card .job-number {
+    min-width:0;
+    overflow:hidden;
+    text-overflow:ellipsis;
+    white-space:nowrap;
+    font-size:12px;
+    line-height:1.15;
+  }
+  body.mg-dispatch-neon .container > .panel > .list > .card .job-heading .badge {
+    min-height:17px;
+    padding:2px 6px;
+    font-size:8px;
+    line-height:1;
+  }
+  body.mg-dispatch-neon .container > .panel > .list > .card .card-topline {
+    gap:3px;
+    flex-wrap:nowrap;
+    overflow:hidden;
+  }
+  body.mg-dispatch-neon .container > .panel > .list > .card .card-topline .badge {
+    flex:0 0 auto;
+    min-height:16px;
+    padding:2px 5px;
+    font-size:7px;
+    line-height:1;
+  }
+  body.mg-dispatch-neon .container > .panel > .list > .card .customer {
+    overflow:hidden;
+    text-overflow:ellipsis;
+    white-space:nowrap;
+    font-size:10px;
+    line-height:1.1;
+  }
+  body.mg-dispatch-neon .container > .panel > .list > .card .route {
+    display:grid;
+    gap:1px;
+    font-size:9px;
+    line-height:1.15;
+  }
+  body.mg-dispatch-neon .container > .panel > .list > .card .route-line {
+    display:flex;
+    min-width:0;
+    gap:4px;
+    align-items:center;
+    white-space:nowrap;
+  }
+  body.mg-dispatch-neon .container > .panel > .list > .card .route-tag {
+    flex:0 0 24px;
+    font-size:8px;
+  }
+  body.mg-dispatch-neon .container > .panel > .list > .card .route-address {
+    display:block;
+    min-width:0;
+    overflow:hidden;
+    text-overflow:ellipsis;
+    white-space:nowrap;
+  }
+  body.mg-dispatch-neon .container > .panel > .list > .card .card-facts {
+    min-width:0;
+  }
+  body.mg-dispatch-neon .container > .panel > .list > .card .card-facts > .meta {
+    display:block;
+    overflow:hidden;
+    text-overflow:ellipsis;
+    white-space:nowrap;
+    font-size:8px;
+    line-height:1.1;
+  }
+  body.mg-dispatch-neon .container > .panel > .list > .card .card-facts > .meta + .meta {
+    display:none;
+  }
+  body.mg-dispatch-neon .container > .panel > .list > .card .card-chevron {
+    font-size:14px;
+  }
+}
+
+@media (max-width:720px) and (max-height:700px) {
+  body.mg-dispatch-neon .container > .summary-grid > .summary-card {
+    height:38px;
+    min-height:38px;
+    padding:4px 7px;
+  }
+  body.mg-dispatch-neon .container > .summary-grid {
+    grid-template-rows:repeat(2,38px);
+    gap:4px;
+  }
+}
