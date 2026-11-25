@@ -2066,6 +2066,40 @@
     }
   </style>
 
+<style id="mg-dashboard-header-restore">
+  body.mg-main-dashboard {
+    background:
+      linear-gradient(180deg,rgba(24,4,39,.12) 0%,rgba(24,4,39,.38) 220px,#17051f 390px),
+      url("/assets/images/vice-city-dashboard-banner.png") center top / 100% 340px no-repeat,
+      #17051f !important;
+  }
+  body.mg-main-dashboard > .topbar,
+  body.mg-main-dashboard.mg-dispatch-neon > .topbar {
+    position:relative !important;
+    background:transparent !important;
+    background-image:none !important;
+    border:0 !important;
+    box-shadow:none !important;
+  }
+  body.mg-main-dashboard .topbar-inner {
+    display:flex !important;
+    align-items:center !important;
+    justify-content:space-between !important;
+  }
+  body.mg-main-dashboard .topbar .dispatch-menu-button {
+    display:inline-flex !important;
+    visibility:visible !important;
+    opacity:1 !important;
+    position:relative !important;
+    z-index:1001 !important;
+    flex:0 0 auto !important;
+    margin-left:auto !important;
+    background:rgba(35,8,55,.76) !important;
+    color:#fff8ff !important;
+    border:1px solid rgba(255,87,190,.8) !important;
+    box-shadow:0 5px 16px rgba(8,1,18,.3) !important;
+  }
+</style>
 </head>
 
 <body class="mg-main-dashboard">
@@ -2077,6 +2111,7 @@
         </div>
         <div class="brand-subtitle">Work Station Hub</div>
       </div>
+      <button class="dispatch-menu-button" type="button" aria-label="Open navigation menu">☰</button>
     </div>
   </header>
 
@@ -5295,7 +5330,7 @@
       });
     })();
   </script>
-  <script src="/dispatch-menu.js?v=20261121-sunset-theme-v2"></script>
+  <script src="/dispatch-menu.js?v=20261125-dashboard-menu-restore-v1"></script>
 <script src="/assets/js/dispatch-push.js?v=20261112-hidden-panel"></script>
   <style id="mg-create-job-form-sunset">
     body.mg-main-dashboard.mobile-create-expanded #createJobSection {
