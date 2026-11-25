@@ -866,31 +866,38 @@
       return `
         <div class="card ${categoryClass}" data-delivery-id="${escapeHtml(String(delivery.id || ""))}" role="button" tabindex="0" aria-label="Open ${escapeHtml(delivery.job_number || "delivery")} details">
           <div class="card-main">
-            <div class="card-topline">
-              <span class="category-dot ${categoryClass}"></span>
-              <span class="badge">${escapeHtml(categoryLabel)}</span>
-              <span class="badge ${statusClass}">${escapeHtml(statusLabel)}</span>
-              <span class="badge" title="Order source">${escapeHtml(orderSourceLabel(delivery))}</span>
-              ${String(delivery.internal_dispatch_notes || "").includes("CUSTOM QUOTE REQUIRED") ? '<span class="badge return">Outside Area · Custom Quote</span>' : String(delivery.internal_dispatch_notes || "").includes("ADDRESS VERIFICATION REQUIRED") ? '<span class="badge return">Verify Address · Dispatch Review</span>' : ""}
-              ${clean(delivery.return_required) === "true" || delivery.return_required === true ? '<span class="badge return">Return</span>' : ""}
+            <div class="job-identity">
+              <div class="job-heading">
+                <span class="job-number">${escapeHtml(delivery.job_number || "Delivery")}</span>
+                <span class="badge ${statusClass}">${escapeHtml(statusLabel)}</span>
+              </div>
+              <div class="card-topline">
+                <span class="badge">${escapeHtml(categoryLabel)}</span>
+                <span class="badge" title="Order source">${escapeHtml(orderSourceLabel(delivery))}</span>
+                ${String(delivery.internal_dispatch_notes || "").includes("CUSTOM QUOTE REQUIRED") ? '<span class="badge return">Outside Area · Custom Quote</span>' : String(delivery.internal_dispatch_notes || "").includes("ADDRESS VERIFICATION REQUIRED") ? '<span class="badge return">Verify Address · Dispatch Review</span>' : ""}
+                ${clean(delivery.return_required) === "true" || delivery.return_required === true ? '<span class="badge return">Return</span>' : ""}
+              </div>
+              <div class="customer">${escapeHtml(delivery.customer_name || delivery.company_name || "Customer")}</div>
             </div>
-            <div class="job-number">${escapeHtml(delivery.job_number || "Delivery")}</div>
-            <div class="customer">${escapeHtml(delivery.customer_name || delivery.company_name || "Customer")}</div>
-            <div class="route">${pickupAddress}<br>↓<br>${deliveryAddress}</div>
-            <div class="meta">
-              <span>Created ${escapeHtml(createdAt)}</span>
-              ${serviceLabel ? `<span>${escapeHtml(serviceLabel)}</span>` : ""}
-              <span>Quote: ${escapeHtml(quotedPriceLabel(delivery))}</span>
+            <div class="route">
+              <div class="route-line"><span class="route-tag pickup-tag">PU</span><span class="route-address">${pickupAddress}</span></div>
+              <div class="route-line"><span class="route-tag delivery-tag">DEL</span><span class="route-address">${deliveryAddress}</span></div>
             </div>
-            <div class="meta">
-              ${assignedTo ? `<span>${assignedTo}</span>` : ""}
-              ${pay !== "-" ? `<span>Pay: ${escapeHtml(pay)}</span>` : ""}
+            <div class="card-facts">
+              <div class="meta">
+                <span>Created ${escapeHtml(createdAt)}</span>
+                ${serviceLabel ? `<span>${escapeHtml(serviceLabel)}</span>` : ""}
+                <span>Quote: ${escapeHtml(quotedPriceLabel(delivery))}</span>
+              </div>
+              <div class="meta">
+                ${assignedTo ? `<span>${assignedTo}</span>` : ""}
+                ${pay !== "-" ? `<span>Pay: ${escapeHtml(pay)}</span>` : ""}
+              </div>
             </div>
           </div>
           <div class="card-chevron" aria-hidden="true">&gt;</div>
         </div>
-      `;
-    }).join("");
+      `;    }).join("");
 
     renderWorkspaceSummary();
   }
