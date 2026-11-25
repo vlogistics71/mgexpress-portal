@@ -86,6 +86,76 @@
         : "message hidden";
   }
 
+
+  const savedCustomerList = document.getElementById("savedCustomerList");
+  const savedCustomerCount = document.getElementById("savedCustomerCount");
+  let savedCustomers = [];
+
+  function renderSavedCustomers() {
+    if (!savedCustomerList || !savedCustomerCount) return;
+    const query = normalize(customerSearch?.value);
+    const visible = savedCustomers.filter(customer =>
+      [customer.name, customer.company, customer.email, customer.phone]
+        .some(value => normalize(value).includes(query))
+    );
+    savedCustomerCount.textContent = `${visible.length} saved`;
+    if (!visible.length) {
+      savedCustomerList.innerHTML = '<div class="empty">No saved customers match your search.</div>';
+      return;
+    }
+    savedCustomerList.innerHTML = visible.map(customer => {
+      const title = customer.company || customer.name || "Saved Customer";
+      const detail = [customer.name, customer.email, customer.phone].filter(Boolean).join(" · ");
+      return `
+        <article class="saved-customer-row">
+          <div class="saved-customer-title">${escapeHtml(title)}</div>
+          ${detail ? `<div class="saved-customer-detail">${escapeHtml(detail)}</div>` : ""}
+          <div class="saved-customer-actions">
+            <span class="saved-customer-badge">Saved Customer</span>
+            <button type="button" data-delete-saved-customer="${escapeHtml(customer.id)}">Delete Saved Customer</button>
+          </div>
+        </article>`;
+    }).join("");
+  }
+
+  async function loadSavedCustomers() {
+    if (!savedCustomerList) return;
+    const { data, error } = await client.from("customers")
+      .select("id,name,company,email,phone")
+      .order("updated_at", { ascending: false })
+      .limit(500);
+    if (error) {
+      savedCustomerCount.textContent = "Unable to load";
+      savedCustomerList.innerHTML = `<div class="empty">${escapeHtml(error.message || "Could not load saved customers.")}</div>`;
+      return;
+    }
+    savedCustomers = data || [];
+    renderSavedCustomers();
+  }
+
+  if (savedCustomerList) {
+    savedCustomerList.addEventListener("click", async event => {
+      const button = event.target.closest("[data-delete-saved-customer]");
+      if (!button) return;
+      const customer = savedCustomers.find(item => String(item.id) === String(button.dataset.deleteSavedCustomer));
+      if (!customer) return;
+      if (!window.confirm(`Delete saved customer "${customer.company || customer.name || "Saved Customer"}"? Existing jobs and CRM profiles will remain unchanged.`)) return;
+      button.disabled = true;
+      button.textContent = "Deleting…";
+      try {
+        const { error } = await client.from("customers").delete().eq("id", customer.id);
+        if (error) throw error;
+        savedCustomers = savedCustomers.filter(item => String(item.id) !== String(customer.id));
+        renderSavedCustomers();
+        setPageMessage("Saved customer deleted. Existing jobs and CRM profiles were left unchanged.", "success");
+      } catch (error) {
+        setPageMessage(error.message || "Unable to delete saved customer.", "error");
+        button.disabled = false;
+        button.textContent = "Delete Saved Customer";
+      }
+    });
+  }
+
   function setCustomerFormMessage(
     message,
     type
@@ -1312,7 +1382,7 @@
         "success"
       );
 
-      await loadCustomerData();
+      await Promise.all([loadCustomerData(), loadSavedCustomers()]);
 
       setTimeout(
         closeCustomerModal,
@@ -1953,6 +2023,8 @@
     renderCustomers
   );
 
+  customerSearch.addEventListener("input", renderSavedCustomers);
+
   customerFilter.addEventListener(
     "change",
     renderCustomers
@@ -2111,7 +2183,7 @@
         })
       );
 
-      await loadCustomerData();
+      await Promise.all([loadCustomerData(), loadSavedCustomers()]);
     } catch (error) {
       customerList.innerHTML = `
         <div class="empty">
