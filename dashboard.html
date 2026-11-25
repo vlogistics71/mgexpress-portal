@@ -5324,7 +5324,7 @@
       }
     })();
   </script>
-  <script src="/assets/js/dashboard-mobile-job-wizard.js?v=20261125-home-test-job"></script>
+  <script src="/assets/js/dashboard-mobile-job-wizard.js?v=20261125-mobile-address-accordion-v1"></script>
   <script src="/assets/js/dashboard-pickup-map.js?v=20261112-google-maps-secure-key"></script>
   <script>
     (() => {
@@ -5555,6 +5555,63 @@
       body.mg-main-dashboard.mobile-create-expanded #refreshButton::before {
         content: "↻";
         font-size: 28px;
+      }
+    }
+  </style>
+  <style id="mg-mobile-address-accordions">
+    @media (max-width: 720px) {
+      body.mg-main-dashboard.mobile-create-expanded #createJobForm section.form-group:has(.mg-address-toggle) > h3 {
+        display: none !important;
+      }
+
+      body.mg-main-dashboard.mobile-create-expanded #createJobForm .mg-address-toggle {
+        display: flex;
+        width: 100%;
+        min-height: 42px;
+        align-items: center;
+        gap: 10px;
+        padding: 0 0 10px;
+        border: 0;
+        border-bottom: 1px solid rgba(255, 41, 152, .48);
+        background: transparent;
+        color: #fff8ff;
+        text-align: left;
+        font-size: 20px;
+        font-weight: 900;
+        cursor: pointer;
+      }
+
+      body.mg-main-dashboard.mobile-create-expanded #createJobForm .mg-address-toggle svg {
+        width: 22px;
+        height: 22px;
+        flex: 0 0 22px;
+        fill: none;
+        stroke: currentColor;
+        stroke-width: 1.8;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+      }
+
+      body.mg-main-dashboard.mobile-create-expanded #createJobForm .mg-address-toggle-label {
+        flex: 1 1 auto;
+      }
+
+      body.mg-main-dashboard.mobile-create-expanded #createJobForm .mg-address-toggle-chevron {
+        font-size: 24px;
+        line-height: 1;
+        transition: transform .18s ease;
+      }
+
+      body.mg-main-dashboard.mobile-create-expanded #createJobForm section.form-group:not(.mg-address-open) .mg-address-toggle-chevron {
+        transform: rotate(-90deg);
+      }
+
+      body.mg-main-dashboard.mobile-create-expanded #createJobForm section.form-group:not(.mg-address-open) > .form-grid {
+        display: none !important;
+      }
+
+      body.mg-main-dashboard.mobile-create-expanded #createJobForm section.form-group.mg-address-open > .form-grid {
+        display: grid !important;
       }
     }
   </style>
