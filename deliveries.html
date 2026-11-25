@@ -1246,5 +1246,14 @@
       body.mg-deliveries-page .badge {font-size:7px;padding:2px 5px}
     }
   </style>
+
+  <style id="active-jobs-actions-visible">
+    body.mg-deliveries-page #newDeliveryButton {display:inline-flex !important}
+    body.mg-deliveries-page .active-jobs-actions {display:flex;align-items:center;gap:8px;flex-wrap:nowrap}
+    @media(max-width:720px) {
+      body.mg-deliveries-page .active-jobs-actions {gap:6px}
+      body.mg-deliveries-page .active-jobs-actions .action-btn {min-height:38px;padding:8px 10px;font-size:12px}
+    }
+  </style>
 </body>
 </html>
