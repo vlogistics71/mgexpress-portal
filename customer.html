@@ -241,7 +241,88 @@
   body.mg-vice-customer.mg-dispatch-neon .customer-main {min-width:0}
   body.mg-vice-customer.mg-dispatch-neon .customer-summary {padding-left:20px!important}
 </style>
-</head>
+<style id="mg-customer-page-compact-columns">
+  /* Compact customer CRM without changing other dispatch pages. */
+  body.mg-vice-customer.mg-dispatch-neon > main.container {
+    width:min(1440px,100%)!important;max-width:1440px!important;
+    padding:58px clamp(12px,1.6vw,22px) 24px!important;
+    box-sizing:border-box!important;
+  }
+  body.mg-vice-customer.mg-dispatch-neon .heading-row {margin:0 0 8px!important;align-items:center!important}
+  body.mg-vice-customer.mg-dispatch-neon .heading-row h1 {margin:2px 0!important;font-size:clamp(24px,2.4vw,34px)!important}
+  body.mg-vice-customer.mg-dispatch-neon .stats {gap:8px!important;margin:8px 0!important}
+  body.mg-vice-customer.mg-dispatch-neon .stat-card {min-height:60px!important;padding:9px 12px!important;border-radius:14px!important}
+  body.mg-vice-customer.mg-dispatch-neon .stat-number {font-size:22px!important;line-height:1.05!important}
+  body.mg-vice-customer.mg-dispatch-neon .stat-label {font-size:11px!important;line-height:1.2!important}
+  body.mg-vice-customer.mg-dispatch-neon .customer-toolbar {grid-template-columns:minmax(0,1fr) 190px auto!important;gap:8px!important;margin:8px 0!important;padding:9px 12px!important}
+  body.mg-vice-customer.mg-dispatch-neon .customer-toolbar .field {min-width:0!important;gap:4px!important}
+  body.mg-vice-customer.mg-dispatch-neon .customer-toolbar label {font-size:10px!important}
+  body.mg-vice-customer.mg-dispatch-neon .customer-toolbar input,
+  body.mg-vice-customer.mg-dispatch-neon .customer-toolbar select {min-height:36px!important;padding:7px 10px!important}
+  body.mg-vice-customer.mg-dispatch-neon .saved-customer-directory {margin:8px 0!important;padding:10px 14px!important}
+  body.mg-vice-customer.mg-dispatch-neon .saved-customer-heading h2 {font-size:18px!important}
+  body.mg-vice-customer.mg-dispatch-neon .saved-customer-list {grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:6px!important;margin-top:8px!important}
+  body.mg-vice-customer.mg-dispatch-neon .saved-customer-row {
+    min-width:0!important;overflow:visible!important;padding:8px 14px!important;
+    text-indent:0!important;box-sizing:border-box!important;
+  }
+  body.mg-vice-customer.mg-dispatch-neon .saved-customer-row .saved-customer-title {
+    display:block!important;min-width:0!important;padding:0 2px!important;
+    overflow:visible!important;text-overflow:clip!important;white-space:normal!important;font-size:14px!important;
+  }
+  body.mg-vice-customer.mg-dispatch-neon .saved-customer-row .saved-customer-detail {font-size:11px!important}
+  body.mg-vice-customer.mg-dispatch-neon .saved-customer-row .saved-customer-actions {flex-wrap:wrap!important;gap:5px!important;margin-top:5px!important}
+  body.mg-vice-customer.mg-dispatch-neon .saved-customer-row button {min-height:28px!important;padding:4px 8px!important;font-size:11px!important}
+  body.mg-vice-customer.mg-dispatch-neon .customer-list {gap:7px!important;margin-top:8px!important}
+  body.mg-vice-customer.mg-dispatch-neon .customer-card {border-radius:14px!important}
+  body.mg-vice-customer.mg-dispatch-neon .customer-summary {
+    box-sizing:border-box!important;min-width:0!important;
+    grid-template-columns:minmax(230px,1.5fr) minmax(70px,.4fr) minmax(90px,.55fr) minmax(100px,.6fr) auto!important;
+    gap:8px!important;padding:10px 18px!important;overflow:visible!important;
+  }
+  body.mg-vice-customer.mg-dispatch-neon .customer-main,
+  body.mg-vice-customer.mg-dispatch-neon .customer-jobs,
+  body.mg-vice-customer.mg-dispatch-neon .customer-revenue,
+  body.mg-vice-customer.mg-dispatch-neon .customer-balance,
+  body.mg-vice-customer.mg-dispatch-neon .customer-status {
+    min-width:0!important;padding-inline:4px!important;box-sizing:border-box!important;
+    overflow:visible!important;text-indent:0!important;
+  }
+  body.mg-vice-customer.mg-dispatch-neon .customer-name,
+  body.mg-vice-customer.mg-dispatch-neon .customer-company,
+  body.mg-vice-customer.mg-dispatch-neon .customer-contact,
+  body.mg-vice-customer.mg-dispatch-neon .customer-meta-label,
+  body.mg-vice-customer.mg-dispatch-neon .customer-meta-value {
+    min-width:0!important;overflow:visible!important;text-overflow:clip!important;
+    white-space:normal!important;overflow-wrap:anywhere!important;line-height:1.25!important;
+  }
+  body.mg-vice-customer.mg-dispatch-neon .customer-name {font-size:15px!important}
+  body.mg-vice-customer.mg-dispatch-neon .customer-contact {font-size:11px!important}
+  body.mg-vice-customer.mg-dispatch-neon .customer-actions {
+    grid-template-columns:repeat(5,minmax(0,1fr))!important;gap:6px!important;padding:7px 14px!important;
+  }
+  body.mg-vice-customer.mg-dispatch-neon .customer-action-button {min-height:34px!important;padding:6px 8px!important;font-size:11px!important}
+  body.mg-vice-customer.mg-dispatch-neon .customer-details {padding:10px 14px!important}
+  body.mg-vice-customer.mg-dispatch-neon .customer-detail-box {padding:9px!important}
+  body.mg-vice-customer.mg-dispatch-neon #customerPageMessage {margin:7px 0!important;padding:8px 12px!important}
+  @media(max-width:900px) {
+    body.mg-vice-customer.mg-dispatch-neon .customer-summary {grid-template-columns:minmax(0,1fr) auto!important;gap:7px!important;padding:10px 18px!important}
+    body.mg-vice-customer.mg-dispatch-neon .customer-actions {grid-template-columns:repeat(3,minmax(0,1fr))!important}
+  }
+  @media(max-width:720px) {
+    body.mg-vice-customer.mg-dispatch-neon > main.container {padding:58px 10px 20px!important}
+    body.mg-vice-customer.mg-dispatch-neon .stats {grid-template-columns:repeat(2,minmax(0,1fr))!important}
+    body.mg-vice-customer.mg-dispatch-neon .customer-toolbar {grid-template-columns:1fr!important}
+    body.mg-vice-customer.mg-dispatch-neon .saved-customer-list {grid-template-columns:1fr!important}
+    body.mg-vice-customer.mg-dispatch-neon .customer-summary {grid-template-columns:minmax(0,1fr)!important;padding:10px 18px!important}
+    body.mg-vice-customer.mg-dispatch-neon .customer-main,
+    body.mg-vice-customer.mg-dispatch-neon .customer-jobs,
+    body.mg-vice-customer.mg-dispatch-neon .customer-revenue,
+    body.mg-vice-customer.mg-dispatch-neon .customer-balance,
+    body.mg-vice-customer.mg-dispatch-neon .customer-status {grid-column:auto!important;grid-row:auto!important}
+    body.mg-vice-customer.mg-dispatch-neon .customer-actions {grid-template-columns:repeat(2,minmax(0,1fr))!important}
+  }
+</style></head>
 
 <body class="mg-vice-customer">
   <header class="topbar">
