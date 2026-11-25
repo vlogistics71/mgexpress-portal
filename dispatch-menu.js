@@ -392,8 +392,10 @@
 
   menu.innerHTML = `<div class="dispatch-menu-header"><button class="dispatch-menu-close" id="dispatchMenuClose" type="button">×</button><div class="dispatch-menu-brand">COMMAND CENTER</div><div class="dispatch-menu-subtitle" id="dispatchMenuUser">MG Express Dispatch</div></div><nav class="dispatch-menu-links">${links}</nav><div class="dispatch-menu-footer"><button id="dispatchMenuSignOut" class="dispatch-menu-signout">Sign Out</button></div>`;
 
-  const openButton = document.createElement("button");
+  const openButton = document.querySelector(".dispatch-menu-button") || document.createElement("button");
   openButton.className = "dispatch-menu-button";
+  openButton.type = "button";
+  openButton.setAttribute("aria-label", "Open navigation menu");
   openButton.innerHTML = "☰";
 
   function openMenu(){ overlay.classList.add("open"); menu.classList.add("open"); document.body.classList.add("dispatch-menu-open"); }
@@ -401,8 +403,15 @@
 
   document.body.appendChild(overlay); document.body.appendChild(menu);
   const header = document.querySelector(".topbar-inner") || document.querySelector(".topbar");
-  if (header) { header.style.display="flex"; header.style.justifyContent="space-between"; header.style.alignItems="center"; header.appendChild(openButton); }
-  else { openButton.classList.add("dispatch-menu-floating"); document.body.appendChild(openButton); }
+  if (header) {
+    header.style.display="flex";
+    header.style.justifyContent="space-between";
+    header.style.alignItems="center";
+    if (!header.contains(openButton)) header.appendChild(openButton);
+  } else if (!openButton.isConnected) {
+    openButton.classList.add("dispatch-menu-floating");
+    document.body.appendChild(openButton);
+  }
 
   openButton.addEventListener("click", openMenu); overlay.addEventListener("click", closeMenu);
   document.getElementById("dispatchMenuClose").addEventListener("click", closeMenu);
