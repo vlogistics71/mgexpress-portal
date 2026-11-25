@@ -206,6 +206,40 @@
     body.mg-vice-customer.mg-dispatch-neon > .topbar .topbar-inner {top:8px !important;right:9px !important}
     body.mg-vice-customer.mg-dispatch-neon > main.container {padding-top:60px !important}
   }
+
+  body.mg-vice-customer.mg-dispatch-neon .saved-customer-directory {
+    margin:16px 0; padding:14px 16px;
+    color:#fff8ff; background:linear-gradient(145deg,rgba(55,12,78,.78),rgba(25,6,43,.78));
+    border:1px solid rgba(255,85,190,.68); border-radius:18px;
+    box-shadow:0 10px 28px rgba(7,1,18,.24); backdrop-filter:blur(8px);
+  }
+  body.mg-vice-customer.mg-dispatch-neon .saved-customer-heading h2 {margin:3px 0 2px;color:#fff8ff}
+  body.mg-vice-customer.mg-dispatch-neon .saved-customer-count {color:#f0d9ef;font-size:13px}
+  body.mg-vice-customer.mg-dispatch-neon .saved-customer-list {display:grid;gap:8px;margin-top:10px}
+  body.mg-vice-customer.mg-dispatch-neon .saved-customer-row {
+    box-sizing:border-box; min-width:0; overflow:hidden; padding:10px 14px;
+    border:1px solid rgba(255,105,203,.65); border-radius:13px;
+    background:rgba(68,17,94,.54); color:#fff8ff;
+  }
+  body.mg-vice-customer.mg-dispatch-neon .saved-customer-row,
+  body.mg-vice-customer.mg-dispatch-neon .saved-customer-row * {
+    text-indent:0; text-align:left; overflow-wrap:anywhere; word-break:normal;
+  }
+  body.mg-vice-customer.mg-dispatch-neon .saved-customer-row .saved-customer-title {font-weight:900;font-size:16px}
+  body.mg-vice-customer.mg-dispatch-neon .saved-customer-row .saved-customer-detail {margin-top:3px;color:#f0d9ef;font-size:12px}
+  body.mg-vice-customer.mg-dispatch-neon .saved-customer-row .saved-customer-actions {display:flex;gap:8px;margin-top:7px}
+  body.mg-vice-customer.mg-dispatch-neon .saved-customer-row .saved-customer-badge {
+    display:inline-flex;padding:4px 9px;border:1px solid rgba(255,100,200,.65);
+    border-radius:99px;background:rgba(236,38,173,.18);color:#fff8ff;font-size:11px;font-weight:800
+  }
+  body.mg-vice-customer.mg-dispatch-neon .saved-customer-row button {
+    min-height:32px;padding:5px 10px;border-radius:10px;color:#fff8ff;
+    background:rgba(255,55,163,.18)!important;border:1px solid rgba(241,116,219,.78)!important;
+  }
+  body.mg-vice-customer.mg-dispatch-neon .customer-card,
+  body.mg-vice-customer.mg-dispatch-neon .customer-summary,
+  body.mg-vice-customer.mg-dispatch-neon .customer-main {min-width:0}
+  body.mg-vice-customer.mg-dispatch-neon .customer-summary {padding-left:20px!important}
 </style>
 </head>
 
@@ -348,6 +382,17 @@
       class="message hidden"
       id="customerPageMessage"
     ></div>
+
+    <section class="saved-customer-directory panel" aria-labelledby="savedCustomerHeading">
+      <div class="saved-customer-heading">
+        <div>
+          <div class="eyebrow">Saved automatically from Create Job</div>
+          <h2 id="savedCustomerHeading">Dispatch Customer Directory</h2>
+          <div class="saved-customer-count" id="savedCustomerCount">Loading saved customers…</div>
+        </div>
+      </div>
+      <div class="saved-customer-list" id="savedCustomerList" aria-live="polite"></div>
+    </section>
 
     <section
       class="customer-list"
