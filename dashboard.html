@@ -2110,6 +2110,7 @@
 
         <div class="create-section-actions">
           <button class="secondary-button" id="toggleCreateJobBtn" type="button">Expand</button>
+          <button class="secondary-button" id="createTestJobBtn" type="button">Create Test Job</button>
           <button class="secondary-button" id="refreshButton" type="button">Refresh</button>
         </div>
       </div>
@@ -2505,6 +2506,7 @@
       quoteColumnSupport: null,
       pendingCustomerAutofill: null,
       submitting: false,
+      creatingTestJob: false,
       addressAutocomplete: {
         fields: [],
         initialized: false,
@@ -2527,6 +2529,7 @@
       newQuoteButton: document.getElementById("newQuoteButton"),
       refreshButton: document.getElementById("refreshButton"),
       toggleCreateJobBtn: document.getElementById("toggleCreateJobBtn"),
+      createTestJobBtn: document.getElementById("createTestJobBtn"),
       createJobSection: document.getElementById("createJobSection"),
       createJobBody: document.getElementById("createJobBody"),
       createJobForm: document.getElementById("createJobForm"),
@@ -4803,6 +4806,8 @@
       }
 
       state.submitting = true;
+      const isTestJob = state.creatingTestJob;
+      state.creatingTestJob = false;
       elements.createJobSubmitBtn.disabled = true;
       elements.createJobSubmitBtn.textContent = "Creating...";
       setCreateJobMessage("", "");
@@ -4815,6 +4820,22 @@
         delete payload._estimated_miles_value;
         delete payload._raw_billing_input_value;
         delete payload._parsed_customer_charge;
+
+        if (isTestJob) {
+          const testReference = "TEST-" + new Date().toISOString().replace(/[-:.TZ]/g, "").slice(0, 14);
+          payload.customer_name = "TEST JOB — DO NOT DISPATCH";
+          payload.company_name = "MG Express Internal Test";
+          payload.customer_email = null;
+          payload.customer_phone = null;
+          payload.reference_number = testReference;
+          payload.special_instructions = [payload.special_instructions, "[TEST JOB] Internal dispatch test only. No customer contact or payment."]
+            .filter(Boolean).join("\n");
+          payload.internal_dispatch_notes = "[TEST JOB] Created by the dispatch test-job button; safe to delete.";
+          payload.billing_notes = [payload.billing_notes, "TEST JOB — no payment link or customer charge collected."]
+            .filter(Boolean).join("\n");
+          payload.status = "ready";
+          payload.request_source = "dispatch";
+        }
 
         if (await detectEstimatedMilesFieldSupport()) {
           payload.estimated_miles = estimatedMilesValue;
@@ -4901,13 +4922,16 @@
           quote_id: savedJob?.id,
           job_number: createdJobNumber,
           amount_label: savedAmountLabel,
-          payment_status_label: "Waiting Payment",
+          payment_status_label: isTestJob ? "Test Job · No Payment" : "Waiting Payment",
           checkout_url: "",
           customer_email: String(elements.createJobForm.customer_email?.value || "").trim(),
           customer_phone: String(elements.createJobForm.customer_phone?.value || "").trim()
         };
 
-        if (approvedBiweeklyAccount) {
+        if (isTestJob) {
+          paymentContext.payment_status_label = "Test Job · No Payment";
+          paymentContext.checkout_url = "";
+        } else if (approvedBiweeklyAccount) {
           paymentContext.payment_status_label = "Biweekly Account";
           paymentContext.checkout_url = "";
         } else if (savedJob?.id) {
@@ -4935,8 +4959,13 @@
         setCreateJobMessage(error.message || "Unable to create job.", "error");
       } finally {
         state.submitting = false;
+        state.creatingTestJob = false;
         elements.createJobSubmitBtn.disabled = false;
         elements.createJobSubmitBtn.textContent = "Create Job";
+        if (elements.createTestJobBtn) {
+          elements.createTestJobBtn.disabled = false;
+          elements.createTestJobBtn.textContent = "Create Test Job";
+        }
       }
     }
 
@@ -5033,6 +5062,47 @@
     elements.toggleCreateJobBtn.addEventListener("click", () => {
       const expanded = elements.createJobBody.classList.contains("hidden");
       setCreateJobExpanded(expanded, { scroll: expanded, focusFirstField: expanded });
+    });
+
+    elements.createTestJobBtn?.addEventListener("click", async () => {
+      if (state.submitting || !elements.createJobForm) return;
+      const form = elements.createJobForm;
+      const setField = (name, value) => {
+        const field = form.elements.namedItem(name);
+        if (!field) return;
+        field.value = value;
+        field.dispatchEvent(new Event("input", { bubbles: true }));
+        field.dispatchEvent(new Event("change", { bubbles: true }));
+      };
+      const reference = "TEST-" + new Date().toISOString().replace(/[-:.TZ]/g, "").slice(0, 14);
+      [
+        ["customer_account_id", ""], ["customer_name", "TEST JOB — DO NOT DISPATCH"],
+        ["company_name", "MG Express Internal Test"], ["customer_email", ""], ["customer_phone", ""],
+        ["request_source", "dispatch"], ["reference_number", reference],
+        ["pickup_address", "100 Test Pickup Ave"], ["pickup_suite_floor", ""],
+        ["pickup_city", "Denver"], ["pickup_zip", "80202"],
+        ["pickup_contact_name", "Test Contact"], ["pickup_contact_phone", ""],
+        ["pickup_instructions", "Internal dispatch test only"],
+        ["delivery_address", "200 Test Delivery Ave"], ["delivery_suite_floor", ""],
+        ["delivery_city", "Denver"], ["delivery_zip", "80202"],
+        ["delivery_contact_name", "Test Contact"], ["delivery_contact_phone", ""],
+        ["delivery_instructions", "Internal dispatch test only"],
+        ["vehicle_type", "Car"], ["preferred_pickup_time", "09:00"],
+        ["preferred_delivery_time", "10:00"], ["job_category", "general"],
+        ["delivery_type", "business_to_business"], ["service_level", ""],
+        ["scheduled_date", ""], ["scheduled_time", ""], ["piece_count", "1"],
+        ["package_type", "Test envelope"], ["package_weight", "2_to_20_lbs"],
+        ["package_weight_custom", ""], ["estimated_miles", "1"],
+        ["special_instructions", "[TEST JOB] Internal dispatch test only. No customer contact or payment."],
+        ["approved_price", "1.00"], ["driver_pay", "0.00"],
+        ["return_required", "false"], ["return_location_type", "same_as_pickup"],
+        ["return_timing", "immediate"], ["return_address", ""], ["return_suite_floor", ""], ["return_zip", ""]
+      ].forEach(([name, value]) => setField(name, value));
+      syncRequestedJobWindow();
+      state.creatingTestJob = true;
+      elements.createTestJobBtn.disabled = true;
+      elements.createTestJobBtn.textContent = "Creating Test Job…";
+      await createJob({ preventDefault() {} });
     });
 
     elements.refreshButton.addEventListener("click", refreshDashboardData);
