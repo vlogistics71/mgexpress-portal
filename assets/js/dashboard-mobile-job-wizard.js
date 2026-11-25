@@ -46,7 +46,7 @@
   footer.className = "mg-wizard-footer";
   footer.setAttribute("aria-label", "Create job controls");
   footer.innerHTML =
-    '<button type="button" class="mg-wizard-back">← Board</button>' +
+    '<button type="button" class="mg-wizard-back" aria-label="Back to previous section">← Back</button>' +
     '<button type="button" class="mg-wizard-next">Next: Pickup &amp; Delivery</button>' +
     '<div class="mg-wizard-submit-slot" hidden></div>';
   body.appendChild(footer);
@@ -107,15 +107,16 @@
       submitSlot.hidden = !next.hidden;
       if (next.hidden) moveSubmitToFooter();
       else restoreSubmit();
-      back.textContent = stepIndex === 0 ? "← Board" : "← Back";
+      back.hidden = stepIndex === 0;
+      back.textContent = "← Back";
       next.textContent = stepIndex < steps.length - 1 ? "Next: " + names[stepIndex + 1] : "Create Job";
-      if (collapseButton) collapseButton.textContent = "← Board";
+      if (collapseButton) collapseButton.textContent = "Home";
     } else {
       next.hidden = true;
       submitSlot.hidden = false;
       moveSubmitToFooter();
-      back.textContent = "← Board";
-      if (collapseButton) collapseButton.textContent = "← Board";
+      back.hidden = true;
+      if (collapseButton) collapseButton.textContent = "Home";
     }
   }
 
