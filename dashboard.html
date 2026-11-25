@@ -2100,7 +2100,24 @@
     box-shadow:0 5px 16px rgba(8,1,18,.3) !important;
   }
 </style>
-</head>
+<style id="mg-mobile-command-menu-layer-fix">
+  @media (max-width:720px) {
+    /* Keep the open drawer above the dashboard trigger so its close button is usable. */
+    body.mg-main-dashboard .dispatch-menu-overlay {z-index:1098!important}
+    body.mg-main-dashboard .dispatch-side-menu {z-index:1099!important}
+    body.mg-main-dashboard .topbar .dispatch-menu-button {z-index:1001!important}
+    body.mg-main-dashboard.dispatch-menu-open .topbar .dispatch-menu-button {
+      visibility:hidden!important;opacity:0!important;pointer-events:none!important;
+    }
+    body.mg-main-dashboard .dispatch-side-menu .dispatch-menu-close {
+      z-index:2!important;pointer-events:auto!important;touch-action:manipulation;
+    }
+    body.mg-main-dashboard .dispatch-side-menu .dispatch-menu-link,
+    body.mg-main-dashboard .dispatch-side-menu .dispatch-menu-signout {
+      pointer-events:auto!important;touch-action:manipulation;
+    }
+  }
+</style></head>
 
 <body class="mg-main-dashboard">
   <header class="topbar">
