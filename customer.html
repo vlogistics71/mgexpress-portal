@@ -322,6 +322,18 @@
     body.mg-vice-customer.mg-dispatch-neon .customer-status {grid-column:auto!important;grid-row:auto!important}
     body.mg-vice-customer.mg-dispatch-neon .customer-actions {grid-template-columns:repeat(2,minmax(0,1fr))!important}
   }
+</style><style id="mg-customer-empty-state-readable">
+  body.mg-vice-customer.mg-dispatch-neon .customer-list .empty,
+  body.mg-vice-customer.mg-dispatch-neon .saved-customer-list .empty {
+    display:block!important;min-height:0!important;padding:12px 16px!important;
+    color:#fff8ff!important;-webkit-text-fill-color:#fff8ff!important;
+    background:linear-gradient(145deg,rgba(55,12,78,.84),rgba(25,6,43,.88))!important;
+    border:1px solid rgba(255,85,190,.68)!important;border-radius:14px!important;
+    box-shadow:0 8px 20px rgba(7,1,18,.2)!important;text-align:left!important;
+    opacity:1!important;text-indent:0!important;
+  }
+  body.mg-vice-customer.mg-dispatch-neon .customer-list .empty::before,
+  body.mg-vice-customer.mg-dispatch-neon .customer-list .empty::after {color:#fff8ff!important}
 </style></head>
 
 <body class="mg-vice-customer">
