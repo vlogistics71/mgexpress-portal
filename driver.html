@@ -6,8 +6,145 @@
   <title>Driver Availability | MG Express Dispatch</title>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <link rel="stylesheet" href="/assets/css/driver-availability.css">
+<style id="mg-vice-city-workspaces">
+  /* Match secondary dispatch workspaces to the main dashboard. */
+  body.mg-vice-process, body.mg-vice-customer, body.mg-vice-driver {
+    min-height:100vh !important;
+    background:
+      linear-gradient(180deg,rgba(24,4,39,.18) 0%,rgba(24,4,39,.48) 205px,#17051f 370px),
+      url("/assets/images/vice-city-dashboard-banner.png") center top / 100% 300px no-repeat,
+      #17051f !important;
+    background-attachment:fixed !important;
+    color:#fff8ff !important;
+  }
+  body.mg-vice-process *, body.mg-vice-customer *, body.mg-vice-driver * { color-scheme:dark; }
+  body.mg-vice-process .topbar, body.mg-vice-customer .topbar, body.mg-vice-driver .topbar {
+    position:relative !important; top:auto !important; z-index:20 !important;
+    padding:14px 20px !important; background:rgba(28,5,43,.32) !important;
+    color:#fff8ff !important; border-bottom:2px solid rgba(255,54,166,.88) !important;
+    box-shadow:0 8px 28px rgba(14,2,28,.18) !important; backdrop-filter:blur(7px);
+  }
+  body.mg-vice-process .topbar-inner, body.mg-vice-customer .topbar-inner, body.mg-vice-driver .topbar-inner {
+    width:min(1440px,100%) !important; min-height:48px !important; margin:auto !important;
+  }
+  body.mg-vice-process .brand, body.mg-vice-customer .brand, body.mg-vice-driver .brand,
+  body.mg-vice-process .brand span, body.mg-vice-customer .brand span, body.mg-vice-driver .brand span {
+    background:linear-gradient(95deg,#ff9f44 0%,#ff3c9b 48%,#a354f0 100%) !important;
+    color:transparent !important; -webkit-background-clip:text !important; background-clip:text !important;
+  }
+  body.mg-vice-process .wrap, body.mg-vice-customer .container, body.mg-vice-driver .container {
+    width:min(1440px,100%) !important; max-width:1440px !important; margin:0 auto !important;
+    padding:22px clamp(14px,2vw,28px) 48px !important;
+  }
+  body.mg-vice-process h1, body.mg-vice-customer h1, body.mg-vice-driver h1,
+  body.mg-vice-process h2, body.mg-vice-customer h2, body.mg-vice-driver h2,
+  body.mg-vice-process h3, body.mg-vice-customer h3, body.mg-vice-driver h3,
+  body.mg-vice-process label, body.mg-vice-customer label, body.mg-vice-driver label,
+  body.mg-vice-process strong, body.mg-vice-customer strong, body.mg-vice-driver strong,
+  body.mg-vice-process .eyebrow, body.mg-vice-customer .eyebrow, body.mg-vice-driver .eyebrow,
+  body.mg-vice-process .stat-label, body.mg-vice-customer .stat-label, body.mg-vice-driver .summary-label,
+  body.mg-vice-process .panel-head, body.mg-vice-customer .panel-head, body.mg-vice-driver .panel-head {
+    color:#fff8ff !important;
+  }
+  body.mg-vice-process p, body.mg-vice-customer p, body.mg-vice-driver p,
+  body.mg-vice-process small, body.mg-vice-customer small, body.mg-vice-driver small,
+  body.mg-vice-process .subhead, body.mg-vice-customer .customer-contact, body.mg-vice-driver .panel-meta {
+    color:#f0d9ef !important;
+  }
+  body.mg-vice-process .card, body.mg-vice-process .panel,
+  body.mg-vice-customer .stat-card, body.mg-vice-customer .panel, body.mg-vice-customer .customer-card,
+  body.mg-vice-customer .customer-actions, body.mg-vice-customer .customer-modal,
+  body.mg-vice-driver .toolbar, body.mg-vice-driver .summary-card, body.mg-vice-driver .driver-card,
+  body.mg-vice-driver .driver-modal, body.mg-vice-driver .modal-body,
+  body.mg-vice-process .sheet, body.mg-vice-process .serve-row {
+    color:#fff8ff !important;
+    background:linear-gradient(145deg,rgba(55,12,78,.78),rgba(25,6,43,.78)) !important;
+    border:1px solid rgba(255,85,190,.68) !important;
+    box-shadow:0 10px 28px rgba(7,1,18,.24),inset 0 1px rgba(255,255,255,.04) !important;
+    backdrop-filter:blur(8px);
+  }
+  body.mg-vice-process .card, body.mg-vice-customer .stat-card, body.mg-vice-driver .summary-card {
+    border-radius:18px !important;
+  }
+  body.mg-vice-process .num, body.mg-vice-customer .stat-number, body.mg-vice-driver .summary-value,
+  body.mg-vice-customer .customer-name, body.mg-vice-customer .customer-company,
+  body.mg-vice-customer .customer-meta-value, body.mg-vice-customer .customer-meta-label,
+  body.mg-vice-driver .driver-name, body.mg-vice-driver .summary-label {
+    color:#fff8ff !important;
+  }
+  body.mg-vice-process .tabs .tab, body.mg-vice-driver .chip {
+    color:#fff8ff !important; background:rgba(42,9,63,.68) !important;
+    border:1px solid rgba(238,99,218,.7) !important; box-shadow:none !important;
+  }
+  body.mg-vice-process .tabs .tab.active, body.mg-vice-driver .chip.active {
+    color:#fff !important; background:linear-gradient(105deg,#ff963f,#ff3298 54%,#9239e8) !important;
+    border-color:rgba(255,220,247,.72) !important;
+  }
+  body.mg-vice-process button, body.mg-vice-customer button, body.mg-vice-driver button,
+  body.mg-vice-customer a.primary-button, body.mg-vice-customer a.secondary-button,
+  body.mg-vice-driver a.primary-cta {
+    color:#fff !important; border:1px solid rgba(240,195,230,.68) !important;
+    background:linear-gradient(105deg,#ff963f 0%,#ff3298 52%,#9239e8 100%) !important;
+    box-shadow:0 4px 14px rgba(15,17,59,.2) !important;
+  }
+  body.mg-vice-process .modal, body.mg-vice-customer .customer-modal-overlay,
+  body.mg-vice-customer .location-modal-overlay, body.mg-vice-driver .modal-backdrop {
+    background:rgba(9,2,20,.78) !important; backdrop-filter:blur(5px);
+  }
+  body.mg-vice-process .sheet, body.mg-vice-customer .customer-modal, body.mg-vice-driver .driver-modal {
+    max-height:min(92vh,900px) !important; overflow:auto !important;
+    border:1px solid #ff42a4 !important; border-radius:20px !important;
+    background:linear-gradient(145deg,rgba(48,10,69,.97),rgba(24,5,42,.97)) !important;
+    color:#fff8ff !important;
+  }
+  body.mg-vice-process .field label, body.mg-vice-customer .field label,
+  body.mg-vice-process .field, body.mg-vice-customer .field,
+  body.mg-vice-driver .search-wrap span {
+    color:#fff8ff !important;
+  }
+  body.mg-vice-process input, body.mg-vice-process select, body.mg-vice-process textarea,
+  body.mg-vice-customer input:not([type="checkbox"]):not([type="hidden"]),
+  body.mg-vice-customer select, body.mg-vice-customer textarea,
+  body.mg-vice-driver input, body.mg-vice-driver select, body.mg-vice-driver textarea {
+    color:#fff8ff !important; background:rgba(28,7,48,.92) !important;
+    border:1px solid rgba(224,111,224,.72) !important; border-radius:12px !important;
+  }
+  body.mg-vice-process input::placeholder, body.mg-vice-process textarea::placeholder,
+  body.mg-vice-customer input::placeholder, body.mg-vice-customer textarea::placeholder,
+  body.mg-vice-driver input::placeholder { color:#e1c8e5 !important; opacity:.88; }
+  body.mg-vice-customer .customer-actions { border-top-color:rgba(255,85,190,.52) !important; }
+  body.mg-vice-customer .customer-meta-value.money { color:#ffb15b !important; }
+  body.mg-vice-customer .customer-badge, body.mg-vice-driver .status-badge,
+  body.mg-vice-driver .warning-badge {
+    color:#fff8ff !important; background:rgba(91,27,103,.8) !important;
+    border:1px solid rgba(236,103,216,.58) !important;
+  }
+  body.mg-vice-driver .status-badge.available { background:rgba(24,109,91,.72) !important; }
+  body.mg-vice-driver .status-badge.busy { background:rgba(153,91,25,.72) !important; }
+  body.mg-vice-driver .status-badge.offline { background:rgba(77,57,96,.82) !important; }
+  body.mg-vice-process .empty, body.mg-vice-customer .empty, body.mg-vice-driver .empty {
+    color:#f0d9ef !important;
+  }
+  body.mg-vice-process .empty { background:transparent !important; }
+  body.mg-vice-process .msg, body.mg-vice-customer .message, body.mg-vice-driver .error-banner {
+    color:#fff8ff !important; background:rgba(126,24,74,.68) !important;
+    border-color:rgba(255,114,157,.75) !important;
+  }
+  body.mg-vice-process .serve-actions .serve-btn { color:#fff !important; }
+  @media(max-width:700px) {
+    body.mg-vice-process .stats, body.mg-vice-customer .stats, body.mg-vice-driver .summary-grid {
+      grid-template-columns:repeat(2,minmax(0,1fr)) !important;
+    }
+    body.mg-vice-process .wrap, body.mg-vice-customer .container, body.mg-vice-driver .container {
+      padding:14px 12px 30px !important;
+    }
+    body.mg-vice-process .sheet, body.mg-vice-customer .customer-modal, body.mg-vice-driver .driver-modal {
+      width:min(96vw,680px) !important; padding:18px !important;
+    }
+  }
+</style>
 </head>
-<body>
+<body class="mg-vice-driver">
   <header class="topbar">
     <div class="topbar-inner">
       <div class="brand">MG <span>EXPRESS</span> DISPATCH</div>
