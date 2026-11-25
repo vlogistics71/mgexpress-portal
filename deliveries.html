@@ -1172,5 +1172,79 @@
       border-color: rgba(220, 112, 226, .62) !important;
     }
   </style>
+
+  <style id="active-jobs-compact-layout">
+    body.mg-deliveries-page .container {width:min(1320px,100%);padding:10px 12px 28px}
+    body.mg-deliveries-page .deliveries-brand-row {padding:6px 12px}
+    body.mg-deliveries-page .page-head {margin:8px 0 0;gap:8px}
+    body.mg-deliveries-page .page-title {font-size:clamp(24px,3vw,34px)}
+    body.mg-deliveries-page .summary-grid {grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin-top:10px}
+    body.mg-deliveries-page .summary-card {min-height:64px;padding:9px 12px;border-radius:15px;grid-template-columns:1fr auto;align-items:center;align-content:center;gap:5px 8px}
+    body.mg-deliveries-page .summary-label {font-size:10px;letter-spacing:.07em}
+    body.mg-deliveries-page .summary-value {font-size:clamp(22px,2.4vw,30px)}
+    body.mg-deliveries-page .toolbar {margin-top:10px;margin-bottom:8px;gap:7px}
+    body.mg-deliveries-page .toolbar .control input,
+    body.mg-deliveries-page .toolbar .control select {min-height:38px;padding:8px 11px}
+    body.mg-deliveries-page .filters {gap:6px}
+    body.mg-deliveries-page .chip {min-height:30px;padding:5px 10px;font-size:12px}
+    body.mg-deliveries-page .panel {border-radius:16px}
+    body.mg-deliveries-page .panel-meta {padding:7px 10px;font-size:11px}
+    body.mg-deliveries-page .list {gap:6px;padding:7px}
+    body.mg-deliveries-page .card {
+      grid-template-columns:minmax(0,1fr) 18px;
+      gap:8px;
+      min-height:68px;
+      padding:7px 10px;
+      border-radius:13px;
+    }
+    body.mg-deliveries-page .card-main {
+      display:grid;
+      grid-template-columns:minmax(190px,1.05fr) minmax(270px,1.65fr) minmax(220px,1.2fr);
+      align-items:center;
+      gap:10px;
+    }
+    body.mg-deliveries-page .job-identity {display:grid;gap:3px;min-width:0}
+    body.mg-deliveries-page .job-heading {display:flex;align-items:center;gap:7px;min-width:0}
+    body.mg-deliveries-page .job-number {font-size:13px;white-space:nowrap}
+    body.mg-deliveries-page .customer {font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    body.mg-deliveries-page .card-topline {gap:4px;flex-wrap:nowrap;overflow:hidden}
+    body.mg-deliveries-page .badge {min-height:18px;padding:2px 6px;font-size:8px;letter-spacing:.025em;white-space:nowrap}
+    body.mg-deliveries-page .route {display:grid;gap:3px;min-width:0;color:#fff8ff;font-size:11px;line-height:1.2}
+    body.mg-deliveries-page .route-line {display:grid;grid-template-columns:28px minmax(0,1fr);align-items:center;gap:5px;min-width:0}
+    body.mg-deliveries-page .route-tag {font-size:9px;font-weight:900;letter-spacing:.05em}
+    body.mg-deliveries-page .pickup-tag {color:#ffad55}
+    body.mg-deliveries-page .delivery-tag {color:#ff63c2}
+    body.mg-deliveries-page .route-address {white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    body.mg-deliveries-page .card-facts {display:grid;gap:3px;min-width:0}
+    body.mg-deliveries-page .card-facts .meta {gap:3px 9px;font-size:10px;line-height:1.2}
+    body.mg-deliveries-page .card-chevron {font-size:18px}
+    @media(max-width:1000px) and (min-width:721px) {
+      body.mg-deliveries-page .card-main {grid-template-columns:minmax(165px,.95fr) minmax(220px,1.3fr) minmax(175px,1fr);gap:7px}
+      body.mg-deliveries-page .card-facts .meta {font-size:9px}
+    }
+    @media(max-width:720px) {
+      body.mg-deliveries-page .container {padding:8px 9px 24px}
+      body.mg-deliveries-page .summary-grid {grid-template-columns:repeat(2,minmax(0,1fr));gap:6px}
+      body.mg-deliveries-page .summary-card {min-height:54px;padding:7px 9px;border-radius:12px}
+      body.mg-deliveries-page .summary-label {font-size:9px;letter-spacing:.04em}
+      body.mg-deliveries-page .summary-value {font-size:24px}
+      body.mg-deliveries-page .toolbar {grid-template-columns:minmax(0,1.3fr) minmax(125px,.7fr);gap:7px}
+      body.mg-deliveries-page .control label {font-size:9px;margin-bottom:3px}
+      body.mg-deliveries-page .filters {gap:5px}
+      body.mg-deliveries-page .chip {min-height:27px;padding:4px 8px;font-size:10px}
+      body.mg-deliveries-page .list {gap:5px;padding:6px}
+      body.mg-deliveries-page .card {grid-template-columns:minmax(0,1fr) 14px;min-height:0;padding:7px 8px;gap:5px}
+      body.mg-deliveries-page .card-main {grid-template-columns:minmax(0,1fr);gap:4px}
+      body.mg-deliveries-page .job-identity {grid-template-columns:minmax(0,1fr) auto;align-items:center}
+      body.mg-deliveries-page .job-heading {grid-column:1/-1;justify-content:space-between}
+      body.mg-deliveries-page .job-number {font-size:12px}
+      body.mg-deliveries-page .card-topline {grid-column:1/-1;grid-row:2}
+      body.mg-deliveries-page .customer {grid-column:1/-1;grid-row:3;font-size:11px}
+      body.mg-deliveries-page .route {gap:2px;font-size:10px}
+      body.mg-deliveries-page .card-facts {grid-template-columns:1fr 1fr;gap:4px}
+      body.mg-deliveries-page .card-facts .meta {font-size:9px;gap:2px 6px}
+      body.mg-deliveries-page .badge {font-size:7px;padding:2px 5px}
+    }
+  </style>
 </body>
 </html>
