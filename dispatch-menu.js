@@ -173,7 +173,7 @@
     document.body.classList.add("mg-compact-screen", "mg-compact-" + compactPage);
     const sharedStylesheet = document.createElement("link");
     sharedStylesheet.rel = "stylesheet";
-    sharedStylesheet.href = "/assets/css/dispatch-compact-workspaces.css?v=20261125-compact-secondary-v1";
+    sharedStylesheet.href = "/assets/css/dispatch-compact-workspaces.css?v=20261113-compact-all-v2";
     document.head.appendChild(sharedStylesheet);
     if (compactPage === "team") {
       const invitePanel = document.querySelector("main#app > section.panel");
@@ -304,80 +304,10 @@
         box-shadow:0 8px 20px rgba(8,0,23,.24) !important;
       }
     `;
-    /* Pages after Deliveries use a compact floating menu button instead of the repeated brand banner.
-       Dashboard and Deliveries keep their own full-width header layouts. */
-    body.mg-dispatch-neon.mg-secondary-page > .topbar {
-      position:static !important; height:0 !important; min-height:0 !important;
-      padding:0 !important; margin:0 !important; overflow:visible !important;
-      border:0 !important; background:transparent !important; box-shadow:none !important;
-    }
-    body.mg-dispatch-neon.mg-secondary-page > .topbar .topbar-inner {
-      position:fixed !important; top:10px !important; right:12px !important; left:auto !important;
-      z-index:1000 !important; width:auto !important; min-height:0 !important;
-      margin:0 !important; padding:0 !important; gap:0 !important;
-    }
-    body.mg-dispatch-neon.mg-secondary-page > .topbar .topbar-inner > :not(.dispatch-menu-button) {
-      display:none !important;
-    }
-    body.mg-dispatch-neon.mg-secondary-page .dispatch-menu-button {
-      width:48px !important; height:48px !important; border-radius:14px !important;
-      background:rgba(36,8,56,.72) !important; color:#fff8ff !important;
-      border:1px solid rgba(255,88,188,.78) !important; box-shadow:0 6px 18px rgba(9,1,19,.25) !important;
-      backdrop-filter:blur(8px);
-    }
-    body.mg-dispatch-neon.mg-secondary-page > main.container,
-    body.mg-dispatch-neon.mg-secondary-page > main.wrap {
-      padding-top:68px !important;
-    }
-    body.mg-dispatch-neon.mg-secondary-page button:not(.dispatch-menu-button):not(.dispatch-menu-close):not(.dispatch-menu-signout),
-    body.mg-dispatch-neon.mg-secondary-page input[type="button"],
-    body.mg-dispatch-neon.mg-secondary-page input[type="submit"],
-    body.mg-dispatch-neon.mg-secondary-page a.primary-button,
-    body.mg-dispatch-neon.mg-secondary-page a.primary-cta,
-    body.mg-dispatch-neon.mg-secondary-page .primary-button,
-    body.mg-dispatch-neon.mg-secondary-page .primary-cta {
-      color:#fff8ff !important; -webkit-text-fill-color:#fff8ff !important;
-      background:linear-gradient(145deg,rgba(255,55,163,.22),rgba(132,54,195,.25)) !important;
-      border:1px solid rgba(241,116,219,.78) !important;
-      box-shadow:inset 0 1px rgba(255,255,255,.06),0 4px 14px rgba(7,1,18,.18) !important;
-      backdrop-filter:blur(6px);
-    }
-    body.mg-dispatch-neon.mg-secondary-page button:hover,
-    body.mg-dispatch-neon.mg-secondary-page a.primary-button:hover,
-    body.mg-dispatch-neon.mg-secondary-page a.primary-cta:hover {
-      background:linear-gradient(145deg,rgba(255,55,163,.34),rgba(132,54,195,.36)) !important;
-      filter:none !important;
-    }
-    body.mg-dispatch-neon.mg-secondary-page .customer-summary,
-    body.mg-dispatch-neon.mg-secondary-page .customer-details,
-    body.mg-dispatch-neon.mg-secondary-page .customer-card,
-    body.mg-dispatch-neon.mg-secondary-page .stat-card,
-    body.mg-dispatch-neon.mg-secondary-page .summary-card,
-    body.mg-dispatch-neon.mg-secondary-page .driver-card,
-    body.mg-dispatch-neon.mg-secondary-page .card {
-      background:linear-gradient(145deg,rgba(55,12,78,.72),rgba(25,6,43,.76)) !important;
-      color:#fff8ff !important; border-color:rgba(255,85,190,.65) !important;
-    }
-    body.mg-dispatch-neon.mg-secondary-page .customer-meta-label,
-    body.mg-dispatch-neon.mg-secondary-page .customer-meta-value,
-    body.mg-dispatch-neon.mg-secondary-page .customer-name,
-    body.mg-dispatch-neon.mg-secondary-page .customer-company,
-    body.mg-dispatch-neon.mg-secondary-page .meta,
-    body.mg-dispatch-neon.mg-secondary-page .value {
-      color:#fff8ff !important;
-    }
-    @media (max-width:720px) {
-      body.mg-dispatch-neon.mg-secondary-page > .topbar .topbar-inner {top:8px !important;right:9px !important}
-      body.mg-dispatch-neon.mg-secondary-page > main.container,
-      body.mg-dispatch-neon.mg-secondary-page > main.wrap {padding-top:62px !important}
-    }
     document.head.appendChild(neonTheme);
   }
 
   const currentPage = window.location.pathname.split("/").pop().toLowerCase();
-  if (!["dashboard.html", "deliveries.html", "index.html"].includes(currentPage)) {
-    document.body.classList.add("mg-secondary-page");
-  }
   function fileName(url) { return new URL(url, window.location.origin).pathname.split("/").pop().toLowerCase(); }
 
   const overlay = document.createElement("div");
