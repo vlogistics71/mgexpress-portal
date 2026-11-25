@@ -27,39 +27,51 @@
     [panels[4]]
   ];
 
-  const addressPanels = [panels[1], panels[2]];
-  addressPanels.forEach((panel, index) => {
-    const heading = panel.querySelector("h3");
-    const fields = panel.querySelector(".form-grid");
-    if (!heading || !fields) return;
+  const accordionIcons = {
+    Customer: '<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><circle cx="12" cy="8" r="3"></circle><path d="M5 20c.5-3.6 2.9-5.5 7-5.5s6.5 1.9 7 5.5"></path></svg>',
+    Pickup: '<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M3 7h11v10H3zM14 10h4l3 4v3h-4M6.5 17a1.5 1.5 0 1 0 3 0m6 0a1.5 1.5 0 1 0 3 0"></path><path d="M18 10v4h4"></path></svg>',
+    Delivery: '<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M3 7h11v10H3zM14 10h4l3 4v3h-4M6.5 17a1.5 1.5 0 1 0 3 0m6 0a1.5 1.5 0 1 0 3 0"></path><path d="M18 10v4h4"></path></svg>',
+    Service: '<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="m4 8 8-4 8 4-8 4-8-4Z"></path><path d="m4 12 8 4 8-4M4 16l8 4 8-4"></path></svg>',
+    "AI Pricing Assistant": '<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M12 3v18M17 7.5c-.8-1-2.1-1.5-4-1.5-2.2 0-3.5 1-3.5 2.5s1.2 2.2 3.5 2.7 4 1.2 4 3-1.4 2.8-4 2.8c-1.8 0-3.4-.6-4.3-1.7"></path></svg>'
+  };
 
-    const label = heading.textContent.trim();
-    heading.classList.add("mg-address-desktop-title");
+  const accordionGroupsByStep = steps;
+  accordionGroupsByStep.forEach((group, stepIndex) => {
+    group.forEach((panel, groupIndex) => {
+      const heading = panel.querySelector("h3");
+      const content = panel.querySelector(":scope > .form-grid, :scope > .pricing-assistant");
+      if (!heading || !content) return;
 
-    const toggle = document.createElement("button");
-    toggle.type = "button";
-    toggle.className = "mg-address-toggle";
-    toggle.setAttribute("aria-expanded", String(index === 0));
-    toggle.innerHTML =
-      '<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">' +
-      '<path d="M3 7h11v10H3zM14 10h4l3 4v3h-4M6.5 17a1.5 1.5 0 1 0 3 0m6 0a1.5 1.5 0 1 0 3 0" />' +
-      '<path d="M18 10v4h4" />' +
-      '</svg><span class="mg-address-toggle-label"></span>' +
-      '<span class="mg-address-toggle-chevron" aria-hidden="true">⌄</span>';
-    toggle.querySelector(".mg-address-toggle-label").textContent = label;
-    panel.classList.toggle("mg-address-open", index === 0);
-    panel.insertBefore(toggle, fields);
+      const label = heading.textContent.trim();
+      const contentId = "mgMobileAccordionContent" + stepIndex + groupIndex;
+      content.id = content.id || contentId;
+      heading.classList.add("mg-mobile-accordion-desktop-title");
+      panel.classList.add("mg-mobile-accordion");
+      const startsOpen = groupIndex === 0;
+      panel.classList.toggle("mg-mobile-accordion-open", startsOpen);
 
-    toggle.addEventListener("click", () => {
-      const opening = !panel.classList.contains("mg-address-open");
-      addressPanels.forEach(other => {
-        const isOpen = other === panel && opening;
-        other.classList.toggle("mg-address-open", isOpen);
-        const otherToggle = other.querySelector(".mg-address-toggle");
-        otherToggle?.setAttribute("aria-expanded", String(isOpen));
+      const toggle = document.createElement("button");
+      toggle.type = "button";
+      toggle.className = "mg-mobile-accordion-toggle";
+      toggle.setAttribute("aria-expanded", String(startsOpen));
+      toggle.setAttribute("aria-controls", content.id);
+      toggle.innerHTML = (accordionIcons[label] || accordionIcons.Service) +
+        '<span class="mg-mobile-accordion-label"></span>' +
+        '<span class="mg-mobile-accordion-chevron" aria-hidden="true">⌄</span>';
+      toggle.querySelector(".mg-mobile-accordion-label").textContent = label;
+      panel.insertBefore(toggle, content);
+
+      toggle.addEventListener("click", () => {
+        const opening = !panel.classList.contains("mg-mobile-accordion-open");
+        group.forEach(other => {
+          const isOpen = other === panel && opening;
+          other.classList.toggle("mg-mobile-accordion-open", isOpen);
+          other.querySelector(".mg-mobile-accordion-toggle")?.setAttribute("aria-expanded", String(isOpen));
+        });
       });
     });
   });
+
   const names = ["Customer", "Pickup & Delivery", "Service & Package", "Pricing"];
   const progress = document.createElement("div");
   progress.className = "mg-wizard-progress";
