@@ -6,7 +6,7 @@
   <title>Deliveries | MG Express Dispatch</title>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="assets/js/config.js"></script>
-  <script defer src="assets/js/deliveries-v2.js?v=20261125-compact-jobs"></script>
+  <script defer src="assets/js/deliveries-v2.js?v=20261125-dialog-plum"></script>
   <link rel="stylesheet" href="/assets/css/mobile-delivery-details-steps.css?v=20261116-overview2">
   <style>
     * { box-sizing: border-box; }
@@ -1254,6 +1254,138 @@
       body.mg-deliveries-page .active-jobs-actions {gap:6px}
       body.mg-deliveries-page .active-jobs-actions .action-btn {min-height:38px;padding:8px 10px;font-size:12px}
     }
+  </style>
+
+  <style id="delivery-dialog-neon-theme">
+    body.mg-deliveries-page .modal-panel,
+    body.mg-deliveries-page .delivery-details-panel,
+    body.mg-deliveries-page .assign-panel,
+    body.mg-deliveries-page .edit-panel {
+      background:linear-gradient(145deg,rgba(35,10,57,.98),rgba(20,5,38,.98)) !important;
+      color:#fff8ff !important;
+      border:1px solid rgba(255,67,179,.7) !important;
+      box-shadow:0 22px 60px rgba(4,0,18,.58),0 0 24px rgba(255,42,166,.18) !important;
+    }
+    body.mg-deliveries-page .modal-head,
+    body.mg-deliveries-page .assign-panel-head,
+    body.mg-deliveries-page .edit-panel-head {
+      color:#fff8ff !important;
+      background:rgba(31,8,51,.98) !important;
+      border-color:rgba(232,85,197,.48) !important;
+    }
+    body.mg-deliveries-page .modal-title,
+    body.mg-deliveries-page .assign-panel-title,
+    body.mg-deliveries-page .edit-panel-title,
+    body.mg-deliveries-page .details-job-number,
+    body.mg-deliveries-page .details-card h4,
+    body.mg-deliveries-page .assign-section-label,
+    body.mg-deliveries-page .edit-section-title,
+    body.mg-deliveries-page .assign-summary-row,
+    body.mg-deliveries-page .details-kv span,
+    body.mg-deliveries-page .details-pay-row,
+    body.mg-deliveries-page .modal-body,
+    body.mg-deliveries-page .assign-panel-body,
+    body.mg-deliveries-page .edit-panel-body {
+      color:#fff8ff !important;
+    }
+    body.mg-deliveries-page .modal-subtitle,
+    body.mg-deliveries-page .details-eyebrow,
+    body.mg-deliveries-page .details-meta,
+    body.mg-deliveries-page .details-kv strong,
+    body.mg-deliveries-page .sheet-note,
+    body.mg-deliveries-page .assign-summary-row strong,
+    body.mg-deliveries-page .edit-field label {
+      color:#d5c2e6 !important;
+    }
+    body.mg-deliveries-page .details-summary,
+    body.mg-deliveries-page .details-card,
+    body.mg-deliveries-page .assign-job-card,
+    body.mg-deliveries-page .assign-recommended,
+    body.mg-deliveries-page .assign-list,
+    body.mg-deliveries-page .assign-future,
+    body.mg-deliveries-page .edit-section {
+      background:rgba(64,20,91,.48) !important;
+      color:#fff8ff !important;
+      border-color:rgba(190,89,224,.48) !important;
+      box-shadow:0 8px 22px rgba(5,0,24,.22) !important;
+    }
+    body.mg-deliveries-page .modal-body input:not([type=checkbox]),
+    body.mg-deliveries-page .modal-body select,
+    body.mg-deliveries-page .modal-body textarea,
+    body.mg-deliveries-page .assign-panel input,
+    body.mg-deliveries-page .assign-panel select,
+    body.mg-deliveries-page .edit-panel input,
+    body.mg-deliveries-page .edit-panel select,
+    body.mg-deliveries-page .edit-panel textarea {
+      background:rgba(20,7,43,.96) !important;
+      color:#fff8ff !important;
+      border:1px solid rgba(196,119,231,.72) !important;
+      box-shadow:none !important;
+    }
+    body.mg-deliveries-page .modal-body input::placeholder,
+    body.mg-deliveries-page .modal-body textarea::placeholder,
+    body.mg-deliveries-page .assign-panel input::placeholder,
+    body.mg-deliveries-page .edit-panel input::placeholder,
+    body.mg-deliveries-page .edit-panel textarea::placeholder {
+      color:#c4add8 !important;
+      opacity:1;
+    }
+    body.mg-deliveries-page .modal-body select option,
+    body.mg-deliveries-page .assign-panel select option,
+    body.mg-deliveries-page .edit-panel select option {
+      background:#210b36 !important;
+      color:#fff8ff !important;
+    }
+    body.mg-deliveries-page .icon-btn {
+      background:rgba(255,56,167,.18) !important;
+      color:#fff8ff !important;
+      border-color:#ff69bd !important;
+    }
+    body.mg-deliveries-page .details-kv,
+    body.mg-deliveries-page .details-card-body,
+    body.mg-deliveries-page .assign-job-grid {
+      color:#fff8ff !important;
+    }
+    body.mg-deliveries-page .details-kv a,
+    body.mg-deliveries-page .details-card a {
+      color:#ff8bd0 !important;
+    }
+    body.mg-deliveries-page .mg-cancel-backdrop {
+      background:rgba(8,0,22,.82) !important;
+      backdrop-filter:blur(5px);
+    }
+    body.mg-deliveries-page .mg-cancel-panel {
+      background:linear-gradient(145deg,rgba(35,10,57,.99),rgba(20,5,38,.99)) !important;
+      color:#fff8ff !important;
+      border:1px solid rgba(255,67,179,.78) !important;
+      box-shadow:0 22px 60px rgba(4,0,18,.62),0 0 26px rgba(255,42,166,.18) !important;
+    }
+    body.mg-deliveries-page .mg-cancel-panel h3,
+    body.mg-deliveries-page .mg-cancel-panel label,
+    body.mg-deliveries-page .mg-cancel-panel p,
+    body.mg-deliveries-page .mg-cancel-panel strong {
+      color:#fff8ff !important;
+    }
+    body.mg-deliveries-page .mg-cancel-panel .mg-cancel-note {color:#d5c2e6 !important}
+    body.mg-deliveries-page .mg-cancel-target {
+      background:rgba(64,20,91,.48) !important;
+      color:#fff8ff !important;
+      border:1px solid rgba(190,89,224,.48) !important;
+    }
+    body.mg-deliveries-page .mg-cancel-panel select,
+    body.mg-deliveries-page .mg-cancel-panel input:not([type=checkbox]) {
+      background:rgba(20,7,43,.98) !important;
+      color:#fff8ff !important;
+      border:1px solid rgba(196,119,231,.78) !important;
+    }
+    body.mg-deliveries-page .mg-cancel-panel select option {
+      background:#210b36 !important;
+      color:#fff8ff !important;
+    }
+    body.mg-deliveries-page .mg-cancel-panel .mg-cancel-verify span {color:#fff8ff !important}
+    body.mg-deliveries-page .mg-cancel-error {color:#ff9caa !important}
+    body.mg-deliveries-page .payment-badge-pending {background:#ff963f !important;color:#240a37 !important}
+    body.mg-deliveries-page .payment-badge-unpaid {background:#e63777 !important;color:#fff8ff !important}
   </style>
 </body>
 </html>
