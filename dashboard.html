@@ -2219,9 +2219,9 @@
         </div>
 
         <div class="create-section-actions">
-          <button class="secondary-button" id="toggleCreateJobBtn" type="button">Expand</button>
-          <button class="secondary-button" id="createTestJobBtn" type="button">Create Test Job</button>
-          <button class="secondary-button" id="refreshButton" type="button">Refresh</button>
+          <button class="secondary-button" id="toggleCreateJobBtn" type="button" aria-label="Return to dashboard">Expand</button>
+          <button class="secondary-button" id="createTestJobBtn" type="button" aria-label="Create test job">Create Test Job</button>
+          <button class="secondary-button" id="refreshButton" type="button" aria-label="Refresh dashboard data">Refresh</button>
         </div>
       </div>
 
@@ -5518,6 +5518,43 @@
 
       body.mg-main-dashboard.mobile-create-expanded #createJobSection {
         margin-top: 0 !important;
+      }
+    }
+  </style>
+  <style id="mg-mobile-create-job-icons">
+    @media (max-width: 720px) {
+      body.mg-main-dashboard.mobile-create-expanded .create-section-actions {
+        flex: 0 0 auto;
+        gap: 7px;
+      }
+
+      body.mg-main-dashboard.mobile-create-expanded .create-section-actions button {
+        display: inline-flex;
+        width: 42px;
+        min-width: 42px;
+        height: 42px;
+        min-height: 42px;
+        padding: 0;
+        align-items: center;
+        justify-content: center;
+        overflow: hidden;
+        font-size: 0 !important;
+        line-height: 1;
+      }
+
+      body.mg-main-dashboard.mobile-create-expanded #toggleCreateJobBtn::before {
+        content: "⌂";
+        font-size: 25px;
+      }
+
+      body.mg-main-dashboard.mobile-create-expanded #createTestJobBtn::before {
+        content: "⚗";
+        font-size: 23px;
+      }
+
+      body.mg-main-dashboard.mobile-create-expanded #refreshButton::before {
+        content: "↻";
+        font-size: 28px;
       }
     }
   </style>
